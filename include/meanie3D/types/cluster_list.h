@@ -13,6 +13,7 @@
 #include <cf-algorithms/cf-algorithms.h>
 
 #include <meanie3D/types/cluster.h>
+#include <meanie3D/types/point.h>
 
 namespace m3D {
     
@@ -288,6 +289,22 @@ namespace m3D {
         
 #pragma mark -
 #pragma mark Miscellaneous
+        
+        // TODO: find a better place for this!
+        static
+        void
+        reset_clustering( FeatureSpace<T> *fs )
+        {
+            struct clear_cluster
+            {
+                void operator() (void *p)
+                {
+                    static_cast< M3DPoint<T> * >(p)->cluster = NULL;
+                };
+            } clear_cluster;
+            
+            for_each( fs->points.begin(), fs->points.end(), clear_cluster );
+        }
         
 #if WRITE_MODES
         const vector< vector<T> > &trajectory_endpoints() { return m_trajectory_endpoints; }

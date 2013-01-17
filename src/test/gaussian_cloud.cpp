@@ -105,51 +105,52 @@ coordinate_t *randomPoint( size_t dim, float m, float s )
 /** Write out an axis with dim->num_dim() grid points, values varying
  * linear between min and max
  */
-void writeAxis( NcFile* file, NcDim *dim, float min, float max )
+void writeAxis( NcFile &file, const NcDim &dim, float min, float max )
 {
     // write x-axis information. Make 0 the center of the map. 
     
-    float *data = (float *) malloc( sizeof(float) * dim->size() );
+    float *data = (float *) malloc( sizeof(float) * dim.getSize() );
 
-    for ( int i=0; i < dim->size(); i++ )
+    for ( int i=0; i < dim.getSize(); i++ )
     {
-        data[i] = min + ((max - min)/dim->size()) * i;
+        data[i] = min + ((max - min)/dim.getSize()) * i;
     }
     
-    NcVar *dimData = file->add_var( dim->name(), ncFloat, dim );
+    NcVar dimData = file.addVar( dim.getName(), NcType::nc_FLOAT, dim );
     
-    dimData->add_att( "value_min", min );
+    dimData.putAtt("value_min", NcType::nc_FLOAT, min );
     
-    dimData->add_att( "value_max", max );
+    dimData.putAtt("value_max", NcType::nc_FLOAT, max );
     
-    dimData->put( data, dim->size() );
+    dimData.putVar(data);
     
     free(data);
 }
 
 /**
  */
-void writeCloud( NcFile* file, NcVar* variable, vector<NcDim *> dims, vector<float> center, vector<float> mean, vector<float> deviation, size_t cloudSize )
+void writeCloud(NcFile &file,
+                NcVar &variable,
+                vector<NcDim> dims,
+                const vector<float> &center,
+                const vector<float> &mean,
+                const vector<float> &deviation,
+                size_t cloudSize )
 {
-    map< NcDim*, NcVar* > vars;
+    map<NcDim,NcVar> vars;
     
     for ( size_t i=0; i<dims.size(); i++ )
     {
-        vars[ dims.at(i) ] = file->get_var( dims.at(i)->name() );
+        vars[ dims.at(i) ] = file.getVar( dims.at(i).getName() );
     }
     
     // writing individual points here, counts are all 1
     
-    long *counts = (long *) malloc( sizeof(long) * dims.size() );
-    
-    for ( size_t i=0; i<dims.size(); i++ )
-    {
-        counts[i] = 1;
-    }
+    vector<size_t> counts( dims.size(),1 );
     
     // allocate a cursor
     
-    long *cursor = (long *) malloc( sizeof(long) * dims.size() );
+    vector<size_t> cursor( dims.size(),0 );
     
     // start generating random points (with random values between 0 and 1)
     
@@ -165,19 +166,20 @@ void writeCloud( NcFile* file, NcVar* variable, vector<NcDim *> dims, vector<flo
             
             while ( !valid )
             {
-                NcDim *dim = dims.at(d);
+                NcDim dim = dims[d];
                 
                 float rand = box_muller( mean.at(d), deviation.at(d) );
                 
                 // re-transform to grid coordinates
                 
-                float min = vars[dim]->get_att("value_min")->values()->as_double(0);
+                float min,max;
                 
-                float max = vars[dim]->get_att("value_max")->values()->as_double(0);            
+                vars[dim].getAtt("value_min").getValues( &min );
+                vars[dim].getAtt("value_max").getValues( &max );
                 
-                long n = (long)round( (dim->size()-1)*(rand - min) / ( max - min ) );
+                long n = (long)round( (dim.getSize()-1)*(rand - min) / ( max - min ) );
                 
-                if ( n >=0 && n < dim->size() )
+                if ( n >=0 && n < dim.getSize() )
                 {
                     cursor[d] = n;
                     
@@ -188,19 +190,13 @@ void writeCloud( NcFile* file, NcVar* variable, vector<NcDim *> dims, vector<flo
         
         // generate a random value
         
-        float value[] = {1.0f}; //ranf();
+        float value = 1.0f;
         
-        variable->set_cur( cursor );
+        variable.putVar( cursor, &value );
         
-        variable->put( value, counts );
-                
         numPoints++;
         
     } while ( numPoints < cloudSize );
-    
-    free( counts );
-    
-    free( cursor );
 }
 
 void writeCloudND( const char *filename, size_t cloud_size, size_t gridSize, float mean, float deviation, vector<float> *centerOffset = NULL )
@@ -210,22 +206,22 @@ void writeCloudND( const char *filename, size_t cloud_size, size_t gridSize, flo
 
 void writeCloud2D( const char *filename, size_t cloud_size, size_t gridSize, float m, float s, vector<float> *centerOffset = NULL )
 {
-    NcFile *file = new NcFile( filename,  NcFile::Replace );
+    NcFile file( filename, NcFile::replace );
     
     // Create gaussian variable with 3 dimensions
-    vector<NcDim *> dims;
+    vector<NcDim> dims;
     
-    NcDim* x = file->add_dim("x",gridSize);
+    NcDim x = file.addDim("x",gridSize);
     writeAxis( file, x, -100.0, 100.0 );
     dims.push_back( x );
 
-    NcDim* y = file->add_dim("y",gridSize);
+    NcDim y = file.addDim("y",gridSize);
     writeAxis( file, y, -100.0, 100.0 );
     dims.push_back( y );
 
-    NcVar *gaussian = file->add_var( "gaussian", ncFloat, x, y );
-    gaussian->add_att( "valid_min", 0.0 );
-    gaussian->add_att( "valid_max", 1.0 );
+    NcVar gaussian = file.addVar("gaussian", NcType::nc_FLOAT, dims );
+    gaussian.putAtt( "valid_min", ncFloat, 0.0f );
+    gaussian.putAtt( "valid_max", ncFloat, 1.0f );
     
     // write cloud out
 
@@ -250,33 +246,31 @@ void writeCloud2D( const char *filename, size_t cloud_size, size_t gridSize, flo
     }
     
     writeCloud( file, gaussian, dims, center, mean, deviation, cloud_size );
-    
-    file->close();
 }
 
 
 void writeCloud3D( const char *filename, size_t cloud_size, size_t gridSize, float m, float s, vector<float> *centerOffset = NULL )
 {
-    NcFile *file = new NcFile( filename,  NcFile::Replace );
+    NcFile file( filename, NcFile::replace );
     
     // Create gaussian variable with 3 dimensions
-    vector<NcDim *> dims;
+    vector<NcDim> dims;
     
-    NcDim* x = file->add_dim("x",gridSize);
+    NcDim x = file.addDim("x",gridSize);
     writeAxis( file, x, -100.0, 100.0 );
     dims.push_back( x );
     
-    NcDim* y = file->add_dim("y",gridSize);
+    NcDim y = file.addDim("y",gridSize);
     writeAxis( file, y, -100.0, 100.0 );
     dims.push_back( y );
     
-    NcDim* z = file->add_dim("z",gridSize);
+    NcDim z = file.addDim("z",gridSize);
     writeAxis( file, z, -100.0, 100.0 );
     dims.push_back( z );
     
-    NcVar *gaussian = file->add_var( "gaussian", ncFloat, x, y, z );
-    gaussian->add_att( "valid_min", 0.0 );
-    gaussian->add_att( "valid_max", 1.0 );
+    NcVar gaussian = file.addVar( "gaussian", NcType::nc_FLOAT, dims );
+    gaussian.putAtt( "valid_min", ncFloat, 0.0f );
+    gaussian.putAtt( "valid_max", ncFloat, 1.0f );
     
     // write cloud out
     
@@ -304,20 +298,18 @@ void writeCloud3D( const char *filename, size_t cloud_size, size_t gridSize, flo
     }
     
     writeCloud( file, gaussian, dims, center, mean, deviation, cloud_size );
-    
-    file->close();
 }
 
 
 
-int main(int argc, char** argv)
-{
-    writeCloud2D("gaussian2D.nc", 2000, 101, 0.0, 40.0 );
-    
-    // writeCloud3D("gaussian3D.nc", 4000, 101, 0.0, 40.0 );
-   
-    return 0;
-}
+//int main(int argc, char** argv)
+//{
+//    writeCloud2D("gaussian2D.nc", 2000, 101, 0.0, 40.0 );
+//    
+//    // writeCloud3D("gaussian3D.nc", 4000, 101, 0.0, 40.0 );
+//   
+//    return 0;
+//}
 
 
 

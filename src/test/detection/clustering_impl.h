@@ -1,13 +1,13 @@
 #ifndef _M3D_TEST_FS_CLUSTERING_IMPL_H_
 #define _M3D_TEST_FS_CLUSTERING_IMPL_H_
 
-#include <cf-algorithms/operations/cluster_op.h>
-#include <cf-algorithms/utils/rand_utils.h>
+#include <meanie3D/meanie3D.h>
 
 template<class T>
 void FSClusteringTest2D<T>::write_cloud( const NcVar &var, vector<T> mean, vector<T> deviation )
 {
     using namespace netCDF;
+    using namespace m3D;
     using namespace cfa::utils::random;
     
     // start generating random points (with random values between 0 and 1)
@@ -218,8 +218,10 @@ TYPED_TEST_CASE( FSClusteringTest2D, DataTypes );
 
 TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
 {
+    using cfa::utils::VisitUtils;
     using namespace cfa::utils::timer;
     using namespace cfa::meanshift;
+    using namespace m3D;
     
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
     
@@ -272,7 +274,7 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
         boost::replace_all( fs_filename, "/", "_" );
         cout << "Writing Featurespace to " + fs_filename << " ... ";
-        write_featurespace_vtk( fs_filename, this->m_featureSpace );
+        VisitUtils<TypeParam>::write_featurespace_vtk( fs_filename, this->m_featureSpace );
         cout << "done." << endl;
 #endif
         
@@ -314,7 +316,7 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         cfa::utils::visualization::write_clusters_vtk<TypeParam>( test_info->test_case_name(), clusters.clusters, h );
         cout << "done." << endl;
 #endif
-        this->m_featureSpace->reset_clustering();
+        ClusterList<TypeParam>::reset_clustering(this->m_featureSpace);
         
         EXPECT_GE( 4, clusters.clusters.size() );
     }
@@ -328,7 +330,9 @@ TYPED_TEST_CASE( FSClusteringTest3D, DataTypes );
 
 TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
 {
+    using namespace m3D;
     using namespace cfa::utils::timer;
+    using cfa::utils::VisitUtils;
     
     const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     
@@ -378,7 +382,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
         boost::replace_all( fs_filename, "/", "_" );
         cout << "Writing Featurespace to " + fs_filename << " ... ";
-        write_featurespace_vtk( fs_filename, this->m_featureSpace );
+        VisitUtils<TypeParam>::write_featurespace_vtk( fs_filename, this->m_featureSpace );
         cout << "done." << endl;
 #endif
         
@@ -410,8 +414,8 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         string vectors_filename = string(test_info->test_case_name()) + "_meanshift.vtk";
         boost::replace_all( vectors_filename, "/", "_" );
         cout << "Writing meanshift vectors to " << vectors_filename << " ... ";
-        write_vectors_vtk( vectors_filename, origins, vectors );
-        write_vectors_vtk( "blahblah.vtk", origins, vectors );
+        VisitUtils<TypeParam>::write_vectors_vtk( vectors_filename, origins, vectors );
+        VisitUtils<TypeParam>::write_vectors_vtk( "blahblah.vtk", origins, vectors );
         cout << "done." << endl;
 #endif
         

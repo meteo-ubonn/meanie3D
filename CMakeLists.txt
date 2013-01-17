@@ -23,22 +23,17 @@ SET(${PROJECT_NAME}_MAJOR_VERSION 0)
 SET(${PROJECT_NAME}_MINOR_VERSION 1)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
-#should not be defined, only if doxygen is found, but then people would forget
-#to update it, because it would be down below
-#also, actually it might be variables in variables are supported in cmake,
-#then it is not needed at all
-SET(FULL_VERSION_FOR_DOXYGEN 0.1.0)
-
 #setup OS
+
 IF(CMAKE_SYSTEM_NAME MATCHES Darwin)
     SET(${PROJECT_NAME}_OS_MACOSX TRUE)
-ELSE()
+ELSE(CMAKE_SYSTEM_NAME MATCHES Darwin)
   IF(CMAKE_SYSTEM_NAME MATCHES Linux)
     SET(${PROJECT_NAME}_OS_LINUX TRUE)
-  ELSE()
+  ELSE(CMAKE_SYSTEM_NAME MATCHES Linux)
     MESSAGE(FATAL_ERROR "unknown target OS")
-  ENDIF()
-ENDIF()
+  ENDIF(CMAKE_SYSTEM_NAME MATCHES Linux)
+ENDIF(CMAKE_SYSTEM_NAME MATCHES Darwin)
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 
@@ -50,7 +45,7 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 ADD_DEFINITIONS(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_HAVE_OWN_TR1_TUPLE=0)
 
 # Switch on to use TBB
-SET(WITH_TBB 0)
+SET(WITH_TBB NO)
 
 # Switch on to use Boost Threads. Do not combine with TBB
 SET(WITH_BOOST_THREADS 0)
@@ -152,20 +147,30 @@ ENDIF()
 # Paths and Build Configuration
 # -------------------------------------
 
-INCLUDE_DIRECTORIES(
-	${PROJECT_SOURCE_DIR}/include
-	${NETCDF_INCLUDE_DIR}
-	${HDF5_INCLUDE_DIR}
 IF(WITH_TBB)
- 	${TBB_INCLUDE_DIRS}
-ENDIF(WITH_TBB)
-	${CFA_INCLUDE_DIR}
+	INCLUDE_DIRECTORIES(
+		${PROJECT_SOURCE_DIR}/include
+		${NETCDF_INCLUDE_DIR}
+		${HDF5_INCLUDE_DIR}
+		${CFA_INCLUDE_DIR}
+		${RADOLAN_INCLUDE_DIR}
+		${TBB_INCLUDE_DIRS})
+ELSE()
+	INCLUDE_DIRECTORIES(
+		${PROJECT_SOURCE_DIR}/include
+		${NETCDF_INCLUDE_DIR}
+		${HDF5_INCLUDE_DIR}
+		${CFA_INCLUDE_DIR}
+		${RADOLAN_INCLUDE_DIR})
+ENDIF()
+
+CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
+	${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h
 )
 
-CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/config_h.in ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h)
-
 #set default cmake build type to Debug
-#(None Debug Release RelWithDebInfo MinSizeRel)
+
+# (None Debug Release RelWithDebInfo MinSizeRel)
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE "Debug")
 ENDIF()
@@ -222,21 +227,21 @@ IF(WITH_TBB)
         ${HDF5_LIBRARIES}
         ${CFA_LIBRARIES}
 		${TBB_LIBRARIES})
-ELSE(WITH_TBB)
+ELSE()
     TARGET_LINK_LIBRARIES(meanie3D-detect
         meanie3D
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
 		${CFA_LIBRARIES})
-ENDIF(WITH_TBB)
+ENDIF()
 
 # Unit Tests
 
 # detection
 
 ADD_EXECUTABLE(meanie3d-detection-test
-	src/test/gaussian_cloud.cpp
+#	src/test/gaussian_cloud.cpp
 	src/test/detection/detection_test.h
     src/test/detection/settings.h
     src/test/detection/settings.cpp
@@ -250,23 +255,23 @@ ADD_EXECUTABLE(meanie3d-detection-test
 
 IF(WITH_TBB)
     TARGET_LINK_LIBRARIES(meanie3d-detection-test
-        Meanie3D
+        meanie3D
         ${Boost_LIBRARIES}
         ${NETCDF_LIBRARIES}
         ${HDF5_LIBRARIES}
         ${GTEST_LIBRARIES}
 		${CFA_LIBRARIES}
         ${TBB_LIBRARIES})
-ELSE(WITH_TBB)
+ELSE()
     TARGET_LINK_LIBRARIES(meanie3d-detection-test
-	    Meanie3D
+	    meanie3D
 	    ${Boost_LIBRARIES}
 	    ${NETCDF_LIBRARIES}
 	    ${HDF5_LIBRARIES}
 	    ${GTEST_LIBRARIES}
 		${CFA_LIBRARIES}
 	    ${TBB_LIBRARIES})
-ENDIF(WITH_TBB)
+ENDIF()
 
 SET_TARGET_PROPERTIES(meanie3D PROPERTIES LINKER_LANGUAGE CXX)
 SET_TARGET_PROPERTIES(meanie3D-detect PROPERTIES LINKER_LANGUAGE CXX)
@@ -278,12 +283,10 @@ INSTALL(DIRECTORY include/${PROJECT_NAME}
         DESTINATION "/usr/local/include"
         PATTERN ".svn" EXCLUDE
         PATTERN ".git" EXCLUDE
-        PATTERN "*.swp" EXCLUDE
-		PATTERN "*.*~" EXCLUDE)
+        PATTERN "*.swp" EXCLUDE)
 INSTALL(TARGETS meanie3D LIBRARY DESTINATION "/usr/local/lib")
 INSTALL(TARGETS meanie3D-detect RUNTIME DESTINATION "/usr/local/bin")
 
 # Documentation
 
-# TODO
-
+SET(FULL_VERSION_FOR_DOXYGEN 0.1.0)
