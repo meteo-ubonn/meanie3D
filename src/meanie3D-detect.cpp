@@ -479,8 +479,12 @@ int main(int argc, char** argv)
                             drf);
 
         // Make the mapping known to the visualization routines
+        
         ::cfa::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
         ::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+        
+        // Select the correct point factory
+        PointFactory<FS_TYPE>::set_instance( new M3DPointFactory<FS_TYPE>() );
         
     }
     catch (const std::exception &e)

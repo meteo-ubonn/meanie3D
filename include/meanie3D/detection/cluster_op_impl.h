@@ -173,8 +173,8 @@ namespace m3D {
 #endif
         
 #if WRITE_MEANSHIFT_VECTORS
-        write_shift_vectors<T>( "meanshift_vectors.vtk", this->feature_space, false );
-        write_shift_vectors<T>( "meanshift_vectors-spatial.vtk", this->feature_space, true );
+        VisitUtils<T>::write_shift_vectors( "meanshift_vectors.vtk", this->feature_space, false );
+        VisitUtils<T>::write_shift_vectors( "meanshift_vectors-spatial.vtk", this->feature_space, true );
 #endif
         
         if ( show_progress_bar )
@@ -208,19 +208,16 @@ namespace m3D {
         }
         cout << "Cluster sizes range: [" << min_size << "," << max_size << "]" << endl;
         
-        double scale = this->feature_space->scale() == FeatureSpace<T>::NO_SCALE ? 0.0 : this->feature_space->scale();
         std::string fn = this->feature_space->filename()
-        + "-scale-" + boost::lexical_cast<string>( scale )
         + "-modes-" + boost::lexical_cast<string>( pass_counter() )
         + ".vtk";
-        write_cluster_modes_vtk<T>( fn, cluster_list.clusters );
+        m3D::utils::VisitUtils<T>::write_cluster_modes_vtk( fn, cluster_list.clusters );
         
         fn = this->feature_space->filename()
-        + "-scale-" + boost::lexical_cast<string>( scale )
         + "-raw-modes-" + boost::lexical_cast<string>( pass_counter() )
         + ".vtk";
-        write_modes_vtk( fn, cluster_list.trajectory_endpoints(), cluster_list.trajectory_lengths() );
-        write_cluster_modes_vtk<T>( fn, cluster_list.clusters );
+        cfa::utils::VisitUtils<T>::write_modes_vtk( fn, cluster_list.trajectory_endpoints(), cluster_list.trajectory_lengths() );
+        m3D::utils::VisitUtils<T>::write_cluster_modes_vtk( fn, cluster_list.clusters );
         
         increment_pass_counter();
         

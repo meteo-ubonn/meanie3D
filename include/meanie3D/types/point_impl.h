@@ -36,7 +36,7 @@ namespace m3D {
     template <class T>
     bool M3DPoint<T>::operator == (const M3DPoint<T> &o)
     {
-        return this->values == o.values && cluster = o.cluster;
+        return this->values == o.values;
     }
     
 };

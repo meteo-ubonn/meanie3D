@@ -7,15 +7,16 @@
 #include <vector>
 
 #include <cf-algorithms/featurespace/point.h>
+#include <meanie3D/types/cluster.h>
 
 namespace m3D {
 
 	using cfa::meanshift::Point;
 
-	// Forward Declaration
-
-	template <typename T>
-	class Cluster;
+//	// Forward Declaration
+//
+//	template <typename T>
+//	class Cluster;
 
 	/** This represents one point f in feature space F.
      */
@@ -23,19 +24,13 @@ namespace m3D {
     struct M3DPoint : public Point<T>
     {
 
-    private:
-        
-        /** Default constructor
-         */
-    	M3DPoint();
-        
     public:
         
 #pragma mark -
 #pragma mark Definitions
         
         typedef M3DPoint<T> * ptr;
-        typedef std::vector< ptr > list;
+        typedef vector< ptr > list;
 
 #pragma mark -
 #pragma mark public properties
@@ -45,6 +40,10 @@ namespace m3D {
 #pragma mark -
 #pragma mark Constructor/Destructor
         
+        /** Default constructor
+         */
+    	M3DPoint();
+
         /** Copy constructor
          */
         M3DPoint( const M3DPoint<T> &o );
@@ -58,7 +57,7 @@ namespace m3D {
          * @param initial coordinate
          * @param initial values
          */
-        M3DPoint( std::vector<T> &coordinate, std::vector<T>& values );
+        M3DPoint( vector<T> &coordinate, vector<T>& values );
         
         /** Destructor */
         ~M3DPoint();

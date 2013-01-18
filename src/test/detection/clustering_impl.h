@@ -244,7 +244,18 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         
         //        VariableWeighed<TypeParam> *weight = new VariableWeighed<TypeParam>( this->m_file, this->coordinate_system, this->m_variables.front() );
         
-        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( h );
+        
+        // Create 'bandwidth' parameter from grid resolution and
+        // the maximum value in the value range
+        
+        vector<TypeParam> resolution = ((TypeParam)3.0) * this->coordinate_system()->resolution();
+        
+        resolution.push_back( numeric_limits<TypeParam>::max());
+        
+        // Search parameters for neighbourhood searches in clustering
+        // should be in the order of the grid resolution
+        
+        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( resolution );
         
         // KNNSearchParams *params = new KNNSearchParams( 200 );
         
@@ -306,14 +317,13 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         string vectors_filename = string(test_info->test_case_name()) + "_meanshift.vtk";
         boost::replace_all( vectors_filename, "/", "_" );
         cout << "Writing meanshift vectors to " << vectors_filename << " ... ";
-        write_vectors_vtk( vectors_filename, origins, vectors );
-        write_vectors_vtk( "blahblah.vtk", origins, vectors );
+        cfa::utils::VisitUtils<TypeParam>::write_vectors_vtk( vectors_filename, origins, vectors );
         cout << "done." << endl;
 #endif
         
 #if WRITE_CLUSTERS
         cout << "Writing clusters ... ";
-        cfa::utils::visualization::write_clusters_vtk<TypeParam>( test_info->test_case_name(), clusters.clusters, h );
+        m3D::utils::VisitUtils<TypeParam>::write_clusters_vtk( test_info->test_case_name(), clusters.clusters, h );
         cout << "done." << endl;
 #endif
         ClusterList<TypeParam>::reset_clustering(this->m_featureSpace);
@@ -358,9 +368,19 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         //        VariableWeighed<TypeParam> *weight = new VariableWeighed<TypeParam>( this->m_file, this->coordinate_system, this->m_variables.front() );
         ClusterOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
         
-        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( h );
+        // Create 'bandwidth' parameter from grid resolution and
+        // the maximum value in the value range
         
-        clusters = op.cluster( params, kernel, 0 );
+        vector<TypeParam> resolution = ((TypeParam)5.0) * this->coordinate_system()->resolution();
+        
+        resolution.push_back( numeric_limits<TypeParam>::max());
+        
+        // Search parameters for neighbourhood searches in clustering
+        // should be in the order of the grid resolution
+        
+        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( resolution );
+        
+        clusters = op.cluster( params, kernel, 0, 0.98 );
         
         delete kernel;
         //        delete weight;
@@ -421,7 +441,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         
 #if WRITE_CLUSTERS
         cout << "Writing clusters ... ";
-        cfa::utils::visualization::write_clusters_vtk<TypeParam>( test_info->test_case_name(), clusters.clusters, h );
+        m3D::utils::VisitUtils<TypeParam>::write_clusters_vtk( test_info->test_case_name(), clusters.clusters, h );
         cout << "done." << endl;
 #endif
         EXPECT_GE( 27, clusters.clusters.size() );

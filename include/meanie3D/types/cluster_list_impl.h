@@ -596,6 +596,8 @@ namespace m3D {
             }
         }
         
+        delete index;
+        
         if ( show_progress )
         {
             cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
@@ -826,15 +828,21 @@ namespace m3D {
             
             bool dynamic_range_test = sup( c1_dyn_range_factor, c2_dyn_range_factor ) >= drf_threshold;
             
+#if DEBUG_CLUSTER_MERGING
+            cout << "\tc1-drf = " << c1_dyn_range_factor << " , c2-drf = " << c2_dyn_range_factor << endl;
+#endif
+            
             // Indicators for merging are: high dynamic range on both sides of the boundary
             // as well as high signal variablility in both
 
             should_merge =  dynamic_range_test;
         }
-//        else
-//        {
-//            cout << "no common boundary" << endl;
-//        }
+#if DEBUG_CLUSTER_MERGING
+        else
+        {
+            cout << "no common boundary" << endl;
+        }
+#endif 
         
 #if DEBUG_CLUSTER_MERGING
         std::cout << "\t==> should merge = " << (should_merge ? "yes" : "no") << std::endl;
@@ -931,7 +939,7 @@ namespace m3D {
             std::string fn = fs->filename() + "_boundary_" + boost::lexical_cast<string>(index) + ".vtk";
             boost::replace_all( fn, "/", "_" );
             boost::replace_all( fn, "..", "" );
-	    write_pointlist_vtk(fn, &b, fs->coordinate_system->size());
+            cfa::utils::VisitUtils<T>::write_pointlist_vtk(fn, &b, fs->coordinate_system->size());
         }
     
         std::string fn = fs->filename() + "_boundary_correlations.txt";

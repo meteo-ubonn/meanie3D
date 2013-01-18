@@ -16,47 +16,55 @@ using std::cout;
 using std::endl;
 using namespace cfa::utils::coords;
 
-template<class T> 
-FSTestBase<T>::FSTestBase() : 
-m_settings(NULL),
-m_coordinate_system(NULL),
-m_totalPointCount(0),
-m_featureSpace(NULL), 
-m_featureSpaceIndex(NULL)
-{
-}
+template<class T>
+FSTestBase<T>::FSTestBase() : m_settings(NULL), m_coordinate_system(NULL), m_totalPointCount(0), m_featureSpace(NULL), m_featureSpaceIndex(NULL) {}
 
-template<class T> 
+template<class T>
 FSTestBase<T>::~FSTestBase()
 {
-    if ( m_settings != NULL )
-    {
+    if (m_featureSpaceIndex) {
+        delete m_featureSpaceIndex;
+        m_featureSpaceIndex = NULL;
+    }
+
+    if (m_settings) {
         delete m_settings;
+        m_settings = NULL;
+    }
+    
+    if (m_coordinate_system) {
+        delete m_coordinate_system;
+        m_coordinate_system = NULL;
+    }
+    
+    if (m_featureSpace) {
+        delete m_featureSpace;
+        m_featureSpace = NULL;
     }
 }
 
-template<class T> 
+template<class T>
 const char * FSTestBase<T>::dimensionName( size_t dimensionIndex )
 {
     assert( dimensionIndex < 4 );
     
     const char* dimensionName = NULL;
     
-    switch (dimensionIndex) 
+    switch (dimensionIndex)
     {
-        case 0: 
+        case 0:
             dimensionName = "x";
             break;
             
-        case 1: 
+        case 1:
             dimensionName = "y";
             break;
             
-        case 2: 
+        case 2:
             dimensionName = "z";
             break;
             
-        case 3: 
+        case 3:
             dimensionName = "t";
             break;
             
@@ -68,12 +76,12 @@ const char * FSTestBase<T>::dimensionName( size_t dimensionIndex )
 }
 
 
-template<class T> 
+template<class T>
 void FSTestBase<T>::generate_dimensions()
 {
     // Figure out the max bandwidth
     
-    // create dimensions 
+    // create dimensions
     
     size_t nupoints = m_settings->num_gridpoints();
     
@@ -89,13 +97,13 @@ void FSTestBase<T>::generate_dimensions()
     // and dimension variables
     
     vector<NcVar> dimension_variables;
-
+    
     for ( size_t i = 0; i < m_settings->num_dimensions(); i++ )
     {
         // create dimension variable. Values range [-max_h ... to max_h]
         
         float max_h = m_settings->axis_bound_values()[i];
-     
+        
         // Create variable with same name as dimension
         
         NcVar var = m_file->addVar( dimensionName(i), ncDouble, dimensions[i] );
@@ -125,9 +133,12 @@ void FSTestBase<T>::generate_dimensions()
     m_coordinate_system = new cfa::utils::coords::CoordinateSystem<T>( dimensions, dimension_variables );
 }
 
-template<class T> 
+template<class T>
 void FSTestBase<T>::SetUp()
 {
+    // Select the correct point factory
+    cfa::meanshift::PointFactory<T>::set_instance( new m3D::M3DPointFactory<T>() );
+    
     // Create NetCDF file
     
     this->m_filename = m_settings->test_filename();
@@ -147,25 +158,14 @@ void FSTestBase<T>::SetUp()
 template<class T>
 void FSTestBase<T>::TearDown()
 {
-    delete m_file;
-    
-    m_file = NULL;
-
-    delete m_coordinate_system;
-    
-    m_coordinate_system = NULL;
-    
-    delete m_featureSpace;
-    
-    m_featureSpace = NULL;
-    
-    delete m_featureSpaceIndex;
-    
-    m_featureSpaceIndex = NULL;
+    if ( m_file ) {
+        delete m_file;
+        m_file = NULL;
+    }
 }
 
 template<class T>
-void FSTestBase<T>::generate_featurespace() 
+void FSTestBase<T>::generate_featurespace()
 {
     cout << "Creating featurespace ... ";
     
@@ -186,7 +186,7 @@ string FSTestBase<T>::filename_from_current_testcase()
     boost::replace_all( filename, "/", "_" );
     
     return filename;
-
+    
 }
 
 #endif

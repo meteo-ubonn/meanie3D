@@ -6,7 +6,7 @@
 namespace m3D {
     
     template <typename T>
-    ThresholdFilter<T>::ThresholdFilter(const std::vector<T> &thresholds) : m_thresholds(thresholds) {};
+    ThresholdFilter<T>::ThresholdFilter(const vector<T> &thresholds) : m_thresholds(thresholds) {};
     
     template <typename T>
     ThresholdFilter<T>::~ThresholdFilter() {};
@@ -16,10 +16,10 @@ namespace m3D {
     
     template <typename T>
     void
-    ThresholdFilter<T>::set_thresholds( const std::vector<T> &t ) { m_thresholds = t; };
+    ThresholdFilter<T>::set_thresholds( const vector<T> &t ) { m_thresholds = t; };
     
     template <typename T>
-    std::vector<T>
+    vector<T>
     ThresholdFilter<T>::thresholds() { return m_thresholds; };
     
 #pragma mark -

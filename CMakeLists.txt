@@ -192,6 +192,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/types/cluster_list.h
     include/meanie3D/types/cluster_list_impl.h
     include/meanie3D/types/point.h
+    include/meanie3D/types/point_impl.h
 	include/meanie3D/filters.h
     include/meanie3D/filters/filter.h
     include/meanie3D/filters/scalespace_filter.h

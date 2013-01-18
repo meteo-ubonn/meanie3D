@@ -16,10 +16,10 @@
 // Featurespace debugging
 
 #define DEBUG_MEANSHIFT_GRAPH 0
-#define DEBUG_CLUSTER_MERGING 0
+#define DEBUG_CLUSTER_MERGING 1
 
-#define WRITE_CLUSTERS 0
+#define WRITE_MEANSHIFT_VECTORS 1
+#define WRITE_CLUSTERS 1
 #define WRITE_BOUNDARIES 0
-#define WRITE_MODES 0
 
 #endif
