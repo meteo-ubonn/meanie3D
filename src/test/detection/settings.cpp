@@ -3,7 +3,7 @@
 //  cf-algorithms
 //
 //  Created by Jürgen Simon on 04.05.12.
-//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
 #include "settings.h"

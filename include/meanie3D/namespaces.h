@@ -4,6 +4,7 @@
 #include <iostream> // namespace std
 #include <netcdf>   // namespace netCDF
 #include <boost/locale.hpp>  // boost::locale
+#include <cf-algorithms/cf-algorithms.h>
 
 // This file manages the imports of namespaces into the 
 // various namespaces defined in this software.

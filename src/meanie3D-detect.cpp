@@ -1,9 +1,11 @@
+
+
 //
 //  meanshift_clustering.cpp
 //  cf-algorithms
 //
 //  Created by Jürgen Lorenz Simon on 5/3/12.
-//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
 #include <boost/tokenizer.hpp>
@@ -50,22 +52,22 @@ typedef enum {
 static const double NO_SCALE = numeric_limits<double>::min();
 
 void parse_commmandline( program_options::variables_map vm,
-                         NcFile **filePtr,
-                         string &filename,
-                         string &output_filename,
-                         vector<NcDim> &dimensions,
-                         vector<NcVar> &dimension_variables,
-                         vector<NcVar> &variables,
-                         map<NcVar,double> **thresholds,
-                         double &scale,
-                         int &weight_index,
-                         string &parameters,
-                         SearchParameters **search_params,
-                         bool &write_vtk,
-                         vector<size_t> &vtk_dimension_indexes,
-                         Verbosity &verbosity,
-                         unsigned int &min_cluster_size,
-                         double &drf_threshold )
+                        NcFile **filePtr,
+                        string &filename,
+                        string &output_filename,
+                        vector<NcDim> &dimensions,
+                        vector<NcVar> &dimension_variables,
+                        vector<NcVar> &variables,
+                        map<NcVar,double> **thresholds,
+                        double &scale,
+                        int &weight_index,
+                        string &parameters,
+                        SearchParameters **search_params,
+                        bool &write_vtk,
+                        vector<size_t> &vtk_dimension_indexes,
+                        Verbosity &verbosity,
+                        unsigned int &min_cluster_size,
+                        double &drf_threshold )
 {
     if ( vm.count("file") == 0 )
     {
@@ -179,7 +181,7 @@ void parse_commmandline( program_options::variables_map vm,
         {
             const char* bw = (*tok_iter).c_str();
             
-            ranges.push_back( (FS_TYPE) strtod( bw, (char **)NULL ) ); 
+            ranges.push_back( (FS_TYPE) strtod( bw, (char **)NULL ) );
         }
         
         if ( ranges.size() != dimension_variables.size() + variables.size() )
@@ -206,7 +208,7 @@ void parse_commmandline( program_options::variables_map vm,
         }
         
         size_t k = vm["knn"].as<long>();
-
+        
         vector<FS_TYPE> cluster_resolution;
         
         tokenizer tokens( vm["cluster-resolution"].as<string>(), sep );
@@ -250,9 +252,9 @@ void parse_commmandline( program_options::variables_map vm,
                 
                 exit( 1 );
             }
-
+            
             const char* value = (*tok_iter).c_str();
-
+            
             NcVar var = variables[var_index];
             
             th->operator[](var) = strtod( value, (char **)NULL );
@@ -312,13 +314,13 @@ void parse_commmandline( program_options::variables_map vm,
             exit(-1);
         }
         
-        // figure out the weight_index 
+        // figure out the weight_index
         
         weight_index = var_index;
         
         parameters = parameters + " weight-variable=" + var_name;
     }
-    else 
+    else
     {
         weight_index = MeanshiftOperation<FS_TYPE>::NO_WEIGHT;
     }
@@ -386,9 +388,9 @@ void parse_commmandline( program_options::variables_map vm,
     min_cluster_size = vm["min-cluster-size"].as<unsigned int>();
 }
 
-/** 
- * 
- * 
+/**
+ *
+ *
  */
 int main(int argc, char** argv)
 {
@@ -427,11 +429,11 @@ int main(int argc, char** argv)
     catch (std::exception &e)
     {
         cerr << "Error parsing command line: " << e.what() << endl;
-        cerr << "Check meanshift_clustering --help for command line options" << endl;
+        cerr << "Check meanie3D-detect --help for command line options" << endl;
         exit(-1);
     }
     
-    if ( vm.count("help")==1 || argc < 2 ) 
+    if ( vm.count("help")==1 || argc < 2 )
     {
         cout << desc << "\n";
         return 1;
@@ -457,27 +459,27 @@ int main(int argc, char** argv)
     Verbosity verbosity = VerbosityNormal;
     double scale = NO_SCALE;
     double drf = 0.95;
-
+    
     try
     {
         parse_commmandline( vm,
-                            &file,
-                            filename,
-                            output_filename,
-                            dimensions,
-                            dimension_variables,
-                            variables,
-                            &thresholds,
-                            scale,
-                            weight_index,
-                            parameters,
-                            &search_params,
-                            write_vtk,
-                            vtk_dimension_indexes,
-                            verbosity,
-                            min_cluster_size,
-                            drf);
-
+                           &file,
+                           filename,
+                           output_filename,
+                           dimensions,
+                           dimension_variables,
+                           variables,
+                           &thresholds,
+                           scale,
+                           weight_index,
+                           parameters,
+                           &search_params,
+                           write_vtk,
+                           vtk_dimension_indexes,
+                           verbosity,
+                           min_cluster_size,
+                           drf);
+        
         // Make the mapping known to the visualization routines
         
         ::cfa::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
@@ -498,49 +500,49 @@ int main(int argc, char** argv)
     
     // DEBUG
     //
-
-//    vector<double> scales;
-//    scales.push_back(0);
-//    scales.push_back(1);
-//    scales.push_back(10);
-//    scales.push_back(100);
-//    scales.push_back(1000);
-//    scales.push_back(5000);
-//    
-//    CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>( dimensions, dimension_variables );
-//
-//    vector<double>::const_iterator si;
-//    for ( si=scales.begin(); si!=scales.end(); si++ )
-//    {
-//        double t = *si;
-//        
-//        // Feature Space
-//        FeatureSpace<double> *sfs = new FeatureSpace<double>( filename, cs, variables, cluster_resolution, thresholds, t, show_progress );
-//        
-//        delete sfs;
-//    }
-//    
-//    delete cs;
+    
+    //    vector<double> scales;
+    //    scales.push_back(0);
+    //    scales.push_back(1);
+    //    scales.push_back(10);
+    //    scales.push_back(100);
+    //    scales.push_back(1000);
+    //    scales.push_back(5000);
+    //
+    //    CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>( dimensions, dimension_variables );
+    //
+    //    vector<double>::const_iterator si;
+    //    for ( si=scales.begin(); si!=scales.end(); si++ )
+    //    {
+    //        double t = *si;
+    //
+    //        // Feature Space
+    //        FeatureSpace<double> *sfs = new FeatureSpace<double>( filename, cs, variables, cluster_resolution, thresholds, t, show_progress );
+    //
+    //        delete sfs;
+    //    }
+    //
+    //    delete cs;
     
     //
     // DEBUG
     
-//    // DEBUG
-//    //
-//    
-//#include <cf-algorithms/utils/console_utils.h>
-//    
-//    Meanshift::utils::ConsoleSpinner spinner;
-//    
-//    spinner.start();
-//    
-//    sleep( 10000 );
-//    
-//    spinner.stop();
-//
-//    //
-//    // DEBUG
-
+    //    // DEBUG
+    //    //
+    //
+    //#include <cf-algorithms/utils/console_utils.h>
+    //
+    //    Meanshift::utils::ConsoleSpinner spinner;
+    //
+    //    spinner.start();
+    //
+    //    sleep( 10000 );
+    //
+    //    spinner.stop();
+    //
+    //    //
+    //    // DEBUG
+    
     
     
     RangeSearchParams<FS_TYPE> *p = dynamic_cast<RangeSearchParams<FS_TYPE> *>(search_params);
@@ -552,7 +554,7 @@ int main(int argc, char** argv)
         cout << "\tinput file = " << filename << endl;
         
         cout << "\tdimensions = " << vm["dimensions"].as<string>() << endl;
-         
+        
         cout << "\tvariables = " << vm["variables"].as<string>() << endl;
         
         if ( p != NULL )
@@ -576,10 +578,10 @@ int main(int argc, char** argv)
         if ( scale != NO_SCALE )
         {
             double width = sqrt( ceil( -2.0*scale*log(0.01) ) ) / 2;
-
+            
             cout << "\tpre-smoothing data with scale parameter " << scale << " ( kernel width = " << width << " )" << endl;
         }
-            
+        
         if ( thresholds != FeatureSpace<FS_TYPE>::NO_THRESHOLDS )
         {
             cout << "\tusing thresholds " << vm["thresholds"].as<string>() << endl;
@@ -602,33 +604,33 @@ int main(int argc, char** argv)
     // VISUALIZAION
     //
     
-//    vector<double> scales;
-//    scales.push_back(0);
-//    scales.push_back(2);
-//    scales.push_back(4);
-//    scales.push_back(8);
-//    scales.push_back(16);
-//    scales.push_back(32);
-//    scales.push_back(64);
-//    scales.push_back(128);
-//    scales.push_back(256);
-//    scales.push_back(512);
-//    
-//    cout << "Running analysis on scales " << scales << endl;
-//    
-//    for ( size_t i=0; i<scales.size(); i++)
-//    {
-//        cout << endl << "== SCALE " << scales[i] << " ==" << endl;
-//        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, cluster_resolution, thresholds, scales[i], show_progress );
-//        FeatureSpaceIndex<FS_TYPE> *index = FeatureSpaceIndex<FS_TYPE>::create( fs );
-//        ClusterOperation<FS_TYPE> cop( fs, index );
-//        ClusterOperation<FS_TYPE>::reset_pass_counter();
-//        ClusterList<FS_TYPE> clusters = cop.cluster( search_params, cluster_resolution, kernel, weight_index, termcrit_epsilon, termcrit_iter, show_progress );
-//    }
+    //    vector<double> scales;
+    //    scales.push_back(0);
+    //    scales.push_back(2);
+    //    scales.push_back(4);
+    //    scales.push_back(8);
+    //    scales.push_back(16);
+    //    scales.push_back(32);
+    //    scales.push_back(64);
+    //    scales.push_back(128);
+    //    scales.push_back(256);
+    //    scales.push_back(512);
+    //
+    //    cout << "Running analysis on scales " << scales << endl;
+    //
+    //    for ( size_t i=0; i<scales.size(); i++)
+    //    {
+    //        cout << endl << "== SCALE " << scales[i] << " ==" << endl;
+    //        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, cluster_resolution, thresholds, scales[i], show_progress );
+    //        FeatureSpaceIndex<FS_TYPE> *index = FeatureSpaceIndex<FS_TYPE>::create( fs );
+    //        ClusterOperation<FS_TYPE> cop( fs, index );
+    //        ClusterOperation<FS_TYPE>::reset_pass_counter();
+    //        ClusterList<FS_TYPE> clusters = cop.cluster( search_params, cluster_resolution, kernel, weight_index, termcrit_epsilon, termcrit_iter, show_progress );
+    //    }
     
     //
     // VISUALIZATION
-
+    
     
     
     // Feature Space
@@ -636,12 +638,12 @@ int main(int argc, char** argv)
     start_timer();
     
     FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, thresholds, show_progress );
-
+    
     // Scale-Space smoothing
-
+    
     if (scale != NO_SCALE) {
     	ScaleSpaceFilter<FS_TYPE> sf(scale,show_progress);
-
+        
     	sf.apply(fs);
     }
     
@@ -656,7 +658,7 @@ int main(int argc, char** argv)
     sample_point[1] = -4383.64453125;
     fs->weight_sample_points.push_back(sample_point);
 #endif
-
+    
     FeatureSpaceIndex<FS_TYPE> *index = FeatureSpaceIndex<FS_TYPE>::create( fs );
     
     //
@@ -670,12 +672,12 @@ int main(int argc, char** argv)
     // Sanity check
     
     clusters.sanity_check( fs );
-
+    
     if ( verbosity == VerbosityAll )
     {
         clusters.print();
     }
-
+    
     // Axe weenies
     
     clusters.apply_size_threshold( min_cluster_size );
@@ -685,13 +687,13 @@ int main(int argc, char** argv)
     if ( verbosity > VerbositySilent )
     {
         cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
-
+        
         clusters.print();
     }
-
+    
     
     // Write out the cluster list
-
+    
     if ( write_vtk )
     {
         boost::filesystem::path path(filename);
@@ -719,3 +721,7 @@ int main(int argc, char** argv)
     
     return 0;
 };
+
+
+
+

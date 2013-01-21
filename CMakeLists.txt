@@ -210,6 +210,9 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/detection/cluster_op.h
     include/meanie3D/detection/cluster_op_impl.h
     include/meanie3D/detection/cluster_task.h
+    include/meanie3D/tracking.h
+    include/meanie3D/tracking/tracking.h
+    include/meanie3D/tracking/tracking_impl.h
     include/meanie3D/utils.h
     include/meanie3D/utils/visit.h
     include/meanie3D/implementations.h
@@ -221,9 +224,9 @@ TARGET_LINK_LIBRARIES(meanie3D
     ${NETCDF_LIBRARIES}
 )
 
-# Executables
 
-# clustering tool
+# detection tool
+
 ADD_EXECUTABLE(meanie3D-detect
     cf-algorithms
     numericalrecipes
@@ -234,13 +237,38 @@ IF(WITH_TBB)
     TARGET_LINK_LIBRARIES(meanie3D-detect
         meanie3D
     	cf-algorithms
-        numericalrecipes
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
 	${TBB_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3D-detect
+        meanie3D
+    	cf-algorithms
+        ${NETCDF_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${HDF5_LIBRARIES})
+ENDIF()
+
+# tracking tool
+
+ADD_EXECUTABLE(meanie3D-track
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-track.cpp
+)
+
+IF(WITH_TBB)
+    TARGET_LINK_LIBRARIES(meanie3D-track
+        meanie3D
+    	cf-algorithms
+        numericalrecipes
+        ${NETCDF_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${HDF5_LIBRARIES}
+	${TBB_LIBRARIES})
+ELSE()
+    TARGET_LINK_LIBRARIES(meanie3D-track
         meanie3D
     	cf-algorithms
         numericalrecipes

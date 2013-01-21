@@ -267,10 +267,10 @@ namespace m3D {
         
         /** Static method for reading cluster lists back in.
          * @param path      : path to the cluster file
-         * @param list      : contains the clusters when done
-         * @param source    : contains the source file attribute's value
-         * @param parameters: contains the run's parameter list
-         * @param var_names : contains the list of variables used
+         * @param list      : contains the clusters after reading
+         * @param source    : contains the source file attribute's value after reading
+         * @param parameters: contains the run's parameter list after reading
+         * @param var_names : contains the list of variables used after reading
          */
         static
         void

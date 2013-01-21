@@ -445,11 +445,11 @@ namespace m3D {
             
             // Create a cluster object
             
-            Cluster<T> cluster( mode );
+            typename Cluster<T>::ptr cluster = new Cluster<T>( mode );
             
             // Assign ID
             
-            var.getAtt("id").getValues( cluster.id );
+            var.getAtt("id").getValues( &(cluster->id) );
             
             // iterate over the data
 
@@ -475,7 +475,7 @@ namespace m3D {
                     }
                 }
                 
-                cluster.points.push_back( p );
+                cluster->points.push_back( p );
             }
             
             list.clusters.push_back( cluster );

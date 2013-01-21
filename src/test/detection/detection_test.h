@@ -6,7 +6,7 @@
 //  cf-algorithms
 //
 //  Created by Jürgen Lorenz Simon on 5/3/12.
-//  Copyright (c) 2012 __MyCompanyName__. All rights reserved.
+//  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
 #include <gtest/gtest.h>
