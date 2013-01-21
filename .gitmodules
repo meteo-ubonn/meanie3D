@@ -1,6 +1,1 @@
-[submodule "numericalrecipes"]
-	path = numericalrecipes
-	url = ./numericalrecipes
-[submodule "cf-algorithms"]
-	path = cf-algorithms
-	url = ./cf-algorithms
+
