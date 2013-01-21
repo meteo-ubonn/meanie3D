@@ -5,7 +5,7 @@
 #include <meanie3D/namespaces.h>
 
 #include <stdlib.h>
-#include <cf-algorithms.h>
+#include <cf-algorithms/cf-algorithms.h>
 
 namespace m3D {
 

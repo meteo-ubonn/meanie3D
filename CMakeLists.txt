@@ -137,11 +137,12 @@ IF (WITH_TBB)
    ENDIF(NOT TBB_FOUND)
 ENDIF(WITH_TBB)
 
-# cf-algorithms
-FIND_PACKAGE(CFA)
-IF (NOT CFA_FOUND)
-   MESSAGE(FATAL_ERROR "cf-algorithms not found INCLUDE_DIR=${CFA_INCLUDE_DIR} LIBRARIES=${CFA_LIBRARIES}")
-ENDIF()
+# ------------------------------------- 
+# Submodules
+# -------------------------------------
+
+ADD_SUBDIRECTORY(cf-algorithms)
+ADD_SUBDIRECTORY(numericalrecipes)
 
 # ------------------------------------- 
 # Paths and Build Configuration
@@ -152,16 +153,16 @@ IF(WITH_TBB)
 		${PROJECT_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
-		${CFA_INCLUDE_DIR}
-		${RADOLAN_INCLUDE_DIR}
+		${CF-ALGORITHMS_INCLUDE_DIRS}
+		${NUMERICALRECIPES_INCLUDE_DIRS}
 		${TBB_INCLUDE_DIRS})
 ELSE()
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
-		${CFA_INCLUDE_DIR}
-		${RADOLAN_INCLUDE_DIR})
+		${NUMERICALRECIPES_INCLUDE_DIRS}
+		${CF-ALGORITHMS_INCLUDE_DIRS})
 ENDIF()
 
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
@@ -201,42 +202,48 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/filters/scalespace_filter_impl.h
     include/meanie3D/filters/threshold_filter.h
     include/meanie3D/filters/threshold_filter_impl.h
-	include/meanie3D/detection.h
+    include/meanie3D/detection.h
     include/meanie3D/detection/cluster_op.h
     include/meanie3D/detection/cluster_op_impl.h
     include/meanie3D/detection/cluster_task.h
     include/meanie3D/utils.h
     include/meanie3D/utils/visit.h
-	include/meanie3D/implementations.h
+    include/meanie3D/implementations.h
 )
 
 TARGET_LINK_LIBRARIES(meanie3D
-   ${NETCDF_LIBRARIES}
-   ${CFA_LIBRARIES}
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${CFA_LIBRARIES}
 )
 
 # Executables
 
 # clustering tool
 ADD_EXECUTABLE(meanie3D-detect
+    cf-algorithms
+    numericalrecipes
     src/meanie3D-detect.cpp
 )
 
 IF(WITH_TBB)
     TARGET_LINK_LIBRARIES(meanie3D-detect
         meanie3D
+    	cf-algorithms
+        numericalrecipes
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
-        ${CFA_LIBRARIES}
-		${TBB_LIBRARIES})
+	${TBB_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3D-detect
         meanie3D
+    	cf-algorithms
+        numericalrecipes
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES}
-		${CFA_LIBRARIES})
+        ${HDF5_LIBRARIES})
 ENDIF()
 
 # Unit Tests
@@ -245,7 +252,7 @@ ENDIF()
 
 ADD_EXECUTABLE(meanie3d-detection-test
 #	src/test/gaussian_cloud.cpp
-	src/test/detection/detection_test.h
+    src/test/detection/detection_test.h
     src/test/detection/settings.h
     src/test/detection/settings.cpp
     src/test/detection/testcase_base.h
@@ -259,21 +266,24 @@ ADD_EXECUTABLE(meanie3d-detection-test
 IF(WITH_TBB)
     TARGET_LINK_LIBRARIES(meanie3d-detection-test
         meanie3D
+    	cf-algorithms
+        numericalrecipes
         ${Boost_LIBRARIES}
         ${NETCDF_LIBRARIES}
         ${HDF5_LIBRARIES}
         ${GTEST_LIBRARIES}
-		${CFA_LIBRARIES}
+	${CFA_LIBRARIES}
         ${TBB_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3d-detection-test
-	    meanie3D
-	    ${Boost_LIBRARIES}
-	    ${NETCDF_LIBRARIES}
-	    ${HDF5_LIBRARIES}
-	    ${GTEST_LIBRARIES}
-		${CFA_LIBRARIES}
-	    ${TBB_LIBRARIES})
+        meanie3D
+    	cf-algorithms
+        numericalrecipes
+	${Boost_LIBRARIES}
+	${NETCDF_LIBRARIES}
+	${HDF5_LIBRARIES}
+	${GTEST_LIBRARIES}
+	${TBB_LIBRARIES})
 ENDIF()
 
 SET_TARGET_PROPERTIES(meanie3D PROPERTIES LINKER_LANGUAGE CXX)
