@@ -30,15 +30,15 @@ namespace m3D {
         
         vector<size_t>   m_bins;
         
-        /** Default @constructor is private
-         */
-    	Histogram() {};
-        
     public:
         
 #pragma mark -
 #pragma mark Constructor/Destructor
         
+        /** Default @constructor is private
+         */
+    	Histogram() {};
+
         /** @constructor
          * @param number of bins
          */
@@ -51,7 +51,7 @@ namespace m3D {
 
         /** Copy constructor
          */
-        Histogram( Histogram<T> &o ) : m_bins(o.bins()) {};
+        Histogram( const Histogram<T> &o ) : m_bins(o.bins()) {};
         
         /** Destructor 
          */
@@ -80,7 +80,7 @@ namespace m3D {
         
         /** Access all bins at once
          */
-        vector<size_t> &bins() { return m_bins; };
+        const vector<size_t> &bins() const { return m_bins; };
         
         /** Access a bin directly
          * @param index
@@ -108,7 +108,7 @@ namespace m3D {
          * @param highest value in the histogram classes
          * @param number of bins (default 10).
          */
-        static Histogram<T> *
+        static Histogram<T>
         create( typename Point<T>::list &points, size_t variable_index, T min, T max, size_t number_of_bins = 10 );
         
     };

@@ -5,6 +5,7 @@
 #include <meanie3D/namespaces.h>
 
 #include <vector>
+#include <netcdf>
 
 #include <cf-algorithms/cf-algorithms.h>
 #include <meanie3D/types/histogram.h>
@@ -14,6 +15,7 @@ namespace m3D {
     // Forward declarations
 
 	using namespace std;
+    using namespace netCDF;
 	using cfa::meanshift::Point;
     
     /** Cluster of points in feature space. A cluster is a point in feature space,
@@ -26,7 +28,9 @@ namespace m3D {
         
     private:
         
-        map< size_t,Histogram<T> >  m_histograms;
+        typedef map< NcVar,Histogram<T> > histogram_map_t;
+        
+        histogram_map_t             m_histograms;
         
     public:
         
@@ -157,8 +161,23 @@ namespace m3D {
          */
         const Histogram<T> &histogram( FeatureSpace<T> *fs, const NcVar &variable, size_t number_of_bins = 10 );
         
-        /** Clears the 
+        /** Clears the histogram caches. Subsequent calls to histogram()
+         * will return freshly calculated histograms
+         */
         void clear_histogram_cache();
+        
+#pragma mark -
+#pragma mark Coverage
+        
+        /** Counts the number of points in cluster b, that are identical to points
+         * in the receiver. Then calculates the percentage of points of in the receiver
+         * that are 'covered' in this fashion. The comparison between points is only
+         * done using the <b>spatial</b> component.
+         *
+         * @param another cluster
+         * @return coverage in percentage
+         */
+        float percent_covered_by( const Cluster<T>& b );
     };
     
 };

@@ -20,17 +20,17 @@ namespace m3D {
 #pragma mark Constructor/Destructor
     
     template <typename T>
-    Cluster<T>::Cluster() : m_histogram(NULL),id(NO_ID)
+    Cluster<T>::Cluster() : id(NO_ID)
     {
     }
     
     template <typename T>
-    Cluster<T>::Cluster( vector<T> mode ) : m_histogram(NULL), mode(mode), id(NO_ID)
+    Cluster<T>::Cluster( vector<T> mode ) : mode(mode), id(NO_ID)
     {
     };
     
     template <typename T>
-    Cluster<T>::Cluster( const Cluster<T> &o ) : m_histogram(NULL)
+    Cluster<T>::Cluster( const Cluster<T> &o )
     {
         id = o.id;
         
@@ -42,12 +42,6 @@ namespace m3D {
     template <typename T>
     Cluster<T>::~Cluster()
     {
-        if (m_histogram)
-        {
-            delete m_histogram;
-            
-            m_histogram = NULL;
-        }
     };
     
 #pragma mark -
@@ -83,9 +77,9 @@ namespace m3D {
         {
             typename Point<T>::ptr p = *li;
             
+#if DEBUG_MEANSHIFT_GRAPH
             M3DPoint<T> *m3p = (M3DPoint<T> *) p;
 
-#if DEBUG_MEANSHIFT_GRAPH
             if ( m3p->cluster )
             {
                 cerr << "Point " << m3p->values << " is already assigned to cluster at " << m3p->cluster->mode << endl;
@@ -166,6 +160,79 @@ namespace m3D {
         return Cluster<T>(o);
     }
     
-}; //namespace
+#pragma mark -
+#pragma mark Histograms
     
+    template <typename T>
+    const Histogram<T> &
+    Cluster<T>::histogram( FeatureSpace<T> *fs, const NcVar &variable, size_t number_of_bins )
+    {
+        typename histogram_map_t::iterator it = this->m_histograms.find(variable);
+        
+        if ( it == this->m_histograms.end() )
+        {
+            // calculate index
+            
+            int value_index = index_of_first( fs->feature_variables(), variable );
+            
+            // this 'should' never happen
+            assert( index >= 0 );
+            
+            T valid_min,valid_max;
+            
+            variable.getAtt("valid_min").getValues( &valid_min );
+            variable.getAtt("valid_max").getValues( &valid_max );
+            
+            Histogram<T> h = Histogram<T>::create( this->points, value_index, valid_min, valid_max, number_of_bins );
+            
+            this->m_histograms.insert( std::pair< NcVar,Histogram<T> >( variable, h ) );
+            
+        }
+        
+        return this->m_histograms[variable];
+    }
+    
+    template <typename T>
+    void
+    Cluster<T>::clear_histogram_cache()
+    {
+        this->m_histograms.clear();
+    }
+
+#pragma mark -
+#pragma mark Coverage
+    
+    template <typename T>
+    float
+    Cluster<T>::percent_covered_by( const Cluster<T>& b )
+    {
+        // TODO: this can be done a lot faster using an index
+        
+        size_t num_common_points = 0;
+        
+        typename Point<T>::iterator a_points;
+        
+        for ( a_points = this->points.begin(); a_points != this->points.end(); a_points++ )
+        {
+            typename Point<T>::ptr pa = *a_points;
+
+            typename Point<T>::iterator b_points;
+
+            for ( b_points = b.points.begin(); b_points != b.points.end(); b_points++ )
+            {
+                typename Point<T>::ptr pb = *b_points;
+                
+                if ( pa->coordinate == pb->coordinate )
+                {
+                    num_common_points++;
+                }
+            }
+        }
+        
+        return ((float)num_common_points) / ((float)this->points.size());
+    }
+    
+    
+}; //namespace
+
 #endif

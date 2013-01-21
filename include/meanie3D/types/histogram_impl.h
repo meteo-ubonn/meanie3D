@@ -50,10 +50,17 @@ namespace m3D {
      * @param number of classes.
      */
     template <typename T>
-    Histogram<T> *
+    Histogram<T> 
     Histogram<T>::create( typename Point<T>::list &points, size_t variable_index, T min, T max, size_t number_of_bins )
     {
-        assert( max > min );
+        if ( max == min )
+        {
+            cerr << "Histogram::create:ERROR:degenerate case, min==max" << endl;
+            
+            vector<size_t> bins(1,points.size());
+            
+            return Histogram<T>(bins);
+        }
         
         typedef pair<T,T> class_t;
         
@@ -106,7 +113,7 @@ namespace m3D {
             }
         }
         
-        Histogram<T> *result = new Histogram<T>( bins );
+        Histogram<T> result( bins );
     
         return result;
     

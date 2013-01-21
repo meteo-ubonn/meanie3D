@@ -224,7 +224,7 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
     using namespace m3D;
 
     GaussianNormal<TypeParam> gauss;
-    TypeParam gauss_zero = gauss( vector<TypeParam>(this->coordinate_system()->size(),0) );
+    // TypeParam gauss_zero = gauss( vector<TypeParam>(this->coordinate_system()->size(),0) );
 
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
     
@@ -288,19 +288,9 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
 
             cout << "\tDynamic range [" << min << "," << max << "]" << endl;
             
-            if ( min == max )
-            {
-                cout << "Can't create a histogram. Min/Max values are equal";
-                
-                continue;
-            }
+            Histogram<TypeParam> h = c->histogram( this->m_featureSpace, this->m_featureSpace->variables()[0] );
             
-            Histogram<TypeParam> *h = Histogram<TypeParam>::create( c->points, 2, min, max, 10 );
-            
-            cout << "\thistogram = " << h->bins() << endl;
-            
-            delete h;
-
+            cout << "\thistogram = " << h.bins() << endl;
         }
         
 #if WRITE_FEATURESPACE
@@ -426,11 +416,9 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
             
             cout << "\tDynamic range [" << min << "," << max << "]" << endl;
 
-            Histogram<TypeParam> *h = Histogram<TypeParam>::create( c->points, 3, min, max, 10 );
+            Histogram<TypeParam> h = c->histogram( this->m_featureSpace, this->m_featureSpace->variables()[0] );
             
-            cout << "\thistogram = " << h->bins() << endl;
-            
-            delete h;
+            cout << "\thistogram = " << h.bins() << endl;
         }
         
 #if WRITE_FEATURESPACE
