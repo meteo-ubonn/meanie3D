@@ -24,6 +24,10 @@ namespace m3D {
     class Cluster
     {
         
+    private:
+        
+        map< size_t,Histogram<T> >  m_histograms;
+        
     public:
         
 #pragma mark -
@@ -138,6 +142,23 @@ namespace m3D {
          * @param cluster
          */
         Cluster<T> operator = (const Cluster<T> &o);
+
+#pragma mark -
+#pragma mark Histogram
+        
+        /** Creates a histogram of the given variable from the points 
+         * in this cluster. The histogram is cached. Subsequent calls
+         * return the cached histogram, unless clear_histogram_cache()
+         * is called first, which will force re-calculation.
+         * @param feature-space
+         * @param variable
+         * @param number of bins in the histogram (default 10)
+         * @return handle on the histogram
+         */
+        const Histogram<T> &histogram( FeatureSpace<T> *fs, const NcVar &variable, size_t number_of_bins = 10 );
+        
+        /** Clears the 
+        void clear_histogram_cache();
     };
     
 };

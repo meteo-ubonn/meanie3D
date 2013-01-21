@@ -20,17 +20,17 @@ namespace m3D {
 #pragma mark Constructor/Destructor
     
     template <typename T>
-    Cluster<T>::Cluster() : id(NO_ID)
+    Cluster<T>::Cluster() : m_histogram(NULL),id(NO_ID)
     {
     }
     
     template <typename T>
-    Cluster<T>::Cluster( vector<T> mode ) : mode(mode), id(NO_ID)
+    Cluster<T>::Cluster( vector<T> mode ) : m_histogram(NULL), mode(mode), id(NO_ID)
     {
     };
     
     template <typename T>
-    Cluster<T>::Cluster( const Cluster<T> &o )
+    Cluster<T>::Cluster( const Cluster<T> &o ) : m_histogram(NULL)
     {
         id = o.id;
         
@@ -42,6 +42,12 @@ namespace m3D {
     template <typename T>
     Cluster<T>::~Cluster()
     {
+        if (m_histogram)
+        {
+            delete m_histogram;
+            
+            m_histogram = NULL;
+        }
     };
     
 #pragma mark -
