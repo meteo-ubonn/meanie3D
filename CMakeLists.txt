@@ -148,21 +148,25 @@ ADD_SUBDIRECTORY(numericalrecipes)
 # Paths and Build Configuration
 # -------------------------------------
 
+MESSAGE(INFO "cf-algorithms_SOURCE_DIR=${cf-algorithms_SOURCE_DIR}")
+
 IF(WITH_TBB)
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/include
+		${cf-algorithms_SOURCE_DIR}/include
+		${cf-algorithms_SOURCE_DIR}/radolan/include
+		${numericalrecipes_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
-		${CF-ALGORITHMS_INCLUDE_DIRS}
-		${NUMERICALRECIPES_INCLUDE_DIRS}
 		${TBB_INCLUDE_DIRS})
 ELSE()
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/include
+		${cf-algorithms_SOURCE_DIR}/include
+		${cf-algorithms_SOURCE_DIR}/radolan/include
+		${numericalrecipes_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
-		${HDF5_INCLUDE_DIR}
-		${NUMERICALRECIPES_INCLUDE_DIRS}
-		${CF-ALGORITHMS_INCLUDE_DIRS})
+		${HDF5_INCLUDE_DIR})
 ENDIF()
 
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
@@ -215,7 +219,6 @@ TARGET_LINK_LIBRARIES(meanie3D
     cf-algorithms
     numericalrecipes
     ${NETCDF_LIBRARIES}
-    ${CFA_LIBRARIES}
 )
 
 # Executables
