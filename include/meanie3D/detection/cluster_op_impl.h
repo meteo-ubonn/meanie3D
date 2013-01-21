@@ -105,6 +105,15 @@ namespace m3D {
 
         ClusterList<T> cluster_list;
         
+        // Guard against empty feature-space
+        
+        if ( this->feature_space->points.size() == 0 )
+        {
+            cerr << "FeatureSpace is empty" << endl;
+            
+            return cluster_list;
+        }
+        
 #if WITH_BOOST_THREADS
         
         // TODO: find some dynamic way to this number

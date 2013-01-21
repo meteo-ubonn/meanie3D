@@ -222,7 +222,10 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
     using namespace cfa::utils::timer;
     using namespace cfa::meanshift;
     using namespace m3D;
-    
+
+    GaussianNormal<TypeParam> gauss;
+    TypeParam gauss_zero = gauss( vector<TypeParam>(this->coordinate_system()->size(),0) );
+
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
     
     for ( size_t i = 0; i < this->m_bandwidths.size(); i++ )
@@ -278,6 +281,26 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
             Cluster<TypeParam> *c = *ci;
             
             cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            
+            TypeParam min, max;
+            
+            c->dynamic_range(0,min,max);
+
+            cout << "\tDynamic range [" << min << "," << max << "]" << endl;
+            
+            if ( min == max )
+            {
+                cout << "Can't create a histogram. Min/Max values are equal";
+                
+                continue;
+            }
+            
+            Histogram<TypeParam> *h = Histogram<TypeParam>::create( c->points, 2, min, max, 10 );
+            
+            cout << "\thistogram = " << h->bins() << endl;
+            
+            delete h;
+
         }
         
 #if WRITE_FEATURESPACE
@@ -396,6 +419,18 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
             Cluster<TypeParam> *c = *ci;
             
             cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            
+            TypeParam min, max;
+            
+            c->dynamic_range(0,min,max);
+            
+            cout << "\tDynamic range [" << min << "," << max << "]" << endl;
+
+            Histogram<TypeParam> *h = Histogram<TypeParam>::create( c->points, 3, min, max, 10 );
+            
+            cout << "\thistogram = " << h->bins() << endl;
+            
+            delete h;
         }
         
 #if WRITE_FEATURESPACE

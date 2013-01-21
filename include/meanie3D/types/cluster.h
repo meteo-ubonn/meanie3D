@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <cf-algorithms/cf-algorithms.h>
+#include <meanie3D/types/histogram.h>
 
 namespace m3D {
     

@@ -7,16 +7,15 @@
 #include <vector>
 
 #include <cf-algorithms/featurespace/point.h>
-#include <meanie3D/types/cluster.h>
 
 namespace m3D {
 
 	using cfa::meanshift::Point;
 
-//	// Forward Declaration
-//
-//	template <typename T>
-//	class Cluster;
+	// Forward Declaration
+
+	template <typename T>
+	class Cluster;
 
 	/** This represents one point f in feature space F.
      */

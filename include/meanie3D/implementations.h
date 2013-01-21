@@ -8,6 +8,7 @@
 #include <meanie3D/types/cluster_impl.h>
 #include <meanie3D/types/cluster_list_impl.h>
 #include <meanie3D/types/point_impl.h>
+#include <meanie3D/types/histogram_impl.h>
 #include <meanie3D/utils/visit_impl.h>
 
 #endif
