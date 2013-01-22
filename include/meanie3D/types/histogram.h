@@ -18,19 +18,13 @@ namespace m3D {
     template <class T> 
     struct Histogram
     {
-    public:
-
-        /** Different ways of comparing histograms 
-         */
-        typedef enum {
-            HistogramCorrelationSpearman
-        } HistogramCorrelation;
-        
     private:
         
         vector<size_t>   m_bins;
         
     public:
+        
+        typedef Histogram<T>* ptr;
         
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -55,7 +49,9 @@ namespace m3D {
         
         /** Destructor 
          */
-        ~Histogram() {};
+        ~Histogram() {
+            cout << "~Histogram()" << endl;
+        };
         
 #pragma mark -
 #pragma mark Operators
@@ -76,7 +72,7 @@ namespace m3D {
         /** Get the number of bins
          * @return size
          */
-        const size_t size() { return this->m_bins.size(); };
+        const size_t size() const { return this->m_bins.size(); };
         
         /** Access all bins at once
          */
@@ -87,15 +83,15 @@ namespace m3D {
          */
         T& operator [] (const size_t index) { return this->m_bins[index]; }
         
-#pragma mark -
-#pragma mark Comparisons
-        
-        /** Correlates this histogram with another. 
-         * @param histogram
-         * @param correlation method
-         * @return correlation factor [0..1].
+        /** Allocates an int array and fills it with the bins. 
+         * @return int array of size this->size()
          */
-        T correlate( const Histogram<T> &other, HistogramCorrelation method = HistogramCorrelationSpearman );
+        int* bins_as_int_array() const;
+        
+        /** Allocates a float array and fills it with the bins.
+         * @return float array of size this->size()
+         */
+        float* bins_as_float_array() const;
         
 #pragma mark -
 #pragma mark Factory Methods
@@ -108,8 +104,25 @@ namespace m3D {
          * @param highest value in the histogram classes
          * @param number of bins (default 10).
          */
-        static Histogram<T>
+        static typename Histogram<T>::ptr
         create( typename Point<T>::list &points, size_t variable_index, T min, T max, size_t number_of_bins = 10 );
+        
+#pragma mark -
+#pragma mark Histogram Correlation
+
+        /** Spearman histogram corellation with another histogram
+         * (see numerical recipes 2nd edition)
+         * @param other histogram
+         * @return rho [-1.0 .. 1.0]
+         */
+        T correlate_spearman( const typename Histogram<T>::ptr o );
+
+        /** Kendall histogram corellation with another histogram
+         * (see numerical recipes 2nd edition)
+         * @param other histogram
+         * @return tau [-1.0 .. 1.0]
+         */
+        T correlate_kendall( const typename Histogram<T>::ptr o );
         
     };
 };

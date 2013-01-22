@@ -3,8 +3,11 @@
 
 #include <algorithm>
 #include <sstream>
-#include <netcdf.h>
+#include <netcdf>
+
 #include <boost/tokenizer.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <stdlib.h>
 
 namespace m3D {
@@ -264,28 +267,39 @@ namespace m3D {
             
             stringstream variable_names(stringstream::in | stringstream::out);
             
-            // dim variables
+            // feature variables
             
-            for ( size_t i=0; i < feature_space->coordinate_system->size(); i++ )
+            for ( size_t i=0; i < feature_space->feature_variables().size(); i++ )
             {
-                NcDim cs_dim = feature_space->coordinate_system->dimensions()[i];
+                NcVar var = feature_space->feature_variables()[i];
+
+                // append to list
                 
-                NcVar cs_dim_var = feature_space->coordinate_system->dimension_variable( cs_dim );
+                variable_names << var.getName() << " ";
                 
-                variable_names << cs_dim_var.getName() << " ";
-            }
-            
-            // other variables
-            
-            for ( size_t i=0; i < feature_space->variables().size(); i++ )
-            {
-                NcVar fs_var = feature_space->variables()[i];
+                // create a dummy variable
                 
-                variable_names << fs_var.getName();
+                NcVar dummyVar = file->addVar( var.getName(), var.getType(), spatial_dim );
                 
-                if ( i <= (feature_space->variables().size() - 2) )
+                // Copy attributes
+                
+                map< string, NcVarAtt > attributes = var.getAtts();
+                
+                map< string, NcVarAtt >::iterator at;
+                
+                for ( at = attributes.begin(); at != attributes.end(); at++ )
                 {
-                    variable_names << " ";
+                    NcVarAtt a = at->second;
+                    
+                    size_t size = a.getAttLength();
+                    
+                    void *data = (void *)malloc( size );
+                    
+                    a.getValues( data );
+                    
+                    NcVarAtt copy = dummyVar.putAtt( a.getName(), a.getType(), size, data );
+                    
+                    free(data);
                 }
             }
             
@@ -363,8 +377,6 @@ namespace m3D {
                 
                 var.putVar( &data[0][0] );
             }
-            
-            delete file;
         }
         catch (const std::exception &e)
         {
@@ -374,13 +386,22 @@ namespace m3D {
 
     template <typename T> 
     void
-    ClusterList<T>::read( const std::string& path, ClusterList<T> &list, std::string& source, std::string &parameters, std::string &variable_names )
+    ClusterList<T>::read(const std::string& path,
+                         NcFile **the_file,
+                         ClusterList<T> &list,
+                         vector<NcVar> &feature_variables,
+                         size_t &spatial_dimensions,
+                         std::string& source,
+                         std::string &parameters,
+                         std::string &variable_names )
     {
         NcFile *file = NULL;
         
         try
         {
             file = new NcFile( path, NcFile::read );
+            
+            *the_file = file;
         }
         catch ( const netCDF::exceptions::NcException &e )
         {
@@ -390,98 +411,119 @@ namespace m3D {
         
         // Read the dimensions
         
-        NcDim fs_dim = file->getDim( "featurespace_dim" );
         
-        NcDim spatial_dim = file->getDim( "spatial_dim" );
-        
-        // Read global attributes
-        
-        file->getAtt("source").getValues( source );
-        file->getAtt("parameters").getValues( parameters );
-        file->getAtt("variables").getValues( variable_names );
-        
-        size_t number_of_clusters;
-        file->getAtt("num_clusters").getValues( &number_of_clusters );
-        
-        // Read clusters one by one
-        
-        for ( size_t i = 0; i < number_of_clusters; i++ )
+        try
         {
-            // cluster dimension
+            NcDim fs_dim = file->getDim( "featurespace_dim" );
+        
+            NcDim spatial_dim = file->getDim( "spatial_dim" );
+            spatial_dimensions = spatial_dim.getSize();
             
-            stringstream dim_name(stringstream::in | stringstream::out);
+            // Read global attributes
             
-            dim_name << "cluster_dim_" << i;
+            file->getAtt("source").getValues( source );
+            file->getAtt("parameters").getValues( parameters );
+            file->getAtt("variables").getValues( variable_names );
             
-            NcDim cluster_dim = file->getDim( dim_name.str().c_str() );
+            int number_of_clusters;
+            file->getAtt("num_clusters").getValues( &number_of_clusters );
             
-            // Read the variable
+            // Read the feature-variables
             
-            stringstream var_name(stringstream::in | stringstream::out);
+            multimap<string,NcVar> vars = file->getVars();
             
-            var_name << "cluster_" << i;
+            typename multimap<string,NcVar>::iterator vi;
             
-            NcVar var = file->getVar( var_name.str().c_str() );
-            
-            // Decode mode
-            
-            typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-            
-            boost::char_separator<char> sep(" ");
-            
-            std::string mode_str;
-            var.getAtt("mode").getValues( mode_str );
-            
-            tokenizer tokens( mode_str, sep );
-            
-            vector<T> mode;
-            
-            for ( tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter )
+            for ( vi = vars.begin(); vi != vars.end(); vi++ )
             {
-            	string token = *tok_iter;
-
-                mode.push_back( (T)atof( token.c_str() ) );
+                if (! boost::starts_with( vi->first, "cluster_"))
+                {
+                    feature_variables.push_back( vi->second );
+                }
             }
             
-            // Create a cluster object
+            // Read clusters one by one
             
-            typename Cluster<T>::ptr cluster = new Cluster<T>( mode );
-            
-            // Assign ID
-            
-            var.getAtt("id").getValues( &(cluster->id) );
-            
-            // iterate over the data
-
-            T data[ cluster_dim.getSize() ][ fs_dim.getSize() ];
-            
-            var.getVar( &data[0][0] );
-
-            for ( size_t point_index = 0; point_index < cluster_dim.getSize(); point_index++ )
+            for ( size_t i = 0; i < number_of_clusters; i++ )
             {
-                Point<T> *p = new Point<T>();
+                // cluster dimension
                 
-                p->values = vector<T>( fs_dim.getSize() );
+                stringstream dim_name(stringstream::in | stringstream::out);
                 
-                p->coordinate = vector<T>( spatial_dim.getSize() );
+                dim_name << "cluster_dim_" << i;
                 
-                for ( size_t i = 0; i < fs_dim.getSize(); i++ )
+                NcDim cluster_dim = file->getDim( dim_name.str().c_str() );
+                
+                // Read the variable
+                
+                stringstream var_name(stringstream::in | stringstream::out);
+                
+                var_name << "cluster_" << i;
+                
+                NcVar var = file->getVar( var_name.str().c_str() );
+                
+                // Decode mode
+                
+                typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+                
+                boost::char_separator<char> sep(" ");
+                
+                std::string mode_str;
+                var.getAtt("mode").getValues( mode_str );
+                
+                tokenizer tokens( mode_str, sep );
+                
+                vector<T> mode;
+                
+                for ( tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter )
                 {
-                    p->values[i] = data[point_index][i];
-                    
-                    if ( i < spatial_dim.getSize() )
-                    {
-                        p->coordinate[i] = data[point_index][i];
-                    }
+                    string token = *tok_iter;
+
+                    mode.push_back( (T)atof( token.c_str() ) );
                 }
                 
-                cluster->points.push_back( p );
+                // Create a cluster object
+                
+                typename Cluster<T>::ptr cluster = new Cluster<T>( mode );
+                
+                // Assign ID
+                
+                var.getAtt("id").getValues( &(cluster->id) );
+                
+                // iterate over the data
+
+                T data[ cluster_dim.getSize() ][ fs_dim.getSize() ];
+                
+                var.getVar( &data[0][0] );
+
+                for ( size_t point_index = 0; point_index < cluster_dim.getSize(); point_index++ )
+                {
+                    Point<T> *p = new Point<T>();
+                    
+                    p->values = vector<T>( fs_dim.getSize() );
+                    
+                    p->coordinate = vector<T>( spatial_dim.getSize() );
+                    
+                    for ( size_t i = 0; i < fs_dim.getSize(); i++ )
+                    {
+                        p->values[i] = data[point_index][i];
+                        
+                        if ( i < spatial_dim.getSize() )
+                        {
+                            p->coordinate[i] = data[point_index][i];
+                        }
+                    }
+                    
+                    cluster->points.push_back( p );
+                }
+                
+                list.clusters.push_back( cluster );
             }
-            
-            list.clusters.push_back( cluster );
         }
-        
-        delete file;
+        catch (const std::exception &e)
+        {
+            cerr << e.what() << endl;
+        }
     }
     
     template <typename T>

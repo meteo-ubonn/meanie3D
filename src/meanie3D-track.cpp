@@ -35,19 +35,12 @@ using namespace m3D;
 /** Feature-space data type */
 typedef double FS_TYPE;
 
-/** Verbosity */
-typedef enum {
-    VerbositySilent = 0,
-    VerbosityNormal = 1,
-    VerbosityDetails = 2,
-    VerbosityAll = 3
-} Verbosity;
-
 static const double NO_SCALE = numeric_limits<double>::min();
 
 void parse_commmandline(program_options::variables_map vm,
                         string &previous_filename,
                         string &current_filename,
+                        string &tracking_variable_name,
                         Verbosity &verbosity)
 {
     if ( vm.count("previous") == 0 )
@@ -86,6 +79,11 @@ void parse_commmandline(program_options::variables_map vm,
         
         exit(-1);
     }
+    
+    if ( vm.count("tracking-variable") > 0 )
+    {
+        tracking_variable_name = vm["tracking-variable"].as<string>();
+    }
 }
 
 /**
@@ -105,6 +103,7 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("previous,p", program_options::value<string>(), "Previous cluster file (netCDF)")
     ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
+    ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Defaults to the first variable that is not a dimension variable.")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ;
     
@@ -130,13 +129,13 @@ int main(int argc, char** argv)
     
     // Evaluate user input
     
-    string previous_filename, current_filename;
+    string previous_filename, current_filename, tracking_variable_name;
     
     Verbosity verbosity;
     
     try
     {
-        parse_commmandline(vm,previous_filename,current_filename,verbosity);
+        parse_commmandline(vm,previous_filename,current_filename,tracking_variable_name,verbosity);
     }
     catch (const std::exception &e)
     {
@@ -152,7 +151,20 @@ int main(int argc, char** argv)
     
     string prev_source, prev_parameters, prev_variable_names;
     
-    ClusterList<FS_TYPE>::read( previous_filename, prev_clusters, prev_source, prev_parameters, prev_variable_names );
+    vector<NcVar> previous_feature_variables, current_feature_variables;
+    
+    size_t prev_spatial_dims=0, curr_spatial_dims=0;
+    
+    NcFile *prev_file = NULL, *curr_file = NULL;
+    
+    ClusterList<FS_TYPE>::read(previous_filename,
+                               &prev_file,
+                               prev_clusters,
+                               previous_feature_variables,
+                               prev_spatial_dims,
+                               prev_source,
+                               prev_parameters,
+                               prev_variable_names );
     
     // Read current clusters
     
@@ -160,13 +172,72 @@ int main(int argc, char** argv)
     
     string curr_source, curr_parameters, curr_variable_names;
     
-    ClusterList<FS_TYPE>::read( current_filename, curr_clusters, curr_source, curr_parameters, curr_variable_names );
+    ClusterList<FS_TYPE>::read(current_filename,
+                               &curr_file,
+                               curr_clusters,
+                               current_feature_variables,
+                               curr_spatial_dims,
+                               curr_source,
+                               curr_parameters,
+                               curr_variable_names );
+    
+    // Check if the feature variables match
+    
+    if ( previous_feature_variables != current_feature_variables )
+    {
+        cerr << "Incompatibe feature variables in the cluster files:" << endl;
+        exit(-1);
+    }
+    
+    // get the tracking variable
+    
+    NcVar tracking_var;
+    
+    if ( tracking_variable_name == "__default__" )
+    {
+        tracking_var = current_feature_variables[curr_spatial_dims];
+    }
+    else
+    {
+        bool found_tracking_var = false;
+        
+        for ( size_t i = 0; i < current_feature_variables.size(); i++ )
+        {
+            NcVar v = current_feature_variables[i];
+            
+            try {
+                if ( v.getName() == tracking_variable_name )
+                {
+                    found_tracking_var = true;
+                    
+                    tracking_var = v;
+                }
+            }
+            catch (const std::exception &e)
+            {
+                cerr << e.what() << endl;
+                
+                exit(-1);
+            }
+        }
+        
+        if ( !found_tracking_var)
+        {
+            cerr << "Tracking variable " << tracking_var.getName() << " is not part of the feature variables" << endl;
+
+            exit(-1);
+        }
+    }
     
     // Perform tracking
     
     Tracking<FS_TYPE> tracking;
 
-    tracking.track( prev_clusters, curr_clusters );
+    tracking.track( prev_clusters, curr_clusters, current_feature_variables, tracking_var , verbosity );
+    
+    delete prev_file;
+    
+    delete curr_file;
     
     return 0;
 };

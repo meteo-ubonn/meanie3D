@@ -28,7 +28,7 @@ namespace m3D {
         
     private:
         
-        typedef map< NcVar,Histogram<T> > histogram_map_t;
+        typedef map< size_t, typename Histogram<T>::ptr > histogram_map_t;
         
         histogram_map_t             m_histograms;
         
@@ -154,12 +154,16 @@ namespace m3D {
          * in this cluster. The histogram is cached. Subsequent calls
          * return the cached histogram, unless clear_histogram_cache()
          * is called first, which will force re-calculation.
-         * @param feature-space
-         * @param variable
-         * @param number of bins in the histogram (default 10)
+         * @param index in point->values to be used
+         * @param bottom boundary of variable's values
+         * @param top boundary of variable's values
+         * @param number of bins in the histogram (default 25)
          * @return handle on the histogram
          */
-        const Histogram<T> &histogram( FeatureSpace<T> *fs, const NcVar &variable, size_t number_of_bins = 10 );
+        const typename Histogram<T>::ptr histogram(size_t variable_index,
+                                                   T valid_min,
+                                                   T valid_max,
+                                                   size_t number_of_bins = 25 );
         
         /** Clears the histogram caches. Subsequent calls to histogram()
          * will return freshly calculated histograms

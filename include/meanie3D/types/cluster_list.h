@@ -23,6 +23,10 @@ namespace m3D {
     /** Cluster of points in feature space. A cluster is a point in feature space,
      * where multiple trajectories of original feature space points end. This end
      * point is called the cluster's 'mode'.
+     *
+     * At the same time, this class represents a serialized form of a list of clusters
+     * to be used in further processing, such as tracking. Serialization/Deserialization
+     * to and from files are done using the read/write methods.
      */
     template <class T>
     class ClusterList
@@ -274,11 +278,14 @@ namespace m3D {
          */
         static
         void
-        read( const string& path,
-        	  ClusterList<T> &list,
-        	  string& source,
-        	  string &parameters,
-        	  string &variable_names );
+        read(const string& path,
+             NcFile **the_file,
+        	 ClusterList<T> &list,
+             vector<NcVar> &feature_variables,
+             size_t &spatial_dimensions,
+             string& source,
+        	 string &parameters,
+        	 string &variable_names );
         
         /** Prints the cluster list out to console
          */

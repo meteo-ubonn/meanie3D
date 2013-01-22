@@ -42,6 +42,7 @@ namespace m3D {
     template <typename T>
     Cluster<T>::~Cluster()
     {
+        this->clear_histogram_cache();
     };
     
 #pragma mark -
@@ -151,51 +152,52 @@ namespace m3D {
     Cluster<T>::operator == (const Cluster<T> &o)
     {
         return o.mode() == mode();
-    }
+    };
     
     template <typename T>
     Cluster<T>
     Cluster<T>::operator = (const Cluster<T> &o)
     {
         return Cluster<T>(o);
-    }
+    };
     
 #pragma mark -
 #pragma mark Histograms
     
     template <typename T>
-    const Histogram<T> &
-    Cluster<T>::histogram( FeatureSpace<T> *fs, const NcVar &variable, size_t number_of_bins )
+    const typename Histogram<T>::ptr
+    Cluster<T>::histogram(size_t variable_index,
+                          T valid_min,
+                          T valid_max,
+                          size_t number_of_bins)
     {
-        typename histogram_map_t::iterator it = this->m_histograms.find(variable);
+        Histogram<T> *h = NULL;
         
-        if ( it == this->m_histograms.end() )
+        try
         {
-            // calculate index
+            h = this->m_histograms.at(variable_index);
+        }
+        catch (const std::exception& e)
+        {
+            h = Histogram<T>::create( this->points, variable_index, valid_min, valid_max, number_of_bins );
             
-            int value_index = index_of_first( fs->feature_variables(), variable );
-            
-            // this 'should' never happen
-            assert( index >= 0 );
-            
-            T valid_min,valid_max;
-            
-            variable.getAtt("valid_min").getValues( &valid_min );
-            variable.getAtt("valid_max").getValues( &valid_max );
-            
-            Histogram<T> h = Histogram<T>::create( this->points, value_index, valid_min, valid_max, number_of_bins );
-            
-            this->m_histograms.insert( std::pair< NcVar,Histogram<T> >( variable, h ) );
-            
+            this->m_histograms.insert( std::pair< size_t, typename Histogram<T>::ptr >( variable_index, h ) );
         }
         
-        return this->m_histograms[variable];
+        return h;
     }
     
     template <typename T>
     void
     Cluster<T>::clear_histogram_cache()
     {
+        typename histogram_map_t::iterator it;
+        
+        for ( it = this->m_histograms.begin(); it != this->m_histograms.end(); ++it )
+        {
+            delete it->second;
+        }
+        
         this->m_histograms.clear();
     }
 

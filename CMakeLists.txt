@@ -197,7 +197,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/types/cluster_list.h
     include/meanie3D/types/cluster_list_impl.h
     include/meanie3D/types/point.h
-    include/meanie3D/types/point_impl.h
+    include/meanie3D/types/point_factory.h
     include/meanie3D/types/histogram.h
     include/meanie3D/types/histogram_impl.h
     include/meanie3D/filters.h
@@ -214,6 +214,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/tracking/tracking.h
     include/meanie3D/tracking/tracking_impl.h
     include/meanie3D/utils.h
+    include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/implementations.h
 )

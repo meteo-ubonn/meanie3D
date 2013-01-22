@@ -37,17 +37,10 @@ using namespace cfa::utils::visit;
 using namespace cfa::utils::vectors;
 using namespace netCDF;
 using namespace m3D::utils::visit;
+using namespace m3D::utils;
 
 /** Feature-space data type */
 typedef double FS_TYPE;
-
-/** Verbosity */
-typedef enum {
-    VerbositySilent = 0,
-    VerbosityNormal = 1,
-    VerbosityDetails = 2,
-    VerbosityAll = 3
-} Verbosity;
 
 static const double NO_SCALE = numeric_limits<double>::min();
 
@@ -322,7 +315,7 @@ void parse_commmandline( program_options::variables_map vm,
     }
     else
     {
-        weight_index = MeanshiftOperation<FS_TYPE>::NO_WEIGHT;
+        weight_index = 0;
     }
     
     // VTK output?
@@ -413,7 +406,7 @@ int main(int argc, char** argv)
     ("cluster-resolution,c",program_options::value<string>(), "When using KNN, specify the resolution of the clusters as comma separated list of (dimensionless) values. Use in the order of (dim1,...dimN,var1,...,varN).")
     ("drf-threshold",program_options::value<double>()->default_value(0.65), "Dynamic range factor threshold for merging clusters. 1 means nothing is merged (=raw clusters). 0 means everything is merged as soon as it touches.")
     ("knn,k", program_options::value<long>(), "Using this parameter means, that you are choosing KNN-Method. The parameter value is the number of nearest neighbours to be used.")
-    ("weight-variable,w", program_options::value<string>(), "variable to be used to weigh meanshift")
+    ("weight-variable,w", program_options::value<string>(), "variable to be used to weight meanshift. If none is given, the first variable is picked.")
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Keep only clusters of this minimum size at each pass")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
@@ -566,9 +559,9 @@ int main(int argc, char** argv)
             KNNSearchParams<FS_TYPE> *knn = dynamic_cast<KNNSearchParams<FS_TYPE> *>(search_params);
             
             cout << "\tknn = " << knn->k << ", resolution = " << knn->resolution << endl;
-        }
         
-        cout << "\tcluster resolution =" << cluster_resolution << endl;
+            cout << "\tcluster resolution =" << cluster_resolution << endl;
+        }
         
         if ( min_cluster_size > 1 )
         {

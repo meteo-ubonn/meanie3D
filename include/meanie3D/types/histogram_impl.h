@@ -4,7 +4,16 @@
 #include <vector>
 #include <utility>
 
+#include <numericalrecipes/nr.h>
+
 #include <cf-algorithms/featurespace/point.h>
+
+extern "C"
+{
+    extern void spear(float data1[],float data2[],unsigned long n, float*d,float*zd, float*probd,float*rs,float*probrs);
+    extern void kendl1(float data1[], float data2[], unsigned long n, float *tau, float *z, float *prob);
+}
+
 
 namespace m3D {
 
@@ -12,30 +21,73 @@ namespace m3D {
     using namespace std;
     
     template <typename T>
-    T correlate_spearman(const vector<T> v1, const vector<T> v2)
+    int *
+    Histogram<T>::bins_as_int_array() const
     {
-        T result = 0.0;
+        int *array = new int( this->size() );
         
-        return result;
-    }
+        for (size_t i=0; i < this->m_bins.size(); i++ )
+        {
+            array[i] = this->m_bins[i];
+        }
+        
+        return array;
+    };
     
+    template <typename T>
+    float *
+    Histogram<T>::bins_as_float_array() const
+    {
+        float *array = (float *) malloc( sizeof(float) * this->m_bins.size() );
+        
+        for (size_t i=0; i < this->m_bins.size(); i++ )
+        {
+            array[i] = (float)this->m_bins[i];
+        }
+        
+        return array;
+    };
+
+    template <typename T>
+    T
+    Histogram<T>::correlate_spearman( const typename Histogram<T>::ptr o )
+    {
+        // Transfer data into correct typed arrays
+        
+        float *h1 = this->bins_as_float_array();
+        
+        float *h2 = o->bins_as_float_array();
+        
+        float d,zd,probd,probrs,rho;
+        
+        spear( h1, h2, this->size(), &d, &zd, &probd, &rho, &probrs );
+        
+#if DEBUG_TRACKING
+        cout << "spearman rank correlation of " << this->bins() << " with " << o->bins();
+        cout << "  =>  rho=" << rho << " d=" << d << " zd=" << zd << " probrs=" << probrs << endl;
+#endif
+        return isnan(rho) ? (T)-1.0 : (T)rho;
+    }
     
     template <typename T>
     T
-    Histogram<T>::correlate( const Histogram<T> &other, HistogramCorrelation method )
+    Histogram<T>::correlate_kendall( const typename Histogram<T>::ptr o )
     {
-        T result = 0;
+        // Transfer data into correct typed arrays
         
-        switch (method)
-        {
-            case HistogramCorrelationSpearman:
-            {
-                result = correlate_spearman( this->values(), other.values() );
-            }
-            break;
-        }
+        float *h1 = this->bins_as_float_array();
         
-        return result;
+        float *h2 = o->bins_as_float_array();
+        
+        float z,prob,tau;
+        
+        kendl1( h1, h2, (int)this->size(), &tau, &z, &prob );
+
+#if DEBUG_TRACKING
+        cout << "kendall  rank correlation of " << this->bins() << " with " << o->bins();
+        cout << "  =>  tau=" << tau << " z=" << z << " prob=" << prob << endl;
+#endif
+        return isnan(tau) ? (T)-1.0 : (T)tau;
     }
     
 #pragma mark -
@@ -50,7 +102,7 @@ namespace m3D {
      * @param number of classes.
      */
     template <typename T>
-    Histogram<T> 
+    typename Histogram<T>::ptr
     Histogram<T>::create( typename Point<T>::list &points, size_t variable_index, T min, T max, size_t number_of_bins )
     {
         if ( max == min )
@@ -59,7 +111,7 @@ namespace m3D {
             
             vector<size_t> bins(1,points.size());
             
-            return Histogram<T>(bins);
+            return new Histogram<T>(bins);
         }
         
         typedef pair<T,T> class_t;
@@ -113,9 +165,7 @@ namespace m3D {
             }
         }
         
-        Histogram<T> result( bins );
-    
-        return result;
+        return new Histogram<T>( bins );
     
     };
 
