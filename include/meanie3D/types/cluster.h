@@ -32,6 +32,10 @@ namespace m3D {
         
         histogram_map_t             m_histograms;
         
+        vector<T>                   m_geometrical_center;
+        
+        map< size_t, vector<T> >    m_weighed_centers;
+        
     public:
         
 #pragma mark -
@@ -182,6 +186,33 @@ namespace m3D {
          * @return coverage in percentage
          */
         float percent_covered_by( const Cluster<T>& b );
+        
+#pragma mark -
+#pragma mark Derived Properties
+        
+        /** Calculate the cluster center. 
+         * The result is cached. The cached value can be reset by
+         * calling clear_center_caches();
+         * @param number of spatial dimensions
+         * @return the spatial coordinate of the geometrical center 
+         * (using only the spatial components for calculation)
+         */
+        vector<T> geometrical_center(size_t spatial_dimensions);
+        
+        /** Calculate the cluster center weighed by a variable. 
+         * The result is cached. The cached value can be reset by 
+         * calling clear_center_caches();
+         * @param number of spatial dimensions
+         * @param index of the variable used for weighing
+         * @return the spatial coordinate of the geometrical center
+         * (using only the spatial components for calculation)
+         */
+        vector<T> weighed_center(size_t spatial_dimensions, size_t variable_index);
+        
+        /** Erases the calculation results of all center calculations,
+         * forcing a fresh calculation the next time they are called.
+         */
+        void clear_center_caches();
     };
     
 };

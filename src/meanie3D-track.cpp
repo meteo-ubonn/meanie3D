@@ -84,6 +84,21 @@ void parse_commmandline(program_options::variables_map vm,
     {
         tracking_variable_name = vm["tracking-variable"].as<string>();
     }
+    
+    // Verbosity
+    
+    unsigned short vb = vm["verbosity"].as<unsigned short>();
+    
+    if ( vb > VerbosityAll )
+    {
+        cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
+        
+        exit( -1 );
+    }
+    else
+    {
+        verbosity = (Verbosity) vb;
+    }
 }
 
 /**
@@ -233,7 +248,7 @@ int main(int argc, char** argv)
     
     Tracking<FS_TYPE> tracking;
 
-    tracking.track( prev_clusters, curr_clusters, current_feature_variables, tracking_var , verbosity );
+    tracking.track( prev_clusters, curr_clusters, current_feature_variables, tracking_var, curr_spatial_dims, verbosity );
     
     delete prev_file;
     

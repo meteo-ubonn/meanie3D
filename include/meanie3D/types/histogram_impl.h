@@ -62,7 +62,7 @@ namespace m3D {
         
         spear( h1, h2, this->size(), &d, &zd, &probd, &rho, &probrs );
         
-#if DEBUG_TRACKING
+#if DEBUG_HISTOGRAM_CORRELATION
         cout << "spearman rank correlation of " << this->bins() << " with " << o->bins();
         cout << "  =>  rho=" << rho << " d=" << d << " zd=" << zd << " probrs=" << probrs << endl;
 #endif
@@ -83,7 +83,7 @@ namespace m3D {
         
         kendl1( h1, h2, (int)this->size(), &tau, &z, &prob );
 
-#if DEBUG_TRACKING
+#if DEBUG_HISTOGRAM_CORRELATION
         cout << "kendall  rank correlation of " << this->bins() << " with " << o->bins();
         cout << "  =>  tau=" << tau << " z=" << z << " prob=" << prob << endl;
 #endif

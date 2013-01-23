@@ -36,11 +36,7 @@ namespace m3D {
         
         typedef map< vector<T>, typename Cluster<T>::ptr > ClusterMap;
         
-#if WRITE_MODES
-        vector< vector<T> >         m_trajectory_endpoints;
-        vector<size_t>              m_trajectory_lengths;
-#endif
-        ClusterMap                  m_cluster_map;
+        ClusterMap      m_cluster_map;
         
     public:
         
@@ -75,9 +71,8 @@ namespace m3D {
         typedef typename FeatureSpace<T>::Trajectory Trajectory;
         
         /** Adds the end point of the trajectory as cluster. If a cluster already
-         * exists, this point is added to it.
-         * All points within grid resolution along the trajectory are also added as
-         * points to this cluster.
+         * exists, this point is added to it. All points within grid resolution 
+         * along the trajectory are also added as points to this cluster as well.
          * @param feature space point x (the start point)
          * @param list of feature space coordinates (trajectory)
          * @param bandwidth of the iteration
@@ -89,7 +84,7 @@ namespace m3D {
                             FeatureSpace<T> *fs );
         
 #pragma mark -
-#pragma mark Post-Processing
+#pragma mark Superclustering
         
         /** Aggregate all clusters who's modes are within grid resolution of each other
          * into superclusters. The resulting superclusters will replace the existing
@@ -100,7 +95,6 @@ namespace m3D {
         void
         aggregate_by_superclustering( const FeatureSpace<T> *fs, const vector<T> &resolution );
         
-        
         /** For each cluster in this list, checks the parent_clusters and finds the modes, that
          * are in the cluster's point list and collects all their points into a list. Finally,
          * it replaces the cluster's point list with this aggregated list of parent points.
@@ -109,13 +103,6 @@ namespace m3D {
          * @param min_cluster_size : drop clusters from the result that have fewer points
          */
         void aggregate_with_parent_clusters( const ClusterList<T> &parent_clusters );
-        
-        /** Iterate through the list of clusters and trow all with smaller number of
-         * points than the given number out.
-         * @param min number of points
-         */
-        void apply_size_threshold( unsigned int min_cluster_size, const bool& show_progress = true );
-        
         
 #pragma mark -
 #pragma mark Clustering by Graph Theory
@@ -256,11 +243,20 @@ namespace m3D {
                               const vector<T> &resolution );
         
 #pragma mark -
+#pragma mark Post-Processing
+        
+        /** Iterate through the list of clusters and trow all with smaller number of
+         * points than the given number out.
+         * @param min number of points
+         */
+        void apply_size_threshold( unsigned int min_cluster_size, const bool& show_progress = true );
+        
+#pragma mark -
 #pragma mark I/O
         
         /** Writes out the cluster list into a NetCDF-file.
          * For the format, check documentation at
-         * http://git.meteo.uni-bonn.de/projects/cf-algorithms/wiki/Meanshift_Clustering
+         * http://git.meteo.uni-bonn.de/projects/meanie3d/wiki/Cluster_File
          * @param full path to filename, including extension '.nc'
          * @param feature space
          * @param parameters used in the run
@@ -297,38 +293,32 @@ namespace m3D {
 #pragma mark -
 #pragma mark Miscellaneous
         
-        // TODO: find a better place for this!
+        /** Sets the cluster property of all points of the given
+         * featurespace to NULL
+         * @param featurespace
+         * TODO: find a better place for this!
+         */
         static
         void
-        reset_clustering( FeatureSpace<T> *fs )
-        {
-            struct clear_cluster
-            {
-                void operator() (void *p)
-                {
-                    static_cast< M3DPoint<T> * >(p)->cluster = NULL;
-                };
-            } clear_cluster;
-            
-            for_each( fs->points.begin(), fs->points.end(), clear_cluster );
-        }
+        reset_clustering( FeatureSpace<T> *fs );
+        
+        /** Counts the number of points in all clusters and checks
+         * if the number is equal to featureSpace->size()
+         */
+        void sanity_check( const FeatureSpace<T> *fs );
+        
+#pragma mark -
+#pragma mark Debugging
         
 #if WRITE_MODES
+    protected:
+        vector< vector<T> >         m_trajectory_endpoints;
+        vector<size_t>              m_trajectory_lengths;
+    public:
         const vector< vector<T> > &trajectory_endpoints() { return m_trajectory_endpoints; }
         const vector<size_t> &trajectory_lengths() { return m_trajectory_lengths; }
 #endif
-        
-        void sanity_check( const FeatureSpace<T> *fs )
-        {
-            size_t point_count = 0;
-            
-            for ( size_t i=0; i < clusters.size(); i++ )
-            {
-                point_count += clusters[i]->points.size();
-            }
-            
-            assert( point_count == fs->size() );
-        }
+
     };
 };
     

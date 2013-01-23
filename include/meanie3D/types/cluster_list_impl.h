@@ -359,23 +359,32 @@ namespace m3D {
 
                 // allocate memory and write the cluster away
                 
-                size_t num_points = clusters[ci]->points.size();
-                
                 size_t dim_size = feature_space->coordinate_system->size();
                 
-                double data[num_points][dim_size];
+                vector<size_t> index(2,0);
+                
+                vector<size_t> count(2,0);
+                
+                count[0] = 1;
+                
+                count[1] = feature_space->dimension;
 
                 for ( size_t pi = 0; pi < clusters[ci]->points.size(); pi++ )
                 {
                     Point<T> *p = clusters[ci]->points[pi];
                     
-                    for ( size_t di = 0; di < feature_space->coordinate_system->size(); di++ )
+                    double data[dim_size];
+
+                    for ( size_t di = 0; di < feature_space->dimension; di++ )
                     {
-                        data[pi][di] = p->coordinate[di];
+                        data[di] = (double)p->values[di];
                     }
+                    
+                    
+                    index[0] = pi;
+                    
+                    var.putVar(index, count, &data[0] );
                 }
-                
-                var.putVar( &data[0][0] );
             }
         }
         catch (const std::exception &e)
@@ -1223,6 +1232,36 @@ namespace m3D {
         
         delete index2;
     }
+    
+    template <typename T>
+    void
+    ClusterList<T>::reset_clustering( FeatureSpace<T> *fs )
+    {
+        struct clear_cluster
+        {
+            void operator() (void *p)
+            {
+                static_cast< M3DPoint<T> * >(p)->cluster = NULL;
+            };
+        } clear_cluster;
+        
+        for_each( fs->points.begin(), fs->points.end(), clear_cluster );
+    };
+    
+    template <typename T>
+    void
+    ClusterList<T>::sanity_check( const FeatureSpace<T> *fs )
+    {
+        size_t point_count = 0;
+        
+        for ( size_t i=0; i < clusters.size(); i++ )
+        {
+            point_count += clusters[i]->points.size();
+        }
+        
+        assert( point_count == fs->size() );
+    };
+
 
 }; //namespace
 

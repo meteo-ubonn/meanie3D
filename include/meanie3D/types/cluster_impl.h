@@ -212,13 +212,13 @@ namespace m3D {
         
         size_t num_common_points = 0;
         
-        typename Point<T>::iterator a_points;
+        typename Point<T>::list::iterator a_points;
         
         for ( a_points = this->points.begin(); a_points != this->points.end(); a_points++ )
         {
             typename Point<T>::ptr pa = *a_points;
 
-            typename Point<T>::iterator b_points;
+            typename Point<T>::list::iterator b_points;
 
             for ( b_points = b.points.begin(); b_points != b.points.end(); b_points++ )
             {
@@ -233,6 +233,81 @@ namespace m3D {
         
         return ((float)num_common_points) / ((float)this->points.size());
     }
+    
+    template <typename T>
+    vector<T>
+    Cluster<T>::geometrical_center(size_t spatial_dimensions)
+    {
+        if ( m_geometrical_center.empty() )
+        {
+            vector<T> center(spatial_dimensions,0.0);
+        
+            typename Point<T>::list::iterator pi;
+            
+            for ( pi = this->points.begin(); pi != this->points.end(); ++pi )
+            {
+                vector<T> tmp = center;
+                
+                center += (*pi)->coordinate;
+                
+                if ( isnan( center[0] ) )
+                {
+                    cerr << "ARGHH!" << endl;
+                }
+            }
+            
+            m_geometrical_center = center/((T)this->points.size());
+        }
+        
+        return m_geometrical_center;
+    }
+    
+    template <typename T>
+    vector<T>
+    Cluster<T>::weighed_center(size_t spatial_dimensions, size_t variable_index)
+    {
+        vector<T> wc;
+        
+        try
+        {
+            wc = this->m_weighed_centers.at(variable_index);
+        }
+        catch (const std::exception& e)
+        {
+            vector<T> center(spatial_dimensions,0.0);
+            
+            typename Point<T>::list::iterator pi;
+            
+            T overall_mass = 0.0;
+            
+            for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
+            {
+                T mass = (*pi)->values[variable_index];
+                
+                center += (*pi)->coordinate * mass;
+                
+                overall_mass += mass;
+            }
+            
+            center /= overall_mass;
+            
+            m_weighed_centers.insert( std::pair< size_t, vector<T> >( variable_index, center ) );
+            
+            wc = m_weighed_centers[variable_index];
+        }
+        
+        return wc;
+    }
+    
+    template <typename T>
+    void
+    Cluster<T>::clear_center_caches()
+    {
+        m_geometrical_center.clear();
+        
+        m_weighed_centers.clear();
+    }
+
     
     
 }; //namespace

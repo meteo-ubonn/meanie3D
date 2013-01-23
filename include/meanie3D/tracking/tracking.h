@@ -34,6 +34,7 @@ namespace m3D {
                    const ClusterList<T> &current_clusters,
                    const vector<NcVar> &feature_variables,
                    const NcVar &track_variable,
+                   size_t spatial_dimensions,
                    Verbosity verbosity = VerbosityNormal);
         
     private:

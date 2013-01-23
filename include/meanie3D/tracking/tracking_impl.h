@@ -41,6 +41,7 @@ namespace m3D {
                        const ClusterList<T> &current_clusters,
                        const vector<NcVar> &feature_variables,
                        const NcVar &track_variable,
+                       size_t spatial_dimensions,
                        Verbosity verbosity )
     {
         // sanity check
@@ -138,13 +139,17 @@ namespace m3D {
 //                  meanVelocity*meanVelocitySecurityPercentage,maxMeanVelocityDisplacement);
 //        }
 //        SPLog(@"\n");
+        
+        // 
 
         
         // Get the counts
+        
         size_t old_count = previous.size();
         size_t new_count = current.size();
         
         // Create result matrices
+        
         matrix_t rank_correlation = create_matrix(new_count,old_count);
         matrix_t midDisplacement = create_matrix(new_count,old_count);
         matrix_t histDiff = create_matrix(new_count,old_count);
@@ -174,8 +179,18 @@ namespace m3D {
                 
                 rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
                 
-                rank_correlation[n][m] = newHistogram->correlate_spearman( oldHistogram );
-//                
+                // calculate average mid displacement
+                
+                // vector<T> dx = newCluster->mode - oldCluster->mode;
+                
+//                vector<T> dx = newCluster->geometrical_center(spatial_dimensions)
+//                                - oldCluster->geometrical_center(spatial_dimensions);
+
+                vector<T> dx = newCluster->weighed_center(spatial_dimensions,tracking_var_index)
+                - oldCluster->weighed_center(spatial_dimensions,tracking_var_index);
+
+                midDisplacement[n][m] = vector_norm(dx);
+//
 //                
 //
 //                Blob* oldBlob = (Blob*)[blobs objectAtIndex:m];
