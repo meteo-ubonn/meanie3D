@@ -241,6 +241,12 @@ namespace m3D {
                               FeatureSpace<T> *fs,
                               PointIndex<T> *index,
                               const vector<T> &resolution );
+#pragma mark -
+#pragma mark ID helpers
+        
+        /** Iterates over all clusters and sets their ID to NO_ID 
+         */
+        void erase_identifiers();
         
 #pragma mark -
 #pragma mark Post-Processing

@@ -28,7 +28,7 @@ namespace m3D {
         {
             m_sum = 0;
             
-            for (vector<size_t>::iterator it=this->m_bins.begin(); it!=this->m_bins.begin(); it++)
+            for (vector<size_t>::iterator it=this->m_bins.begin(); it!=this->m_bins.end(); it++)
             {
                 m_sum += *it;
             }

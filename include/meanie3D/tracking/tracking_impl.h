@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <netcdf>
+#include <set>
 
 #include <numericalrecipes/nr.h>
 
@@ -38,7 +39,7 @@ namespace m3D {
     template <typename T>
     void
     Tracking<T>::track(const ClusterList<T> &last_clusters,
-                       const ClusterList<T> &current_clusters,
+                       ClusterList<T> &current_clusters,
                        const vector<NcVar> &feature_variables,
                        const NcVar &track_variable,
                        size_t spatial_dimensions,
@@ -105,6 +106,10 @@ namespace m3D {
         }
         
         // TODO: check time difference and determine displacement restraints
+        // TODO: add timestamp to the cluster file format
+        // TODO: timestamp in the original file other than in the filename? Spec?
+        
+        T deltaT = 300; // (seconds)
         
 //        Blob* oldBlob = (Blob*)[blobs objectAtIndex:0];
 //        Blob* newBlob = (Blob*)[newBlobs objectAtIndex:0];
@@ -128,17 +133,29 @@ namespace m3D {
 //                return;
 //            }
 //        }
-//        float maxDisplacement = [trackStore maxVelocity]*deltaT;
-//        SPLog(@"max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm",
-//              [trackStore maxVelocity],deltaT,maxDisplacement);
+
+        T maxDisplacement = this->m_maxVelocity * deltaT;
+        
+        if ( verbosity >= VerbosityDetails )
+        {
+            printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm",
+                   this->m_maxVelocity, deltaT, maxDisplacement );
+        }
+        
+//        T maxMeanVelocityDisplacement = 0.0;
 //        
-//        float maxMeanVelocityDisplacement=0;
-//        if (useMeanVelocityConstraint) {
-//            maxMeanVelocityDisplacement=deltaT*meanVelocity*meanVelocitySecurityPercentage;
-//            SPLog(@"mean velocity constraint at %4.2f m/s, dR_max = %7.1f",
-//                  meanVelocity*meanVelocitySecurityPercentage,maxMeanVelocityDisplacement);
+//        if (m_useMeanVelocityConstraint)
+//        {
+//            m_useMeanVelocityConstraint = deltaT * meanVelocity * m_meanVelocitySecurityPercentage;
+//            
+//            printf("mean velocity constraint at %4.2f m/s, dR_max = %7.1f",
+//                   meanVelocity * m_meanVelocitySecurityPercentage, maxMeanVelocityDisplacement );
 //        }
+        
 //        SPLog(@"\n");
+        
+        // Prepare the newcomers for re-identification
+        current_clusters.erase_identifiers();
 
         // Get the counts
         
@@ -244,7 +261,7 @@ namespace m3D {
                 
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("\t<ID#%llu>:\tdeltaR=%4.1f (%f)\t\tdH=%5.4f (%f)\t\ttau=%6.4f\t\tsum=%5.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                    printf("\t<ID#%llu>:\tdeltaR=%4.1f (%f)\t\tdH=%5.4f (%f)\t\ttau=%7.4f\t\tsum=%5.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                            oldCluster->id,
                            midDisplacement[n][m],
                            prob_r,
@@ -258,83 +275,123 @@ namespace m3D {
             }
         }
         
-//
-//        float velocitySum = 0;
-//        int velocityBlobCount = 0;
-//        float currentMaxProb = 1000;
-//        int maxIterations = [newBlobs count] + [blobs count];
-//        int iterations = 0;
-//        NSMutableSet* usedOldBlobs = [[NSMutableSet alloc] init];
+        float velocitySum = 0;
+        
+        int velocityBlobCount = 0;
+        
+        float currentMaxProb = numeric_limits<float>::min();
+        
+        int maxIterations = new_count + old_count;
+        
+        int iterations = 0;
+        
+        // NSMutableSet* usedOldBlobs = [[NSMutableSet alloc] init];
+        
+        set< typename Cluster<T>::ptr > matched_previous_clusters;
+        
 //        SPLog(@"\n-- Matching Results --\n");
-//        while (iterations<=maxIterations)
-//        {
-//            // find the highest significant tau value
-//            float maxProb = -1000;
-//            int maxN=0,maxM=0;
-//            for (n=0;n<[newBlobs count];n++) {
-//                for (m=0;m<[blobs count];m++) {
-//                    if (sum_prob[n][m]>maxProb && sum_prob[n][m]<currentMaxProb) {
-//                        maxProb = sum_prob[n][m];
-//                        maxN = n;
-//                        maxM = m;
-//                    }
-//                }
-//            }
-//            
-//            // take pick, remove paired candidates from arrays
+        
+        while (iterations<=maxIterations)
+        {
+            // find the highest significant tau value
+            float maxProb = -1000;
+            
+            int maxN=0,maxM=0;
+            
+            for (n=0;n<new_count;n++)
+            {
+                for (m=0;m<old_count;m++)
+                {
+                    if ( sum_prob[n][m] > maxProb && sum_prob[n][m] < currentMaxProb )
+                    {
+                        maxProb = sum_prob[n][m];
+                        maxN = n;
+                        maxM = m;
+                    }
+                }
+            }
+
+            // take pick, remove paired candidates from arrays
+            
+            typename Cluster<T>::ptr matchedPrev = previous[maxM];
+            
+            typename Cluster<T>::ptr matchedCurr = current[maxN];
+            
 //            Blob* oldBlob = (Blob*)[blobs objectAtIndex:maxM];
-//            Blob* newBlob = (Blob*)[newBlobs objectAtIndex:maxN];
 //            
-//            // check mid displacement constraints and update mean velocity
-//            if (midDisplacement[maxN][maxM]>maxDisplacement)
+//            Blob* newBlob = (Blob*)[newBlobs objectAtIndex:maxN];
+            
+            // check mid displacement constraints and update mean velocity
+            if ( midDisplacement[maxN][maxM] > maxDisplacement )
+            {
+                if ( verbosity >= VerbosityDetails )
+                {
+                    printf("pairing new blob #%d / old blob ID#%ld rejected. dR=%4.1f violates maximum velocity constraint.",
+                           maxN, matchedPrev->id, midDisplacement[maxN][maxM] );
+                }
+            }
+//            else if (m_useMeanVelocityConstraint && midDisplacement[maxN][maxM] > maxMeanVelocityDisplacement )
 //            {
-//                SPLog(@"pairing new blob #%d / old blob ID#%ld rejected. dR=%4.1f violates maximum velocity constraint.",maxN,[oldBlob tag],midDisplacement[maxN][maxM]);
-//            }
-//            else if (useMeanVelocityConstraint && midDisplacement[maxN][maxM] > maxMeanVelocityDisplacement)
-//            {
-//                SPLog(@"pairing new blob #%d / old blob ID#%ld rejected. dR=%4.1f violates mean velocity constraint.",maxN,[oldBlob tag],midDisplacement[maxN][maxM]);
-//            }
-//            else if ([newBlob tag]==0 && ![usedOldBlobs containsObject:oldBlob])
-//            {
-//                float velocity = midDisplacement[maxN][maxM]/deltaT;
-//                [newBlob setVelocity:velocity];
-//                if (velocity>0.5) {
-//                    velocitySum+=velocity;
-//                    velocityBlobCount++;
+//                if ( verbosity >= VerbosityDetails )
+//                {
+//                    printf("pairing new blob #%d / old blob ID#%ld rejected. dR=%4.1f violates mean velocity constraint.",
+//                           maxN, matchedPrev->id, midDisplacement[maxN][maxM] );
 //                }
-//                
-//                SPLog(@"pairing new blob #%d / old blob ID=#%ld accepted, velocity %4.1f m/s",
-//                      maxN,[oldBlob tag],velocity);
-//                
-//                [newBlob setTag:[oldBlob tag] color:[oldBlob color]];
-//                [newBlob setTimestamp:[eoScan timestamp]];
-//                [usedOldBlobs addObject:oldBlob];
-//                [oldBlob release];
 //            }
-//            currentMaxProb=maxProb;
-//            iterations++;
-//        }
+            else if (matchedCurr->id == Cluster<T>::NO_ID
+                     && matched_previous_clusters.find(matchedPrev) == matched_previous_clusters.end() )
+            {
+                float velocity = midDisplacement[maxN][maxM] / deltaT;
+                
+                //[newBlob setVelocity:velocity];
+                
+                if ( velocity > 0.5 )
+                {
+                    velocitySum += velocity;
+                    
+                    velocityBlobCount++;
+                }
+                
+//                if ( verbosity >= VerbosityDetails )
+//                {
+                    printf("pairing new blob #%d / old blob ID=#%lu accepted, velocity %4.1f m/s\n",
+                           maxN, matchedPrev->id, velocity );
+//                }
+                
+                matchedCurr->id = matchedPrev->id;
+                
+                matched_previous_clusters.insert( matchedPrev );
+            }
+            
+            currentMaxProb = maxProb;
+            
+            iterations++;
+        }
+
 //        // update mean velocity
 //        float newMeanVelocity = 0;
 //        if (velocityBlobCount>0) newMeanVelocity = velocitySum/velocityBlobCount;
 //        if (newMeanVelocity > 2.0) meanVelocity = newMeanVelocity;
 //        
 //        SPLog(@"\ncurrent mean velocity: %4.2f m/s",meanVelocity);
-//        
-//        // all new blobs without id now get one
-//        NSMutableArray* result = [[NSMutableArray alloc] init];
-//        SPLog(@"\n-- New ID assignments --");
-//        for (n=0;n<[newBlobs count]; n++)
-//        {
-//            Blob* newBlob = [newBlobs objectAtIndex:n];
-//            if ([newBlob tag]==0) {
-//                [self tagBlob:newBlob];
-//                SPLog(@"new blob #%d at [%3d,%3d]\t with |H|=%5d is assigned new ID#%ld",
-//                      n,[newBlob midX],[newBlob midY],(int)[newBlob histogramSize],[newBlob tag]);
-//            }
-//            [result addObject:newBlob];
-//        }
-//        
+        
+        // all new blobs without id now get one
+        
+        printf("\n-- New ID assignments --\n");
+        
+        for (n=0;n<new_count;n++)
+        {
+            typename Cluster<T>::ptr c = current[n];
+            
+            if ( c->id == Cluster<T>::NO_ID )
+            {
+                c->id = current_id++;
+                
+                cout << "new cluster #" << n << " at " << c->mode << " with |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum()
+                     << " is assigned new ID#" << c->id << endl;
+            }
+        }
+
 //        // list those old blobs not being lined up again
 //        NSEnumerator* obn = [blobs objectEnumerator];
 //        Blob* ob;

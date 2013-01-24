@@ -23,9 +23,17 @@ namespace m3D {
          */
         matrix_t create_matrix(size_t width, size_t height);
         
-        T   m_dist_weight;
-        T   m_size_weight;
-        T   m_corr_weight;
+        T   m_dist_weight;  // correlation weight distance
+        
+        T   m_size_weight;  // correlation weight histogram sum
+        
+        T   m_corr_weight;  // correlation weight histogram rank correlation
+        
+        bool    m_useMeanVelocityConstraint;        // make use of max velocity constraint?
+        
+        T       m_meanVelocitySecurityPercentage;   // Percentual amount of deviation from mean velocity allowed
+        
+        T       m_maxVelocity;                      // physical maximum speed of objects in m/s
         
         /** Private default constructor 
          */
@@ -38,7 +46,14 @@ namespace m3D {
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking( T dw, T sw, T cw ) : m_dist_weight(dw),m_size_weight(sw),m_corr_weight(cw) {};
+        Tracking( T dw, T sw, T cw )
+        : m_dist_weight(dw)
+        , m_size_weight(sw)
+        , m_corr_weight(cw)
+        , m_useMeanVelocityConstraint(true)     // limit deviation from mean velocity
+        , m_meanVelocitySecurityPercentage(0.5) // to 50 %
+        , m_maxVelocity(27.0)                  // limit max velocity to 15 m/s (~100 km/h)
+        {};
         
         /** Compares two cluster lists and propagates or assigns new identifiers.
          * @param clusters from the last run
@@ -46,7 +61,7 @@ namespace m3D {
          * @param new clusters, which need id's
          */
         void track(const ClusterList<T> &last_clusters,
-                   const ClusterList<T> &current_clusters,
+                   ClusterList<T> &current_clusters,
                    const vector<NcVar> &feature_variables,
                    const NcVar &track_variable,
                    size_t spatial_dimensions,

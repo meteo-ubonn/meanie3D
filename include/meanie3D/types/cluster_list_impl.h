@@ -641,7 +641,7 @@ namespace m3D {
                 
                 cluster->add_points( nodes );
                 
-                cluster->id = cluster_id++;
+                // cluster->id = cluster_id++;
                 
                 this->clusters.push_back( cluster );
             }
@@ -1232,6 +1232,17 @@ namespace m3D {
         
         delete index2;
     }
+    
+    template <typename T>
+    void
+    ClusterList<T>::erase_identifiers()
+    {
+        for ( size_t i=0; i < clusters.size(); i++ )
+        {
+            clusters[i]->id = Cluster<T>::NO_ID;
+        }
+    }
+
     
     template <typename T>
     void
