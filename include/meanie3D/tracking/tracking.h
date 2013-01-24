@@ -23,7 +23,22 @@ namespace m3D {
          */
         matrix_t create_matrix(size_t width, size_t height);
         
+        T   m_dist_weight;
+        T   m_size_weight;
+        T   m_corr_weight;
+        
+        /** Private default constructor 
+         */
+        Tracking() {};
+        
     public:
+        
+        /** Constructor
+         * @param weight for distance correlation
+         * @param weight for size correlation
+         * @param weight for histogram rank correlation
+         */
+        Tracking( T dw, T sw, T cw ) : m_dist_weight(dw),m_size_weight(sw),m_corr_weight(cw) {};
         
         /** Compares two cluster lists and propagates or assigns new identifiers.
          * @param clusters from the last run

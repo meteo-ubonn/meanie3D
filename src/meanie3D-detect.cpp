@@ -381,7 +381,7 @@ void parse_commmandline( program_options::variables_map vm,
     min_cluster_size = vm["min-cluster-size"].as<unsigned int>();
 }
 
-/**
+/** 
  *
  *
  */
@@ -615,7 +615,7 @@ int main(int argc, char** argv)
     //    {
     //        cout << endl << "== SCALE " << scales[i] << " ==" << endl;
     //        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, cluster_resolution, thresholds, scales[i], show_progress );
-    //        FeatureSpaceIndex<FS_TYPE> *index = FeatureSpaceIndex<FS_TYPE>::create( fs );
+    //        PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
     //        ClusterOperation<FS_TYPE> cop( fs, index );
     //        ClusterOperation<FS_TYPE>::reset_pass_counter();
     //        ClusterList<FS_TYPE> clusters = cop.cluster( search_params, cluster_resolution, kernel, weight_index, termcrit_epsilon, termcrit_iter, show_progress );
@@ -652,7 +652,7 @@ int main(int argc, char** argv)
     fs->weight_sample_points.push_back(sample_point);
 #endif
     
-    FeatureSpaceIndex<FS_TYPE> *index = FeatureSpaceIndex<FS_TYPE>::create( fs );
+    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
     
     //
     // Simple clustering

@@ -20,29 +20,41 @@ namespace m3D {
 #pragma mark Constructor/Destructor
     
     template <typename T>
-    Cluster<T>::Cluster() : id(NO_ID)
-    {
-    }
+    Cluster<T>::Cluster()
+    : id(NO_ID)
+    , m_index(NULL)
+    , m_dimension(0)
+    , m_spatial_dimension(0)
+    {};
     
     template <typename T>
-    Cluster<T>::Cluster( vector<T> mode ) : mode(mode), id(NO_ID)
+    Cluster<T>::Cluster( size_t dim, size_t spatial_dim, vector<T> mode )
+    : m_index(NULL)
+    , m_dimension(dim)
+    , m_spatial_dimension(spatial_dim)
+    , mode(mode)
+    , id(NO_ID)
     {
+        assert( m_dimension > m_spatial_dimension ); // TODO: change on refac #146
     };
     
     template <typename T>
     Cluster<T>::Cluster( const Cluster<T> &o )
+    : m_index(NULL)
+    , m_dimension(o.m_dimension)
+    , m_spatial_dimension( o.m_spatial_dimension )
+    , id(o.id)
+    , mode(o.mode)
+    , points(o.points)
     {
-        id = o.id;
-        
-        mode = o.mode;
-        
-        points = o.points;
-    }
+    };
     
     template <typename T>
     Cluster<T>::~Cluster()
     {
         this->clear_histogram_cache();
+
+        this->clear_index();
     };
     
 #pragma mark -
@@ -200,34 +212,64 @@ namespace m3D {
         
         this->m_histograms.clear();
     }
+    
+#pragma mark -
+#pragma mark Index
+    
+    template <typename T>
+    PointIndex<T> *
+    Cluster<T>::index()
+    {
+        if ( this->m_index == NULL )
+        {
+            // index is constructed using the spatial components only
+            
+            vector<size_t> indexes(m_spatial_dimension);
+            
+            for (size_t i=0; i<m_spatial_dimension; i++) indexes[i]=i;
+
+            this->m_index = PointIndex<T>::create( &(this->points), indexes );
+        }
+        
+        return m_index;
+    }
+    
+    template <typename T>
+    void
+    Cluster<T>::clear_index()
+    {
+        if ( this->m_index != NULL )
+        {
+            delete this->m_index;
+            
+            this->m_index = NULL;
+        }
+    }
 
 #pragma mark -
 #pragma mark Coverage
     
     template <typename T>
     float
-    Cluster<T>::percent_covered_by( const Cluster<T>& b )
+    Cluster<T>::percent_covered_by( const Cluster<T>::ptr b ) const
     {
         // TODO: this can be done a lot faster using an index
         
         size_t num_common_points = 0;
         
-        typename Point<T>::list::iterator a_points;
+        typename Point<T>::list::const_iterator a_points;
+        
+        PointIndex<T> *b_index = b->index();
         
         for ( a_points = this->points.begin(); a_points != this->points.end(); a_points++ )
         {
             typename Point<T>::ptr pa = *a_points;
-
-            typename Point<T>::list::iterator b_points;
-
-            for ( b_points = b.points.begin(); b_points != b.points.end(); b_points++ )
+            
+            vector<T> x = pa->coordinate;
+            
+            if ( b_index->has_value(x))
             {
-                typename Point<T>::ptr pb = *b_points;
-                
-                if ( pa->coordinate == pb->coordinate )
-                {
-                    num_common_points++;
-                }
+                num_common_points++;
             }
         }
         

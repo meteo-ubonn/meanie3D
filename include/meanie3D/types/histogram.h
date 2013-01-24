@@ -20,7 +20,11 @@ namespace m3D {
     {
     private:
         
-        vector<size_t>   m_bins;
+        vector<size_t>  m_bins;
+        
+        bool            m_sum_dirty;
+        
+        size_t          m_sum;
         
     public:
         
@@ -31,25 +35,26 @@ namespace m3D {
         
         /** Default @constructor is private
          */
-    	Histogram() {};
+    	Histogram() : m_sum_dirty(true),m_sum(0) {};
 
         /** @constructor
          * @param number of bins
          */
-    	Histogram( const size_t &size ) : m_bins(vector<size_t>(size,0)) {};
+    	Histogram( const size_t &size ) : m_bins(vector<size_t>(size,0)), m_sum_dirty(true), m_sum(0)  {};
 
         /** Constructor.
          * @param initial bins
          */
-        Histogram( vector<size_t> &bins ) {this->m_bins = bins; };
+        Histogram( vector<size_t> &bins ) : m_bins(bins), m_sum_dirty(true), m_sum(0) {};
 
         /** Copy constructor
          */
-        Histogram( const Histogram<T> &o ) : m_bins(o.bins()) {};
+        Histogram( const Histogram<T> &o ) : m_bins(o.bins()), m_sum_dirty(true), m_sum(0) {};
         
         /** Destructor 
          */
-        ~Histogram() {
+        ~Histogram()
+        {
             cout << "~Histogram()" << endl;
         };
         
@@ -73,6 +78,10 @@ namespace m3D {
          * @return size
          */
         const size_t size() const { return this->m_bins.size(); };
+
+        /** Contains the sum of all bins 
+         */
+        const size_t sum();
         
         /** Access all bins at once
          */
@@ -81,7 +90,7 @@ namespace m3D {
         /** Access a bin directly
          * @param index
          */
-        T& operator [] (const size_t index) { return this->m_bins[index]; }
+        T& operator [] (const size_t index);
         
         /** Allocates an int array and fills it with the bins. 
          * @return int array of size this->size()

@@ -12,7 +12,7 @@ namespace m3D {
 	using namespace ::std;
 	using ::cfa::meanshift::Point;
 	using ::cfa::meanshift::FeatureSpace;
-	using ::cfa::meanshift::FeatureSpaceIndex;
+	using ::cfa::meanshift::PointIndex;
 	using ::cfa::meanshift::SearchParameters;
 	using ::cfa::meanshift::Kernel;
 	using ::cfa::meanshift::MeanshiftOperation;
@@ -21,7 +21,7 @@ namespace m3D {
     struct ClusterTask
     {
         FeatureSpace<T>         *m_fs;
-        FeatureSpaceIndex<T>    *m_index;
+        PointIndex<T>    *m_index;
         ClusterOperation<T>     *m_op;
         ClusterList<T>          *m_cluster_list;
         
@@ -41,7 +41,7 @@ namespace m3D {
         /** Constructor for single-threaded or boost threads 
          */
         ClusterTask( FeatureSpace<T> *fs,  
-                     FeatureSpaceIndex<T> *index,
+                     PointIndex<T> *index,
                      ClusterOperation<T> *op,
                      ClusterList<T> *cs,
                      const size_t start_index,
@@ -86,7 +86,7 @@ namespace m3D {
         /** Constructor for TBB
          */
         ClusterTask( FeatureSpace<T> *fs,  
-                     FeatureSpaceIndex<T> *index,
+                     PointIndex<T> *index,
                      ClusterOperation<T> *op,
                      ClusterList<T> *cs,
                      const SearchParameters *params,

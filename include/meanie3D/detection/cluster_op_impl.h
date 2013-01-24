@@ -132,7 +132,7 @@ namespace m3D {
             size_t end_index = (( i < NUMBER_OF_CLUSTERING_THREADS - 1 ) ? ( i + 1 ) * points_per_thread - 1 : points.size());
             
             boost::thread thread( ClusterTask<T>(this->feature_space,
-                                                 this->feature_space_index,
+                                                 this->point_index,
                                                  this, &cluster_list,
                                                  weight_index,
                                                  this->feature_space->size(),
@@ -153,7 +153,7 @@ namespace m3D {
         
         parallel_for(tbb::blocked_range<size_t>(0,points.size()) ,
                      ClusterTask<T>(this->feature_space,
-                                    this->feature_space_index,
+                                    this->point_index,
                                     this, &cluster_list,
                                     weight_index,
                                     this->feature_space->size(),
@@ -168,7 +168,7 @@ namespace m3D {
         // Single threaded execution
         
         ClusterTask<T> ct(this->feature_space,
-                          this->feature_space_index,
+                          this->point_index,
                           this, &cluster_list,
                           0,
                           this->feature_space->size(),
@@ -200,11 +200,11 @@ namespace m3D {
         cluster_list.aggregate_cluster_graph( (size_t)weight_index, this->feature_space, resolution, show_progress_bar );
         
 #if WRITE_BOUNDARIES
-        cluster_list.write_boundaries( (size_t) weight_index, this->feature_space, this->feature_space_index, resolution );
+        cluster_list.write_boundaries( (size_t) weight_index, this->feature_space, this->point_index, resolution );
 #endif
 
         // Analyze the clusters to create objects
-        cluster_list.aggregate_clusters_by_boundary_analysis( (size_t)weight_index, this->feature_space_index, resolution, drf_threshold, show_progress_bar );
+        cluster_list.aggregate_clusters_by_boundary_analysis( (size_t)weight_index, this->point_index, resolution, drf_threshold, show_progress_bar );
         
 #if WRITE_MODES
         

@@ -246,7 +246,7 @@ int main(int argc, char** argv)
     
     // Perform tracking
     
-    Tracking<FS_TYPE> tracking;
+    Tracking<FS_TYPE> tracking(1.0, 1.0, 1.0);
 
     tracking.track( prev_clusters, curr_clusters, current_feature_variables, tracking_var, curr_spatial_dims, verbosity );
     

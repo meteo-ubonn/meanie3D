@@ -21,6 +21,34 @@ namespace m3D {
     using namespace std;
     
     template <typename T>
+    const size_t
+    Histogram<T>::sum() 
+    {
+        if (m_sum_dirty)
+        {
+            m_sum = 0;
+            
+            for (vector<size_t>::iterator it=this->m_bins.begin(); it!=this->m_bins.begin(); it++)
+            {
+                m_sum += *it;
+            }
+            
+            m_sum_dirty = false;
+        }
+        
+        return m_sum;
+    }
+    
+    template <typename T>
+    T&
+    Histogram<T>::operator [] (const size_t index)
+    {
+        m_sum_dirty = true;
+        
+        return this->m_bins[index];
+    }
+    
+    template <typename T>
     int *
     Histogram<T>::bins_as_int_array() const
     {

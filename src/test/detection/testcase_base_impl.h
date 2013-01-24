@@ -171,7 +171,7 @@ void FSTestBase<T>::generate_featurespace()
     
     this->m_featureSpace = new FeatureSpace<T>( this->m_filename, this->coordinate_system(), this->m_variables );
     
-    this->m_featureSpaceIndex = FeatureSpaceIndex<T>::create( this->m_featureSpace );
+    this->m_featureSpaceIndex = PointIndex<T>::create( this->m_featureSpace );
     
     cout << "done. (" << m_featureSpace->size() << " points)" << endl;
 }

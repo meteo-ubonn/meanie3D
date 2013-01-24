@@ -94,7 +94,7 @@ namespace m3D {
             
             // create a 'spatial only' index of the feature-space points
             
-            FeatureSpaceIndex<T> *index = FeatureSpaceIndex<T>::create( &fs_copy, fs->coordinate_system->dimension_variables() );
+            PointIndex<T> *index = PointIndex<T>::create( &fs_copy, fs->coordinate_system->dimension_variables() );
 
             // Initialize limit trackers
             

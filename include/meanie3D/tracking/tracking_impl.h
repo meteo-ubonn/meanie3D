@@ -139,10 +139,7 @@ namespace m3D {
 //                  meanVelocity*meanVelocitySecurityPercentage,maxMeanVelocityDisplacement);
 //        }
 //        SPLog(@"\n");
-        
-        // 
 
-        
         // Get the counts
         
         size_t old_count = previous.size();
@@ -156,6 +153,10 @@ namespace m3D {
         matrix_t sum_prob = create_matrix(new_count,old_count);
         matrix_t coverOldByNew = create_matrix(new_count,old_count);
         matrix_t coverNewByOld = create_matrix(new_count,old_count);
+        
+        size_t maxHistD = numeric_limits<size_t>::min();
+        
+        T maxMidD = numeric_limits<T>::min();
         
         // compute correlation matrix
         
@@ -181,110 +182,83 @@ namespace m3D {
                 
                 // calculate average mid displacement
                 
-                // vector<T> dx = newCluster->mode - oldCluster->mode;
-                
-//                vector<T> dx = newCluster->geometrical_center(spatial_dimensions)
-//                                - oldCluster->geometrical_center(spatial_dimensions);
-
                 vector<T> dx = newCluster->weighed_center(spatial_dimensions,tracking_var_index)
                 - oldCluster->weighed_center(spatial_dimensions,tracking_var_index);
 
                 midDisplacement[n][m] = vector_norm(dx);
-//
-//                
-//
-//                Blob* oldBlob = (Blob*)[blobs objectAtIndex:m];
-//                [self correlate:oldBlob byKendallWith:newBlob tau:&tau[n][m] prob:&probrs[n][m]];
-//                
-//                float div = GSL_MAX((float)[newBlob histogramSize],(float)[oldBlob histogramSize]);
-//                if (div==0.0) div=1.0;
-//                histDiff[n][m]=abs((float)[newBlob histogramSize]-(float)[oldBlob histogramSize])/div;
-//                
-//                float dx = [oldBlob area]->scaleX * ([oldBlob midX]-[newBlob midX]);
-//                float dy = [oldBlob area]->scaleY * ([oldBlob midY]-[newBlob midY]);
-//                midDisplacement[n][m]=sqrt(dx*dx + dy*dy);
-//                
-//                coverNewByOld[n][m]=[self coverageOf:newBlob by:oldBlob];
-//                coverOldByNew[n][m]=[self coverageOf:oldBlob by:newBlob];
-            }
-        }
-        
-        if ( verbosity >= VerbosityDetails )
-        {
-            cout << "Correlation table " << endl;
-        
-            cout << "      ";
-            
-            cout << fixed << setprecision(4);
-            
-            for ( m=0; m < old_count; m++ )
-            {
-                cout << m;
-            }
-            
-            cout << endl;
 
-            for ( n=0; n < new_count; n++ )
-            {
-                cout << n;
+                size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
                 
-                for ( m=0; m < old_count; m++ )
+                histDiff[n][m] = (max_size==0) ? 1.0 : (abs( (T)newHistogram->sum() - (T)oldHistogram->sum() ) / ((T)max_size) );
+                
+                coverNewByOld[n][m] = newCluster->percent_covered_by( oldCluster );
+                
+                coverOldByNew[n][m] = oldCluster->percent_covered_by( newCluster );
+                
+                // track maxHistD and maxMidD
+                
+                if ( histDiff[n][m] > maxHistD )
                 {
-                    cout << rank_correlation[n][m];
+                    maxHistD = histDiff[n][m];
                 }
                 
-                cout << endl;
+                if (midDisplacement[n][m]>maxMidD)
+                {
+                    maxMidD = midDisplacement[n][m];
+                }
+
             }
         }
-
         
-        // find maximum values for midD and histSD
-//        int maxHistD = 0;
-//        float maxMidD = 0;
-//        for (n=0;n<[newBlobs count];n++)
-//        {
-//            for (m=0;m<[blobs count];m++)
-//            {
-//                if (histDiff[n][m]>maxHistD)
-//                    maxHistD = histDiff[n][m];
-//                
-//                if (midDisplacement[n][m]>maxMidD)
-//                    maxMidD = midDisplacement[n][m];
-//            }
-//        }
-//        if (maxMidD==0) maxMidD=1;
-//        if (maxHistD==0) maxHistD=1;
-//        
-//        // normalise with maximum possible distance
-//        // maxMidD = sqrt( 2*200*200 );
-//        
-//        // calculate the final probability
+        // Can't have zeros here
+        
+        if (maxHistD==0) maxHistD = 1;
+        
+        // normalise maxMidD with maximum possible distance
+        // why?
+        
+        // maxMidD = sqrt( 2*200*200 );
+
+        // calculate the final probability
 //        SPLog(@"-- Correlation Table --\n");
-//        for (n=0;n<[newBlobs count];n++)
-//        {
-//            Blob* newBlob = [newBlobs objectAtIndex:n];
-//            SPLog(@"\nCorrelating new Blob #%d (histogram size %d, [%3d,%3d])",
-//                  n,(int)[newBlob histogramSize],[newBlob midX],[newBlob midY]);
-//            
-//            for (m=0;m<[blobs count];m++)
-//            {
-//                Blob* cmpBlob = (Blob*)[blobs objectAtIndex:m];
-//                float prob_r = WEIGHT_R * gsl_sf_erfc(midDisplacement[n][m]/maxMidD);
-//                float prob_h = WEIGHT_H * gsl_sf_erfc(histDiff[n][m]/maxHistD);
-//                float prob_t = WEIGHT_T * tau[n][m];
-//                sum_prob[n][m] = prob_t + prob_r + prob_h;
-//                
-//                SPLog(@"\t<ID#%ld>:\tdeltaR=%4.1f (%f)\tdH=%5.4f (%f)\ttau=%5.4f\tsum=%5.4f\tcovON=%3.2f\tcovNO=%3.2f",
-//                      [cmpBlob tag],
-//                      midDisplacement[n][m], prob_r,
-//                      histDiff[n][m], prob_h,
-//                      prob_t,
-//                      sum_prob[n][m],
-//                      coverOldByNew[n][m],coverNewByOld[n][m]
-//                      );
-//            }
-//        }
-//        
+        
+        for ( n=0; n < new_count; n++ )
+        {
+            typename Cluster<T>::ptr newCluster = current[n];
+            
+            if ( verbosity >= VerbosityDetails )
+            {
+                cout << endl << "Correlating new Blob #" << n
+                << " (histogram size " << newCluster->histogram(tracking_var_index,valid_min,valid_max)->sum() << ")"
+                << " at " << newCluster->mode << endl;
+            }
+
+            for ( m=0; m < old_count; m++ )
+            {
+                typename Cluster<T>::ptr oldCluster = previous[m];
+
+                float prob_r = m_dist_weight * erfc( midDisplacement[n][m] / maxMidD );
+                float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
+                float prob_t = m_corr_weight * rank_correlation[n][m];
+                sum_prob[n][m] = prob_t + prob_r + prob_h;
+                
+                if ( verbosity >= VerbosityDetails )
+                {
+                    printf("\t<ID#%llu>:\tdeltaR=%4.1f (%f)\t\tdH=%5.4f (%f)\t\ttau=%6.4f\t\tsum=%5.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                           oldCluster->id,
+                           midDisplacement[n][m],
+                           prob_r,
+                           histDiff[n][m],
+                           prob_h,
+                           prob_t,
+                           sum_prob[n][m],
+                           coverOldByNew[n][m],
+                           coverNewByOld[n][m]);
+                }
+            }
+        }
+        
+//
 //        float velocitySum = 0;
 //        int velocityBlobCount = 0;
 //        float currentMaxProb = 1000;

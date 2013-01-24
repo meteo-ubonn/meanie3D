@@ -71,7 +71,7 @@ protected:
     
     FeatureSpace<T>         *m_featureSpace;
     
-    FeatureSpaceIndex<T>    *m_featureSpaceIndex;
+    PointIndex<T>    *m_featureSpaceIndex;
     
     //
     // Protected methods

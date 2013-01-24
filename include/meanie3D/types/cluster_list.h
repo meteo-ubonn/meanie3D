@@ -136,7 +136,7 @@ namespace m3D {
          */
         typename Point<T>::ptr
         predecessor_of(FeatureSpace<T> *fs,
-                       FeatureSpaceIndex<T> *index,
+                       PointIndex<T> *index,
                        const vector<T> &resolution,
                        const size_t &variable_index,
                        typename Point<T>::ptr p);
@@ -149,7 +149,7 @@ namespace m3D {
          */
         typename Cluster<T>::list
         neighbours_of( typename Cluster<T>::ptr cluster,
-                      FeatureSpaceIndex<T> *index,
+                      PointIndex<T> *index,
                       const vector<T> &resolution,
                       const size_t &variable_index );
         
@@ -166,7 +166,7 @@ namespace m3D {
         should_merge_neighbouring_clusters( typename Cluster<T>::ptr c1,
                                            typename Cluster<T>::ptr c2,
                                            const size_t &variable_index,
-                                           FeatureSpaceIndex<T> *index,
+                                           PointIndex<T> *index,
                                            const vector<T> &resolution,
                                            const double &drf_threshold);
         
@@ -181,7 +181,7 @@ namespace m3D {
         get_boundary_points( typename Cluster<T>::ptr c1,
                             typename Cluster<T>::ptr c2,
                             typename Point<T>::list &boundary_points,
-                            FeatureSpaceIndex<T> *index,
+                            PointIndex<T> *index,
                             const vector<T> &resolution );
         
         
@@ -230,7 +230,7 @@ namespace m3D {
          * @param resolution (use cluster_resolution)
          */
         void aggregate_clusters_by_boundary_analysis( const size_t &variable_index,
-                                                     FeatureSpaceIndex<T> *index,
+                                                     PointIndex<T> *index,
                                                      const vector<T> &resolution,
                                                      const double &drf_threshold,
                                                      const bool& show_progress);
@@ -239,7 +239,7 @@ namespace m3D {
          */
         void write_boundaries( const size_t &variable_index,
                               FeatureSpace<T> *fs,
-                              FeatureSpaceIndex<T> *index,
+                              PointIndex<T> *index,
                               const vector<T> &resolution );
         
 #pragma mark -

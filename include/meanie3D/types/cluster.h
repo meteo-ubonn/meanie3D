@@ -17,7 +17,8 @@ namespace m3D {
 	using namespace std;
     using namespace netCDF;
 	using cfa::meanshift::Point;
-    
+    using cfa::meanshift::PointIndex;
+
     /** Cluster of points in feature space. A cluster is a point in feature space,
      * where multiple trajectories of original feature space points end. This end
      * point is called the cluster's 'mode'.
@@ -35,6 +36,12 @@ namespace m3D {
         vector<T>                   m_geometrical_center;
         
         map< size_t, vector<T> >    m_weighed_centers;
+        
+        PointIndex<T>               *m_index;
+        
+        size_t                      m_dimension;                // dimension of the points
+        
+        size_t                      m_spatial_dimension;        // number of spatial dimensions (always first)
         
     public:
         
@@ -64,24 +71,25 @@ namespace m3D {
          */
         id_t                        id;
         
+        // Private default constructor
+        Cluster();
+        
 #pragma mark -
 #pragma mark Constructor/Destructor
         
-        /** Default constructor
-         */
-        Cluster();
-        
         /** Constructor
+         * @param number of spatial dimensions
          * @param mode
          */
-        Cluster( vector<T> mode );
+        Cluster( size_t dimension, size_t spatial_dimension, vector<T> mode);
         
         /** Copy constructor
          * @param cluster
          */
-        Cluster( const Cluster<T> &o );
+        Cluster(const Cluster<T> &o);
         
-        /** Destructor */
+        /** Destructor 
+         */
         virtual ~Cluster();
         
 #pragma mark -
@@ -175,6 +183,20 @@ namespace m3D {
         void clear_histogram_cache();
         
 #pragma mark -
+#pragma mark Index
+
+        /** Returns the cluster's index (an index over the cluster's points).
+         * The result is cached. The cache can be cleared by calling clear_index().
+         * @return index on the cluster's points.
+         */
+        PointIndex<T> *index();
+
+        /** Deletes the cluster's index. Subsequent call to index() will force
+         * a re-calculation of the index.
+         */
+        void clear_index();
+
+#pragma mark -
 #pragma mark Coverage
         
         /** Counts the number of points in cluster b, that are identical to points
@@ -185,7 +207,7 @@ namespace m3D {
          * @param another cluster
          * @return coverage in percentage
          */
-        float percent_covered_by( const Cluster<T>& b );
+        float percent_covered_by( const Cluster<T>::ptr b ) const;
         
 #pragma mark -
 #pragma mark Derived Properties

@@ -281,16 +281,6 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
             Cluster<TypeParam> *c = *ci;
             
             cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
-            
-            TypeParam min, max;
-            
-            c->dynamic_range(0,min,max);
-
-            cout << "\tDynamic range [" << min << "," << max << "]" << endl;
-            
-            Histogram<TypeParam> h = c->histogram( this->m_featureSpace, this->m_featureSpace->variables()[0] );
-            
-            cout << "\thistogram = " << h.bins() << endl;
         }
         
 #if WRITE_FEATURESPACE
@@ -409,16 +399,6 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
             Cluster<TypeParam> *c = *ci;
             
             cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
-            
-            TypeParam min, max;
-            
-            c->dynamic_range(0,min,max);
-            
-            cout << "\tDynamic range [" << min << "," << max << "]" << endl;
-
-            Histogram<TypeParam> h = c->histogram( this->m_featureSpace, this->m_featureSpace->variables()[0] );
-            
-            cout << "\thistogram = " << h.bins() << endl;
         }
         
 #if WRITE_FEATURESPACE

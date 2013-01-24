@@ -18,7 +18,7 @@ namespace m3D {
 
 	using namespace ::std;
 	using ::cfa::meanshift::FeatureSpace;
-	using ::cfa::meanshift::FeatureSpaceIndex;
+	using ::cfa::meanshift::PointIndex;
 	using ::cfa::meanshift::SearchParameters;
 	using ::cfa::meanshift::Kernel;
 

@@ -45,7 +45,7 @@ namespace m3D {
         void report_done();
         
         ClusterOperation(FeatureSpace<T> *fs,
-        		 	 	 FeatureSpaceIndex<T> *index)
+        		 	 	 PointIndex<T> *index)
         : Operation<T>( fs, index ), m_progress_bar(NULL) {};
         
         virtual ~ClusterOperation() {}

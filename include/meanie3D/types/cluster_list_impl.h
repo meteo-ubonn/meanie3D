@@ -20,7 +20,7 @@ namespace m3D {
     using namespace cfa::utils::visit;
 	using cfa::meanshift::Point;
 	using cfa::meanshift::FeatureSpace;
-	using cfa::meanshift::FeatureSpaceIndex;
+	using cfa::meanshift::PointIndex;
 	using cfa::meanshift::KNNSearchParams;
 	using cfa::meanshift::RangeSearchParams;
 	using cfa::meanshift::SearchParameters;
@@ -493,7 +493,7 @@ namespace m3D {
                 
                 // Create a cluster object
                 
-                typename Cluster<T>::ptr cluster = new Cluster<T>( mode );
+                typename Cluster<T>::ptr cluster = new Cluster<T>( feature_variables.size(), spatial_dimensions, mode );
                 
                 // Assign ID
                 
@@ -555,7 +555,7 @@ namespace m3D {
     void
     ClusterList<T>::aggregate_cluster_graph( const size_t &variable_index, FeatureSpace<T> *fs, const vector<T> &resolution, const bool& show_progress )
     {
-        // FeatureSpaceIndex<T>::write_index_searches = true;
+        // PointIndex<T>::write_index_searches = true;
         
         size_t cluster_id = 0;
         
@@ -570,7 +570,7 @@ namespace m3D {
         
         // Create own index for KNN search
         
-        FeatureSpaceIndex<T> *index = FeatureSpaceIndex<T>::create( fs );
+        PointIndex<T> *index = PointIndex<T>::create( fs );
         
         for ( size_t i = 0; i < fs->points.size(); i++ )
         {
@@ -655,13 +655,13 @@ namespace m3D {
             delete progress;
         }
         
-        // FeatureSpaceIndex<T>::write_index_searches = false;
+        // PointIndex<T>::write_index_searches = false;
     }
     
     template <typename T>
     typename Point<T>::ptr
     ClusterList<T>::predecessor_of( FeatureSpace<T> *fs,
-                                    FeatureSpaceIndex<T> *index,
+                                    PointIndex<T> *index,
                                     const vector<T> &resolution,
                                     const size_t &variable_index,
                                     typename Point<T>::ptr p )
@@ -714,7 +714,7 @@ namespace m3D {
 
     template <typename T>
     typename Cluster<T>::list
-    ClusterList<T>::neighbours_of( typename Cluster<T>::ptr cluster, FeatureSpaceIndex<T> *index, const vector<T> &resolution, const size_t &variable_index )
+    ClusterList<T>::neighbours_of( typename Cluster<T>::ptr cluster, PointIndex<T> *index, const vector<T> &resolution, const size_t &variable_index )
     {
         typename Cluster<T>::list neighbouring_clusters;
         
@@ -756,7 +756,7 @@ namespace m3D {
     ClusterList<T>::get_boundary_points( typename Cluster<T>::ptr c1,
                                     typename Cluster<T>::ptr c2,
                                     typename Point<T>::list &boundary_points,
-                                    FeatureSpaceIndex<T> *index,
+                                    PointIndex<T> *index,
                                     const vector<T> &resolution )
     {
         // make the width of the boundary half the resolution
@@ -848,7 +848,7 @@ namespace m3D {
     ClusterList<T>::should_merge_neighbouring_clusters( typename Cluster<T>::ptr c1,
                                                         typename Cluster<T>::ptr c2,
                                                         const size_t &variable_index,
-                                                        FeatureSpaceIndex<T> *index,
+                                                        PointIndex<T> *index,
                                                         const vector<T> &resolution,
                                                         const double &drf_threshold )
     {
@@ -907,7 +907,7 @@ namespace m3D {
     void
     ClusterList<T>::write_boundaries( const size_t &variable_index,
                                       FeatureSpace<T> *fs,
-                                      FeatureSpaceIndex<T> *index,
+                                      PointIndex<T> *index,
                                       const vector<T> &resolution )
     {
         // collate the data
@@ -1143,7 +1143,7 @@ namespace m3D {
     template <typename T>
     void
     ClusterList<T>::aggregate_clusters_by_boundary_analysis( const size_t &variable_index,
-                                                             FeatureSpaceIndex<T> *index,
+                                                             PointIndex<T> *index,
                                                              const vector<T> &resolution,
                                                              const double &drf_threshold,
                                                              const bool &show_progress )
@@ -1152,7 +1152,7 @@ namespace m3D {
         // resolution and would trigger re-calculation of the index every other
         // step. It's cheaper to provide them with their own index
         
-        FeatureSpaceIndex<T> *index2 = FeatureSpaceIndex<T>::create( (FeatureSpace<T> *) index->feature_space() );
+        PointIndex<T> *index2 = PointIndex<T>::create( (FeatureSpace<T> *) index->feature_space() );
         
         ConsoleSpinner *spinner = NULL;
 
