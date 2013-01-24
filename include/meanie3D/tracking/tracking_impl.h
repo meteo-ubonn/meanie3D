@@ -78,7 +78,7 @@ namespace m3D {
         
         // Find the highest id 
         
-        size_t current_id = Cluster<T>::NO_ID;
+        size_t current_id = 0;
 
         // Find out the highest id from the previous list
         
