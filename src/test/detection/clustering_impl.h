@@ -239,8 +239,6 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         << " max_iter=" << TERMCRIT_ITER << " ... "
         << " with bandwidths " << h  << " ... " << endl;
         
-        ClusterList<TypeParam> clusters;
-        
         typename Cluster<TypeParam>::list::iterator ci;
         
         start_timer();
@@ -264,7 +262,7 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         
         ClusterOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
         
-        clusters = op.cluster( params, kernel, 0 );
+        ClusterList<TypeParam> clusters = op.cluster( params, kernel, 0 );
         
         delete kernel;
         
@@ -362,8 +360,6 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         << " max_iter=" << TERMCRIT_ITER << " ... "
         << " with bandwidths " << h << " ... " << endl;
         
-        ClusterList<TypeParam> clusters;
-        
         typename Cluster<TypeParam>::list::iterator ci;
         
         start_timer();
@@ -383,7 +379,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( resolution );
         
-        clusters = op.cluster( params, kernel, 0, 0.98 );
+        ClusterList<TypeParam> clusters = op.cluster( params, kernel, 0, 0.98 );
         
         delete kernel;
         //        delete weight;

@@ -103,7 +103,9 @@ namespace m3D {
             m_progress_bar = new boost::progress_display( this->feature_space->size() );
         }
 
-        ClusterList<T> cluster_list;
+        ClusterList<T> cluster_list(this->feature_space->feature_variables(),
+                                    this->feature_space->coordinate_system->size(),
+                                    this->feature_space->filename());
         
         // Guard against empty feature-space
         

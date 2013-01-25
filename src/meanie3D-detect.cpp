@@ -697,7 +697,7 @@ int main(int argc, char** argv)
     if ( verbosity > VerbositySilent )
         cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;
     
-    clusters.write( output_filename, fs, parameters );
+    clusters.write( output_filename );
     
     if ( verbosity > VerbositySilent )
         cout << "done." << endl;

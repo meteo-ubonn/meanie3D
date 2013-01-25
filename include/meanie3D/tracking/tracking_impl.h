@@ -38,16 +38,14 @@ namespace m3D {
     
     template <typename T>
     void
-    Tracking<T>::track(const ClusterList<T> &last_clusters,
-                       ClusterList<T> &current_clusters,
-                       const vector<NcVar> &feature_variables,
+    Tracking<T>::track(typename ClusterList<T>::ptr previous,
+                       typename ClusterList<T>::ptr current,
                        const NcVar &track_variable,
-                       size_t spatial_dimensions,
-                       Verbosity verbosity )
+                       Verbosity verbosity)
     {
         // sanity check
         
-        if ( current_clusters.clusters.size() == 0 )
+        if ( current->clusters.size() == 0 )
         {
             if ( verbosity >= VerbosityNormal )
             {
@@ -60,7 +58,7 @@ namespace m3D {
         
         // figure out tracking variable index
         
-        int index = index_of_first( feature_variables, track_variable );
+        int index = index_of_first( current->feature_variables, track_variable );
         
         assert( index >= 0 );
         
@@ -84,11 +82,7 @@ namespace m3D {
         
         typename Cluster<T>::list::iterator ci;
         
-        typename Cluster<T>::list previous = last_clusters.clusters;
-        
-        typename Cluster<T>::list current = current_clusters.clusters;
-        
-        for ( ci = previous.begin(); ci != previous.end(); ci++ )
+        for ( ci = previous->clusters.begin(); ci != previous->clusters.end(); ci++ )
         {
             typename Cluster<T>::ptr c = *ci;
             
@@ -108,8 +102,6 @@ namespace m3D {
         // TODO: check time difference and determine displacement restraints
         // TODO: add timestamp to the cluster file format
         // TODO: timestamp in the original file other than in the filename? Spec?
-        
-        T deltaT = 300; // (seconds)
         
 //        Blob* oldBlob = (Blob*)[blobs objectAtIndex:0];
 //        Blob* newBlob = (Blob*)[newBlobs objectAtIndex:0];
@@ -134,12 +126,12 @@ namespace m3D {
 //            }
 //        }
 
-        T maxDisplacement = this->m_maxVelocity * deltaT;
+        T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         
         if ( verbosity >= VerbosityDetails )
         {
-            printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm",
-                   this->m_maxVelocity, deltaT, maxDisplacement );
+            printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm\n",
+                   this->m_maxVelocity, this->m_deltaT, maxDisplacement );
         }
         
 //        T maxMeanVelocityDisplacement = 0.0;
@@ -155,12 +147,12 @@ namespace m3D {
 //        SPLog(@"\n");
         
         // Prepare the newcomers for re-identification
-        current_clusters.erase_identifiers();
+        current->erase_identifiers();
 
         // Get the counts
         
-        size_t old_count = previous.size();
-        size_t new_count = current.size();
+        size_t old_count = previous->clusters.size();
+        size_t new_count = current->clusters.size();
         
         // Create result matrices
         
@@ -183,13 +175,13 @@ namespace m3D {
         
         for ( n=0; n < new_count; n++ )
         {
-            typename Cluster<T>::ptr newCluster = current[n];
+            typename Cluster<T>::ptr newCluster = current->clusters[n];
             
             typename Histogram<T>::ptr newHistogram = newCluster->histogram(tracking_var_index,valid_min,valid_max);
             
             for ( m=0; m < old_count; m++ )
             {
-                typename Cluster<T>::ptr oldCluster = previous[m];
+                typename Cluster<T>::ptr oldCluster = previous->clusters[m];
                 
                 typename Histogram<T>::ptr oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
                 
@@ -199,8 +191,8 @@ namespace m3D {
                 
                 // calculate average mid displacement
                 
-                vector<T> dx = newCluster->weighed_center(spatial_dimensions,tracking_var_index)
-                - oldCluster->weighed_center(spatial_dimensions,tracking_var_index);
+                vector<T> dx = newCluster->weighed_center(current->spatial_dimension,tracking_var_index)
+                             - oldCluster->weighed_center(current->spatial_dimension,tracking_var_index);
 
                 midDisplacement[n][m] = vector_norm(dx);
 
@@ -237,11 +229,11 @@ namespace m3D {
         // maxMidD = sqrt( 2*200*200 );
 
         // calculate the final probability
-//        SPLog(@"-- Correlation Table --\n");
+        cout << endl << "-- Correlation Table --" << endl;
         
         for ( n=0; n < new_count; n++ )
         {
-            typename Cluster<T>::ptr newCluster = current[n];
+            typename Cluster<T>::ptr newCluster = current->clusters[n];
             
             if ( verbosity >= VerbosityDetails )
             {
@@ -252,7 +244,7 @@ namespace m3D {
 
             for ( m=0; m < old_count; m++ )
             {
-                typename Cluster<T>::ptr oldCluster = previous[m];
+                typename Cluster<T>::ptr oldCluster = previous->clusters[m];
 
                 float prob_r = m_dist_weight * erfc( midDisplacement[n][m] / maxMidD );
                 float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
@@ -261,13 +253,14 @@ namespace m3D {
                 
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("\t<ID#%llu>:\tdeltaR=%4.1f (%f)\t\tdH=%5.4f (%f)\t\ttau=%7.4f\t\tsum=%5.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                    printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f\t\tsum=%6.4f\t\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                            oldCluster->id,
+                           oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
                            midDisplacement[n][m],
                            prob_r,
                            histDiff[n][m],
                            prob_h,
-                           prob_t,
+                           rank_correlation[n][m],
                            sum_prob[n][m],
                            coverOldByNew[n][m],
                            coverNewByOld[n][m]);
@@ -279,33 +272,36 @@ namespace m3D {
         
         int velocityBlobCount = 0;
         
-        float currentMaxProb = numeric_limits<float>::min();
+        float currentMaxProb = numeric_limits<float>::max();
         
-        int maxIterations = new_count + old_count;
+        int maxIterations = new_count * old_count;
         
         int iterations = 0;
         
         // NSMutableSet* usedOldBlobs = [[NSMutableSet alloc] init];
         
-        set< typename Cluster<T>::ptr > matched_previous_clusters;
+        set< typename Cluster<T>::ptr > used_clusters;
         
-//        SPLog(@"\n-- Matching Results --\n");
+        printf("\n-- Matching Results --\n");
         
-        while (iterations<=maxIterations)
+        while ( iterations <= maxIterations )
         {
-            // find the highest significant tau value
-            float maxProb = -1000;
+            // find the highest significant correlation match
             
-            int maxN=0,maxM=0;
+            float maxProb = numeric_limits<float>::min();
             
-            for (n=0;n<new_count;n++)
+            size_t maxN=0, maxM=0;
+            
+            for ( n=0; n < new_count; n++ )
             {
-                for (m=0;m<old_count;m++)
+                for ( m=0; m < old_count; m++ )
                 {
-                    if ( sum_prob[n][m] > maxProb && sum_prob[n][m] < currentMaxProb )
+                    if ( (sum_prob[n][m] > maxProb) && (sum_prob[n][m] < currentMaxProb) )
                     {
                         maxProb = sum_prob[n][m];
+
                         maxN = n;
+                        
                         maxM = m;
                     }
                 }
@@ -313,21 +309,17 @@ namespace m3D {
 
             // take pick, remove paired candidates from arrays
             
-            typename Cluster<T>::ptr matchedPrev = previous[maxM];
-            
-            typename Cluster<T>::ptr matchedCurr = current[maxN];
-            
-//            Blob* oldBlob = (Blob*)[blobs objectAtIndex:maxM];
-//            
-//            Blob* newBlob = (Blob*)[newBlobs objectAtIndex:maxN];
+            typename Cluster<T>::ptr new_cluster = current->clusters[maxN];
+
+            typename Cluster<T>::ptr old_cluster = previous->clusters[maxM];
             
             // check mid displacement constraints and update mean velocity
+            
             if ( midDisplacement[maxN][maxM] > maxDisplacement )
             {
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("pairing new blob #%d / old blob ID#%ld rejected. dR=%4.1f violates maximum velocity constraint.",
-                           maxN, matchedPrev->id, midDisplacement[maxN][maxM] );
+                    printf("pairing new blob #%4d / old blob ID#%ld rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
                 }
             }
 //            else if (m_useMeanVelocityConstraint && midDisplacement[maxN][maxM] > maxMeanVelocityDisplacement )
@@ -338,29 +330,30 @@ namespace m3D {
 //                           maxN, matchedPrev->id, midDisplacement[maxN][maxM] );
 //                }
 //            }
-            else if (matchedCurr->id == Cluster<T>::NO_ID
-                     && matched_previous_clusters.find(matchedPrev) == matched_previous_clusters.end() )
+            else if ( new_cluster->id == Cluster<T>::NO_ID )
             {
-                float velocity = midDisplacement[maxN][maxM] / deltaT;
+                // new cluster not tagged yet
                 
-                //[newBlob setVelocity:velocity];
-                
-                if ( velocity > 0.5 )
+                if ( used_clusters.find(old_cluster) == used_clusters.end() )
                 {
+                    // old cluster not matched yet
+
+                    float velocity = midDisplacement[maxN][maxM] / this->m_deltaT;
+                
                     velocitySum += velocity;
-                    
+                        
                     velocityBlobCount++;
+                    
+    //                if ( verbosity >= VerbosityDetails )
+    //                {
+                        printf("pairing new blob #%4lu / old blob ID=#%4lu accepted, velocity %4.1f m/s\n",
+                               maxN, old_cluster->id, velocity );
+    //                }
+                    
+                    new_cluster->id = old_cluster->id;
+                    
+                    used_clusters.insert( old_cluster );
                 }
-                
-//                if ( verbosity >= VerbosityDetails )
-//                {
-                    printf("pairing new blob #%d / old blob ID=#%lu accepted, velocity %4.1f m/s\n",
-                           maxN, matchedPrev->id, velocity );
-//                }
-                
-                matchedCurr->id = matchedPrev->id;
-                
-                matched_previous_clusters.insert( matchedPrev );
             }
             
             currentMaxProb = maxProb;
@@ -372,7 +365,7 @@ namespace m3D {
 //        float newMeanVelocity = 0;
 //        if (velocityBlobCount>0) newMeanVelocity = velocitySum/velocityBlobCount;
 //        if (newMeanVelocity > 2.0) meanVelocity = newMeanVelocity;
-//        
+//
 //        SPLog(@"\ncurrent mean velocity: %4.2f m/s",meanVelocity);
         
         // all new blobs without id now get one
@@ -381,29 +374,48 @@ namespace m3D {
         
         for (n=0;n<new_count;n++)
         {
-            typename Cluster<T>::ptr c = current[n];
+            typename Cluster<T>::ptr c = current->clusters[n];
             
             if ( c->id == Cluster<T>::NO_ID )
             {
-                c->id = current_id++;
+                c->id = current_id;
                 
                 cout << "new cluster #" << n << " at " << c->mode << " with |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum()
                      << " is assigned new ID#" << c->id << endl;
+                
+                current_id++;
             }
         }
 
-//        // list those old blobs not being lined up again
+        // list those old blobs not being lined up again
+        bool hadGoners = false;
+        cout << "\n-- Goners --" << endl;
+        for ( ci = previous->clusters.begin(); ci != previous->clusters.end(); ci++ )
+        {
+            typename Cluster<T>::ptr c = *ci;
+            typename set< typename Cluster<T>::ptr >::iterator f = used_clusters.find( c );
+            if ( f != used_clusters.end() ) continue;
+            cout << "ID#" << c->id << " at " << c->mode << " |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum() << endl;
+            hadGoners = true;
+        }
+        if (!hadGoners)
+        {
+            cout << "none." << endl;
+        }
+        
 //        NSEnumerator* obn = [blobs objectEnumerator];
 //        Blob* ob;
 //        SPLog(@"\n-- Goners --");
 //        BOOL hadGoners=NO;
-//        while ((ob=[obn nextObject])!=nil) {
+//        while ((ob=[obn nextObject])!=nil)
+//        {
 //            if ([usedOldBlobs containsObject:ob]) continue;
 //            SPLog(@"ID#%ld at [%3d,%3d]\t |H|=%5d",[ob tag],[ob midX],[ob midY],(int)[ob histogramSize]);
 //            hadGoners=YES;
 //        }
 //        if (!hadGoners) SPLog(@"none.");
-//        
+        
+        
 //        // handle merging
 //        SPLog(@"\n-- Merges --");
 //        // for each new blob check coverage of old blobs

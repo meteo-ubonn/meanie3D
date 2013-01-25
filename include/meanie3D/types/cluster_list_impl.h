@@ -31,18 +31,6 @@ namespace m3D {
 	#define sup( v1,v2 ) (v1 > v2 ? v1:v2)
 	#define inf( v1,v2 ) (v1 < v2 ? v1:v2)
 
-#pragma mark -
-#pragma mark Constructor/Destructor
-
-    template <typename T> 
-    ClusterList<T>::ClusterList()
-    {
-    }
-    
-    template <typename T> 
-    ClusterList<T>::~ClusterList()
-    {
-    };
     
 #pragma mark -
 #pragma mark Accessing the list
@@ -230,7 +218,7 @@ namespace m3D {
 
     template <typename T> 
     void 
-    ClusterList<T>::write( const std::string& path, const FeatureSpace<T> *feature_space, const string& parameters )
+    ClusterList<T>::write( const std::string& path )
     {
         try
         {
@@ -252,15 +240,14 @@ namespace m3D {
             
             // Create dimensions
             
-            NcDim dim = file->addDim("featurespace_dim", (int) feature_space->dimension );
+            NcDim dim = file->addDim("featurespace_dim", (int) this->feature_variables.size() );
             
-            NcDim spatial_dim = file->addDim("spatial_dim", (int) feature_space->coordinate_system->size() );
+            NcDim spatial_dim = file->addDim("spatial_dim", (int) this->spatial_dimension );
             
-            // Create attributes
+            // Create dummy variables, attributes and other meta-info
             
             file->putAtt( "num_clusters", ncInt, (int) clusters.size() );
-            file->putAtt( "source", feature_space->filename() );
-            file->putAtt( "parameters", parameters );
+            file->putAtt( "source", this->source_file );
             
             // compile a list of the feature space variables used,
             // including the spatial dimensions
@@ -269,9 +256,9 @@ namespace m3D {
             
             // feature variables
             
-            for ( size_t i=0; i < feature_space->feature_variables().size(); i++ )
+            for ( size_t i=0; i < this->feature_variables.size(); i++ )
             {
-                NcVar var = feature_space->feature_variables()[i];
+                NcVar var = this->feature_variables[i];
 
                 // append to list
                 
@@ -303,9 +290,9 @@ namespace m3D {
                 }
             }
             
-            file->putAtt( "variables", variable_names.str() );
+            file->putAtt( "featurespace_variables", variable_names.str() );
             
-            // Add cluster variables
+            // Add cluster dimensions and variables
             
             for ( size_t ci = 0; ci < clusters.size(); ci++ )
             {
@@ -335,9 +322,9 @@ namespace m3D {
                 
                 // id
                 
-                unsigned long long cid = clusters[ci]->id;
+                unsigned long long cid = (unsigned long long) clusters[ci]->id;
                 
-                var.putAtt( "id", ncInt, cid );
+                var.putAtt( "id", ncInt64, cid );
                 
                 // mode
 
@@ -357,32 +344,26 @@ namespace m3D {
                 
                 var.putAtt( "mode", mode_str.str() );
 
-                // allocate memory and write the cluster away
+                // Write the clusters away point by point
                 
-                size_t dim_size = feature_space->coordinate_system->size();
-                
+                // index and counter
                 vector<size_t> index(2,0);
-                
                 vector<size_t> count(2,0);
-                
                 count[0] = 1;
-                
-                count[1] = feature_space->dimension;
+                count[1] = dim.getSize();
 
+                // iterate over points
                 for ( size_t pi = 0; pi < clusters[ci]->points.size(); pi++ )
                 {
                     Point<T> *p = clusters[ci]->points[pi];
                     
-                    double data[dim_size];
-
-                    for ( size_t di = 0; di < feature_space->dimension; di++ )
+                    double data[ dim.getSize() ];
+                    
+                    for ( size_t di = 0; di < dim.getSize(); di++ )
                     {
                         data[di] = (double)p->values[di];
                     }
-                    
-                    
                     index[0] = pi;
-                    
                     var.putVar(index, count, &data[0] );
                 }
             }
@@ -394,23 +375,23 @@ namespace m3D {
     }
 
     template <typename T> 
-    void
-    ClusterList<T>::read(const std::string& path,
-                         NcFile **the_file,
-                         ClusterList<T> &list,
-                         vector<NcVar> &feature_variables,
-                         size_t &spatial_dimensions,
-                         std::string& source,
-                         std::string &parameters,
-                         std::string &variable_names )
+    typename ClusterList<T>::ptr
+    ClusterList<T>::read(const std::string& path)
     {
+        // TODO: make this a normal variable
         NcFile *file = NULL;
+
+        // meta-info
         
+        vector<NcVar>                   feature_variables;
+        size_t                          spatial_dimension;
+        string                          source_file;
+        typename Cluster<T>::list       list;
+
+        // TODO: let this exception go up
         try
         {
             file = new NcFile( path, NcFile::read );
-            
-            *the_file = file;
         }
         catch ( const netCDF::exceptions::NcException &e )
         {
@@ -418,21 +399,19 @@ namespace m3D {
             exit( -1 );
         }
         
-        // Read the dimensions
-        
-        
         try
         {
+            // Read the dimensions
+
             NcDim fs_dim = file->getDim( "featurespace_dim" );
         
             NcDim spatial_dim = file->getDim( "spatial_dim" );
-            spatial_dimensions = spatial_dim.getSize();
+            
+            spatial_dimension = spatial_dim.getSize();
             
             // Read global attributes
             
-            file->getAtt("source").getValues( source );
-            file->getAtt("parameters").getValues( parameters );
-            file->getAtt("variables").getValues( variable_names );
+            file->getAtt("source").getValues( source_file );
             
             int number_of_clusters;
             file->getAtt("num_clusters").getValues( &number_of_clusters );
@@ -493,46 +472,65 @@ namespace m3D {
                 
                 // Create a cluster object
                 
-                typename Cluster<T>::ptr cluster = new Cluster<T>( feature_variables.size(), spatial_dimensions, mode );
+                typename Cluster<T>::ptr cluster = new Cluster<T>( mode, spatial_dim.getSize() );
                 
-                // Assign ID
+                // read cluster id
                 
                 var.getAtt("id").getValues( &(cluster->id) );
                 
                 // iterate over the data
 
-                T data[ cluster_dim.getSize() ][ fs_dim.getSize() ];
+                // Read the points, one by one
                 
-                var.getVar( &data[0][0] );
-
+                vector<size_t> index(2,0);
+                vector<size_t> count(2,0);
+                count[0] = 1;
+                count[1] = fs_dim.getSize();
+                
                 for ( size_t point_index = 0; point_index < cluster_dim.getSize(); point_index++ )
                 {
-                    Point<T> *p = new Point<T>();
+                    // Allocate data
                     
-                    p->values = vector<T>( fs_dim.getSize() );
+                    T data[fs_dim.getSize()];
                     
-                    p->coordinate = vector<T>( spatial_dim.getSize() );
+                    // set index up and read
                     
-                    for ( size_t i = 0; i < fs_dim.getSize(); i++ )
+                    index[0] = point_index;
+                    
+                    var.getVar(index,count,&data[0]);
+                    
+                    // copy data over to vectors
+                    
+                    vector<T> coordinate(spatial_dim.getSize(),0);
+                    
+                    vector<T> values(fs_dim.getSize(),0);
+                    
+                    for ( size_t i=0; i<fs_dim.getSize(); i++)
                     {
-                        p->values[i] = data[point_index][i];
+                        values[i] = data[i];
                         
                         if ( i < spatial_dim.getSize() )
                         {
-                            p->coordinate[i] = data[point_index][i];
+                            coordinate[i] = values[i];
                         }
                     }
                     
-                    cluster->points.push_back( p );
+                    // Create a point and add it to the cluster
+                    
+                    Point<T> *p = PointFactory<T>::get_instance()->create( coordinate, values );
+                    
+                    cluster->add_point(p);
                 }
                 
-                list.clusters.push_back( cluster );
+                list.push_back( cluster );
             }
         }
         catch (const std::exception &e)
         {
             cerr << e.what() << endl;
         }
+        
+        return new ClusterList<T>( list, feature_variables, spatial_dimension, source_file );
     }
     
     template <typename T>
@@ -637,11 +635,11 @@ namespace m3D {
             {
                 // Create a cluster and add it to the list
                 
-                typename Cluster<T>::ptr cluster = new Cluster<T>( nodes.back()->values );
+                typename Cluster<T>::ptr cluster = new Cluster<T>( nodes.back()->values, this->spatial_dimension );
                 
                 cluster->add_points( nodes );
                 
-                // cluster->id = cluster_id++;
+                cluster->id = cluster_id++;
                 
                 this->clusters.push_back( cluster );
             }
@@ -1114,7 +1112,7 @@ namespace m3D {
     {
         vector<T> merged_mode = (T)0.5 * ( c1->mode + c2->mode );
         
-        typename Cluster<T>::ptr merged_cluster = new Cluster<T>( merged_mode );
+        typename Cluster<T>::ptr merged_cluster = new Cluster<T>( merged_mode, this->spatial_dimension );
         
         merged_cluster->add_points( c1->points );
         
@@ -1231,7 +1229,7 @@ namespace m3D {
         }
         
         delete index2;
-    }
+    };
     
     template <typename T>
     void
@@ -1241,8 +1239,7 @@ namespace m3D {
         {
             clusters[i]->id = Cluster<T>::NO_ID;
         }
-    }
-
+    };
     
     template <typename T>
     void
@@ -1272,7 +1269,6 @@ namespace m3D {
         
         assert( point_count == fs->size() );
     };
-
 
 }; //namespace
 

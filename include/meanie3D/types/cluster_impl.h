@@ -28,10 +28,10 @@ namespace m3D {
     {};
     
     template <typename T>
-    Cluster<T>::Cluster( size_t dim, size_t spatial_dim, vector<T> mode )
+    Cluster<T>::Cluster(const vector<T> &mode, size_t spatial_dimension)
     : m_index(NULL)
-    , m_dimension(dim)
-    , m_spatial_dimension(spatial_dim)
+    , m_dimension(mode.size())
+    , m_spatial_dimension(spatial_dimension)
     , mode(mode)
     , id(NO_ID)
     {

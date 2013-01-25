@@ -142,6 +142,9 @@ int main(int argc, char** argv)
         return 1;
     }
     
+    // Select the correct point factory
+    PointFactory<FS_TYPE>::set_instance( new M3DPointFactory<FS_TYPE>() );
+    
     // Evaluate user input
     
     string previous_filename, current_filename, tracking_variable_name;
@@ -162,43 +165,15 @@ int main(int argc, char** argv)
     
     // Read previous clusters
     
-    ClusterList<FS_TYPE> prev_clusters;
-    
-    string prev_source, prev_parameters, prev_variable_names;
-    
-    vector<NcVar> previous_feature_variables, current_feature_variables;
-    
-    size_t prev_spatial_dims=0, curr_spatial_dims=0;
-    
-    NcFile *prev_file = NULL, *curr_file = NULL;
-    
-    ClusterList<FS_TYPE>::read(previous_filename,
-                               &prev_file,
-                               prev_clusters,
-                               previous_feature_variables,
-                               prev_spatial_dims,
-                               prev_source,
-                               prev_parameters,
-                               prev_variable_names );
-    
+    typename ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( previous_filename );
+
     // Read current clusters
     
-    ClusterList<FS_TYPE> curr_clusters;
-    
-    string curr_source, curr_parameters, curr_variable_names;
-    
-    ClusterList<FS_TYPE>::read(current_filename,
-                               &curr_file,
-                               curr_clusters,
-                               current_feature_variables,
-                               curr_spatial_dims,
-                               curr_source,
-                               curr_parameters,
-                               curr_variable_names );
+    typename ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read( current_filename );
     
     // Check if the feature variables match
     
-    if ( previous_feature_variables != current_feature_variables )
+    if ( previous->feature_variables != current->feature_variables )
     {
         cerr << "Incompatibe feature variables in the cluster files:" << endl;
         exit(-1);
@@ -210,15 +185,15 @@ int main(int argc, char** argv)
     
     if ( tracking_variable_name == "__default__" )
     {
-        tracking_var = current_feature_variables[curr_spatial_dims];
+        tracking_var = current->feature_variables[current->spatial_dimension];
     }
     else
     {
         bool found_tracking_var = false;
         
-        for ( size_t i = 0; i < current_feature_variables.size(); i++ )
+        for ( size_t i = 0; i < current->feature_variables.size(); i++ )
         {
-            NcVar v = current_feature_variables[i];
+            NcVar v = current->feature_variables[i];
             
             try {
                 if ( v.getName() == tracking_variable_name )
@@ -246,13 +221,19 @@ int main(int argc, char** argv)
     
     // Perform tracking
     
-    Tracking<FS_TYPE> tracking(1.0, 1.0, 1.0);
+    Tracking<FS_TYPE> tracking;
 
-    tracking.track( prev_clusters, curr_clusters, current_feature_variables, tracking_var, curr_spatial_dims, verbosity );
+    tracking.track( previous, current, tracking_var, verbosity );
     
-    delete prev_file;
+    // Write results back
     
-    delete curr_file;
+    current->write( current_filename );
+    
+    // Clean up
+    
+    delete previous;
+    
+    delete current;
     
     return 0;
 };

@@ -78,10 +78,10 @@ namespace m3D {
 #pragma mark Constructor/Destructor
         
         /** Constructor
+         * @param the cluster mode in feature-space (not in spatial coordinates!!)
          * @param number of spatial dimensions
-         * @param mode
          */
-        Cluster( size_t dimension, size_t spatial_dimension, vector<T> mode);
+        Cluster(const vector<T> &mode, size_t spatial_dimension);
         
         /** Copy constructor
          * @param cluster

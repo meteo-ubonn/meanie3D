@@ -29,15 +29,18 @@ namespace m3D {
         
         T   m_corr_weight;  // correlation weight histogram rank correlation
         
+        T   m_deltaT;       // This should in future be calculated properly from timestamps
+
         bool    m_useMeanVelocityConstraint;        // make use of max velocity constraint?
         
         T       m_meanVelocitySecurityPercentage;   // Percentual amount of deviation from mean velocity allowed
         
         T       m_maxVelocity;                      // physical maximum speed of objects in m/s
         
+        
         /** Private default constructor 
          */
-        Tracking() {};
+        // Tracking() {};
         
     public:
         
@@ -46,13 +49,14 @@ namespace m3D {
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking( T dw, T sw, T cw )
-        : m_dist_weight(dw)
-        , m_size_weight(sw)
-        , m_corr_weight(cw)
+        Tracking()
+        : m_dist_weight(1.0)
+        , m_size_weight(1.0)
+        , m_corr_weight(1.0)
+        , m_deltaT(300)                         // 5 minutes
         , m_useMeanVelocityConstraint(true)     // limit deviation from mean velocity
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
-        , m_maxVelocity(27.0)                  // limit max velocity to 15 m/s (~100 km/h)
+        , m_maxVelocity(27.0)                   // limit max velocity to 15 m/s (~100 km/h)
         {};
         
         /** Compares two cluster lists and propagates or assigns new identifiers.
@@ -60,11 +64,9 @@ namespace m3D {
          * @param index of variable to be used for the histogram correlation.
          * @param new clusters, which need id's
          */
-        void track(const ClusterList<T> &last_clusters,
-                   ClusterList<T> &current_clusters,
-                   const vector<NcVar> &feature_variables,
+        void track(typename ClusterList<T>::ptr previous,
+                   typename ClusterList<T>::ptr current,
                    const NcVar &track_variable,
-                   size_t spatial_dimensions,
                    Verbosity verbosity = VerbosityNormal);
         
     private:

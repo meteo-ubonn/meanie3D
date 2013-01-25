@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <boost/shared_ptr.hpp>
 #include <stdlib.h>
+#include <netcdf>
 
 #include <cf-algorithms/cf-algorithms.h>
 
@@ -17,6 +18,7 @@
 
 namespace m3D {
     
+    using namespace netCDF;
 	using namespace std;
 	using ::cfa::meanshift::Point;
 
@@ -32,26 +34,76 @@ namespace m3D {
     class ClusterList
     {
         
-    protected:
+    private:
         
         typedef map< vector<T>, typename Cluster<T>::ptr > ClusterMap;
         
         ClusterMap      m_cluster_map;
         
+        
+        /** Standard constructor is private
+         */
+        ClusterList() {};
+        
     public:
         
-        typename Cluster<T>::list clusters;
+#pragma mark -
+#pragma mark Public typedefs
+        
+        typedef ClusterList<T> *    ptr;
+        
+#pragma mark -
+#pragma mark Public Properties
+
+        // meta-info
+        
+        vector<NcVar>   feature_variables;            // all variables, including dimension variables
+        
+        size_t          spatial_dimension;            // 2D or 3D ?
+        
+        string          source_file;                  // Name of the file that the clusters were created from
+        
+        // payload
+
+        typename Cluster<T>::list   clusters;
         
 #pragma mark -
 #pragma mark Constructor/Destructor
-        
-        /** Standard constructor
+
+        /** @constructor
+         * @param all variables used to contruct the points from, in the same order
+         * @param the spatial dimension (2D/3D)
+         * @param name of the file the clusters were created from
+         * @param the command line parameters used to cluster
          */
-        ClusterList();
-        
+        ClusterList(const vector<NcVar> &variables,
+                    size_t spatial_dim,
+                    const string& source_file )
+        : feature_variables(variables)
+        , spatial_dimension(spatial_dim)
+        , source_file(source_file)
+        {};
+
+        /** @constructor
+         * @param a list of clusters
+         * @param all variables used to contruct the points from, in the same order
+         * @param the spatial dimension (2D/3D)
+         * @param name of the file the clusters were created from
+         * @param the command line parameters used to cluster
+         */
+        ClusterList(const typename Cluster<T>::list &list,
+                    const vector<NcVar> &variables,
+                    size_t spatial_dim,
+                    const string& source_file )
+        : feature_variables(variables)
+        , spatial_dimension(spatial_dim)
+        , source_file(source_file)
+        , clusters(list)
+        {};
+
         /** Destructor
          */
-        ~ClusterList();
+        ~ClusterList() {};
         
 #pragma mark -
 #pragma mark Accessing the list
@@ -267,9 +319,7 @@ namespace m3D {
          * @param feature space
          * @param parameters used in the run
          */
-        void write( const string& path,
-                   const FeatureSpace<T> *feature_space,
-                   const string& parameters );
+        void write( const string& path );
         
         /** Static method for reading cluster lists back in.
          * @param path      : path to the cluster file
@@ -279,15 +329,8 @@ namespace m3D {
          * @param var_names : contains the list of variables used after reading
          */
         static
-        void
-        read(const string& path,
-             NcFile **the_file,
-        	 ClusterList<T> &list,
-             vector<NcVar> &feature_variables,
-             size_t &spatial_dimensions,
-             string& source,
-        	 string &parameters,
-        	 string &variable_names );
+        typename ClusterList<T>::ptr
+        read(const string& path );
         
         /** Prints the cluster list out to console
          */
