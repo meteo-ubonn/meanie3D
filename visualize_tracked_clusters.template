@@ -1,0 +1,89 @@
+#!/usr/bin/python
+import glob
+import sys
+import os
+
+# plot original data
+source_file = "SOURCE_FILE"
+OpenDatabase( source_file )
+
+# extract the cluster filename filter from the source file
+basename = os.path.basename(source_file)
+pattern = os.path.splitext(basename)[0]
+
+print "Source-File = " + source_file 
+print "Basename    = " + basename
+print "Pattern     = " + pattern
+
+
+#a = GetAnnotationAttributes()
+#a.axes2D.visible=0
+#SetAnnotationAttributes(a)
+
+# Add the source data plot
+#AddPlot("Pseudocolor", "zh")
+#p = PseudocolorAttributes()
+#p.colorTableName="hot_desaturated"
+#p.invertColorTable=0
+#p.legendFlag=1
+#p.minFlag, p.maxFlag = 1,1
+#p.min,p.max = 0,50
+#p.opacity=0.33
+#SetPlotOptions(p)
+
+# Add threshold operator
+#AddOperator("Threshold")
+#t = ThresholdAttributes();
+#t.lowerBounds=(10)
+#print t
+#t.lbound = 10
+#SetOperatorOptions(t)
+
+#DrawPlots();
+
+# plot the clusters
+cluster_basename = "Debug/*"+pattern+"*_cluster_*.vtk"
+list = glob.glob(cluster_basename)
+
+count = 0;
+#col_tables = ["Purples","Blues","Oranges","Greens","Reds","Set1","Set2","Set3","hot","hot_and_cold","hot_desaturated"]
+col_tables = ["Purples","Blues","Oranges","Greens","Reds","Set1","Set2","Set3"]
+#col_tables = ["Purples","Blues","Oranges","Reds","RdYlGn"]
+for fname in list:
+
+    # add plot                                                                                                                                                                      
+    OpenDatabase(fname);
+    AddPlot("Pseudocolor", "cluster")
+
+    # extract the number from the cluster filename
+    # to select the color table based on the ID
+
+    try:
+        
+        print "Extracting cluster number from " + fname;
+
+        start = fname.index("_cluster_",0) + len("_cluster_")
+        end = fname.index(".vtk",start)
+        cluster_num = int( fname[start:end] );
+
+        print "Plotting cluster #" + str(cluster_num)
+
+    except ValueError:
+        print "Illegal filename " + fname
+        continue
+
+    # set plot attributes accordingly                                                                                                                                               
+    cp=PseudocolorAttributes();
+    cp.minFlag,cp.maxFlag = 1,1
+    cp.min,cp.max = 0.0, 50.0
+    cp.pointSizePixels=10
+    cp.legendFlag, cp.lightingFlag = 0,0
+    cp.invertColorTable=0
+    index = cluster_num % len(col_tables);
+    cp.colorTableName = col_tables[index];
+    cp.opacity=0.125
+
+    SetPlotOptions(cp)
+    count = count + 1;
+
+DrawPlots()
