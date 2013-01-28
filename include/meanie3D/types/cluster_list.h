@@ -57,6 +57,8 @@ namespace m3D {
 
         // meta-info
         
+        NcFile          *ncFile;
+        
         vector<NcVar>   feature_variables;            // all variables, including dimension variables
         
         size_t          spatial_dimension;            // 2D or 3D ?
@@ -66,6 +68,17 @@ namespace m3D {
         // payload
 
         typename Cluster<T>::list   clusters;
+        
+        // tracking help
+        
+        bool            tracking_performed;
+        
+        vector<size_t>  tracked_ids;
+        
+        vector<size_t>  dropped_ids;
+        
+        vector<size_t>  new_ids;
+
         
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -79,9 +92,11 @@ namespace m3D {
         ClusterList(const vector<NcVar> &variables,
                     size_t spatial_dim,
                     const string& source_file )
-        : feature_variables(variables)
+        : ncFile(NULL)
+        , feature_variables(variables)
         , spatial_dimension(spatial_dim)
         , source_file(source_file)
+        , tracking_performed(false)
         {};
 
         /** @constructor
@@ -95,15 +110,29 @@ namespace m3D {
                     const vector<NcVar> &variables,
                     size_t spatial_dim,
                     const string& source_file )
-        : feature_variables(variables)
+        : ncFile(NULL)
+        , feature_variables(variables)
         , spatial_dimension(spatial_dim)
         , source_file(source_file)
         , clusters(list)
+        , tracking_performed(false)
         {};
 
         /** Destructor
          */
-        ~ClusterList() {};
+        ~ClusterList()
+        {
+            close_ncFile();
+        };
+        
+        void close_ncFile()
+        {
+            if (ncFile!=NULL)
+            {
+                delete ncFile;
+                ncFile=NULL;
+            }
+        };
         
 #pragma mark -
 #pragma mark Accessing the list

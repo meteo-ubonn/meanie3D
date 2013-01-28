@@ -24,6 +24,7 @@ namespace m3D { namespace utils {
 
 	using namespace std;
 	using ::m3D::Cluster;
+	using ::m3D::ClusterList;
 
     template <typename T>
     class VisitUtils
@@ -49,6 +50,11 @@ namespace m3D { namespace utils {
     							const typename Cluster<T>::list &list,
     							const vector<T> &bandwidths,
     							bool use_ids = false );
+        /**
+         */
+        static
+        void
+        write_clusters_vtk( typename ClusterList<T>::ptr list );
 
     };
     

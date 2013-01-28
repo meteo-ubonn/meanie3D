@@ -216,6 +216,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils.h
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
+    include/meanie3D/utils/visit_impl.h
     include/meanie3D/implementations.h
 )
 
@@ -278,6 +279,18 @@ ELSE()
         ${HDF5_LIBRARIES})
 ENDIF()
 
+# VTK-converter
+
+ADD_EXECUTABLE(meanie3D-cfm2vtk
+    src/meanie3D-cfm2vtk.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-cfm2vtk
+    meanie3D
+    cf-algorithms
+    ${Boost_LIBRARIES}
+)
+
 # Unit Tests
 
 # detection
@@ -331,7 +344,7 @@ INSTALL(DIRECTORY include/${PROJECT_NAME}
         PATTERN "*.swp" EXCLUDE)
 INSTALL(TARGETS meanie3D LIBRARY DESTINATION "/usr/local/lib")
 INSTALL(TARGETS meanie3D-detect RUNTIME DESTINATION "/usr/local/bin")
-
+INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 # Documentation
 
 SET(FULL_VERSION_FOR_DOXYGEN 0.1.0)

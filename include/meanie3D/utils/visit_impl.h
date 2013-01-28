@@ -135,7 +135,77 @@ namespace m3D { namespace utils {
             f.close();
         }
     };
-
+    
+    template <class T>
+    void
+    VisitUtils<T>::write_clusters_vtk( typename ClusterList<T>::ptr list )
+    {
+        string basename = list->source_file;
+        
+        for ( size_t ci = 0; ci < list->size(); ci++ )
+        {
+            vector<T> mode = list->clusters[ci]->mode;
+            
+            // Write cluster out
+            
+            boost::replace_all( basename, "/", "_" );
+            boost::replace_all( basename, "..", "" );
+            
+            string filename = basename + "_cluster_" + boost::lexical_cast<string>( list->clusters[ci]->id ) + ".vtk";
+            
+            ofstream f( filename.c_str() );
+            f << fixed << setprecision(4);
+            
+            // Write Header
+            f << "# vtk DataFile Version 3.0" << endl;
+            f << "Meanshift Clustering Result" << endl;
+            f << "ASCII" << endl;
+            f << "DATASET UNSTRUCTURED_GRID" << endl;
+            f << "POINTS " << list->clusters[ci]->points.size() << " FLOAT" << endl;
+            
+            // Write point coordinates out as unstructured grid
+            
+            size_t point_dim = list->clusters[ci]->points[0]->coordinate.size();
+            
+            for ( size_t pi = 0; pi < list->clusters[ci]->points.size(); pi++ )
+            {
+                Point<T> *p = list->clusters[ci]->points[pi];
+                
+                for ( size_t vi = 0; vi < point_dim; vi++)
+                {
+                    size_t index = VTK_DIMENSION_INDEXES.empty() ? vi : VTK_DIMENSION_INDEXES[vi];
+                    
+                    f << p->coordinate[index] << "\t";
+                }
+                
+                if ( point_dim < 3 )
+                {
+                    f << "0.0";
+                }
+                
+                f << endl;
+            }
+            
+            // Write point data out. Only take the first value after coordinates
+            
+            f << endl;
+            f << "POINT_DATA " << list->clusters[ci]->points.size() << endl;
+            f << "SCALARS cluster FLOAT" << endl;
+            f << "LOOKUP_TABLE default" << endl;
+            
+            for ( size_t pi = 0; pi < list->clusters[ci]->points.size() - 1 ; pi++ )
+            {
+                Point<T> *p = list->clusters[ci]->points[pi];
+                
+                // f << p->trajectory_length << endl;
+                
+                f << p->values[ point_dim ] << endl;
+            }
+            
+            f.close();
+        }
+    };
+    
 }};
 
 #endif

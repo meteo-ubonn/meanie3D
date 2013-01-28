@@ -41,6 +41,7 @@ void parse_commmandline(program_options::variables_map vm,
                         string &previous_filename,
                         string &current_filename,
                         string &tracking_variable_name,
+                        bool &write_vtk,
                         Verbosity &verbosity)
 {
     if ( vm.count("previous") == 0 )
@@ -99,6 +100,10 @@ void parse_commmandline(program_options::variables_map vm,
     {
         verbosity = (Verbosity) vb;
     }
+    
+    // --write-vtk
+    
+    write_vtk = vm.count("write-vtk") > 0;
 }
 
 /**
@@ -119,6 +124,7 @@ int main(int argc, char** argv)
     ("previous,p", program_options::value<string>(), "Previous cluster file (netCDF)")
     ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
     ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Defaults to the first variable that is not a dimension variable.")
+    ("write-vtk,k","Write out the clusters as .vtk files for visit")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ;
     
@@ -151,9 +157,11 @@ int main(int argc, char** argv)
     
     Verbosity verbosity;
     
+    bool write_vtk = false;
+    
     try
     {
-        parse_commmandline(vm,previous_filename,current_filename,tracking_variable_name,verbosity);
+        parse_commmandline(vm,previous_filename,current_filename,tracking_variable_name,write_vtk,verbosity);
     }
     catch (const std::exception &e)
     {
@@ -222,12 +230,19 @@ int main(int argc, char** argv)
     // Perform tracking
     
     Tracking<FS_TYPE> tracking;
-
+    
     tracking.track( previous, current, tracking_var, verbosity );
     
     // Write results back
     
     current->write( current_filename );
+    
+    if ( write_vtk )
+    {
+        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( previous );
+        
+        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( current );
+    }
     
     // Clean up
     

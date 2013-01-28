@@ -222,15 +222,23 @@ namespace m3D {
     {
         try
         {
-       
-            // use NetCDF C - API (instead of C++) because the C++ API has no 
+            // use NetCDF C - API (instead of C++) because the C++ API has no
             // support for variable length arrays :(
+            
+            bool fileExists = this->ncFile != NULL;
             
             NcFile *file = NULL;
             
             try
             {
-                file = new NcFile( path, NcFile::replace );
+                if ( fileExists )
+                {
+                    file = this->ncFile;
+                }
+                else
+                {
+                    file = new NcFile( path, NcFile::replace );
+                }
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
@@ -240,57 +248,79 @@ namespace m3D {
             
             // Create dimensions
             
-            NcDim dim = file->addDim("featurespace_dim", (int) this->feature_variables.size() );
+            NcDim dim,spatial_dim;
             
-            NcDim spatial_dim = file->addDim("spatial_dim", (int) this->spatial_dimension );
-            
-            // Create dummy variables, attributes and other meta-info
-            
-            file->putAtt( "num_clusters", ncInt, (int) clusters.size() );
-            file->putAtt( "source", this->source_file );
-            
-            // compile a list of the feature space variables used,
-            // including the spatial dimensions
-            
-            stringstream variable_names(stringstream::in | stringstream::out);
-            
-            // feature variables
-            
-            for ( size_t i=0; i < this->feature_variables.size(); i++ )
+            if ( fileExists )
             {
-                NcVar var = this->feature_variables[i];
+                dim = file->getDim("featurespace_dim");
+                
+                spatial_dim = file->getDim("spatial_dim");
+            }
+            else
+            {
+                dim = file->addDim("featurespace_dim", (int) this->feature_variables.size() );
+            
+                spatial_dim = file->addDim("spatial_dim", (int) this->spatial_dimension );
+                
+                // Create dummy variables, attributes and other meta-info
+                
+                file->putAtt( "num_clusters", ncInt, (int) clusters.size() );
+                
+                file->putAtt( "source", this->source_file );
 
-                // append to list
+                // compile a list of the feature space variables used,
+                // including the spatial dimensions
                 
-                variable_names << var.getName() << " ";
+                stringstream variable_names(stringstream::in | stringstream::out);
                 
-                // create a dummy variable
+                // feature variables
                 
-                NcVar dummyVar = file->addVar( var.getName(), var.getType(), spatial_dim );
-                
-                // Copy attributes
-                
-                map< string, NcVarAtt > attributes = var.getAtts();
-                
-                map< string, NcVarAtt >::iterator at;
-                
-                for ( at = attributes.begin(); at != attributes.end(); at++ )
+                for ( size_t i=0; i < this->feature_variables.size(); i++ )
                 {
-                    NcVarAtt a = at->second;
+                    NcVar var = this->feature_variables[i];
+
+                    // append to list
                     
-                    size_t size = a.getAttLength();
+                    variable_names << var.getName() << " ";
                     
-                    void *data = (void *)malloc( size );
+                    // create a dummy variable
                     
-                    a.getValues( data );
+                    NcVar dummyVar = file->addVar( var.getName(), var.getType(), spatial_dim );
                     
-                    NcVarAtt copy = dummyVar.putAtt( a.getName(), a.getType(), size, data );
+                    // Copy attributes
                     
-                    free(data);
+                    map< string, NcVarAtt > attributes = var.getAtts();
+                    
+                    map< string, NcVarAtt >::iterator at;
+                    
+                    for ( at = attributes.begin(); at != attributes.end(); at++ )
+                    {
+                        NcVarAtt a = at->second;
+                        
+                        size_t size = a.getAttLength();
+                        
+                        void *data = (void *)malloc( size );
+                        
+                        a.getValues( data );
+                        
+                        NcVarAtt copy = dummyVar.putAtt( a.getName(), a.getType(), size, data );
+                        
+                        free(data);
+                    }
                 }
+                
+                file->putAtt( "featurespace_variables", variable_names.str() );
             }
             
-            file->putAtt( "featurespace_variables", variable_names.str() );
+            // Add tracking meta-info
+            
+            if ( this->tracking_performed )
+            {
+                file->putAtt( "tracking_performed", "yes" );
+                file->putAtt( "tracked_ids", to_string( this->tracked_ids ) );
+                file->putAtt( "new_ids", to_string( this->new_ids ) );
+                file->putAtt( "dropped_ids", to_string( this->dropped_ids ) );
+            }
             
             // Add cluster dimensions and variables
             
@@ -302,7 +332,16 @@ namespace m3D {
                 
                 dim_name << "cluster_dim_" << ci;
                 
-                NcDim cluster_dim = file->addDim( dim_name.str(), clusters[ci]->points.size() );
+                NcDim cluster_dim;
+                
+                if ( fileExists )
+                {
+                    cluster_dim = file->getDim( dim_name.str() );
+                }
+                else
+                {
+                    cluster_dim = file->addDim( dim_name.str(), clusters[ci]->points.size() );
+                }
                 
                 // Create variable
                 
@@ -314,7 +353,16 @@ namespace m3D {
                 dims[0] = cluster_dim;
                 dims[1] = dim;
                 
-                NcVar var = file->addVar( var_name.str(), ncDouble, dims );
+                NcVar var;
+                
+                if ( fileExists )
+                {
+                    var = file->getVar( var_name.str() );
+                }
+                else
+                {
+                    var = file->addVar( var_name.str(), ncDouble, dims );
+                }
                 
                 // size
                 
@@ -328,21 +376,9 @@ namespace m3D {
                 
                 // mode
 
-                vector<T> mode = clusters[ci]->mode;
-                
-                stringstream mode_str( stringstream::in | stringstream::out );
-                
-                for (size_t i = 0; i < mode.size(); i++ ) 
-                { 
-                    mode_str << mode[i];
-                    
-                    if ( i <= (mode.size()-2) ) 
-                    {
-                        mode_str << " ";
-                    }
-                };
-                
-                var.putAtt( "mode", mode_str.str() );
+                string mode = to_string( clusters[ci]->mode );
+
+                var.putAtt( "mode", mode );
 
                 // Write the clusters away point by point
                 
@@ -378,20 +414,18 @@ namespace m3D {
     typename ClusterList<T>::ptr
     ClusterList<T>::read(const std::string& path)
     {
-        // TODO: make this a normal variable
-        NcFile *file = NULL;
-
         // meta-info
         
         vector<NcVar>                   feature_variables;
         size_t                          spatial_dimension;
         string                          source_file;
         typename Cluster<T>::list       list;
+        NcFile                          *file = NULL;
 
         // TODO: let this exception go up
         try
         {
-            file = new NcFile( path, NcFile::read );
+            file = new NcFile( path, NcFile::write );
         }
         catch ( const netCDF::exceptions::NcException &e )
         {
@@ -454,10 +488,14 @@ namespace m3D {
                 
                 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
                 
-                boost::char_separator<char> sep(" ");
+                boost::char_separator<char> sep(",");
                 
                 std::string mode_str;
-                var.getAtt("mode").getValues( mode_str );
+                
+                var.getAtt("mode").getValues(mode_str);
+                
+                boost::replace_all(mode_str, "(", "" );
+                boost::replace_all(mode_str, ")", "" );
                 
                 tokenizer tokens( mode_str, sep );
                 
@@ -530,7 +568,11 @@ namespace m3D {
             cerr << e.what() << endl;
         }
         
-        return new ClusterList<T>( list, feature_variables, spatial_dimension, source_file );
+        ClusterList<T>::ptr cl = new ClusterList<T>( list, feature_variables, spatial_dimension, source_file );
+        
+        cl->ncFile = file;
+        
+        return cl;
     }
     
     template <typename T>

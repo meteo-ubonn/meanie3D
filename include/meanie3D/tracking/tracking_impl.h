@@ -319,7 +319,7 @@ namespace m3D {
             {
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("pairing new blob #%4d / old blob ID#%ld rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
+                    printf("pairing new blob #%4d / old blob ID#%lld rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
                 }
             }
 //            else if (m_useMeanVelocityConstraint && midDisplacement[maxN][maxM] > maxMeanVelocityDisplacement )
@@ -346,13 +346,14 @@ namespace m3D {
                     
     //                if ( verbosity >= VerbosityDetails )
     //                {
-                        printf("pairing new blob #%4lu / old blob ID=#%4lu accepted, velocity %4.1f m/s\n",
-                               maxN, old_cluster->id, velocity );
+                        printf("pairing new blob #%4lu / old blob ID=#%4llu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
     //                }
                     
                     new_cluster->id = old_cluster->id;
                     
                     used_clusters.insert( old_cluster );
+                    
+                    current->tracked_ids.push_back( new_cluster->id );
                 }
             }
             
@@ -380,6 +381,8 @@ namespace m3D {
             {
                 c->id = current_id;
                 
+                current->new_ids.push_back( c->id );
+                
                 cout << "new cluster #" << n << " at " << c->mode << " with |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum()
                      << " is assigned new ID#" << c->id << endl;
                 
@@ -393,10 +396,17 @@ namespace m3D {
         for ( ci = previous->clusters.begin(); ci != previous->clusters.end(); ci++ )
         {
             typename Cluster<T>::ptr c = *ci;
+            
             typename set< typename Cluster<T>::ptr >::iterator f = used_clusters.find( c );
+            
             if ( f != used_clusters.end() ) continue;
+            
             cout << "ID#" << c->id << " at " << c->mode << " |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum() << endl;
+            
+            current->dropped_ids.push_back(c->id);
+
             hadGoners = true;
+            
         }
         if (!hadGoners)
         {
@@ -505,7 +515,8 @@ namespace m3D {
 //        }
 //        SPLog(@"\n");
 //
-
+        
+        current->tracking_performed = true;
     }
     
 };
