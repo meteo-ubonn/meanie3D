@@ -61,7 +61,7 @@ namespace m3D {
         
         vector<NcVar>   feature_variables;            // all variables, including dimension variables
         
-        size_t          spatial_dimension;            // 2D or 3D ?
+        vector<NcDim>   dimensions;                   // all dimensions that were in the featurespace
         
         string          source_file;                  // Name of the file that the clusters were created from
         
@@ -85,17 +85,17 @@ namespace m3D {
 
         /** @constructor
          * @param all variables used to contruct the points from, in the same order
-         * @param the spatial dimension (2D/3D)
+         * @param all dimensions that were in the featurespace
          * @param name of the file the clusters were created from
          * @param the command line parameters used to cluster
          */
         ClusterList(const vector<NcVar> &variables,
-                    size_t spatial_dim,
-                    const string& source_file )
+                    const vector<NcDim> &dims,
+                    const string& sourcefile )
         : ncFile(NULL)
         , feature_variables(variables)
-        , spatial_dimension(spatial_dim)
-        , source_file(source_file)
+        , dimensions(dims)
+        , source_file(sourcefile)
         , tracking_performed(false)
         {};
 
@@ -107,13 +107,13 @@ namespace m3D {
          * @param the command line parameters used to cluster
          */
         ClusterList(const typename Cluster<T>::list &list,
+                    const vector<NcDim> &dims,
                     const vector<NcVar> &variables,
-                    size_t spatial_dim,
-                    const string& source_file )
+                    const string& sourcefile )
         : ncFile(NULL)
         , feature_variables(variables)
-        , spatial_dimension(spatial_dim)
-        , source_file(source_file)
+        , dimensions(dims)
+        , source_file(sourcefile)
         , clusters(list)
         , tracking_performed(false)
         {};

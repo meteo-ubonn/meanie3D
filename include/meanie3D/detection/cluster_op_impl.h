@@ -104,7 +104,7 @@ namespace m3D {
         }
 
         ClusterList<T> cluster_list(this->feature_space->feature_variables(),
-                                    this->feature_space->coordinate_system->size(),
+                                    this->feature_space->coordinate_system->dimensions(),
                                     this->feature_space->filename());
         
         // Guard against empty feature-space

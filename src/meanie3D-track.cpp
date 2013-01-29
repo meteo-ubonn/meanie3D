@@ -42,6 +42,7 @@ void parse_commmandline(program_options::variables_map vm,
                         string &current_filename,
                         string &tracking_variable_name,
                         bool &write_vtk,
+                        vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity)
 {
     if ( vm.count("previous") == 0 )
@@ -101,6 +102,54 @@ void parse_commmandline(program_options::variables_map vm,
         verbosity = (Verbosity) vb;
     }
     
+    // VTK dimension mapping
+    
+    if ( vm.count("vtk-dimensions") > 0 )
+    {
+        
+        // Open the file for reading once more
+        
+        NcFile *file = new NcFile( current_filename, NcFile::read );
+        
+        
+        // Read "featurespace_dimensions"
+        
+        string fs_dimensions;
+
+        file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
+
+        vector<string> fs_dim_names = from_string<string>(fs_dimensions);
+        
+        
+        // parse dimension list
+        
+        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+        
+        boost::char_separator<char> sep(",");
+        
+        string str_value = vm["vtk-dimensions"].as<string>();
+        
+        tokenizer dim_tokens( str_value, sep );
+
+        for ( tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter )
+        {
+            string name = *tok_iter;
+            
+            int index = index_of_first( fs_dim_names, name );
+            
+            if ( index < 0 )
+            {
+                cerr << "Invalid dimension '" << name << "'. Check parameter --vtk-dimensions" << endl;
+                
+                exit(-1);
+            }
+            
+            vtk_dimension_indexes.push_back( (size_t)index );
+        }
+        
+        delete file;
+    }
+    
     // --write-vtk
     
     write_vtk = vm.count("write-vtk") > 0;
@@ -125,6 +174,7 @@ int main(int argc, char** argv)
     ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
     ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Defaults to the first variable that is not a dimension variable.")
     ("write-vtk,k","Write out the clusters as .vtk files for visit")
+    ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ;
     
@@ -154,14 +204,17 @@ int main(int argc, char** argv)
     // Evaluate user input
     
     string previous_filename, current_filename, tracking_variable_name;
-    
     Verbosity verbosity;
-    
     bool write_vtk = false;
+    vector<size_t> vtk_dimension_indexes;
     
     try
     {
-        parse_commmandline(vm,previous_filename,current_filename,tracking_variable_name,write_vtk,verbosity);
+        parse_commmandline(vm,previous_filename,current_filename,tracking_variable_name,write_vtk,vtk_dimension_indexes,verbosity);
+        
+        ::cfa::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+        ::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+
     }
     catch (const std::exception &e)
     {
@@ -193,7 +246,7 @@ int main(int argc, char** argv)
     
     if ( tracking_variable_name == "__default__" )
     {
-        tracking_var = current->feature_variables[current->spatial_dimension];
+        tracking_var = current->feature_variables[current->dimensions.size()];
     }
     else
     {

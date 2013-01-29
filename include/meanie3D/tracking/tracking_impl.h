@@ -191,8 +191,8 @@ namespace m3D {
                 
                 // calculate average mid displacement
                 
-                vector<T> dx = newCluster->weighed_center(current->spatial_dimension,tracking_var_index)
-                             - oldCluster->weighed_center(current->spatial_dimension,tracking_var_index);
+                vector<T> dx = newCluster->weighed_center(current->dimensions.size(),tracking_var_index)
+                             - oldCluster->weighed_center(current->dimensions.size(),tracking_var_index);
 
                 midDisplacement[n][m] = vector_norm(dx);
 

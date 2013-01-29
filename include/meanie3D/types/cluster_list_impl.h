@@ -260,7 +260,27 @@ namespace m3D {
             {
                 dim = file->addDim("featurespace_dim", (int) this->feature_variables.size() );
             
-                spatial_dim = file->addDim("spatial_dim", (int) this->spatial_dimension );
+                spatial_dim = file->addDim("spatial_dim", (int) this->dimensions.size() );
+                
+                // write featurespace_dimensions attribute
+                
+                vector<string> fs_dims;
+                
+                for (size_t di=0; di<this->dimensions.size(); di++)
+                {
+                    fs_dims.push_back(this->dimensions[di].getName());
+                }
+                
+                file->putAtt("featurespace_dimensions", to_string(fs_dims) );
+                
+                // copy dimensions
+                
+                for (size_t di=0; di<this->dimensions.size(); di++)
+                {
+                    NcDim d = this->dimensions[di];
+                    
+                    file->addDim(d.getName(), d.getSize());
+                }
                 
                 // Create dummy variables, attributes and other meta-info
                 
@@ -271,7 +291,7 @@ namespace m3D {
                 // compile a list of the feature space variables used,
                 // including the spatial dimensions
                 
-                stringstream variable_names(stringstream::in | stringstream::out);
+                vector<string> variable_names;
                 
                 // feature variables
                 
@@ -281,7 +301,7 @@ namespace m3D {
 
                     // append to list
                     
-                    variable_names << var.getName() << " ";
+                    variable_names.push_back(var.getName());
                     
                     // create a dummy variable
                     
@@ -309,7 +329,7 @@ namespace m3D {
                     }
                 }
                 
-                file->putAtt( "featurespace_variables", variable_names.str() );
+                file->putAtt("featurespace_variables", to_string(variable_names));
             }
             
             // Add tracking meta-info
@@ -417,7 +437,7 @@ namespace m3D {
         // meta-info
         
         vector<NcVar>                   feature_variables;
-        size_t                          spatial_dimension;
+        vector<NcDim>                   dimensions;
         string                          source_file;
         typename Cluster<T>::list       list;
         NcFile                          *file = NULL;
@@ -438,16 +458,30 @@ namespace m3D {
             // Read the dimensions
 
             NcDim fs_dim = file->getDim( "featurespace_dim" );
-        
-            NcDim spatial_dim = file->getDim( "spatial_dim" );
             
-            spatial_dimension = spatial_dim.getSize();
+            // Read the dimensions attribute
             
+            string dim_str;
+            
+            file->getAtt("featurespace_dimensions").getValues(dim_str);
+            
+            // Fill the dimensions vector from that
+            
+            vector<string> fs_dim_names = from_string<string>(dim_str);
+            
+            for (size_t di=0; di < fs_dim_names.size(); di++)
+            {
+                NcDim d = file->getDim(fs_dim_names[di]);
+                
+                dimensions.push_back(d);
+            }
+
             // Read global attributes
             
             file->getAtt("source").getValues( source_file );
             
             int number_of_clusters;
+            
             file->getAtt("num_clusters").getValues( &number_of_clusters );
             
             // Read the feature-variables
@@ -510,7 +544,7 @@ namespace m3D {
                 
                 // Create a cluster object
                 
-                typename Cluster<T>::ptr cluster = new Cluster<T>( mode, spatial_dim.getSize() );
+                typename Cluster<T>::ptr cluster = new Cluster<T>( mode, dimensions.size() );
                 
                 // read cluster id
                 
@@ -539,7 +573,7 @@ namespace m3D {
                     
                     // copy data over to vectors
                     
-                    vector<T> coordinate(spatial_dim.getSize(),0);
+                    vector<T> coordinate(dimensions.size(),0);
                     
                     vector<T> values(fs_dim.getSize(),0);
                     
@@ -547,7 +581,7 @@ namespace m3D {
                     {
                         values[i] = data[i];
                         
-                        if ( i < spatial_dim.getSize() )
+                        if ( i < dimensions.size() )
                         {
                             coordinate[i] = values[i];
                         }
@@ -568,7 +602,7 @@ namespace m3D {
             cerr << e.what() << endl;
         }
         
-        ClusterList<T>::ptr cl = new ClusterList<T>( list, feature_variables, spatial_dimension, source_file );
+        ClusterList<T>::ptr cl = new ClusterList<T>( list, dimensions, feature_variables, source_file );
         
         cl->ncFile = file;
         
@@ -677,7 +711,7 @@ namespace m3D {
             {
                 // Create a cluster and add it to the list
                 
-                typename Cluster<T>::ptr cluster = new Cluster<T>( nodes.back()->values, this->spatial_dimension );
+                typename Cluster<T>::ptr cluster = new Cluster<T>( nodes.back()->values, this->dimensions.size() );
                 
                 cluster->add_points( nodes );
                 
@@ -1154,7 +1188,7 @@ namespace m3D {
     {
         vector<T> merged_mode = (T)0.5 * ( c1->mode + c2->mode );
         
-        typename Cluster<T>::ptr merged_cluster = new Cluster<T>( merged_mode, this->spatial_dimension );
+        typename Cluster<T>::ptr merged_cluster = new Cluster<T>( merged_mode, this->dimensions.size() );
         
         merged_cluster->add_points( c1->points );
         

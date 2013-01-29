@@ -60,7 +60,8 @@ void parse_commmandline( program_options::variables_map vm,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity,
                         unsigned int &min_cluster_size,
-                        double &drf_threshold )
+                        double &drf_threshold,
+                        vector<NcVar> &vtk_variables)
 {
     if ( vm.count("file") == 0 )
     {
@@ -379,6 +380,28 @@ void parse_commmandline( program_options::variables_map vm,
     }
     
     min_cluster_size = vm["min-cluster-size"].as<unsigned int>();
+    
+    // vtk-variables
+    
+    if ( vm.count("write-variables-as-vtk") > 0 )
+    {
+        tokenizer bw_tokens( vm["write-variables-as-vtk"].as<string>(), sep );
+        
+        for ( tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter )
+        {
+            const char* bw = (*tok_iter).c_str();
+            
+            try
+            {
+                vtk_variables.push_back(file->getVar(bw));
+            }
+            catch (const netCDF::exceptions::NcException &e)
+            {
+                cerr << "Can't find variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
+                exit(-1);
+            }
+        }
+    }
 }
 
 /** 
@@ -410,6 +433,7 @@ int main(int argc, char** argv)
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Keep only clusters of this minimum size at each pass")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
+    ("write-variables-as-vtk",program_options::value<string>(),"Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ;
     
@@ -441,6 +465,7 @@ int main(int argc, char** argv)
     vector<NcVar> variables;
     vector<double> ranges;
     map<NcVar,double> *thresholds = FeatureSpace<FS_TYPE>::NO_THRESHOLDS;
+    vector<NcVar> vtk_variables;
     vector<double> cluster_resolution;
     int weight_index;
     string filename;
@@ -471,7 +496,8 @@ int main(int argc, char** argv)
                            vtk_dimension_indexes,
                            verbosity,
                            min_cluster_size,
-                           drf);
+                           drf,
+                           vtk_variables);
         
         // Make the mapping known to the visualization routines
         
@@ -630,6 +656,9 @@ int main(int argc, char** argv)
     
     start_timer();
     
+    // TODO: threshold should be applied as a filter somehow
+    // this approach seems a little half-cocked
+    
     FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, thresholds, show_progress );
     
     // Scale-Space smoothing
@@ -638,6 +667,21 @@ int main(int argc, char** argv)
     	ScaleSpaceFilter<FS_TYPE> sf(scale,show_progress);
         
     	sf.apply(fs);
+    }
+    
+    if (!vtk_variables.empty())
+    {
+        string filename_only = boost::filesystem::path(filename).filename().string();
+        
+        boost::filesystem::path destination_path = boost::filesystem::path(".");
+        
+        destination_path /= filename_only;
+        
+        destination_path.replace_extension("vtk");
+        
+        string dest_path = destination_path.generic_string();
+        
+        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
     }
     
     if ( verbosity == VerbosityAll )
