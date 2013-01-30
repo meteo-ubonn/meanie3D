@@ -49,10 +49,10 @@ namespace m3D {
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking()
-        : m_dist_weight(1.0)
-        , m_size_weight(1.0)
-        , m_corr_weight(1.0)
+        Tracking(T wr=1.0, T wd=1.0, T wt=1.0 )
+        : m_dist_weight(wr)
+        , m_size_weight(wd)
+        , m_corr_weight(wt)
         , m_deltaT(300)                         // 5 minutes
         , m_useMeanVelocityConstraint(true)     // limit deviation from mean velocity
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %

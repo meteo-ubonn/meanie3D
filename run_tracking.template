@@ -56,7 +56,7 @@ for netcdf_file in netcdf_list:
 
     # build the clustering command
     command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file+" --dimensions z,y,x --vtk-dimensions=x,y,z"\
-    +" -v zh -w zh -r 2,5,5,100 --drf-threshold 0.95 --scale 8 --thresholds 20 --write-variables-as-vtk=zh"
+    +" -v zh -w zh -r 2,5,5,100 --drf-threshold 0.75 --scale 8 --thresholds 20 --write-variables-as-vtk=zh"
     
     # if it's the first file, write the clusters out from here
     # else from the tracking tool
@@ -70,7 +70,7 @@ for netcdf_file in netcdf_list:
     # if we have a previous scan, run the tracking command
 
     if last_cluster_file != "" :
-        command=tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" -t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z"
+        command=tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" -t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
         print command
         return_code = call( command, shell=True)
 

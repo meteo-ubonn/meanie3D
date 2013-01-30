@@ -42,6 +42,9 @@ void parse_commmandline(program_options::variables_map vm,
                         string &current_filename,
                         string &tracking_variable_name,
                         bool &write_vtk,
+                        FS_TYPE &range_weight,
+                        FS_TYPE &size_weight,
+                        FS_TYPE &correlation_weight,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity)
 {
@@ -153,6 +156,10 @@ void parse_commmandline(program_options::variables_map vm,
     // --write-vtk
     
     write_vtk = vm.count("write-vtk") > 0;
+    
+    range_weight = vm["wr"].as<FS_TYPE>();
+    size_weight = vm["ws"].as<FS_TYPE>();
+    correlation_weight = vm["wt"].as<FS_TYPE>();
 }
 
 /**
@@ -173,6 +180,9 @@ int main(int argc, char** argv)
     ("previous,p", program_options::value<string>(), "Previous cluster file (netCDF)")
     ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
     ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Defaults to the first variable that is not a dimension variable.")
+    ("wr", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for range correlation [0..1]")
+    ("ws", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for size correlation [0..1]")
+    ("wt", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for histogram rank correlation [0..1]")
     ("write-vtk,k","Write out the clusters as .vtk files for visit")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
@@ -208,9 +218,21 @@ int main(int argc, char** argv)
     bool write_vtk = false;
     vector<size_t> vtk_dimension_indexes;
     
+    FS_TYPE range_weight, size_weight, correlation_weight;
+
+    
     try
     {
-        parse_commmandline(vm,previous_filename,current_filename,tracking_variable_name,write_vtk,vtk_dimension_indexes,verbosity);
+        parse_commmandline(vm,
+                           previous_filename,
+                           current_filename,
+                           tracking_variable_name,
+                           write_vtk,
+                           range_weight,
+                           size_weight,
+                           correlation_weight,
+                           vtk_dimension_indexes,
+                           verbosity);
         
         ::cfa::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
         ::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
@@ -221,8 +243,6 @@ int main(int argc, char** argv)
         cerr << e.what() << endl;
         exit(-1);
     }
-    
-    bool show_progress = (verbosity > VerbositySilent);
     
     // Read previous clusters
     
@@ -282,7 +302,7 @@ int main(int argc, char** argv)
     
     // Perform tracking
     
-    Tracking<FS_TYPE> tracking;
+    Tracking<FS_TYPE> tracking(range_weight,size_weight,correlation_weight);
     
     tracking.track( previous, current, tracking_var, verbosity );
     

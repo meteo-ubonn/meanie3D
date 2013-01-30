@@ -253,7 +253,7 @@ namespace m3D {
                 
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f\t\tsum=%6.4f\t\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                    printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                            oldCluster->id,
                            oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
                            midDisplacement[n][m],
@@ -261,6 +261,7 @@ namespace m3D {
                            histDiff[n][m],
                            prob_h,
                            rank_correlation[n][m],
+                           prob_t,
                            sum_prob[n][m],
                            coverOldByNew[n][m],
                            coverNewByOld[n][m]);
