@@ -44,7 +44,7 @@ typedef double FS_TYPE;
 
 static const double NO_SCALE = numeric_limits<double>::min();
 
-void parse_commmandline( program_options::variables_map vm,
+void parse_commmandline(program_options::variables_map vm,
                         NcFile **filePtr,
                         string &filename,
                         string &output_filename,
@@ -736,6 +736,10 @@ int main(int argc, char** argv)
         boost::filesystem::path path(filename);
         
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( path.filename().string(), clusters.clusters, ranges, true );
+        
+        string modes_path = path.filename().stem().string() + "-clusters-modes.vtk";
+        
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
     }
     
     if ( verbosity > VerbositySilent )

@@ -40,7 +40,8 @@ namespace m3D { namespace utils {
     	 */
         static
     	void write_cluster_modes_vtk(const string &filename,
-    								 const typename Cluster<T>::list &list);
+    								 const typename Cluster<T>::list &list,
+                                     bool spatial_only=false);
 
     	/**
     	 *

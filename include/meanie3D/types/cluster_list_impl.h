@@ -827,11 +827,11 @@ namespace m3D {
     
     template <typename T>
     void
-    ClusterList<T>::get_boundary_points( typename Cluster<T>::ptr c1,
-                                    typename Cluster<T>::ptr c2,
-                                    typename Point<T>::list &boundary_points,
-                                    PointIndex<T> *index,
-                                    const vector<T> &resolution )
+    ClusterList<T>::get_boundary_points(typename Cluster<T>::ptr c1,
+                                        typename Cluster<T>::ptr c2,
+                                        typename Point<T>::list &boundary_points,
+                                        PointIndex<T> *index,
+                                        const vector<T> &resolution )
     {
         // make the width of the boundary half the resolution
         // that is 0.25 left and right of the boundary = 0.5 * resolution
@@ -936,7 +936,7 @@ namespace m3D {
         
         // if no common boundary exists, the point is moot
         
-#if DEBUG_CLUSTER_MERGING
+#if DEBUG_CLUSTER_MERGING_DECISION
         std::cout << "===================================================================" << std::endl;
         std::cout << "comparing #" << c1->id << " = " << c1->mode << " (" << c1->size() << " points)" << std::endl;
         std::cout << "with      #" << c2->id << " = " << c2->mode << " (" << c2->size() << " points)" << std::endl;
@@ -953,7 +953,7 @@ namespace m3D {
             
             bool dynamic_range_test = sup( c1_dyn_range_factor, c2_dyn_range_factor ) >= drf_threshold;
             
-#if DEBUG_CLUSTER_MERGING
+#if DEBUG_CLUSTER_MERGING_DECISION
             cout << "\tc1-drf = " << c1_dyn_range_factor << " , c2-drf = " << c2_dyn_range_factor << endl;
 #endif
             
@@ -962,14 +962,14 @@ namespace m3D {
 
             should_merge =  dynamic_range_test;
         }
-#if DEBUG_CLUSTER_MERGING
+#if DEBUG_CLUSTER_MERGING_DECISION
         else
         {
             cout << "no common boundary" << endl;
         }
 #endif 
         
-#if DEBUG_CLUSTER_MERGING
+#if DEBUG_CLUSTER_MERGING_DECISION
         std::cout << "\t==> should merge = " << (should_merge ? "yes" : "no") << std::endl;
         std::cout << "===================================================================" << std::endl;
 #endif

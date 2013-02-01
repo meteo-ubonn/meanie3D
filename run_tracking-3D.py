@@ -2,6 +2,9 @@
 import glob
 import sys
 import os
+#import Scientific.IO.NetCDF
+#from Numeric import * 
+#from NetCDF import *
 from subprocess import call
 
 # python script template for tracking
@@ -10,7 +13,8 @@ from subprocess import call
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
-CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 3,7,7,100 --drf-threshold 0.75 -s 12 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
+CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 3,7,7,100 --drf-threshold 0.5 -s 8 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
+#CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 3,7,7,100 --drf-threshold 0.75 -s 12 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
 TRACKING_PARAMS   = "-t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
 
 # print parameters
@@ -52,21 +56,19 @@ a.timeInfoFlag=0
 a.legendInfoFlag=0
 a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
-print a
 
 # Modify view parameters
 v = GetView3D()
 v.focus=(-238.5,-4222.5,50.0)
 SetView3D(v)
 
-s = GetSaveWindowAttributes()
-print s
-
 # Get a list of the files we need to process
+
+file_count=0
+last_cluster_file=""
+
 netcdf_pattern = NETCDF_DIR + "/*.nc"
 netcdf_list=glob.glob(netcdf_pattern)
-last_cluster_file=""
-file_count=0
 
 # Process the files one by one
 for netcdf_file in netcdf_list:
@@ -76,9 +78,10 @@ for netcdf_file in netcdf_list:
     basename = os.path.basename(netcdf_file)
     cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
     vtk_file=os.path.splitext(basename)[0]+".vtk"
+    modes_file=os.path.splitext(basename)[0]+"-clusters-modes.vtk"
 
     # build the clustering command
-    command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + CLUSTERING_PARAMS
+    command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " "+CLUSTERING_PARAMS
     
     # if it's the first file, write the clusters out from here
     # else from the tracking tool
@@ -92,7 +95,7 @@ for netcdf_file in netcdf_list:
     # if we have a previous scan, run the tracking command
 
     if last_cluster_file != "" :
-        command=tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + TRACKING_PARAMS
+        command=tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" "+TRACKING_PARAMS
         print command
         return_code = call( command, shell=True)
 
@@ -105,19 +108,12 @@ for netcdf_file in netcdf_list:
 
     p = PseudocolorAttributes()
     p.colorTableName = "hot_desaturated"
-    #p.legendFlag=1
-    #p.lightingFlag=0
-    #p.invertColorTable=0
-    #p.minFlag,p.maxFlag = 1,1
-    #p.min,p.max = 0.0, 50.0
-    #p.opacity=1.0
     SetPlotOptions(p)
 
     # save the source file
     s = GetSaveWindowAttributes()
     s.fileName="source_";
     s.progressive=1
-    print s
     SetSaveWindowAttributes(s)
     
     # Draw, save and remove
@@ -154,8 +150,6 @@ for netcdf_file in netcdf_list:
         OpenDatabase(cluster_file)
         AddPlot("Pseudocolor", "cluster")
         cp=PseudocolorAttributes();
-        #cp.minFlag,cp.maxFlag = 1,1
-        #cp.min,cp.max = 10.0, 60.0
         cp.pointSizePixels=5
         cp.legendFlag=0 
         cp.lightingFlag=1
@@ -164,6 +158,10 @@ for netcdf_file in netcdf_list:
         cp.colorTableName = col_tables[index];
         cp.opacity=1
         SetPlotOptions(cp)
+
+    # Add modes as labels
+    OpenDatabase(modes_file)
+    AddPlot("Label","mode")
 
     # Get it all plotted
     DrawPlots()
@@ -188,6 +186,7 @@ for netcdf_file in netcdf_list:
 
     ClearWindow()
     CloseDatabase(vtk_file)
+    CloseDatabase(modes_file)
     for cluster_file in cluster_list:
         CloseDatabase(cluster_file)
     #return_code=call("rm *.vtk", shell=True)

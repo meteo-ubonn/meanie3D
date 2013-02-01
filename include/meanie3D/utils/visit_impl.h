@@ -22,7 +22,7 @@ namespace m3D { namespace utils {
      */
     template <typename T>
     void
-    VisitUtils<T>::write_cluster_modes_vtk( const string &filename, const typename Cluster<T>::list &list )
+    VisitUtils<T>::write_cluster_modes_vtk( const string &filename, const typename Cluster<T>::list &list, bool spatial_only )
     {
         ofstream f( filename.c_str() );
         f << fixed << setprecision(4);
@@ -34,14 +34,23 @@ namespace m3D { namespace utils {
         f << "ASCII" << endl;
         f << "DATASET UNSTRUCTURED_GRID" << endl;
         f << "POINTS " << list.size() << " FLOAT" << endl;
-
+        
         for ( size_t ci = 0; ci < list.size(); ci++ )
         {
-            vector<T> mode = list[ci]->mode;
+            typename Cluster<T>::ptr c = list[ci];
+            
+            size_t dim_count = spatial_only ? c->spatial_dimension() : c->dimension();
+            
+            vector<T> mode = c->mode;
 
-            for ( size_t vi = 0; vi < mode.size(); vi++)
+            for ( size_t vi = 0; vi < dim_count; vi++)
             {
-                size_t dim_index = VTK_DIMENSION_INDEXES.empty() ? vi : VTK_DIMENSION_INDEXES[vi];
+                size_t dim_index = vi;
+                
+                if ( vi < VTK_DIMENSION_INDEXES.size() )
+                {
+                    dim_index = VTK_DIMENSION_INDEXES.empty() ? vi : VTK_DIMENSION_INDEXES[vi];
+                }
 
                 f << mode[dim_index] << "\t";
             }
@@ -58,9 +67,20 @@ namespace m3D { namespace utils {
         f << "POINT_DATA " << list.size() << endl;
         f << "SCALARS mode INT" << endl;
         f << "LOOKUP_TABLE default" << endl;
-        for ( size_t pi = 0; pi < list.size() - 1 ; pi++ )
+        for ( size_t pi = 0; pi < list.size() ; pi++ )
         {
-            f << list[pi]->size() << endl;
+            typename Cluster<T>::ptr c = list[pi];
+            
+            size_t dim_count = spatial_only ? c->spatial_dimension() : c->dimension();
+
+            if ( spatial_only )
+            {
+                f << c->id << endl;
+            }
+            else
+            {
+                f << c->mode[ dim_count-1 ];
+            }
         }
 
         f.close();
@@ -123,7 +143,7 @@ namespace m3D { namespace utils {
             f << "SCALARS cluster FLOAT" << endl;
             f << "LOOKUP_TABLE default" << endl;
 
-            for ( size_t pi = 0; pi < list[ci]->points.size() - 1 ; pi++ )
+            for ( size_t pi = 0; pi < list[ci]->points.size(); pi++ )
             {
                 Point<T> *p = list[ci]->points[pi];
 

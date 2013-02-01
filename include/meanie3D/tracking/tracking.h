@@ -37,6 +37,8 @@ namespace m3D {
         
         T       m_maxVelocity;                      // physical maximum speed of objects in m/s
         
+        float   m_merge_threshold;
+        
         
         /** Private default constructor 
          */
@@ -57,6 +59,7 @@ namespace m3D {
         , m_useMeanVelocityConstraint(true)     // limit deviation from mean velocity
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
         , m_maxVelocity(27.0)                   // limit max velocity to 15 m/s (~100 km/h)
+        , m_merge_threshold(0.33)               // percentage coverage old/new for merge/split
         {};
         
         /** Compares two cluster lists and propagates or assigns new identifiers.

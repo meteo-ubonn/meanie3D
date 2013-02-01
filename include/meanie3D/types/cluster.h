@@ -71,8 +71,16 @@ namespace m3D {
          */
         id_t                        id;
         
-        // Private default constructor
+        // default constructor
         Cluster();
+        
+        size_t
+        spatial_dimension() { return m_spatial_dimension; };
+        
+        size_t
+        dimension() { return m_dimension; };
+        
+        
         
 #pragma mark -
 #pragma mark Constructor/Destructor

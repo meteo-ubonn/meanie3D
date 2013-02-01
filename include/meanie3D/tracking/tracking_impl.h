@@ -253,7 +253,7 @@ namespace m3D {
                 
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                    printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                            oldCluster->id,
                            oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
                            midDisplacement[n][m],
@@ -320,7 +320,7 @@ namespace m3D {
             {
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("pairing new blob #%4d / old blob ID#%lld rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
+                    printf("pairing new blob #%4lu / old blob ID#%lu rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
                 }
             }
 //            else if (m_useMeanVelocityConstraint && midDisplacement[maxN][maxM] > maxMeanVelocityDisplacement )
@@ -347,7 +347,7 @@ namespace m3D {
                     
     //                if ( verbosity >= VerbosityDetails )
     //                {
-                        printf("pairing new blob #%4lu / old blob ID=#%4llu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
+                        printf("pairing new blob #%4lu / old blob ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
     //                }
                     
                     new_cluster->id = old_cluster->id;
@@ -414,108 +414,151 @@ namespace m3D {
             cout << "none." << endl;
         }
         
-//        NSEnumerator* obn = [blobs objectEnumerator];
-//        Blob* ob;
-//        SPLog(@"\n-- Goners --");
-//        BOOL hadGoners=NO;
-//        while ((ob=[obn nextObject])!=nil)
-//        {
-//            if ([usedOldBlobs containsObject:ob]) continue;
-//            SPLog(@"ID#%ld at [%3d,%3d]\t |H|=%5d",[ob tag],[ob midX],[ob midY],(int)[ob histogramSize]);
-//            hadGoners=YES;
-//        }
-//        if (!hadGoners) SPLog(@"none.");
+        // handle merging
         
+        cout << endl << "-- Merges --" << endl;
         
-//        // handle merging
-//        SPLog(@"\n-- Merges --");
-//        // for each new blob check coverage of old blobs
-//        BOOL hadMerges = NO;
-//        for (n=0;n<[result count];n++) {
-//            float candidates[50];
-//            int candidateCount = 0;
-//            Blob* newBlob = (Blob*)[result objectAtIndex:n];
-//            for (m=0;m<[blobs count];m++) {
-//                if (coverOldByNew[n][m]>mergeThreshold)
-//                {
-//                    candidates[candidateCount++]=m;
-//                }
-//            }
-//            // if there are more than one candidate other than self fulfilling the criteria
-//            // assume a merge has happened
-//            if (candidateCount>1) {
-//                // remove the merged old blobs from the matching process
-//                // and print them out.
-//                SPLog(@"Blobs ");
-//                for (m=0;m<candidateCount;m++) {
-//                    SPLog(@"#%ld ",[(Blob*)[blobs objectAtIndex:candidates[m]] tag]);
-//                }
-//                SPLog(@" seem to have merged into blob #ID%ld, ",[newBlob tag]);
-//                [self tagBlob:newBlob];
-//                SPLog(@"Assigned new ID#%ld\n",[newBlob tag]);
-//                hadMerges=YES;
-//            }
-//        }
-//        if (!hadMerges) SPLog(@"none.");
-//        
-//        // handle splitting
-//        SPLog(@"\n-- Slits --");
-//        // for each new blob check coverage of old blobs
-//        BOOL hadSplits = NO;
-//        for (m=0;m<[blobs count];m++) {
-//            float candidates[50];
-//            int candidateCount = 0;
-//            Blob* oldBlob = (Blob*)[blobs objectAtIndex:m];
-//            for (n=0;n<[result count];n++) {
-//                if (coverNewByOld[n][m]>mergeThreshold)
-//                {
-//                    candidates[candidateCount++]=n;
-//                }
-//            }
-//            if (candidateCount>1) {
-//                hadSplits=YES;
-//                SPLog(@"Blob ID#%ld seems to have split into blobs ",[oldBlob tag]);
-//                for (n=0;n<candidateCount;n++) {
-//                    Blob* newBlob = (Blob*)[result objectAtIndex:candidates[n]]; 
-//                    SPLog(@"#%ld ",[newBlob tag]);
-//                }
-//                SPLog(@"\n");
-//                SPLog(@"Assigned new IDs\n");
-//                for (n=0;n<candidateCount;n++) {
-//                    Blob* newBlob = (Blob*)[result objectAtIndex:candidates[n]]; 
-//                    unsigned long oldTag = [newBlob tag];
-//                    [self tagBlob:newBlob];
-//                    SPLog(@"#%ld --> #%ld\n",oldTag,[newBlob tag]);
-//                }
-//            }
-//        }
-//        if (!hadSplits) SPLog(@"none.");
-//        
-//        [usedOldBlobs release];
-//        [newBlobs release];
-//        
-//        [blobs removeAllObjects];
-//        [blobs addObjectsFromArray:result];
-//        [blobs retain];
-//        
-//        // sort ascending by ID
-//        // NSSortDescriptor* sorta = [[NSSortDescriptor alloc] initWithKey:@"tag" ascending:YES];
-//        
-//        [result sortUsingSelector: @selector(compareTag:) ];
-//        //[result sortUsingDescriptors:[NSArray arrayWithObject:sorta]];
-//        
-//        if (doTracking) [trackStore addBlobArray:result];
-//        
-//        int i;
-//        n=[result count];
-//        for (i=0;i<n;i++) {
-//            Blob* blob = (Blob*)[result objectAtIndex:i];
-//            [eoScan addToBlobs:blob];
-//            //	EOBlob* eoBlob = [blob eoBlob];
-//            //	[eoScan addToEOBlobs:eoBlob];
-//        }
-//        SPLog(@"\n");
-//
+        // for each new blob check coverage of old blobs
+        
+        bool had_merges = false;
+        
+        for ( n=0; n < current->clusters.size(); n++ )
+        {
+            vector<float> candidates;
+            
+            typename Cluster<T>::ptr new_cluster = current->clusters[n];
+
+            for ( m=0; m < previous->clusters.size(); m++ )
+            {
+                typename Cluster<T>::ptr old_cluster = previous->clusters[m];
+                
+                float coverage = old_cluster->percent_covered_by( new_cluster );
+                
+                if ( coverage > this->m_merge_threshold )
+                {
+                    candidates.push_back(m);
+                }
+            }
+            
+            if (candidates.size() > 1 )
+            {
+                had_merges = true;
+
+                // remove the merged old blobs from the matching process
+                // and print them out.
+                
+                cout << "Blobs ";
+                
+                for ( int i=0; i < candidates.size(); i++ )
+                {
+                    typename Cluster<T>::ptr c = previous->clusters[ candidates[i] ];
+                    
+                    printf("#%llu ",c->id);
+                }
+                
+                printf(" seem to have merged into blob #ID%llu, ", new_cluster->id );
+                
+                // store the given ID
+                
+                size_t the_id = new_cluster->id;
+                
+                // check if the ID was new?
+                
+                int index = index_of_first( current->new_ids, the_id );
+                
+                if ( index < 0 )
+                {
+                    // not new => was tracked
+                    
+                    // tag fresh and add to new IDs
+                    
+                    new_cluster->id = ++current_id;
+                    
+                    printf("Assigned new ID#%llu\n", new_cluster->id );
+
+                    current->new_ids.push_back(new_cluster->id);
+                    
+                    // and remove from tracked IDs
+
+                    size_t index = index_of_first( current->tracked_ids, the_id );
+                    
+                    current->tracked_ids.erase( current->tracked_ids.begin() + index );
+                }
+            }
+        }
+        
+        if ( ! had_merges ) cout << "none." << endl;
+        
+        // handle merging
+        
+        cout << endl << "-- Splits --" << endl;
+        
+        // for each new blob check coverage of old blobs
+        
+        bool had_splits = false;
+        
+        for ( m=0; m < previous->clusters.size(); m++ )
+        {
+            typename Cluster<T>::ptr old_cluster = previous->clusters[m];
+            
+            vector<float> candidates;
+
+            for ( n=0; n < current->clusters.size(); n++ )
+            {
+                typename Cluster<T>::ptr new_cluster = current->clusters[n];
+            
+                float coverage = new_cluster->percent_covered_by( old_cluster );
+                
+                if ( coverage > this->m_merge_threshold )
+                {
+                    candidates.push_back(n);
+                }
+            }
+
+            if (candidates.size() > 1 )
+            {
+                had_splits = true;
+                
+                printf("Blob ID#%llu seems to have split into blobs ", old_cluster->id);
+                
+                for ( int i=0; i < candidates.size(); i++ )
+                {
+                    typename Cluster<T>::ptr c = current->clusters[ candidates[i] ];
+                    
+                    printf("#%llu ",c->id);
+                    
+                    // check if the new blob's IDs are in tracked IDs and
+                    // retag / remove them
+                    
+                    size_t the_id = c->id;
+                    
+                    int index = index_of_first( current->tracked_ids, the_id );
+                    
+                    if ( index >= 0 )
+                    {
+                        // remove
+                        
+                        current->tracked_ids.erase( current->tracked_ids.begin() + index );
+                        
+                        // re-tag and add to new IDs
+                        
+                        c->id = current_id++;
+                        
+                        printf(" (re-tagged as #%llu)",c->id);
+                        
+                        current->new_ids.push_back( c->id );
+                    }
+                }
+            
+                cout << endl;
+            }
+        }
+        
+        if ( ! had_splits)
+        {
+            cout << "none." << endl;
+        }
+        
         
         current->tracking_performed = true;
     }
