@@ -15,13 +15,27 @@ namespace m3D {
     class Tracking
     {
     private:
+        
+        // Matrix
 
         // A matrix is a 2D vector construct in this context
         typedef vector< vector<T> > matrix_t;
-
+        
         /** Creates a new matrix of the given dimensions
          */
         matrix_t create_matrix(size_t width, size_t height);
+        
+        // Flag Matrix
+
+        typedef vector< vector<bool> > flag_matrix_t;
+        
+        /** Creates a new matrix of the given dimensions
+         */
+        flag_matrix_t create_flag_matrix(size_t width, size_t height);
+        
+        
+        // Member Variables
+        
         
         T   m_dist_weight;  // correlation weight distance
         
@@ -38,6 +52,8 @@ namespace m3D {
         T       m_maxVelocity;                      // physical maximum speed of objects in m/s
         
         float   m_merge_threshold;
+        
+        float   m_max_size_deviation;               // how many percent may the objects vary in size (number of points) between scans?
         
         
         /** Private default constructor 
@@ -58,8 +74,9 @@ namespace m3D {
         , m_deltaT(300)                         // 5 minutes
         , m_useMeanVelocityConstraint(true)     // limit deviation from mean velocity
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
-        , m_maxVelocity(27.0)                   // limit max velocity to 15 m/s (~100 km/h)
+        , m_maxVelocity(30.0)                   // limit max velocity to 30 m/s (~108 km/h)
         , m_merge_threshold(0.33)               // percentage coverage old/new for merge/split
+        , m_max_size_deviation(15.0)            // how many percent may the objects vary in size (number of points) between scans (1500%)
         {};
         
         /** Compares two cluster lists and propagates or assigns new identifiers.

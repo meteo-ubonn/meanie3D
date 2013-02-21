@@ -35,6 +35,22 @@ namespace m3D {
         return matrix;
     }
 
+    template <typename T>
+    typename Tracking<T>::flag_matrix_t
+    Tracking<T>::create_flag_matrix(size_t width, size_t height)
+    {
+        flag_matrix_t matrix;
+        
+        matrix.resize(width);
+        
+        for (int i=0; i<width; ++i)
+        {
+            matrix[i].resize(height);
+        }
+        
+        return matrix;
+    }
+    
     
     template <typename T>
     void
@@ -103,28 +119,6 @@ namespace m3D {
         // TODO: add timestamp to the cluster file format
         // TODO: timestamp in the original file other than in the filename? Spec?
         
-//        Blob* oldBlob = (Blob*)[blobs objectAtIndex:0];
-//        Blob* newBlob = (Blob*)[newBlobs objectAtIndex:0];
-//        int deltaT = [[newBlob timestamp] timeIntervalSinceDate:[oldBlob timestamp]];
-//        if (doTracking) {
-//            if (deltaT<0) {
-//                SPLog(@"Can't go back in time when tracking. Ignored.");
-//                return;
-//            }
-//            else if (deltaT==0) {
-//                SPLog(@"Repeated Image while tracking. Nothing to do");
-//                return;
-//            }
-//            else if ([trackStore constrainTimesliceDifference] && deltaT>[trackStore maxTimesliceDifference]) {
-//                SPLog(@"Critical time difference of %4.1d exceeded while tracking. Starting new Series",
-//                      [trackStore maxTimesliceDifference]);
-//                [blobs removeAllObjects];
-//                [self addSet:theNewBlobs toArray:blobs tagObjects:YES];
-//                [trackStore addBlobArray:blobs];
-//                meanVelocity=[trackStore maxVelocity];
-//                return;
-//            }
-//        }
 
         T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         
@@ -133,6 +127,8 @@ namespace m3D {
             printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm\n",
                    this->m_maxVelocity, this->m_deltaT, maxDisplacement );
         }
+
+        // TODO: mean velocity constraint
         
 //        T maxMeanVelocityDisplacement = 0.0;
 //        
@@ -146,7 +142,16 @@ namespace m3D {
         
 //        SPLog(@"\n");
         
+        
+        // Minimum object radius for overlap constraint
+        
+        T overlap_constraint_velocity = 0.5 * m_maxVelocity;
+        
+        T overlap_constraint_radius = m_deltaT * overlap_constraint_velocity;
+        
+        
         // Prepare the newcomers for re-identification
+        
         current->erase_identifiers();
 
         // Get the counts
@@ -162,6 +167,8 @@ namespace m3D {
         matrix_t sum_prob = create_matrix(new_count,old_count);
         matrix_t coverOldByNew = create_matrix(new_count,old_count);
         matrix_t coverNewByOld = create_matrix(new_count,old_count);
+        
+        flag_matrix_t constraints_satisified = create_flag_matrix(new_count, old_count);
         
         size_t maxHistD = numeric_limits<size_t>::min();
         
@@ -181,13 +188,19 @@ namespace m3D {
             
             for ( m=0; m < old_count; m++ )
             {
+                // set all constraint flags to false to start with
+                
+                constraints_satisified[n][m] = false;
+                
+                // mark coverage calculations as 'not done' using min value
+                
+                coverNewByOld[n][m] = coverNewByOld[n][m] = numeric_limits<T>::min();
+                
+                // Displacement
+                
                 typename Cluster<T>::ptr oldCluster = previous->clusters[m];
                 
                 typename Histogram<T>::ptr oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
-                
-                // calculate spearman's tau
-                
-                rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
                 
                 // calculate average mid displacement
                 
@@ -195,15 +208,79 @@ namespace m3D {
                              - oldCluster->weighed_center(current->dimensions.size(),tracking_var_index);
 
                 midDisplacement[n][m] = vector_norm(dx);
+                
+                //
+                // Maximum velocity constraint
+                //
+                
+                // TODO: calculate the max displacement in the same dimension
+                // as the dimension variables
+                
+                if ( 1000.0 * midDisplacement[n][m] > maxDisplacement ) continue;
 
+                
+                // Histogram Size
+                
                 size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
                 
                 histDiff[n][m] = (max_size==0) ? 1.0 : (abs( (T)newHistogram->sum() - (T)oldHistogram->sum() ) / ((T)max_size) );
                 
-                coverNewByOld[n][m] = newCluster->percent_covered_by( oldCluster );
+                //
+                // Size deviation overlap constraint
+                //
+                
+                // Processes in nature develop within certain bounds. It is not possible
+                // that a cloud covers 10 pixels in one scan and 1000 in the next. The
+                // size deviation constraint is created to prohibit matches between objects,
+                // which vary too much in size
+                
+                T max_H = (T) max(oldHistogram->sum(), newHistogram->sum());
+                
+                T min_H = (T) min(oldHistogram->sum(), newHistogram->sum());
+                
+                T size_deviation = max_H / min_H;
+                
+                if ( size_deviation > m_max_size_deviation ) continue;
+                
+                //
+                // Overlap Constraint
+                //
+                
+                // if the object is so big, that overlap is required at the given advection velocity
+                // then check if that is the case. If no overlap exists, prohibit the match by setting
+                // the constraint to false. If no overlap is required, the constraint is simply set to
+                // true, thus allowing a match.
+                
+                // Note: radius is calculated in kilometres.
+                // TODO: calculate overlap constraint radius in the same dimension
+                // as the dimension variables!
+                
+                bool requires_overlap = 1000 * oldCluster->radius() >= overlap_constraint_radius;
                 
                 coverOldByNew[n][m] = oldCluster->percent_covered_by( newCluster );
                 
+                bool overlap_constraint_satisfied = true;
+                
+                if (requires_overlap)
+                {
+                    overlap_constraint_satisfied = coverOldByNew[n][m] > 0.0;
+                }
+                
+                if ( !overlap_constraint_satisfied ) continue;
+                
+                coverNewByOld[n][m] = newCluster->percent_covered_by( oldCluster );
+
+
+                // Histogram Correlation
+                
+                // calculate spearman's tau
+                
+                if ( m_corr_weight != 0.0 )
+                {
+                    rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
+                }
+                
+
                 // track maxHistD and maxMidD
                 
                 if ( histDiff[n][m] > maxHistD )
@@ -215,7 +292,10 @@ namespace m3D {
                 {
                     maxMidD = midDisplacement[n][m];
                 }
-
+                
+                // only if all constraints are passed, the flag is set to true
+                
+                constraints_satisified[n][m] = true;
             }
         }
         
@@ -245,26 +325,36 @@ namespace m3D {
             for ( m=0; m < old_count; m++ )
             {
                 typename Cluster<T>::ptr oldCluster = previous->clusters[m];
-
-                float prob_r = m_dist_weight * erfc( midDisplacement[n][m] / maxMidD );
-                float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
-                float prob_t = m_corr_weight * rank_correlation[n][m];
-                sum_prob[n][m] = prob_t + prob_r + prob_h;
                 
-                if ( verbosity >= VerbosityDetails )
+                // Only calculate values for pairs, that satisfy the
+                // overlap constraint
+                
+                if ( constraints_satisified[n][m] )
                 {
-                    printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
-                           oldCluster->id,
-                           oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
-                           midDisplacement[n][m],
-                           prob_r,
-                           histDiff[n][m],
-                           prob_h,
-                           rank_correlation[n][m],
-                           prob_t,
-                           sum_prob[n][m],
-                           coverOldByNew[n][m],
-                           coverNewByOld[n][m]);
+                    float prob_r = m_dist_weight * erfc( midDisplacement[n][m] / maxMidD );
+                    float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
+                    float prob_t = m_corr_weight * rank_correlation[n][m];
+                    sum_prob[n][m] = prob_t + prob_r + prob_h;
+                    
+                    if ( verbosity >= VerbosityDetails )
+                    {
+                        printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                               oldCluster->id,
+                               oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
+                               midDisplacement[n][m],
+                               prob_r,
+                               histDiff[n][m],
+                               prob_h,
+                               rank_correlation[n][m],
+                               prob_t,
+                               sum_prob[n][m],
+                               coverOldByNew[n][m],
+                               coverNewByOld[n][m]);
+                    }
+                }
+                else
+                {
+                    printf("\t<ID#%4llu>:\toverlap, size or max velocity constraints violated\n", oldCluster->id);
                 }
             }
         }
@@ -297,17 +387,22 @@ namespace m3D {
             {
                 for ( m=0; m < old_count; m++ )
                 {
-                    if ( (sum_prob[n][m] > maxProb) && (sum_prob[n][m] < currentMaxProb) )
+                    // only consider pairings, where the overlap constraint is satisfied
+                    
+                    if ( constraints_satisified[n][m] )
                     {
-                        maxProb = sum_prob[n][m];
+                        if ( (sum_prob[n][m] > maxProb) && (sum_prob[n][m] < currentMaxProb) )
+                        {
+                            maxProb = sum_prob[n][m];
 
-                        maxN = n;
-                        
-                        maxM = m;
+                            maxN = n;
+                            
+                            maxM = m;
+                        }
                     }
                 }
             }
-
+            
             // take pick, remove paired candidates from arrays
             
             typename Cluster<T>::ptr new_cluster = current->clusters[maxN];
@@ -316,11 +411,11 @@ namespace m3D {
             
             // check mid displacement constraints and update mean velocity
             
-            if ( midDisplacement[maxN][maxM] > maxDisplacement )
+            if ( 1000.0 * midDisplacement[maxN][maxM] > maxDisplacement )
             {
                 if ( verbosity >= VerbosityDetails )
                 {
-                    printf("pairing new blob #%4lu / old blob ID#%lu rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
+                    printf("pairing new blob #%4lu / old blob ID#%llu rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
                 }
             }
 //            else if (m_useMeanVelocityConstraint && midDisplacement[maxN][maxM] > maxMeanVelocityDisplacement )
@@ -339,7 +434,10 @@ namespace m3D {
                 {
                     // old cluster not matched yet
 
-                    float velocity = midDisplacement[maxN][maxM] / this->m_deltaT;
+                    // TODO: calculate velocity in the same units as the dimension
+                    // variables
+                    
+                    float velocity = 1000 * midDisplacement[maxN][maxM] / this->m_deltaT;
                 
                     velocitySum += velocity;
                         
@@ -347,7 +445,7 @@ namespace m3D {
                     
     //                if ( verbosity >= VerbosityDetails )
     //                {
-                        printf("pairing new blob #%4lu / old blob ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
+                        printf("pairing new blob #%4lu / old blob ID=#%4llu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
     //                }
                     
                     new_cluster->id = old_cluster->id;
@@ -393,7 +491,9 @@ namespace m3D {
 
         // list those old blobs not being lined up again
         bool hadGoners = false;
+        
         cout << "\n-- Goners --" << endl;
+        
         for ( ci = previous->clusters.begin(); ci != previous->clusters.end(); ci++ )
         {
             typename Cluster<T>::ptr c = *ci;
@@ -432,9 +532,12 @@ namespace m3D {
             {
                 typename Cluster<T>::ptr old_cluster = previous->clusters[m];
                 
-                float coverage = old_cluster->percent_covered_by( new_cluster );
+                if ( coverOldByNew[n][m] == numeric_limits<T>::min() )
+                {
+                    coverOldByNew[n][m] = old_cluster->percent_covered_by( new_cluster );
+                }
                 
-                if ( coverage > this->m_merge_threshold )
+                if ( coverOldByNew[n][m] > this->m_merge_threshold )
                 {
                     candidates.push_back(m);
                 }
@@ -506,10 +609,13 @@ namespace m3D {
             for ( n=0; n < current->clusters.size(); n++ )
             {
                 typename Cluster<T>::ptr new_cluster = current->clusters[n];
-            
-                float coverage = new_cluster->percent_covered_by( old_cluster );
                 
-                if ( coverage > this->m_merge_threshold )
+                if ( coverNewByOld[n][m] == numeric_limits<T>::min() )
+                {
+                    coverNewByOld[n][m] = new_cluster->percent_covered_by( old_cluster );
+                }
+
+                if ( coverNewByOld[n][m] > this->m_merge_threshold )
                 {
                     candidates.push_back(n);
                 }
