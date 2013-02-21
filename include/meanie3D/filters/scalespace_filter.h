@@ -5,6 +5,8 @@
 #include <meanie3D/namespaces.h>
 
 #include <meanie3D/filters/filter.h>
+#include <cf-algorithms/cf-algorithms.h>
+#include <boost/progress.hpp>
 
 namespace m3D {
 
@@ -16,8 +18,38 @@ namespace m3D {
     {
         
     private:
+
+        double          m_scale;            /// Sole input parameter
         
-        double   m_scale;
+        PointIndex<T>   *m_index;           /// Index of a copy of the FS
+        
+        map<int,T>      m_min;              /// minimum tracker
+        
+        map<int,T>      m_max;              /// maximum tracker
+        
+        double          m_filter_width;     /// filter size, stored for efficiency
+        
+        double          m_gauging_factor;   /// multiplier, stored for efficiency
+        
+        cfa::meanshift::RangeSearchParams<T>    *m_range;           /// Search range, stored for efficiency
+        
+        boost::progress_display                 *m_progress_bar;    /// Progress meter
+
+        /** Shortcut method. Does not create new points. Violates
+         * the integrational constraint of the scale-space theory,
+         * where the integral over the whole domain should not change
+         */
+        void applyWithoutNewPoints( FeatureSpace<T> *fs );
+        
+        /** Proper method. Preserves the integral.
+         */
+        void applyWithNewPoints( FeatureSpace<T> *fs );
+
+        /** Recursive helper method for the proper method 
+         */
+        void applyWithNewPointsRecursive( FeatureSpace<T> *fs,
+                                          size_t dimensionIndex,
+                                          typename cfa::utils::CoordinateSystem<T>::GridPoint &gridpoint );
 
     public:
         

@@ -21,6 +21,9 @@ namespace m3D {
  
     template <typename T>
     ScaleSpaceFilter<T>::ScaleSpaceFilter(T scale, bool show_progress) : FeatureSpaceFilter<T>(show_progress)
+    , m_index(NULL)
+    , m_progress_bar(NULL)
+    , m_range(NULL)
     {
         if ( scale < 0 )
         {
@@ -31,7 +34,26 @@ namespace m3D {
     };
 
     template <typename T>
-    ScaleSpaceFilter<T>::~ScaleSpaceFilter() {};
+    ScaleSpaceFilter<T>::~ScaleSpaceFilter()
+    {
+        if ( m_index != NULL )
+        {
+            delete m_index;
+            m_index = NULL;
+        }
+        
+        if ( m_progress_bar != NULL )
+        {
+            delete m_progress_bar;
+            m_progress_bar = NULL;
+        }
+        
+        if ( m_range != NULL )
+        {
+            delete m_range;
+            m_range = NULL;
+        }
+    };
     
 #pragma mark -
 #pragma mark Accessors
@@ -57,7 +79,7 @@ namespace m3D {
     
     template <typename T>
     void
-    ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
+    ScaleSpaceFilter<T>::applyWithoutNewPoints( FeatureSpace<T> *fs )
     {
       using namespace cfa::utils::timer;
       using namespace cfa::utils::vectors;
@@ -202,6 +224,222 @@ namespace m3D {
 #endif
     }
     
+    
+    template <typename T>
+    void
+    ScaleSpaceFilter<T>::applyWithNewPointsRecursive( FeatureSpace<T> *fs,
+                                                      size_t dimensionIndex,
+                                                      typename cfa::utils::CoordinateSystem<T>::GridPoint &gridpoint )
+    {
+        using namespace std;
+        
+        NcDim dim = fs->coordinate_system->dimensions()[dimensionIndex];
+        
+        // iterate over dimensions
+        
+        for ( int index = 0; index < dim.getSize(); index++ )
+        {
+            // at each point for each variable
+
+            gridpoint[dimensionIndex] = index;
+            
+            if ( dimensionIndex < (gridpoint.size()-1) )
+            {
+                // recurse
+                
+                applyWithNewPointsRecursive(fs, dimensionIndex+1, gridpoint);
+            }
+            else
+            {
+                typename Point<T>::ptr p = NULL;
+                
+                // Get the points in radius
+                if ( this->show_progress() )
+                {
+                    m_progress_bar->operator++();
+                }
+                
+                vector<T> x(gridpoint.size(),0);
+                
+                fs->coordinate_system->lookup(gridpoint,x);
+                
+                // search in range filter_width around p in spatial index
+                // Iterate over the range variables in the sample
+                // calculate the result from the points found in the index
+
+                typename Point<T>::list *sample = m_index->search( x, m_range );
+
+                vector<T> values( fs->feature_variables().size(), 0.0 );
+                
+                typename Point<T>::list::iterator sample_iter;
+                
+                for ( sample_iter = sample->begin(); sample_iter != sample->end(); sample_iter++ )
+                {
+                    typename Point<T>::ptr sample_point = *sample_iter;
+                    
+                    // if the point is part of the original feature-space,
+                    // remember it.
+                    
+                    if ( sample_point->coordinate == x )
+                    {
+                        p = sample_point;
+                    }
+                    
+                    // distance from origin?
+                    
+                    T r = vector_norm( x - sample_point->coordinate );
+                    
+                    double gauss = m_gauging_factor * exp(-(r*r)/(2*m_scale));
+                    
+                    for ( size_t var_index = fs->coordinate_system->size(); var_index < fs->feature_variables().size(); var_index++ )
+                    {
+                        values[var_index] += gauss * sample_point->values[var_index];
+                    }
+                }
+                
+                // make sure limit trackers are initialized
+                
+                typename map<int,T>::iterator m;
+                
+                for ( size_t var_index = fs->coordinate_system->size(); var_index < fs->feature_variables().size(); var_index++ )
+                {
+                    if ( (m = m_min.find(var_index)) == m_min.end() )
+                    {
+                        m_min[var_index] = std::numeric_limits<T>::max();
+                    }
+                    
+                    if ( (m = m_max.find(var_index)) == m_max.end() )
+                    {
+                        m_max[var_index] = std::numeric_limits<T>::min();
+                    }
+                    
+                    // track limits
+                    
+                    if (values[var_index] < m_min[var_index] )
+                    {
+                        m_min[var_index] = values[var_index];
+                    }
+                    
+                    if (values[var_index] > m_max[var_index] )
+                    {
+                        m_max[var_index] = values[var_index];
+                    }
+                }
+                
+                delete sample;
+
+                // if the point exists in the feature-space, replace
+                // it with the fresh result
+                
+                if ( p != NULL )
+                {
+                    for ( size_t var_index = fs->coordinate_system->size(); var_index < fs->feature_variables().size(); var_index++ )
+                    {
+                        p->values[var_index] = values[var_index];
+                    }
+                }
+                else
+                {
+                    // otherwise create a new one
+                    
+                    for ( size_t i = 0; i < fs->coordinate_system->size(); i++ )
+                    {
+                        values[i] = x[i];
+                    }
+                
+                    p = new Point<T>(x,values);
+                    
+                    fs->points.push_back(p);
+                }
+            }
+        }
+    }
+    
+    
+    template <typename T>
+    void
+    ScaleSpaceFilter<T>::applyWithNewPoints( FeatureSpace<T> *fs )
+    {
+        using namespace cfa::utils::timer;
+        using namespace cfa::utils::vectors;
+        
+        using namespace cfa::utils::timer;
+        using namespace cfa::utils::vectors;
+        
+#if WRITE_FEATURESPACE
+        std::string fn = fs->filename() + "_scale_0.vtk";
+        VisitUtils<T>::write_featurespace_vtk( fn, fs );
+#endif
+        if ( m_scale > 0.0 )
+        {
+            // Replace the value of each point in feature-space with the average
+            // of the neighbours within a range determined by the scale parameter
+            
+            m_filter_width = sqrt( ceil( -2.0 * m_scale * log(0.01) ) ) / 2;
+            
+            // Pre-calculate the gauging factor for the gaussian kernel
+            
+            m_gauging_factor = 1.0 / std::pow( (double)sqrt(2.0 * M_PI * m_scale), (double)fs->coordinate_system->size() );
+
+            vector<T> spatial_range( fs->coordinate_system->size(), m_filter_width );
+            
+            m_range = new RangeSearchParams<T>( spatial_range );
+            
+            if ( this->show_progress() )
+            {
+                cout << endl << "Applying scale filter t=" << m_scale << " (ranges " << spatial_range << ") ...";
+                
+                long numPoints = 1;
+                
+                for ( size_t i=0; i < fs->coordinate_system->dimensions().size(); i++)
+                {
+                    numPoints *= fs->coordinate_system->dimensions()[i].getSize();
+                }
+                
+                m_progress_bar = new boost::progress_display( numPoints );
+                
+                start_timer();
+            }
+            
+            // Make a copy of the feature space
+            
+            FeatureSpace<T> fs_copy = FeatureSpace<T>( *fs );
+            
+            // create a 'spatial only' index of the feature-space points
+            
+            m_index = PointIndex<T>::create( &fs_copy, fs->coordinate_system->dimension_variables() );
+            
+            // Iterate over the dimensions
+            
+            typename cfa::utils::CoordinateSystem<T>::GridPoint gp = fs->coordinate_system->newGridPoint();
+            
+            this->applyWithNewPointsRecursive(fs, 0, gp);
+
+            if ( this->show_progress() )
+            {
+                cout << "done. (" << stop_timer() << "s)" << endl;
+                cout << "Value ranges of smoothed features:" << endl;
+                for ( size_t var_index = fs->coordinate_system->size(); var_index < fs->feature_variables().size(); var_index++ )
+                {
+                    cout << "\t#" << var_index << " : [" << m_min[var_index] << "," << m_max[var_index] << "]" << endl;
+                }
+
+                delete m_progress_bar;
+                m_progress_bar = NULL;
+            }
+#if WRITE_FEATURESPACE
+            fn = fs->filename() + "_scale_" + boost::lexical_cast<string>(m_scale) + ".vtk";
+            VisitUtils<T>::write_featurespace_vtk( fn, fs );
+#endif
+        }
+    }
+    
+    template <typename T>
+    void
+    ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
+    {
+        this->applyWithNewPoints( fs );
+    }
     
 };
 
