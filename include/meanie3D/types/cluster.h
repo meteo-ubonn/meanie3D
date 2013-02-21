@@ -37,6 +37,8 @@ namespace m3D {
         
         map< size_t, vector<T> >    m_weighed_centers;
         
+        T                           m_radius;
+        
         PointIndex<T>               *m_index;
         
         size_t                      m_dimension;                // dimension of the points
@@ -79,8 +81,6 @@ namespace m3D {
         
         size_t
         dimension() { return m_dimension; };
-        
-        
         
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -243,6 +243,11 @@ namespace m3D {
          * forcing a fresh calculation the next time they are called.
          */
         void clear_center_caches();
+        
+        /** Returns the maximum distance between the cluster mode and
+         * the point farthest away from it.
+         */
+        T radius();
     };
     
 };
