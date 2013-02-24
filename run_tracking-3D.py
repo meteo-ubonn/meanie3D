@@ -13,7 +13,8 @@ from subprocess import call
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
-CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 3,7,7,100 --drf-threshold 0.5 -s 8 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
+#CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 2,5,5,100 --drf-threshold 0.25 -s 16 -t 20 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
+CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 2,5,5,100 --drf-threshold 0.25 -s 128 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
 #CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 3,7,7,100 --drf-threshold 0.75 -s 12 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
 TRACKING_PARAMS   = "-t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
 
@@ -49,17 +50,26 @@ col_tables = ["Purples","Blues","Oranges","Greens","Reds","Set1","Set2","Set3"]
 a = GetAnnotationAttributes()
 a.axes3D.visible=1
 a.axes3D.setBBoxLocation=1
-a.axes3D.bboxLocation = (-366, -111, -4340, -4105, 0, 15)
+a.axes3D.bboxLocation = (-366, -111, -4340, -4105, 0, 15) 
 a.axes3D.autoSetScaling=0
 a.userInfoFlag=0
 a.timeInfoFlag=0
 a.legendInfoFlag=0
 a.databaseInfoFlag=1
+a.axes3D.xAxis.title.visible = 0
+a.axes3D.yAxis.title.visible = 0
+a.axes3D.zAxis.title.visible = 0
 SetAnnotationAttributes(a)
 
 # Modify view parameters
 v = GetView3D()
-v.focus=(-238.5,-4222.5,50.0)
+v.viewNormal=(0,0,1)
+v.focus=(-251.462, -4202.15, 3.75)
+v.parallelScale=119.692
+v.nearPlane=-239.383
+v.farPlane=239.383
+v.imagePan=(-0.021871, 0.0640515)
+v.imageZoom=0.9
 SetView3D(v)
 
 # Get a list of the files we need to process
