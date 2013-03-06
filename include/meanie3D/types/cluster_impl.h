@@ -231,7 +231,7 @@ namespace m3D {
             
             for (size_t i=0; i<m_spatial_dimension; i++) indexes[i]=i;
 
-            this->m_index = PointIndex<T>::create( &(this->points), indexes );
+            this->m_index = PointIndex<T>::create( &this->points, indexes );
         }
         
         return m_index;
