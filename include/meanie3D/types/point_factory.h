@@ -20,19 +20,20 @@ namespace m3D {
     class M3DPointFactory : public PointFactory<T>
     {
         
-        /** This is an abstract method used to create new instances of Point.
-         */
         Point<T> * create() {
             return new M3DPoint<T>();
         }
         
-        /** This is an abstract method used to create new instances of Point.
-         * @param vector with initial point coordinates
-         * @param vector with initial point value
-         */
         Point<T> * create( vector<T> &coord, vector<T> &value ) {
             return new M3DPoint<T>(coord,value);
         }
+        
+        Point<T> *
+        copy( const Point<T> *p)
+        {
+            return new M3DPoint<T>( (M3DPoint<T>*) p );
+        }
+
     };
     
 };

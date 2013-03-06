@@ -268,6 +268,13 @@ namespace m3D {
                 // calculate the result from the points found in the index
 
                 typename Point<T>::list *sample = m_index->search( x, m_range );
+                
+                if ( sample->size() == 0 )
+                {
+                    delete sample;
+                    
+                    continue;
+                }
 
                 vector<T> values( fs->feature_variables().size(), 0.0 );
                 
@@ -287,9 +294,11 @@ namespace m3D {
                     
                     // distance from origin?
                     
-                    T r = vector_norm( x - sample_point->coordinate );
+                    // T r = vector_norm( x - sample_point->coordinate );
                     
-                    double gauss = m_gauging_factor * exp(-(r*r)/(2*m_scale));
+                    vector<T> dx = x - sample_point->coordinate;
+                    
+                    double gauss = m_gauging_factor * exp( - (dx * dx) / 2 * m_scale );
                     
                     for ( size_t var_index = fs->coordinate_system->size(); var_index < fs->feature_variables().size(); var_index++ )
                     {
@@ -347,7 +356,11 @@ namespace m3D {
                         values[i] = x[i];
                     }
                 
-                    p = new Point<T>(x,values);
+                    p = PointFactory<T>::get_instance()->create(x,values);
+                    
+                    M3DPoint<T> *mp = (M3DPoint<T> *)p;
+                    
+                    mp->setIsOriginalPoint(false);
                     
                     fs->points.push_back(p);
                 }
@@ -379,7 +392,7 @@ namespace m3D {
             
             // Pre-calculate the gauging factor for the gaussian kernel
             
-            m_gauging_factor = 1.0 / std::pow( (double)sqrt(2.0 * M_PI * m_scale), (double)fs->coordinate_system->size() );
+            m_gauging_factor = 1.0 / std::pow( 2.0 * M_PI * m_scale, (double)fs->coordinate_system->size()/2 );
 
             vector<T> spatial_range( fs->coordinate_system->size(), m_filter_width );
             
@@ -439,6 +452,7 @@ namespace m3D {
     ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
     {
         this->applyWithNewPoints( fs );
+        //this->applyWithoutNewPoints( fs );
     }
     
 };

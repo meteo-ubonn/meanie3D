@@ -661,14 +661,6 @@ int main(int argc, char** argv)
     
     FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, thresholds, show_progress );
     
-    // Scale-Space smoothing
-    
-    if (scale != NO_SCALE) {
-    	ScaleSpaceFilter<FS_TYPE> sf(scale,show_progress);
-        
-    	sf.apply(fs);
-    }
-    
     if (!vtk_variables.empty())
     {
         string filename_only = boost::filesystem::path(filename).filename().string();
@@ -684,6 +676,17 @@ int main(int argc, char** argv)
         cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
     }
     
+    // Scale-Space smoothing
+    
+    if (scale != NO_SCALE)
+    {
+    	ScaleSpaceFilter<FS_TYPE> sf(scale,show_progress);
+        
+    	sf.apply(fs);
+        
+        cout << "\t" << fs->points.size() << " points." << endl;
+    }
+
     if ( verbosity == VerbosityAll )
         fs->print();
     
@@ -708,7 +711,7 @@ int main(int argc, char** argv)
     
     // Sanity check
     
-    clusters.sanity_check( fs );
+    // clusters.sanity_check( fs );
     
     if ( verbosity == VerbosityAll )
     {

@@ -656,7 +656,14 @@ namespace m3D {
             M3DPoint<T> *p = (M3DPoint<T> *) fs->points[i];
             
             // Skip points that have been assigned already
+            
             if ( p->cluster != NULL ) continue;
+            
+            // Skip points, that do not belong to the original
+            // feature-space, but were created by scale-space
+            // filtering etc.
+            
+            if ( ! p->isOriginalPoint()) continue;
             
             typename Point<T>::list nodes;
             
@@ -807,6 +814,12 @@ namespace m3D {
             for ( ni = neighbours->begin(); ni != neighbours->end(); ni++ )
             {
                 M3DPoint<T> *n = (M3DPoint<T> *) *ni;
+                
+                // Exclude points, that have not been clustered.
+                // This can happen because scale-space filtering
+                // creates new points, but those are not associated
+                // with clusters in later steps
+                if ( n->cluster == NULL ) continue;
                 
                 if ( n->cluster != p->cluster )
                 {

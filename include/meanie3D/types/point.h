@@ -22,6 +22,10 @@ namespace m3D {
     template <class T> 
     struct M3DPoint : public Point<T>
     {
+        
+    private:
+        
+        bool    m_isOriginalPoint;
 
     public:
         
@@ -41,17 +45,26 @@ namespace m3D {
         
         /** Default constructor
          */
-    	M3DPoint() : Point<T>(), cluster(NULL) {};
+    	M3DPoint()
+        : Point<T>(),m_isOriginalPoint(true),cluster(NULL) {};
 
         /** Constructor.
          * @param initial coordinate
          * @param initial values
          */
-        M3DPoint( vector<T> &coord, vector<T>& value ) : Point<T>(coord,value), cluster(NULL) {};
+        M3DPoint( vector<T> &coord, vector<T>& value )
+        : Point<T>(coord,value),m_isOriginalPoint(true),cluster(NULL) {};
 
         /** Copy constructor
          */
-        M3DPoint( const M3DPoint<T> &o ) : Point<T>(o), cluster( o.cluster ) {};
+        M3DPoint( const M3DPoint<T> &o )
+        : Point<T>(o),m_isOriginalPoint(o.isOriginalPoint()),cluster( o.cluster ) {};
+        
+        /** Copy constructor on pointer
+         */
+        M3DPoint( const M3DPoint<T> *o )
+        : Point<T>(o),m_isOriginalPoint(o->isOriginalPoint()),cluster( o->cluster ) {};
+
         
         /** Copy operator */
         
@@ -71,6 +84,13 @@ namespace m3D {
          */
         bool
         operator == (const M3DPoint<T> &o) { return this->values == o.values; };
+        
+#pragma mark -
+#pragma mark Accessors
+        
+        bool isOriginalPoint() const {return m_isOriginalPoint;};
+        
+        void setIsOriginalPoint(bool value) { m_isOriginalPoint=value; };
 
     };
 };
