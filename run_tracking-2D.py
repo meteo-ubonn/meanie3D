@@ -10,8 +10,14 @@ from subprocess import call
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
-CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 5,10,10,100 --drf-threshold 0.75 -s 16 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
-TRACKING_PARAMS   = "-t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
+
+# OASE Komposit
+#CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 5,10,10,100 --drf-threshold 0.75 -s 16 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
+#TRACKING_PARAMS   = "-t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
+
+# RADOLAN
+CLUSTERING_PARAMS = "-d x,y -v reflectivity -w reflectivity -r 5,5,100 --drf-threshold 1 -s 128 -t 20 --write-variables-as-vtk=reflectivity"
+TRACKING_PARAMS   = "-t reflectivity --verbosity 3 --write-vtk --wr=1.0 --ws=1.0 --wt=0.0"
 
 # print parameters
 
@@ -39,13 +45,11 @@ print "Tracking Command:"
 print tracking_bin
 
 # Cluster color tables
-col_tables = ["Purples","Blues","Oranges","Greens","Reds","Set1","Set2","Set3"]
+col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
 
 # Set view and annotation attributes
 a = GetAnnotationAttributes()
 a.axes2D.visible=1
-a.axes2D.setBBoxLocation=1
-a.axes2D.bboxLocation = (-366, -111, -4340, -4105, 0, 15)
 a.axes2D.autoSetScaling=0
 a.userInfoFlag=0
 a.timeInfoFlag=0
@@ -104,13 +108,13 @@ for netcdf_file in netcdf_list:
     AddPlot("Pseudocolor", "zh")
 
     p = PseudocolorAttributes()
-    p.colorTableName = "hot_desaturated"
+    p.colorTableName = "xray"
     #p.legendFlag=1
-    #p.lightingFlag=0
-    #p.invertColorTable=0
-    #p.minFlag,p.maxFlag = 1,1
-    #p.min,p.max = 0.0, 50.0
-    #p.opacity=1.0
+    p.lightingFlag=1
+    #p.invertColorTable=1
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = 0.0, 50.0
+    p.opacity=1.0
     SetPlotOptions(p)
 
     # save the source file
@@ -162,7 +166,7 @@ for netcdf_file in netcdf_list:
         cp.invertColorTable=0
         index = cluster_num % len(col_tables);
         cp.colorTableName = col_tables[index];
-        cp.opacity=1
+        cp.opacity=0.05
         SetPlotOptions(cp)
 
     # Get it all plotted
@@ -190,7 +194,7 @@ for netcdf_file in netcdf_list:
     CloseDatabase(vtk_file)
     for cluster_file in cluster_list:
         CloseDatabase(cluster_file)
-    #return_code=call("rm *.vtk", shell=True)
+    return_code=call("rm *cluster_*.vtk", shell=True)
 
     file_count += 1
 

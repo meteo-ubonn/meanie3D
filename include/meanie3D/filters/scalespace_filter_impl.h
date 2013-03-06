@@ -251,8 +251,6 @@ namespace m3D {
             }
             else
             {
-                typename Point<T>::ptr p = NULL;
-                
                 // Get the points in radius
                 if ( this->show_progress() )
                 {
@@ -283,14 +281,6 @@ namespace m3D {
                 for ( sample_iter = sample->begin(); sample_iter != sample->end(); sample_iter++ )
                 {
                     typename Point<T>::ptr sample_point = *sample_iter;
-                    
-                    // if the point is part of the original feature-space,
-                    // remember it.
-                    
-                    if ( sample_point->coordinate == x )
-                    {
-                        p = sample_point;
-                    }
                     
                     // distance from origin?
                     
@@ -337,33 +327,20 @@ namespace m3D {
                 
                 delete sample;
 
-                // if the point exists in the feature-space, replace
-                // it with the fresh result
+                // Create point
                 
-                if ( p != NULL )
+                for ( size_t i = 0; i < fs->coordinate_system->size(); i++ )
                 {
-                    for ( size_t var_index = fs->coordinate_system->size(); var_index < fs->feature_variables().size(); var_index++ )
-                    {
-                        p->values[var_index] = values[var_index];
-                    }
+                    values[i] = x[i];
                 }
-                else
-                {
-                    // otherwise create a new one
-                    
-                    for ( size_t i = 0; i < fs->coordinate_system->size(); i++ )
-                    {
-                        values[i] = x[i];
-                    }
+            
+                typename Point<T>::ptr p = PointFactory<T>::get_instance()->create(x,values);
                 
-                    p = PointFactory<T>::get_instance()->create(x,values);
-                    
-                    M3DPoint<T> *mp = (M3DPoint<T> *)p;
-                    
-                    mp->setIsOriginalPoint(false);
-                    
-                    fs->points.push_back(p);
-                }
+                M3DPoint<T> *mp = (M3DPoint<T> *)p;
+                
+                mp->setIsOriginalPoint(false);
+                
+                fs->points.push_back(p);
             }
         }
     }
@@ -414,19 +391,26 @@ namespace m3D {
                 start_timer();
             }
             
-            // Make a copy of the feature space
-            
-            FeatureSpace<T> fs_copy = FeatureSpace<T>( *fs );
-            
             // create a 'spatial only' index of the feature-space points
             
-            m_index = PointIndex<T>::create( &fs_copy, fs->coordinate_system->dimension_variables() );
+            m_index = PointIndex<T>::create( fs, fs->coordinate_system->dimension_variables() );
             
             // Iterate over the dimensions
             
             typename cfa::utils::CoordinateSystem<T>::GridPoint gp = fs->coordinate_system->newGridPoint();
             
-            this->applyWithNewPointsRecursive(fs, 0, gp);
+            FeatureSpace<T> *filtered_featurespace = new FeatureSpace<T>(*fs,false);
+            
+            this->applyWithNewPointsRecursive(filtered_featurespace, 0, gp);
+            
+            // replace points in the featurespace with
+            // the filtered results
+            
+            fs->clear_points();
+            
+            fs->points = filtered_featurespace->points;
+            
+            // Finish 
 
             if ( this->show_progress() )
             {
