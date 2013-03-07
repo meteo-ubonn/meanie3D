@@ -37,10 +37,10 @@ namespace m3D {
          * @param index of current dimension
          */
         void
-        construct_array_recursive(size_t dim_index);
+        construct_array_recursive(size_t dim_index, void *data, typename CoordinateSystem<T>::GridPoint &gridpoint );
         
         void
-        destroy_array_recursive(size_t dim_index);
+        destroy_array_recursive(size_t dim_index, typename CoordinateSystem<T>::GridPoint &gridpoint );
         
 #pragma mark -
 #pragma mark Constructors/Destructors

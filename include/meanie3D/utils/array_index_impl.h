@@ -28,19 +28,54 @@ namespace m3D {
     
     template <typename T>
     void
-    ArrayIndex<T>::construct_array_recursive(size_t dim_index, void *)
+    ArrayIndex<T>::construct_array_recursive(size_t dim_index, void **data, typename CoordinateSystem<T>::GridPoint &gridpoint )
     {
-        if ( dim_index < )
+        NcDim dim = m_fs->coordinate_system()->dimensions()[dim_index];
+        
+        if (dim_index==0)
+        {
+            *data = (void *) new vector<void *>(dim.getSize(),NULL);
+            
+            gridpoint[
+
+            construct_array_recursive(dim_index+1, data, gridpoint);
+
+        }
+        else
+        {
+            for ( int index = 0; index < dim.getSize(); index++ )
+            {
+                gridpoint[dimensionIndex] = index;
+
+                vector<void *> *array = (vector<void *>) (*data);
+
+                if (dim_index < (m_fs->coordinate_system()->size()-1) )
+                {
+                    else
+                    {
+                        array[index] = new vector<void *>(dim.getSize(),NULL);
+                    }
+                    
+                    construct_array_recursive(dim_index+1, data, gridpoint);
+                }
+                else
+                {
+                    array[index] = new vector<typename Point<T>::ptr>(dim.getSize(),NULL);
+                }
+            }
+        }
     }
     
     template <typename T>
     void
-    ArrayIndex<T>::destroy_array_recursive(size_t dim_index)
+    ArrayIndex<T>::destroy_array_recursive(size_t dim_index,typename CoordinateSystem<T>::GridPoint &gridpoint)
     {
     }
     
 #pragma mark -
 #pragma mark Accessors
+                      
+    
     
     template <typename T>
     typename Point<T>::ptr
