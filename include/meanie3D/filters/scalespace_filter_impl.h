@@ -251,11 +251,14 @@ namespace m3D {
             }
             else
             {
-                // Get the points in radius
+                bool isOriginalPoint = false;
+                
                 if ( this->show_progress() )
                 {
                     m_progress_bar->operator++();
                 }
+            
+                // Obtain the coordinate
                 
                 vector<T> x(gridpoint.size(),0);
                 
@@ -273,6 +276,9 @@ namespace m3D {
                     
                     continue;
                 }
+                
+                // calculate smoothed value as gauss-weighed sum of
+                // the values in the sample around x
 
                 vector<T> values( fs->feature_variables().size(), 0.0 );
                 
@@ -280,23 +286,32 @@ namespace m3D {
                 
                 for ( sample_iter = sample->begin(); sample_iter != sample->end(); sample_iter++ )
                 {
+                    
+                    // calculate weight
+                    
                     typename Point<T>::ptr sample_point = *sample_iter;
                     
-                    // distance from origin?
+                    // Remember, if a point existed at this coordinate
+                    // in the original feature-space
                     
-                    // T r = vector_norm( x - sample_point->coordinate );
-                    
+                    if ( sample_point->coordinate == x )
+                    {
+                        isOriginalPoint = true;
+                    }
+
                     vector<T> dx = x - sample_point->coordinate;
                     
-                    double gauss = m_gauging_factor * exp( - (dx * dx) / 2 * m_scale );
+                    T weight = m_gauging_factor * std::exp( - (dx*dx) / (2*m_scale) );
+                    
+                    // calculate values
                     
                     for ( size_t var_index = fs->coordinate_system->size(); var_index < fs->feature_variables().size(); var_index++ )
                     {
-                        values[var_index] += gauss * sample_point->values[var_index];
+                        values[var_index] += weight * sample_point->values[var_index];
                     }
                 }
                 
-                // make sure limit trackers are initialized
+                // Track limits
                 
                 typename map<int,T>::iterator m;
                 
@@ -311,8 +326,6 @@ namespace m3D {
                     {
                         m_max[var_index] = std::numeric_limits<T>::min();
                     }
-                    
-                    // track limits
                     
                     if (values[var_index] < m_min[var_index] )
                     {
@@ -338,7 +351,7 @@ namespace m3D {
                 
                 M3DPoint<T> *mp = (M3DPoint<T> *)p;
                 
-                mp->setIsOriginalPoint(false);
+                mp->setIsOriginalPoint(isOriginalPoint);
                 
                 fs->points.push_back(p);
             }

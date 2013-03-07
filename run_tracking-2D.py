@@ -1,4 +1,4 @@
-3#!/usr/bin/python
+#!/usr/bin/python
 import glob
 import sys
 import os
@@ -16,7 +16,7 @@ NETCDF_DIR        = "SOURCE_DIR"
 #TRACKING_PARAMS   = "-t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
 
 # RADOLAN
-CLUSTERING_PARAMS = "-d x,y -v reflectivity -w reflectivity -r 5,5,100 --drf-threshold 1 -s 128 -t 20 --write-variables-as-vtk=reflectivity"
+CLUSTERING_PARAMS = "--write-variables-as-vtk=reflectivity -v reflectivity -w reflectivity -d x,y -r 5,5,100 --drf-threshold 0.25 -s 32 -t 20 -m 10"
 TRACKING_PARAMS   = "-t reflectivity --verbosity 3 --write-vtk --wr=1.0 --ws=1.0 --wt=0.0"
 
 # print parameters
@@ -105,7 +105,7 @@ for netcdf_file in netcdf_list:
  
     # open the file and add the plot
     OpenDatabase(vtk_file)
-    AddPlot("Pseudocolor", "zh")
+    AddPlot("Pseudocolor", "reflectivity")
 
     p = PseudocolorAttributes()
     p.colorTableName = "xray"
