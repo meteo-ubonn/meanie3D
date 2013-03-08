@@ -17,30 +17,48 @@ namespace m3D {
     using namespace netCDF;
     using cfa::meanshift::Point;
     using cfa::meanshift::FeatureSpace;
-    using cfa::meanshift::utils::CoordinateSystem;
+    using cfa::utils::coords::CoordinateSystem;
 
     template <class T>
     class ArrayIndex
     {
+        
+    protected:
+        
+        typedef vector<void*>   array_t;
+        typedef array_t*        array_t_ptr;
         
 #pragma mark -
 #pragma mark Attributes
 
     private:
         
-        FeatureSpace<T>     *m_fs;
-        void                *data;
+        const FeatureSpace<T>       *m_fs;
+        array_t                     *m_data;
         
         /** Helper method for constructing the arbitrary deep
          * vector structure. Guided by the feature-spaces's
          * coordinate system.
          * @param index of current dimension
+         * @param pointer to data
+         * @param current grid point
          */
         void
-        construct_array_recursive(size_t dim_index, void *data, typename CoordinateSystem<T>::GridPoint &gridpoint );
+        construct_array_recursive(size_t dim_index, array_t **array, typename CoordinateSystem<T>::GridPoint &gridpoint );
         
+        /** Helper method for destroying the data. Does not free
+         * the points, only the index arrays.
+         * @param index of current dimension
+         * @param pointer to data
+         * @param current grid point
+         */
         void
-        destroy_array_recursive(size_t dim_index, typename CoordinateSystem<T>::GridPoint &gridpoint );
+        destroy_array_recursive(size_t dim_index, array_t **array, typename CoordinateSystem<T>::GridPoint &gridpoint );
+        
+        /** Constructs the actual index.
+         */
+        void
+        build_index();
         
 #pragma mark -
 #pragma mark Constructors/Destructors
@@ -59,10 +77,10 @@ namespace m3D {
 #pragma mark -
 #pragma mark Accessors
     
-        typename Point<T>::ptr get(const GridPoint &gp);
+        typename Point<T>::ptr get(const typename CoordinateSystem<T>::GridPoint &gp);
     
-        void set(const GridPoint &gp, typename Point<T>::ptr p);
-    }
+        void set(const typename CoordinateSystem<T>::GridPoint &gp, typename Point<T>::ptr p);
+    };
 
 };
     

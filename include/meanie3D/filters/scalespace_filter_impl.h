@@ -10,6 +10,8 @@
 
 #include <cf-algorithms/cf-algorithms.h>
 
+#include <meanie3D/utils.h>
+
 namespace m3D {
 
 	using namespace std;
@@ -347,7 +349,7 @@ namespace m3D {
                     values[i] = x[i];
                 }
             
-                typename Point<T>::ptr p = PointFactory<T>::get_instance()->create(x,values);
+                typename Point<T>::ptr p = PointFactory<T>::get_instance()->create(gridpoint,x,values);
                 
                 M3DPoint<T> *mp = (M3DPoint<T> *)p;
                 
@@ -448,8 +450,18 @@ namespace m3D {
     void
     ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
     {
+        cout << "fs = " << fs << endl;
+        
+        ArrayIndex<T> * arrayIndex = new ArrayIndex<T>(fs);
+        
+        delete arrayIndex;
+
+        cout << "fs = " << fs << endl;
+        
         this->applyWithNewPoints( fs );
+        
         //this->applyWithoutNewPoints( fs );
+        
     }
     
 };

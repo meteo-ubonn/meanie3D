@@ -24,8 +24,11 @@ namespace m3D {
             return new M3DPoint<T>();
         }
         
-        Point<T> * create( vector<T> &coord, vector<T> &value ) {
-            return new M3DPoint<T>(coord,value);
+        Point<T> * create( vector<size_t> &gridpoint, vector<T> &coord, vector<T> &value )
+        {
+            M3DPoint<T> *p = new M3DPoint<T>(gridpoint,coord,value);
+            
+            return p;
         }
         
         Point<T> *

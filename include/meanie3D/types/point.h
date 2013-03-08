@@ -52,8 +52,8 @@ namespace m3D {
          * @param initial coordinate
          * @param initial values
          */
-        M3DPoint( vector<T> &coord, vector<T>& value )
-        : Point<T>(coord,value),m_isOriginalPoint(true),cluster(NULL) {};
+        M3DPoint( vector<size_t> gridpoint, vector<T> &coord, vector<T>& value )
+        : Point<T>(gridpoint,coord,value),m_isOriginalPoint(true),cluster(NULL) {};
 
         /** Copy constructor
          */
