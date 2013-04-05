@@ -9,7 +9,7 @@ OpenDatabase( source_file )
 a = AnnotationAttributes()
 print a
 
-AddPlot("Pseudocolor", "zh")
+AddPlot("Pseudocolor", "reflectivity")
 p = PseudocolorAttributes()
 p.colorTableName = "xray"
 p.legendFlag=0

@@ -49,11 +49,20 @@ namespace m3D {
         : Point<T>(),m_isOriginalPoint(true),cluster(NULL) {};
 
         /** Constructor.
-         * @param initial coordinate
-         * @param initial values
+         * @param gridpoint
+         * @param coordinate
+         * @param values
          */
         M3DPoint( vector<size_t> gridpoint, vector<T> &coord, vector<T>& value )
         : Point<T>(gridpoint,coord,value),m_isOriginalPoint(true),cluster(NULL) {};
+
+        /** Constructor.
+         * @param gridpoint
+         * @param coordinate
+         * @deprecated
+         */
+        M3DPoint( vector<T> &coord, vector<T>& value )
+        : Point<T>(coord,value),m_isOriginalPoint(true),cluster(NULL) {};
 
         /** Copy constructor
          */

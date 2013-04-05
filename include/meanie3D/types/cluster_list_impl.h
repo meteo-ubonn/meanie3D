@@ -1235,6 +1235,9 @@ namespace m3D {
                                                              const double &drf_threshold,
                                                              const bool &show_progress )
     {
+        // No merging
+        if (drf_threshold==1.0) return;
+        
         // Provide a second index for the merge examination. They use a smaller
         // resolution and would trigger re-calculation of the index every other
         // step. It's cheaper to provide them with their own index

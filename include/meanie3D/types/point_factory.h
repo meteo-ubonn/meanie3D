@@ -31,6 +31,13 @@ namespace m3D {
             return p;
         }
         
+        Point<T> * create( vector<T> &coord, vector<T> &value )
+        {
+            M3DPoint<T> *p = new M3DPoint<T>(coord,value);
+            
+            return p;
+        }
+
         Point<T> *
         copy( const Point<T> *p)
         {
