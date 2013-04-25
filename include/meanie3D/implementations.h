@@ -2,6 +2,7 @@
 #define _M3D_IMPLEMENTATIONS_H_
 
 #include <meanie3D/detection/cluster_op_impl.h>
+#include <meanie3D/filters/scalespace_kernel_impl.h>
 #include <meanie3D/filters/scalespace_filter_impl.h>
 #include <meanie3D/filters/threshold_filter_impl.h>
 #include <meanie3D/implementations.h>

@@ -16,7 +16,7 @@ NETCDF_DIR        = "SOURCE_DIR"
 #TRACKING_PARAMS   = "-t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
 
 # RADOLAN
-CLUSTERING_PARAMS = "--write-variables-as-vtk=reflectivity -v reflectivity -w reflectivity -d x,y -r 5,5,100 --drf-threshold 0.25 -s 32 -t 20 -m 10"
+CLUSTERING_PARAMS = "--write-variables-as-vtk=reflectivity -v reflectivity -w reflectivity -d x,y -r 5,5,100 --drf-threshold 0.5 -s 8 -t 10 -m 10"
 TRACKING_PARAMS   = "-t reflectivity --verbosity 3 --write-vtk --wr=1.0 --ws=1.0 --wt=0.0"
 
 # print parameters

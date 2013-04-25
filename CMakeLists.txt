@@ -45,7 +45,7 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 ADD_DEFINITIONS(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_HAVE_OWN_TR1_TUPLE=0)
 
 # Switch on to use TBB
-SET(WITH_TBB NO)
+SET(WITH_TBB YES)
 
 # Switch on to use Boost Threads. Do not combine with TBB
 SET(WITH_BOOST_THREADS 0)
@@ -105,6 +105,8 @@ ENDIF (USE_CPP11)
 # Find dependencies
 # -------------------------------------
 
+MESSAGE(STATUS "Resolving dependencies for Meanie3D")
+
 # netcdf
 FIND_PACKAGE(NETCDF)
 IF (NOT NETCDF_FOUND)
@@ -131,13 +133,16 @@ ENDIF()
 
 # TBB
 IF (WITH_TBB)
+    MESSAGE(STATUS "Looking for TBB")
    FIND_PACKAGE(TBB)
    IF (NOT TBB_FOUND)
-      MESSAGE(FATAL_ERROR "TBB not found (http://threadingbuildingblocks.org)")
+        MESSAGE(FATAL_ERROR "TBB not found (http://threadingbuildingblocks.org)")
+   ELSE(NOT TBB_FOUND)
+        MESSAGE(STATUS "TBB_LIBRARIES = ${TBB_LIBRARIES}")
    ENDIF(NOT TBB_FOUND)
 ENDIF(WITH_TBB)
 
-# ------------------------------------- 
+# -------------------------------------
 # Submodules
 # -------------------------------------
 
@@ -202,6 +207,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/types/histogram_impl.h
     include/meanie3D/filters.h
     include/meanie3D/filters/filter.h
+    include/meanie3D/filters/scalespace_kernel.h
+    include/meanie3D/filters/scalespace_kernel_impl.h
     include/meanie3D/filters/scalespace_filter.h
     include/meanie3D/filters/scalespace_filter_impl.h
     include/meanie3D/filters/threshold_filter.h
@@ -245,7 +252,7 @@ IF(WITH_TBB)
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
-	${TBB_LIBRARIES})
+        ${TBB_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3D-detect
         meanie3D
@@ -320,18 +327,16 @@ IF(WITH_TBB)
         ${NETCDF_LIBRARIES}
         ${HDF5_LIBRARIES}
         ${GTEST_LIBRARIES}
-	${CFA_LIBRARIES}
         ${TBB_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3d-detection-test
         meanie3D
     	cf-algorithms
         numericalrecipes
-	${Boost_LIBRARIES}
-	${NETCDF_LIBRARIES}
-	${HDF5_LIBRARIES}
-	${GTEST_LIBRARIES}
-	${TBB_LIBRARIES})
+        ${Boost_LIBRARIES}
+        ${NETCDF_LIBRARIES}
+        ${HDF5_LIBRARIES}
+        ${GTEST_LIBRARIES})
 ENDIF()
 
 SET_TARGET_PROPERTIES(meanie3D PROPERTIES LINKER_LANGUAGE CXX)

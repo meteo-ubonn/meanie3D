@@ -680,7 +680,9 @@ int main(int argc, char** argv)
     
     if (scale != NO_SCALE)
     {
-    	ScaleSpaceFilter<FS_TYPE> sf(scale,show_progress);
+        // TODO: make decay a parameter or at least a constant
+        
+    	ScaleSpaceFilter<FS_TYPE> sf(scale, fs->coordinate_system->resolution(), 0.01, show_progress);
         
     	sf.apply(fs);
         

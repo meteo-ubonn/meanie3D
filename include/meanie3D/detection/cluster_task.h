@@ -7,6 +7,10 @@
 #include <stdlib.h>
 #include <cf-algorithms/cf-algorithms.h>
 
+#if WITH_TBB
+#include <tbb/tbb.h>
+#endif
+
 namespace m3D {
 
 	using namespace ::std;
@@ -67,18 +71,18 @@ namespace m3D {
         
         /** Copy contructor */
         ClusterTask( const ClusterTask &other )
+        : m_fs(other.m_fs),
+        m_index(other.m_index),
+        m_op(other.m_op),
+        m_cluster_list(other.m_cluster_list),
+        m_search_params(other.m_search_params),
+        m_start_index(other.m_start_index),
+        m_end_index(other.m_end_index),
+        m_kernel(other.m_kernel),
+        m_weight_index(other.m_weight_index),
+        m_drf_threshold(other.m_drf_threshold),
+        m_show_progress(other.m_show_progress)
         {
-            m_fs = other.m_fs;
-            m_index = other.index;
-            m_op = other.m_op;
-            m_cluster_list = other.m_cluster_list;
-            m_start_index = other.m_start_index;
-            m_end_index = other.m_end_index;
-            m_search_params = other.m_search_params;
-            m_kernel = other.m_kernel;
-            m_weight_index = other.m_weight_index;
-            m_drf_threshold = other.m_drf_threshold;
-            m_show_progress(other.m_show_progress);
         }
         
 #if WITH_TBB
@@ -109,7 +113,7 @@ namespace m3D {
         };
         
         void 
-        operator()( const tbb::blocked_range<size_t>& r )  
+        operator()( const tbb::blocked_range<size_t>& r ) const
         {
             MeanshiftOperation<T> ms_op( m_fs, m_index );
 
@@ -122,7 +126,7 @@ namespace m3D {
                 
                 typename Point<T>::ptr x = m_fs->points[ index ];
                 
-                M3DPoint<T>::ptr mx = (M3DPoint<T>::ptr) x;
+                M3DPoint<T> *mx = (M3DPoint<T> *) x;
                 
                 // only go through with the calculation for points, that belonged
                 // to the original feature-space. Not those, who were created in

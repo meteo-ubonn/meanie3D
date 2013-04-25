@@ -153,11 +153,21 @@ namespace m3D {
         
 #elif WITH_TBB
         
-        parallel_for(tbb::blocked_range<size_t>(0,points.size()) ,
+        // perform one search operation on the index
+        // in order to pre-empt the index building
+        
+        typename Point<T>::ptr x = this->feature_space->points[0];
+        typename Point<T>::list *list = this->point_index->search(x->values, params);
+        delete list;
+
+        // Run parallelized version
+        
+        parallel_for(tbb::blocked_range<size_t>(0,this->point_index->size()),
+                     
                      ClusterTask<T>(this->feature_space,
                                     this->point_index,
                                     this, &cluster_list,
-                                    weight_index,
+                                    0,
                                     this->feature_space->size(),
                                     params,
                                     kernel,
