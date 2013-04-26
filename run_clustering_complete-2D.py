@@ -26,7 +26,7 @@ vtk_file=os.path.splitext(basename)[0]+".vtk"
 #CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 5,10,10,100 --drf-threshold 0.75 -s 16 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
 
 # RADOLAN
-CLUSTERING_PARAMS = "-v reflectivity -w reflectivity -d x,y -r 5,5,200 -t 10 -m 10"
+CLUSTERING_PARAMS = "-v reflectivity -w reflectivity -d x,y -r 5,5,200 -t 10 -m 10 --write-clusters-as-vtk"
 
 # print parameters
 
@@ -175,7 +175,7 @@ for scale in scales:
 
         # Save the image
         s = GetSaveWindowAttributes()
-        s.fileName=basename+"_clusters_scale_"+scale+"_drf_"+drf
+        s.fileName=basename+"_clusters_scale_"+scale+"_drf_"+drf+"_"
         s.progressive=0
         SetSaveWindowAttributes(s)
         DrawPlots()
