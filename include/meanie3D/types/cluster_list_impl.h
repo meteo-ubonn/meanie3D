@@ -761,7 +761,7 @@ namespace m3D {
         // In case the search turns up more than one point,
         // find the strongest point
         
-        T max_dist = 2 * vector_norm( fs->spatial_component(resolution) );
+        T max_dist = 10 * vector_norm( fs->spatial_component(resolution) );
 
         T max_value = std::numeric_limits<T>::min();
         
@@ -851,7 +851,7 @@ namespace m3D {
         // Note: this will start to generate problems, if the bandwidth
         // chosen is too small. 
         
-        RangeSearchParams<T> search_params( (T)0.25 * resolution );
+        RangeSearchParams<T> search_params( (T)0.5 * resolution );
         
         typename Point<T>::list::const_iterator pi;
         
