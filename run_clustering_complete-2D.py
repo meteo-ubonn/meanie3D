@@ -14,7 +14,6 @@ NETCDF_FILE       = "SOURCE_FILE"
 # Derive some useful filenames
 
 basename = os.path.basename(NETCDF_FILE)
-cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
 vtk_file=os.path.splitext(basename)[0]+".vtk"
 
 # Command parameters
@@ -95,6 +94,7 @@ for scale in scales:
            PARAMS = PARAMS + " --write-variables-as-vtk=reflectivity" 
 
         # build the clustering command
+        cluster_file=os.path.splitext(basename)[0]+"_clusters_scale_"+scale+"_drf_"+drf+".nc"
         command=detection_bin+" -f "+NETCDF_FILE+" -o "+cluster_file + " " + PARAMS
     
         # execute
