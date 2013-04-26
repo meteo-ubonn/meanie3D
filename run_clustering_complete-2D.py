@@ -187,7 +187,7 @@ for scale in scales:
         CloseDatabase(vtk_file)
         for cluster_file in cluster_list:
             CloseDatabase(cluster_file)
-            return_code=call("rm *cluster_*.vtk", shell=True)
+        return_code=call("rm *cluster_*.vtk", shell=True)
 
 print "Done. Closing Visit."
 Close();
