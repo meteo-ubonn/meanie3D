@@ -119,7 +119,7 @@ namespace m3D {
          * Does not insert duplicates.
          */
         void
-        add_points( const vector< Point<T> * > &list );
+        add_points( const vector< Point<T> * > &list, bool addOriginalPointsOnly=true );
         
         /** Searches the list of points in this cluster for the given one.
          * @param point

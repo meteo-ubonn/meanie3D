@@ -558,6 +558,10 @@ namespace m3D {
                         
                         p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
                         
+                        M3DPoint<T> * m3p = (M3DPoint<T> *) p;
+                        
+                        m3p->setIsOriginalPoint(false);
+                        
                         filteredPoints->set(gridpoint,p);
                         
                         m_created_points++;

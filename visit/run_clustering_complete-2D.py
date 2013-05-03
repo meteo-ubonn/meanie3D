@@ -37,10 +37,7 @@ toggled_maintain=False
 
 # delete any previous results
 # results are stored in the work directory
-
-# delete previous results
-return_code=call("rm *-clusters.nc", shell=True)
-return_code=call("rm *_clusters_*.vtk", shell=True)
+return_code=call("rm *cluster_*.vtk", shell=True)
 
 # binaries
 bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
@@ -53,10 +50,13 @@ print "Tracking Command:"
 print tracking_bin
 
 # scales to use
-scales = ["4","10","50","100","200","500","1000"]
+#scales = ["4","8","16","32","64","128","256","512","1024"]
+scales = ["10","25","50","75"]
+resume_at_scale=""
 
 # DRFs to use
-drfs = ["0","0.5","0.75","0.95","1.0"]
+drfs = ["0.0","0.5","0.75","1.0"]
+resume_at_drf=""
 
 # Cluster color tables
 col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
@@ -83,9 +83,20 @@ SetView3D(v)
 # source vtk files multiple times
 source_saved=False
 
+
 for scale in scales:
 
+    if resume_at_scale!="" and resume_at_scale!=scale:
+        continue
+    else:
+        resume_at_scale=""
+
     for drf in drfs:
+
+        if resume_at_drf!="" and resume_at_drf!=drf:
+            continue
+        else:
+            resume_at_drf=""
 
         PARAMS = CLUSTERING_PARAMS + " --drf-threshold " +drf + " -s " + scale
 

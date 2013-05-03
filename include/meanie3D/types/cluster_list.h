@@ -43,7 +43,8 @@ namespace m3D {
         
         /** Standard constructor is private
          */
-        ClusterList() {};
+        ClusterList()
+        {};
         
     public:
         
@@ -78,8 +79,20 @@ namespace m3D {
         vector<size_t>  dropped_ids;
         
         vector<size_t>  new_ids;
-
         
+        // control
+        
+        size_t          m_predecessor_maxdistance_gridpoints;
+        
+        // make the width of the boundary half the resolution
+        // that is 0.25 left and right of the boundary = 0.5 * resolution
+        // Note: this will start to generate problems, if the bandwidth
+        // chosen is too small.
+        T               m_neighbourhood_range_search_multiplier;
+        
+        bool            m_use_original_points_only;
+        
+
 #pragma mark -
 #pragma mark Constructor/Destructor
 
@@ -88,15 +101,32 @@ namespace m3D {
          * @param all dimensions that were in the featurespace
          * @param name of the file the clusters were created from
          * @param the command line parameters used to cluster
+         * @param when searching for predecessors in the meanshift vector graph,
+         *          there is a maximum distance in gridpoints, after which the 
+         *          neighbourhood search will not accept points. This parameter
+         *          sets that distance in #grid-points.
+         * @param In the process of linking up meanshift vectors to a graph, the
+         *          vicinity of vector endpoints is searched for other points to
+         *          link up to. The maximum distance of that search (in grid points)
+         *          is determined here.
+         * @param When adding points to clusters, this switch can be used to control
+         *          if only points from the original data set are added or also points
+         *          that resulted from filtering (for example scale-space)
          */
         ClusterList(const vector<NcVar> &variables,
                     const vector<NcDim> &dims,
-                    const string& sourcefile )
+                    const string& sourcefile,
+                    size_t predecessor_maxdistance_gridpoints=3,
+                    T neighbourhood_range_search_multiplier=1.0,
+                    bool use_original_points_only=true)
         : ncFile(NULL)
         , feature_variables(variables)
         , dimensions(dims)
         , source_file(sourcefile)
         , tracking_performed(false)
+        , m_predecessor_maxdistance_gridpoints(predecessor_maxdistance_gridpoints)
+        , m_neighbourhood_range_search_multiplier(neighbourhood_range_search_multiplier)
+        , m_use_original_points_only(use_original_points_only)
         {};
 
         /** @constructor
@@ -328,6 +358,10 @@ namespace m3D {
         /** Iterates over all clusters and sets their ID to NO_ID 
          */
         void erase_identifiers();
+        
+        /** Re-tags sequentially, starting with 0 
+         */
+        void retag_identifiers();
         
 #pragma mark -
 #pragma mark Post-Processing

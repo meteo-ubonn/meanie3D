@@ -240,9 +240,8 @@ namespace m3D {
         cfa::utils::VisitUtils<T>::write_modes_vtk( fn, cluster_list.trajectory_endpoints(), cluster_list.trajectory_lengths() );
         m3D::utils::VisitUtils<T>::write_cluster_modes_vtk( fn, cluster_list.clusters );
         
-        increment_pass_counter();
-        
 #endif
+//        increment_pass_counter();
 
         return cluster_list;
     }

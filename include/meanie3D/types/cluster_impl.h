@@ -83,7 +83,7 @@ namespace m3D {
     
     template <typename T>
     void
-    Cluster<T>::add_points( const vector< Point<T> * > &list )
+    Cluster<T>::add_points( const vector< Point<T> * > &list, bool addOriginalPointsOnly )
     {
         // cout << "Cluster::add_points() " << this->mode << " -> #points = " << this->points.size() << endl;
         
@@ -93,15 +93,21 @@ namespace m3D {
         {
             typename Point<T>::ptr p = *li;
             
-#if DEBUG_MEANSHIFT_GRAPH
             M3DPoint<T> *m3p = (M3DPoint<T> *) p;
 
+#if DEBUG_MEANSHIFT_GRAPH
             if ( m3p->cluster )
             {
                 cerr << "Point " << m3p->values << " is already assigned to cluster at " << m3p->cluster->mode << endl;
                 continue;
             }
 #endif
+            
+            if ( !m3p->isOriginalPoint() )
+            {
+                continue;
+            }
+            
             typename Point<T>::list::iterator fi = find( points.begin(), points.end(), p );
             
             if ( fi == points.end() )
@@ -362,6 +368,8 @@ namespace m3D {
             vector<T> m( &mode[0], &mode[m_spatial_dimension] );
             
             typename Point<T>::list::iterator pi;
+            
+            T sum = 0.0;
 
             for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
             {
@@ -369,11 +377,15 @@ namespace m3D {
                 
                 T dist = vector_norm( p->coordinate - m );
                 
-                if (dist > m_radius)
-                {
-                    m_radius = dist;
-                }
+                sum += dist;
+                
+//                if (dist > m_radius)
+//                {
+//                    m_radius = dist;
+//                }
             }
+            
+            m_radius = sum / ((T)this->points.size());
         }
         
         return m_radius;

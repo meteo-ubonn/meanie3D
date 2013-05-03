@@ -23,15 +23,17 @@ namespace m3D {
         
         /** Creates a new matrix of the given dimensions
          */
-        matrix_t create_matrix(size_t width, size_t height);
+        matrix_t
+        create_matrix(size_t width, size_t height);
         
         // Flag Matrix
 
-        typedef vector< vector<bool> > flag_matrix_t;
+        typedef vector< vector<int> > flag_matrix_t;
         
         /** Creates a new matrix of the given dimensions
          */
-        flag_matrix_t create_flag_matrix(size_t width, size_t height);
+        flag_matrix_t
+        create_flag_matrix(size_t width, size_t height, int defaultValue=0 );
         
         
         // Member Variables
@@ -50,6 +52,8 @@ namespace m3D {
         T       m_meanVelocitySecurityPercentage;   // Percentual amount of deviation from mean velocity allowed
         
         T       m_maxVelocity;                      // physical maximum speed of objects in m/s
+        
+        bool    m_useOverlapConstraint;             // make use of max velocity constraint?
         
         float   m_merge_threshold;
         
@@ -72,11 +76,12 @@ namespace m3D {
         , m_size_weight(wd)
         , m_corr_weight(wt)
         , m_deltaT(300)                         // 5 minutes
-        , m_useMeanVelocityConstraint(true)     // limit deviation from mean velocity
+        , m_useMeanVelocityConstraint(false)    // limit deviation from mean velocity (false)
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
-        , m_maxVelocity(30.0)                   // limit max velocity to 30 m/s (~108 km/h)
-        , m_merge_threshold(0.33)               // percentage coverage old/new for merge/split
-        , m_max_size_deviation(15.0)            // how many percent may the objects vary in size (number of points) between scans (1500%)
+        , m_maxVelocity(100.0)                  // limit max velocity to 30 m/s (~108 km/h)
+        , m_useOverlapConstraint(false)
+        , m_merge_threshold(0.33)               // percentage coverage old/new for merge/split (33%)
+        , m_max_size_deviation(2.5)             // how many percent may the objects vary in size (number of points) between scans (250%)
         {};
         
         /** Compares two cluster lists and propagates or assigns new identifiers.

@@ -18,11 +18,14 @@ then
     exit 0
 fi
 
+# Make sure the visualization modules are found
+export PYTHONPATH="${MEANIE3D_HOME}/visit"
+
 DL_PATH=$MEANIE3D_HOME/Debug
 SCRIPTFILE="/tmp/tracking-$RANDOM.py"
 ESCAPED_SOURCE_DIR=$(echo $1 | sed -e "s/\//\\\\\//g")
 ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 ESCAPED_DL_PATH=$(echo $DL_PATH | sed -e "s/\//\\\\\//g")
 
-cat run_tracking-2D.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > $SCRIPTFILE
+cat $MEANIE3D_HOME/visit/run_tracking-2D.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > $SCRIPTFILE
 ${VISIT_EXECUTABLE} -s $SCRIPTFILE

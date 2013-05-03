@@ -724,6 +724,10 @@ int main(int argc, char** argv)
     
     clusters.apply_size_threshold( min_cluster_size );
     
+    // Number the result sequentially
+    
+    clusters.retag_identifiers();
+    
     // Announce final results
     
     if ( verbosity > VerbositySilent )
@@ -739,11 +743,11 @@ int main(int argc, char** argv)
     if ( write_vtk )
     {
         boost::filesystem::path path(filename);
-        
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( path.filename().string(), clusters.clusters, ranges, true );
+
+        // MODES are needed for tagging with IDs
         
-        string modes_path = path.filename().stem().string() + "-clusters-modes.vtk";
-        
+        string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
     }
     

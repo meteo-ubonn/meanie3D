@@ -316,7 +316,7 @@ int main(int argc, char** argv)
         
         boost::filesystem::path path( current_filename );
         
-        string modes_path = path.filename().stem().string() + "-modes.vtk";
+        string modes_path = path.filename().stem().string() + "_modes.vtk";
         
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, current->clusters, true );
     }

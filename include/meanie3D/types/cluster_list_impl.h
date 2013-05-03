@@ -30,7 +30,6 @@ namespace m3D {
     
 	#define sup( v1,v2 ) (v1 > v2 ? v1:v2)
 	#define inf( v1,v2 ) (v1 < v2 ? v1:v2)
-
     
 #pragma mark -
 #pragma mark Accessing the list
@@ -720,7 +719,7 @@ namespace m3D {
                 
                 typename Cluster<T>::ptr cluster = new Cluster<T>( nodes.back()->values, this->dimensions.size() );
                 
-                cluster->add_points( nodes );
+                cluster->add_points( nodes, m_use_original_points_only );
                 
                 cluster->id = cluster_id++;
                 
@@ -761,7 +760,7 @@ namespace m3D {
         // In case the search turns up more than one point,
         // find the strongest point
         
-        T max_dist = 10 * vector_norm( fs->spatial_component(resolution) );
+        T max_dist = m_predecessor_maxdistance_gridpoints * vector_norm( fs->spatial_component(resolution) );
 
         T max_value = std::numeric_limits<T>::min();
         
@@ -846,12 +845,7 @@ namespace m3D {
                                         PointIndex<T> *index,
                                         const vector<T> &resolution )
     {
-        // make the width of the boundary half the resolution
-        // that is 0.25 left and right of the boundary = 0.5 * resolution
-        // Note: this will start to generate problems, if the bandwidth
-        // chosen is too small. 
-        
-        RangeSearchParams<T> search_params( (T)0.5 * resolution );
+        RangeSearchParams<T> search_params( m_neighbourhood_range_search_multiplier * resolution );
         
         typename Point<T>::list::const_iterator pi;
         
@@ -1314,6 +1308,7 @@ namespace m3D {
             
         } while (had_merge);
         
+        
         if ( show_progress )
         {
             delete spinner;
@@ -1332,6 +1327,17 @@ namespace m3D {
             clusters[i]->id = Cluster<T>::NO_ID;
         }
     };
+    
+    template <typename T>
+    void
+    ClusterList<T>::retag_identifiers()
+    {
+        for ( size_t i=0; i < clusters.size(); i++ )
+        {
+            clusters[i]->id = i;
+        }
+    };
+    
     
     template <typename T>
     void

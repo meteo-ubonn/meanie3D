@@ -37,15 +37,15 @@ namespace m3D {
 
     template <typename T>
     typename Tracking<T>::flag_matrix_t
-    Tracking<T>::create_flag_matrix(size_t width, size_t height)
+    Tracking<T>::create_flag_matrix(size_t width, size_t height, int defaultValue)
     {
         flag_matrix_t matrix;
         
         matrix.resize(width);
         
-        for (int i=0; i<width; ++i)
+        for (size_t i=0; i<width; ++i)
         {
-            matrix[i].resize(height);
+            matrix[i].resize(height,defaultValue);
         }
         
         return matrix;
@@ -59,6 +59,10 @@ namespace m3D {
                        const NcVar &track_variable,
                        Verbosity verbosity)
     {
+        if ( verbosity >= VerbosityNormal )
+            cout << endl << "-- Tracking --" << endl;
+
+        
         // sanity check
         
         if ( current->clusters.size() == 0 )
@@ -110,10 +114,8 @@ namespace m3D {
         
         current_id++;
         
-        if ( verbosity >= VerbosityDetails )
-        {
-            cout << "Tracking: next available id is " << current_id << endl;
-        }
+        if ( verbosity >= VerbosityNormal )
+            cout << "next available id is " << current_id << endl;
         
         // TODO: check time difference and determine displacement restraints
         // TODO: add timestamp to the cluster file format
@@ -122,11 +124,9 @@ namespace m3D {
 
         T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         
-        if ( verbosity >= VerbosityDetails )
-        {
+        if ( verbosity >= VerbosityNormal )
             printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm\n",
                    this->m_maxVelocity, this->m_deltaT, maxDisplacement );
-        }
 
         // TODO: mean velocity constraint
         
@@ -144,11 +144,12 @@ namespace m3D {
         
         
         // Minimum object radius for overlap constraint
+        // TODO: this point needs to be replaced with velocity
+        // vectors from SMV/RMV estimates
         
-        T overlap_constraint_velocity = 0.5 * m_maxVelocity;
+        T overlap_constraint_velocity = m_maxVelocity;
         
-        T overlap_constraint_radius = m_deltaT * overlap_constraint_velocity;
-        
+        T overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
         
         // Prepare the newcomers for re-identification
         
@@ -158,6 +159,9 @@ namespace m3D {
         
         size_t old_count = previous->clusters.size();
         size_t new_count = current->clusters.size();
+        
+        if ( verbosity >= VerbosityNormal )
+            cout << "Matching " << new_count << " new clusters against " << old_count << " old clusters" << endl;
         
         // Create result matrices
         
@@ -170,7 +174,7 @@ namespace m3D {
         
         flag_matrix_t constraints_satisified = create_flag_matrix(new_count, old_count);
         
-        size_t maxHistD = numeric_limits<size_t>::min();
+        T maxHistD = numeric_limits<T>::min();
         
         T maxMidD = numeric_limits<T>::min();
         
@@ -216,8 +220,9 @@ namespace m3D {
                 // TODO: calculate the max displacement in the same dimension
                 // as the dimension variables
                 
-                if ( 1000.0 * midDisplacement[n][m] > maxDisplacement ) continue;
-
+                T displacement = 1000.0 * midDisplacement[n][m];
+                
+                if ( displacement > maxDisplacement ) continue;
                 
                 // Histogram Size
                 
@@ -255,21 +260,26 @@ namespace m3D {
                 // TODO: calculate overlap constraint radius in the same dimension
                 // as the dimension variables!
                 
-                bool requires_overlap = 1000 * oldCluster->radius() >= overlap_constraint_radius;
-                
                 coverOldByNew[n][m] = oldCluster->percent_covered_by( newCluster );
-                
-                bool overlap_constraint_satisfied = true;
-                
-                if (requires_overlap)
-                {
-                    overlap_constraint_satisfied = coverOldByNew[n][m] > 0.0;
-                }
-                
-                if ( !overlap_constraint_satisfied ) continue;
-                
+
                 coverNewByOld[n][m] = newCluster->percent_covered_by( oldCluster );
 
+                if (m_useOverlapConstraint)
+                {
+                    T radius = 1000 * oldCluster->radius();
+                    
+                    bool requires_overlap = (radius >= overlap_constraint_radius);
+                    
+                    
+                    bool overlap_constraint_satisfied = true;
+                    
+                    if (requires_overlap)
+                    {
+                        overlap_constraint_satisfied = coverOldByNew[n][m] > 0.0;
+                    }
+                    
+                    if ( !overlap_constraint_satisfied ) continue;
+                }
 
                 // Histogram Correlation
                 
@@ -309,13 +319,15 @@ namespace m3D {
         // maxMidD = sqrt( 2*200*200 );
 
         // calculate the final probability
-        cout << endl << "-- Correlation Table --" << endl;
+        
+        if ( verbosity >= VerbosityDetails )
+            cout << endl << "-- Correlation Table --" << endl;
         
         for ( n=0; n < new_count; n++ )
         {
             typename Cluster<T>::ptr newCluster = current->clusters[n];
             
-            if ( verbosity >= VerbosityDetails )
+            if ( verbosity >= VerbosityNormal )
             {
                 cout << endl << "Correlating new Blob #" << n
                 << " (histogram size " << newCluster->histogram(tracking_var_index,valid_min,valid_max)->sum() << ")"
@@ -336,7 +348,7 @@ namespace m3D {
                     float prob_t = m_corr_weight * rank_correlation[n][m];
                     sum_prob[n][m] = prob_t + prob_r + prob_h;
                     
-                    if ( verbosity >= VerbosityDetails )
+                    if ( verbosity >= VerbosityNormal )
                     {
                         printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                                oldCluster->id,
@@ -354,7 +366,8 @@ namespace m3D {
                 }
                 else
                 {
-                    printf("\t<ID#%4llu>:\toverlap, size or max velocity constraints violated\n", oldCluster->id);
+                    if ( verbosity >= VerbosityNormal )
+                        printf("\t<ID#%4llu>:\toverlap, size or max velocity constraints violated\n", oldCluster->id);
                 }
             }
         }
@@ -373,7 +386,8 @@ namespace m3D {
         
         set< typename Cluster<T>::ptr > used_clusters;
         
-        printf("\n-- Matching Results --\n");
+        if ( verbosity >= VerbosityDetails )
+            printf("\n-- Matching Results --\n");
         
         while ( iterations <= maxIterations )
         {
@@ -383,25 +397,28 @@ namespace m3D {
             
             size_t maxN=0, maxM=0;
             
+            bool matchFound = false;
+            
             for ( n=0; n < new_count; n++ )
             {
                 for ( m=0; m < old_count; m++ )
                 {
                     // only consider pairings, where the overlap constraint is satisfied
                     
-                    if ( constraints_satisified[n][m] )
+                    if ( constraints_satisified[n][m] && (sum_prob[n][m] > maxProb) && (sum_prob[n][m] < currentMaxProb) )
                     {
-                        if ( (sum_prob[n][m] > maxProb) && (sum_prob[n][m] < currentMaxProb) )
-                        {
-                            maxProb = sum_prob[n][m];
+                        maxProb = sum_prob[n][m];
 
-                            maxN = n;
-                            
-                            maxM = m;
-                        }
+                        maxN = n;
+                        
+                        maxM = m;
+                        
+                        matchFound = true;
                     }
                 }
             }
+            
+            if (!matchFound) break;
             
             // take pick, remove paired candidates from arrays
             
@@ -409,24 +426,7 @@ namespace m3D {
 
             typename Cluster<T>::ptr old_cluster = previous->clusters[maxM];
             
-            // check mid displacement constraints and update mean velocity
-            
-            if ( 1000.0 * midDisplacement[maxN][maxM] > maxDisplacement )
-            {
-                if ( verbosity >= VerbosityDetails )
-                {
-                    printf("pairing new blob #%4lu / old blob ID#%llu rejected. dR=%4.1f violates maximum velocity constraint.\n", maxN, old_cluster->id, midDisplacement[maxN][maxM] );
-                }
-            }
-//            else if (m_useMeanVelocityConstraint && midDisplacement[maxN][maxM] > maxMeanVelocityDisplacement )
-//            {
-//                if ( verbosity >= VerbosityDetails )
-//                {
-//                    printf("pairing new blob #%d / old blob ID#%ld rejected. dR=%4.1f violates mean velocity constraint.",
-//                           maxN, matchedPrev->id, midDisplacement[maxN][maxM] );
-//                }
-//            }
-            else if ( new_cluster->id == Cluster<T>::NO_ID )
+            if ( new_cluster->id == Cluster<T>::NO_ID )
             {
                 // new cluster not tagged yet
                 
@@ -443,17 +443,26 @@ namespace m3D {
                         
                     velocityBlobCount++;
                     
-    //                if ( verbosity >= VerbosityDetails )
-    //                {
+                    if ( verbosity >= VerbosityNormal )
+                    {
                         printf("pairing new blob #%4lu / old blob ID=#%4llu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
-    //                }
-                    
+                    }
+                        
                     new_cluster->id = old_cluster->id;
                     
                     used_clusters.insert( old_cluster );
                     
                     current->tracked_ids.push_back( new_cluster->id );
                 }
+            }
+            else
+            {
+                if ( verbosity >= VerbosityNormal )
+                {
+                    printf("pairing new blob #%4lu / old blob ID=#%4llu rejected, cluster was already tagged as #%4llu\n",
+                           maxN, old_cluster->id, new_cluster->id );
+                }
+
             }
             
             currentMaxProb = maxProb;
@@ -470,9 +479,10 @@ namespace m3D {
         
         // all new blobs without id now get one
         
-        printf("\n-- New ID assignments --\n");
+        if ( verbosity >= VerbosityNormal )
+            printf("\n-- New ID assignments --\n");
         
-        for (n=0;n<new_count;n++)
+        for ( n=0; n < new_count; n++ )
         {
             typename Cluster<T>::ptr c = current->clusters[n];
             
@@ -482,17 +492,25 @@ namespace m3D {
                 
                 current->new_ids.push_back( c->id );
                 
-                cout << "new cluster #" << n << " at " << c->mode << " with |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum()
-                     << " is assigned new ID#" << c->id << endl;
+                if ( verbosity >= VerbosityNormal )
+                {
+                    cout << "#" << n
+                         << " at " << c->mode
+                         << " with |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum()
+                         << " is assigned new ID #" << c->id
+                         << endl;
+                }
                 
                 current_id++;
             }
         }
 
         // list those old blobs not being lined up again
+        
         bool hadGoners = false;
         
-        cout << "\n-- Goners --" << endl;
+        if ( verbosity >= VerbosityNormal )
+            cout << "\n-- Goners --" << endl;
         
         for ( ci = previous->clusters.begin(); ci != previous->clusters.end(); ci++ )
         {
@@ -502,7 +520,8 @@ namespace m3D {
             
             if ( f != used_clusters.end() ) continue;
             
-            cout << "ID#" << c->id << " at " << c->mode << " |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum() << endl;
+            if ( verbosity >= VerbosityNormal )
+                cout << "#" << c->id << " at " << c->mode << " |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum() << endl;
             
             current->dropped_ids.push_back(c->id);
 
@@ -516,7 +535,8 @@ namespace m3D {
         
         // handle merging
         
-        cout << endl << "-- Merges --" << endl;
+        if ( verbosity >= VerbosityNormal )
+            cout << endl << "-- Merges --" << endl;
         
         // for each new blob check coverage of old blobs
         
@@ -527,19 +547,32 @@ namespace m3D {
             vector<float> candidates;
             
             typename Cluster<T>::ptr new_cluster = current->clusters[n];
+            
+            // keep track of the largest candidate, that is: the cluster from
+            // the previous series, that covers most of the area of the current
+            // cluster
+            
+            T maxCover = 0.0;
+            
+            size_t largestCandidateIndex = 0;
 
             for ( m=0; m < previous->clusters.size(); m++ )
             {
-                typename Cluster<T>::ptr old_cluster = previous->clusters[m];
-                
-                if ( coverOldByNew[n][m] == numeric_limits<T>::min() )
+                if (constraints_satisified[n][m])
                 {
-                    coverOldByNew[n][m] = old_cluster->percent_covered_by( new_cluster );
-                }
-                
-                if ( coverOldByNew[n][m] > this->m_merge_threshold )
-                {
-                    candidates.push_back(m);
+                    T overlap = coverOldByNew[n][m];
+                    
+                    if ( overlap > this->m_merge_threshold )
+                    {
+                        candidates.push_back(m);
+                        
+                        if (coverNewByOld[n][m] > maxCover)
+                        {
+                            maxCover = coverNewByOld[n][m];
+                            
+                            largestCandidateIndex = m;
+                        }
+                    }
                 }
             }
             
@@ -550,16 +583,19 @@ namespace m3D {
                 // remove the merged old blobs from the matching process
                 // and print them out.
                 
-                cout << "Blobs ";
-                
-                for ( int i=0; i < candidates.size(); i++ )
+                if ( verbosity >= VerbosityNormal )
                 {
-                    typename Cluster<T>::ptr c = previous->clusters[ candidates[i] ];
-                    
-                    printf("#%llu ",c->id);
-                }
+                    cout << "Blobs ";
                 
-                printf(" seem to have merged into blob #ID%llu, ", new_cluster->id );
+                    for ( int i=0; i < candidates.size(); i++ )
+                    {
+                        typename Cluster<T>::ptr c = previous->clusters[ candidates[i] ];
+                        
+                        printf("#%llu ",c->id);
+                    }
+                    
+                    printf("seem to have merged into blob #%llu\n", new_cluster->id );
+                }
                 
                 // store the given ID
                 
@@ -573,11 +609,28 @@ namespace m3D {
                 {
                     // not new => was tracked
                     
+                    // if the biggest congruence is at least 75%, continue
+                    // the track
+                    
+                    if ( maxCover > 0.75 )
+                    {
+                        typename Cluster<T>::ptr c = previous->clusters[ largestCandidateIndex ];
+                        
+                        new_cluster->id = c->id;
+                        
+                        if ( verbosity >= VerbosityNormal )
+                            printf("Re-assigned ID#%llu\n", new_cluster->id );
+                    }
+                    else
+                    {
+                        new_cluster->id = ++current_id;
+                        
+                        if ( verbosity >= VerbosityNormal )
+                            printf("Assigned new ID#%llu\n", new_cluster->id );
+                        
+                    }
+                    
                     // tag fresh and add to new IDs
-                    
-                    new_cluster->id = ++current_id;
-                    
-                    printf("Assigned new ID#%llu\n", new_cluster->id );
 
                     current->new_ids.push_back(new_cluster->id);
                     
@@ -590,11 +643,14 @@ namespace m3D {
             }
         }
         
-        if ( ! had_merges ) cout << "none." << endl;
+        if ( ! had_merges )
+            if ( verbosity >= VerbosityNormal )
+                cout << "none." << endl;
         
         // handle merging
         
-        cout << endl << "-- Splits --" << endl;
+        if ( verbosity >= VerbosityNormal )
+            cout << endl << "-- Splits --" << endl;
         
         // for each new blob check coverage of old blobs
         
@@ -605,19 +661,28 @@ namespace m3D {
             typename Cluster<T>::ptr old_cluster = previous->clusters[m];
             
             vector<float> candidates;
+            
+            T maxCover = 0.0;
+
+            size_t largestCandidateIndex = 0;
 
             for ( n=0; n < current->clusters.size(); n++ )
             {
-                typename Cluster<T>::ptr new_cluster = current->clusters[n];
-                
-                if ( coverNewByOld[n][m] == numeric_limits<T>::min() )
+                if (constraints_satisified[n][m])
                 {
-                    coverNewByOld[n][m] = new_cluster->percent_covered_by( old_cluster );
-                }
+                    T overlap = coverOldByNew[n][m];
 
-                if ( coverNewByOld[n][m] > this->m_merge_threshold )
-                {
-                    candidates.push_back(n);
+                    if ( overlap > this->m_merge_threshold )
+                    {
+                        candidates.push_back(n);
+                        
+                        if (coverOldByNew[n][m] > maxCover)
+                        {
+                            maxCover = coverOldByNew[n][m];
+                            
+                            largestCandidateIndex = n;
+                        }
+                    }
                 }
             }
 
@@ -625,34 +690,52 @@ namespace m3D {
             {
                 had_splits = true;
                 
-                printf("Blob ID#%llu seems to have split into blobs ", old_cluster->id);
+                if ( verbosity >= VerbosityNormal )
+                    printf("Blob ID#%llu seems to have split into blobs ", old_cluster->id);
                 
                 for ( int i=0; i < candidates.size(); i++ )
                 {
                     typename Cluster<T>::ptr c = current->clusters[ candidates[i] ];
                     
-                    printf("#%llu ",c->id);
-                    
                     // check if the new blob's IDs are in tracked IDs and
                     // retag / remove them
                     
-                    size_t the_id = c->id;
+                    printf("#%llu ",c->id );
+
+                    // check if the tracked id's contains c->id
                     
-                    int index = index_of_first( current->tracked_ids, the_id );
+                    int index = index_of_first( current->tracked_ids, (size_t)c->id );
+
+                    // If the largest one of the new clusters is at least 75% of the
+                    // size of new previous cluster, the ID of the previous cluster
+                    // is continued in the largest candidate
                     
-                    if ( index >= 0 )
+                    bool continueID = (candidates[i] == largestCandidateIndex) && (maxCover > 0.75);
+                    
+                    if (continueID)
                     {
-                        // remove
-                        
-                        current->tracked_ids.erase( current->tracked_ids.begin() + index );
-                        
-                        // re-tag and add to new IDs
-                        
-                        c->id = current_id++;
-                        
-                        printf(" (re-tagged as #%llu)",c->id);
-                        
-                        current->new_ids.push_back( c->id );
+                        c->id = old_cluster->id;
+                    
+                        if (index < 0)
+                        {
+                            current->tracked_ids.push_back(c->id);
+                        }
+                    }
+                    else
+                    {
+                        if ( index >= 0 )
+                        {
+                            // remove from tracked id's, re-tag and add to new IDs
+                            
+                            current->tracked_ids.erase( current->tracked_ids.begin() + index );
+                            
+                            c->id = current_id++;
+                            
+                            if ( verbosity >= VerbosityNormal )
+                                printf(" (re-tagged as #%llu)",c->id);
+                            
+                            current->new_ids.push_back( c->id );
+                        }
                     }
                 }
             
@@ -661,10 +744,8 @@ namespace m3D {
         }
         
         if ( ! had_splits)
-        {
-            cout << "none." << endl;
-        }
-        
+            if ( verbosity >= VerbosityNormal )
+                cout << "none." << endl;
         
         current->tracking_performed = true;
     }

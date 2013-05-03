@@ -55,7 +55,7 @@ namespace m3D { namespace utils {
          */
         static
         void
-        write_clusters_vtk( typename ClusterList<T>::ptr list );
+        write_clusters_vtk( typename ClusterList<T>::ptr list, std::string infix="_cluster_" );
 
     };
     

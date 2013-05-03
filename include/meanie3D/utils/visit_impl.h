@@ -42,6 +42,8 @@ namespace m3D { namespace utils {
             size_t dim_count = spatial_only ? c->spatial_dimension() : c->dimension();
             
             vector<T> mode = c->mode;
+            
+            size_t dims_plotted = 0;
 
             for ( size_t vi = 0; vi < dim_count; vi++)
             {
@@ -53,11 +55,15 @@ namespace m3D { namespace utils {
                 }
 
                 f << mode[dim_index] << "\t";
+                
+                dims_plotted++;
             }
 
-            if ( mode.size() < 3 )
+            while (dims_plotted < 3)
             {
-                f << "0.0";
+                f << "0.0\t";
+                
+                dims_plotted++;
             }
 
             f << endl;
@@ -158,7 +164,7 @@ namespace m3D { namespace utils {
     
     template <class T>
     void
-    VisitUtils<T>::write_clusters_vtk( typename ClusterList<T>::ptr list )
+    VisitUtils<T>::write_clusters_vtk( typename ClusterList<T>::ptr list, std::string infix )
     {
         string basename = list->source_file;
         
@@ -171,7 +177,7 @@ namespace m3D { namespace utils {
             boost::replace_all( basename, "/", "_" );
             boost::replace_all( basename, "..", "" );
             
-            string filename = basename + "_cluster_" + boost::lexical_cast<string>( list->clusters[ci]->id ) + ".vtk";
+            string filename = basename + infix + boost::lexical_cast<string>( list->clusters[ci]->id ) + ".vtk";
             
             ofstream f( filename.c_str() );
             f << fixed << setprecision(4);

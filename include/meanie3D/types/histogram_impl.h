@@ -169,7 +169,9 @@ namespace m3D {
         {
             typename Point<T>::ptr p = *it;
             
-            T value = p->values[variable_index];
+            size_t real_index = p->coordinate.size() + variable_index;
+            
+            T value = p->values[real_index];
             
             // TODO: obtain the class index through calculation
             
