@@ -91,6 +91,76 @@ namespace m3D { namespace utils {
 
         f.close();
     }
+    
+    template <class T>
+    void
+    VisitUtils<T>::write_geometrical_cluster_centers_vtk(const string &filename,
+                                                         const typename Cluster<T>::list &list)
+    {
+        ofstream f( filename.c_str() );
+        f << fixed << setprecision(4);
+        
+        // determine the spatial dimension
+        typename Cluster<T>::ptr c = list[0];
+        typename Point<T>::ptr p = c->points[0];
+        size_t spatial_dims = p->coordinate.size();
+
+        // Write Header
+        
+        f << "# vtk DataFile Version 3.0" << endl;
+        f << "point list " << endl;
+        f << "ASCII" << endl;
+        f << "DATASET UNSTRUCTURED_GRID" << endl;
+        f << "POINTS " << list.size() << " FLOAT" << endl;
+        
+        for ( size_t ci = 0; ci < list.size(); ci++ )
+        {
+            typename Cluster<T>::ptr c = list[ci];
+            
+            // obtain the geometrical center
+            
+            vector<T> mode = c->geometrical_center(spatial_dims);
+            
+            size_t dims_plotted = 0;
+            
+            for ( size_t vi = 0; vi < spatial_dims; vi++)
+            {
+                size_t dim_index = vi;
+                
+                if ( vi < VTK_DIMENSION_INDEXES.size() )
+                {
+                    dim_index = VTK_DIMENSION_INDEXES.empty() ? vi : VTK_DIMENSION_INDEXES[vi];
+                }
+                
+                f << mode[dim_index] << "\t";
+                
+                dims_plotted++;
+            }
+            
+            while (dims_plotted < 3)
+            {
+                f << "0.0\t";
+                
+                dims_plotted++;
+            }
+            
+            f << endl;
+        }
+        
+        f << endl;
+        f << "POINT_DATA " << list.size() << endl;
+        f << "SCALARS geometrical_center INT" << endl;
+        f << "LOOKUP_TABLE default" << endl;
+        for ( size_t pi = 0; pi < list.size() ; pi++ )
+        {
+            typename Cluster<T>::ptr c = list[pi];
+            
+            f << c->id << endl;
+        }
+        
+        f.close();
+    }
+
 
     template <class T>
     void
@@ -231,6 +301,64 @@ namespace m3D { namespace utils {
             f.close();
         }
     };
+    
+    template <class T>
+    void
+    VisitUtils<T>::write_center_tracks_vtk(typename Tracking<T>::trackmap_t &track_map, const std::string &basename, size_t spatial_dimensions)
+    {
+        for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        {
+            typename Tracking<T>::track_t *track = tmi->second;
+            
+            string filename = basename + "-track_" + boost::lexical_cast<string>( tmi->first ) + ".vtk";
+            
+            ofstream f( filename.c_str() );
+            f << fixed << setprecision(4);
+            
+            // Write Header
+            f << "# vtk DataFile Version 3.0" << endl;
+            f << "Meanie3D Track" << endl;
+            f << "ASCII" << endl;
+            f << "DATASET UNSTRUCTURED_GRID" << endl;
+            f << "POINTS " << track->size() << " FLOAT" << endl;
+
+            // Write point coordinates out as unstructured grid
+            
+            for ( typename Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+            {
+                vector<T> center = ti->geometrical_center(spatial_dimensions);
+
+                for ( size_t vi = 0; vi < center.size(); vi++)
+                {
+                    size_t index = VTK_DIMENSION_INDEXES.empty() ? vi : VTK_DIMENSION_INDEXES[vi];
+                    
+                    f << center[index] << "\t";
+                }
+                
+                if ( center.size() < 3 )
+                {
+                    f << "0.0";
+                }
+                    
+                f << endl;
+            }
+            
+            // Write point data out. Only take the first value after coordinates
+            
+            f << endl;
+            f << "POINT_DATA " << track->size() << endl;
+            f << "SCALARS number_of_points FLOAT" << endl;
+            f << "LOOKUP_TABLE default" << endl;
+
+            for ( typename Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+            {
+                f << ti->points.size() << endl;
+            }
+            
+            f.close();
+        }
+    }
+
     
 }};
 

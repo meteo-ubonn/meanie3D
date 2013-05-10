@@ -313,12 +313,13 @@ int main(int argc, char** argv)
     if ( write_vtk )
     {
         m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( current );
-        
         boost::filesystem::path path( current_filename );
         
         string modes_path = path.filename().stem().string() + "_modes.vtk";
-        
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, current->clusters, true );
+        
+        string centers_path = path.filename().stem().string() + "_centers.vtk";
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, current->clusters);
     }
     
     // Clean up

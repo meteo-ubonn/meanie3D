@@ -712,7 +712,7 @@ namespace m3D {
         }
 #if WRITE_FEATURESPACE
         string fn = fs->filename() + "_scale_" + boost::lexical_cast<string>(m_scale) + ".vtk";
-        VisitUtils<T>::write_featurespace_vtk( fn, fs );
+        ::cfa::utils::VisitUtils<T>::write_featurespace_vtk( fn, fs );
 #endif
         
         // Clean up

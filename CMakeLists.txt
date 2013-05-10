@@ -289,6 +289,22 @@ ELSE()
         ${HDF5_LIBRARIES})
 ENDIF()
 
+# trackplot
+
+ADD_EXECUTABLE(meanie3D-trackplot
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-trackplot.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-trackplot
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES})
+
 # VTK-converter
 
 ADD_EXECUTABLE(meanie3D-cfm2vtk

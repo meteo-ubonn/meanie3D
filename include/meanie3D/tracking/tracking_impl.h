@@ -196,56 +196,34 @@ namespace m3D {
                 
                 constraints_satisified[n][m] = false;
                 
-                // mark coverage calculations as 'not done' using min value
-                
-                coverNewByOld[n][m] = coverNewByOld[n][m] = numeric_limits<T>::min();
-                
                 // Displacement
                 
                 typename Cluster<T>::ptr oldCluster = previous->clusters[m];
                 
-                typename Histogram<T>::ptr oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
-                
-                // calculate average mid displacement
-                
-                vector<T> dx = newCluster->weighed_center(current->dimensions.size(),tracking_var_index)
-                             - oldCluster->weighed_center(current->dimensions.size(),tracking_var_index);
-
-                midDisplacement[n][m] = vector_norm(dx);
-                
-                //
-                // Maximum velocity constraint
-                //
-                
-                // TODO: calculate the max displacement in the same dimension
-                // as the dimension variables
-                
-                T displacement = 1000.0 * midDisplacement[n][m];
-                
-                if ( displacement > maxDisplacement ) continue;
-                
                 // Histogram Size
                 
-                size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
-                
-                histDiff[n][m] = (max_size==0) ? 1.0 : (abs( (T)newHistogram->sum() - (T)oldHistogram->sum() ) / ((T)max_size) );
-                
-                //
-                // Size deviation overlap constraint
-                //
-                
-                // Processes in nature develop within certain bounds. It is not possible
-                // that a cloud covers 10 pixels in one scan and 1000 in the next. The
-                // size deviation constraint is created to prohibit matches between objects,
-                // which vary too much in size
-                
-                T max_H = (T) max(oldHistogram->sum(), newHistogram->sum());
-                
-                T min_H = (T) min(oldHistogram->sum(), newHistogram->sum());
-                
-                T size_deviation = max_H / min_H;
-                
-                if ( size_deviation > m_max_size_deviation ) continue;
+                typename Histogram<T>::ptr oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
+//
+//                size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
+//                
+//                histDiff[n][m] = (max_size==0) ? 1.0 : (abs( (T)newHistogram->sum() - (T)oldHistogram->sum() ) / ((T)max_size) );
+//                
+//                //
+//                // Size deviation overlap constraint
+//                //
+//                
+//                // Processes in nature develop within certain bounds. It is not possible
+//                // that a cloud covers 10 pixels in one scan and 1000 in the next. The
+//                // size deviation constraint is created to prohibit matches between objects,
+//                // which vary too much in size
+//                
+//                T max_H = (T) max(oldHistogram->sum(), newHistogram->sum());
+//                
+//                T min_H = (T) min(oldHistogram->sum(), newHistogram->sum());
+//                
+//                T size_deviation = max_H / min_H;
+//                
+//                if ( size_deviation > m_max_size_deviation ) continue;
                 
                 //
                 // Overlap Constraint
@@ -280,6 +258,27 @@ namespace m3D {
                     
                     if ( !overlap_constraint_satisfied ) continue;
                 }
+                
+                // calculate average mid displacement
+                
+                vector<T> oldCenter = oldCluster->geometrical_center(current->dimensions.size());
+                vector<T> newCenter = newCluster->geometrical_center(current->dimensions.size());
+                
+                vector<T> dx = newCenter - oldCenter;
+                
+                midDisplacement[n][m] = vector_norm(dx);
+                
+                //
+                // Maximum velocity constraint
+                //
+                
+                // TODO: calculate the max displacement in the same dimension
+                // as the dimension variables
+                
+                T displacement = 1000.0 * midDisplacement[n][m];
+                
+                if ( displacement > maxDisplacement ) continue;
+
 
                 // Histogram Correlation
                 
@@ -366,7 +365,7 @@ namespace m3D {
                 }
                 else
                 {
-                    if ( verbosity >= VerbosityNormal )
+                    if ( verbosity >= VerbosityDetails )
                         printf("\t<ID#%4llu>:\toverlap, size or max velocity constraints violated\n", oldCluster->id);
                 }
             }
@@ -670,7 +669,7 @@ namespace m3D {
             {
                 if (constraints_satisified[n][m])
                 {
-                    T overlap = coverOldByNew[n][m];
+                    T overlap = coverNewByOld[n][m];
 
                     if ( overlap > this->m_merge_threshold )
                     {
@@ -678,7 +677,7 @@ namespace m3D {
                         
                         if (coverOldByNew[n][m] > maxCover)
                         {
-                            maxCover = coverOldByNew[n][m];
+                            maxCover = coverNewByOld[n][m];
                             
                             largestCandidateIndex = n;
                         }
@@ -700,7 +699,7 @@ namespace m3D {
                     // check if the new blob's IDs are in tracked IDs and
                     // retag / remove them
                     
-                    printf("#%llu ",c->id );
+                    printf("#%llu",c->id );
 
                     // check if the tracked id's contains c->id
                     
@@ -737,6 +736,9 @@ namespace m3D {
                             current->new_ids.push_back( c->id );
                         }
                     }
+                    
+                    if (i<candidates.size()-1)
+                        cout << ",";
                 }
             
                 cout << endl;

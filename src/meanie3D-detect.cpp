@@ -749,6 +749,9 @@ int main(int argc, char** argv)
         
         string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
+        
+        string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk( centers_path, clusters.clusters);
     }
     
     if ( verbosity > VerbositySilent )

@@ -325,22 +325,44 @@ namespace m3D {
         }
         catch (const std::exception& e)
         {
+            // first, figure out the min/max values
+            
+            typename Point<T>::list::const_iterator pi;
+            
+            T min = std::numeric_limits<T>::max();
+            T max = std::numeric_limits<T>::min();
+            for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
+            {
+                T val = (*pi)->values[variable_index];
+                if (val < min) {
+                    min = val;
+                }
+                if (val>max) {
+                    max = val;
+                }
+            }
+            
+            T range = max - min;
+            
+            // weight is assigned based on percentage of the range
+            // within [min..max]
+            
             vector<T> center(spatial_dimensions,0.0);
             
-            typename Point<T>::list::iterator pi;
-            
-            T overall_mass = 0.0;
+            T overall_mass_percent = 0.0;
             
             for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
             {
                 T mass = (*pi)->values[variable_index];
                 
-                center += (*pi)->coordinate * mass;
+                T massPercent = (max-mass)/range;
                 
-                overall_mass += mass;
+                center += (*pi)->coordinate * massPercent;
+                
+                overall_mass_percent += massPercent;
             }
             
-            center /= overall_mass;
+            center /= overall_mass_percent;
             
             m_weighed_centers.insert( std::pair< size_t, vector<T> >( variable_index, center ) );
             

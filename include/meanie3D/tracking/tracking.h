@@ -66,6 +66,10 @@ namespace m3D {
         
     public:
         
+        typedef std::vector< Cluster<T> >                   track_t;
+        
+        typedef std::map< cfa::meanshift::id_t, track_t* >  trackmap_t;
+        
         /** Constructor
          * @param weight for distance correlation
          * @param weight for size correlation
@@ -79,7 +83,7 @@ namespace m3D {
         , m_useMeanVelocityConstraint(false)    // limit deviation from mean velocity (false)
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
         , m_maxVelocity(100.0)                  // limit max velocity to 30 m/s (~108 km/h)
-        , m_useOverlapConstraint(false)
+        , m_useOverlapConstraint(true)
         , m_merge_threshold(0.33)               // percentage coverage old/new for merge/split (33%)
         , m_max_size_deviation(2.5)             // how many percent may the objects vary in size (number of points) between scans (250%)
         {};

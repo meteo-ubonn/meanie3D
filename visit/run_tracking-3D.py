@@ -1,11 +1,4 @@
-3#!/usr/bin/python
-import glob
-import sys
-import os
-#import Scientific.IO.NetCDF
-#from Numeric import * 
-#from NetCDF import *
-from subprocess import call
+#!/usr/bin/python
 
 # python script template for tracking
 # TODO: clustering parameters should be passed in from the bash script
@@ -13,10 +6,26 @@ from subprocess import call
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
-#CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 2,5,5,100 --drf-threshold 0.25 -s 16 -t 20 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
-CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 2,5,5,100 --drf-threshold 0.25 -s 128 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
-#CLUSTERING_PARAMS = "-d z,y,x -v zh -w zh -r 3,7,7,100 --drf-threshold 0.75 -s 12 -t 10 --write-variables-as-vtk=zh --vtk-dimensions=x,y,z" 
-TRACKING_PARAMS   = "-t zh --verbosity 3 --write-vtk --vtk-dimensions=x,y,z --wr=1.0 --ws=1.0 --wt=0.0"
+
+# Appending the module path is crucial
+sys.path.append(MEANIE3D_HOME+"/visit/modules")
+
+import glob
+import os
+import sys
+import time
+import visit3D
+import visitUtils
+from subprocess import call
+
+# OASE Komposit
+CLUSTERING_PARAMS =  "-d z,y,x --vtk-dimensions=x,y,z"
+CLUSTERING_PARAMS += " --verbosity 1"
+CLUSTERING_PARAMS += " -v xband_oase_zh -w xband_oase_zh --write-variables-as-vtk=xband_oase_zh"
+CLUSTERING_PARAMS += " -r 2,5,5,100 --drf-threshold 0.5 -s 64 -t 10"
+
+TRACKING_PARAMS =   "--verbosity 1 --write-vtk --vtk-dimensions=x,y,z -t xband_oase_zh"
+TRACKING_PARAMS +=  " --wr 1.0 --ws 0.0 --wt 0.0"
 
 # print parameters
 
@@ -26,12 +35,9 @@ print "DYLD_LIBRARY_PATH="+DYLD_LIBRARY_PATH
 
 toggled_maintain=False
 
-# delete any previous results
-# results are stored in the work directory
-
 # delete previous results
-return_code=call("rm *-clusters.nc", shell=True)
-return_code=call("rm *_clusters_*.vtk", shell=True)
+print "Cleaning up *.vtk *.nc *.png *.log"
+return_code=call("rm -f *.nc *.vtk *.log *.png", shell=True)
 
 # binaries
 bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
@@ -44,164 +50,184 @@ print "Tracking Command:"
 print tracking_bin
 
 # Cluster color tables
-col_tables = ["Purples","Blues","Oranges","Greens","Reds","Set1","Set2","Set3"]
+col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
+
+# Silent
+SuppressMessages(True)
+SuppressQueryOutputOn()
 
 # Set view and annotation attributes
 a = GetAnnotationAttributes()
-a.axes3D.visible=1
-a.axes3D.setBBoxLocation=1
-a.axes3D.bboxLocation = (-366, -111, -4340, -4105, 0, 15) 
-a.axes3D.autoSetScaling=0
+a.axes2D.visible=1
+a.axes2D.autoSetScaling=0
 a.userInfoFlag=0
 a.timeInfoFlag=0
 a.legendInfoFlag=0
 a.databaseInfoFlag=1
-a.axes3D.xAxis.title.visible = 0
-a.axes3D.yAxis.title.visible = 0
-a.axes3D.zAxis.title.visible = 0
 SetAnnotationAttributes(a)
 
 # Modify view parameters
 v = GetView3D()
-v.viewNormal=(0,0,1)
-v.focus=(-251.462, -4202.15, 3.75)
-v.parallelScale=119.692
-v.nearPlane=-239.383
-v.farPlane=239.383
-v.imagePan=(-0.021871, 0.0640515)
-v.imageZoom=0.9
+v.focus=(-238.5,-4222.5,50.0)
 SetView3D(v)
 
 # Get a list of the files we need to process
-
-file_count=0
-last_cluster_file=""
-
 netcdf_pattern = NETCDF_DIR + "/*.nc"
 netcdf_list=glob.glob(netcdf_pattern)
 
+last_cluster_file=""
+run_count = 0
+
 # Process the files one by one
 for netcdf_file in netcdf_list:
-
+    
+    print "----------------------------------------------------------"
     print "Processing " + netcdf_file
-
+    print "----------------------------------------------------------"
+    
     basename = os.path.basename(netcdf_file)
     cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
     vtk_file=os.path.splitext(basename)[0]+".vtk"
-    modes_file=os.path.splitext(basename)[0]+"-clusters-modes.vtk"
-
-    # build the clustering command
-    command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " "+CLUSTERING_PARAMS
     
-    # if it's the first file, write the clusters out from here
-    # else from the tracking tool
-    if last_cluster_file == "" :
-        command = command + " --write-clusters-as-vtk"
-        
+    print "-- Clustering --"
+    start_time = time.time()
+
+    #
+    # Cluster
+    #
+    
+    # build the clustering command
+    command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + CLUSTERING_PARAMS
+    command = command + " --write-clusters-as-vtk"
+    command = command + " > clustering_" + str(run_count)+".log"
+    
     # execute
-    print command
     return_code = call( command, shell=True)
 
-    # if we have a previous scan, run the tracking command
-
-    if last_cluster_file != "" :
-        command=tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" "+TRACKING_PARAMS
-        print command
-        return_code = call( command, shell=True)
-
-    # keep track
-    last_cluster_file=cluster_file
- 
-    # open the file and add the plot
-    OpenDatabase(vtk_file)
-    AddPlot("Pseudocolor", "zh")
-
-    p = PseudocolorAttributes()
-    p.colorTableName = "hot_desaturated"
-    SetPlotOptions(p)
-
-    # save the source file
-    s = GetSaveWindowAttributes()
-    s.fileName="source_";
-    s.progressive=1
-    SetSaveWindowAttributes(s)
+    print "    done. (%.2f seconds)" % (time.time()-start_time)
+    print "-- Rendering source data --"
+    start_time = time.time()
     
-    # Draw, save and remove
+    #
+    # Plot the source data in color
+    #
+    
+    visit3D.add_clusters(vtk_file,"xband_oase_zh","hot_desaturated",0.1)
     DrawPlots()
-    SaveWindow()
-    DeleteAllPlots();
-
-    # now the clusters
-    cluster_pattern=basename+"*cluster*.vtk"
-    print "Looking for cluster files at " + cluster_pattern
-    cluster_list=glob.glob(cluster_pattern)
-
-    print "Processing clusters:"
-    print cluster_list
-
-    for cluster_file in cluster_list:
-        
-        # figure out cluster number for choice of color table
-        # extract the number from the cluster filename
-        # to select the color table based on the ID
-        
-        cluster_num=0
-
-        try:
-            print "Extracting cluster number from " + cluster_file;
-            start = cluster_file.index("_cluster_",0) + len("_cluster_")
-            end = cluster_file.index(".vtk",start)
-            cluster_num = int( cluster_file[start:end] );
-            print "Plotting cluster #" + str(cluster_num)
-        except ValueError:
-            print "Illegal filename " + fname
-            continue
-
-        OpenDatabase(cluster_file)
-        AddPlot("Pseudocolor", "cluster")
-        cp=PseudocolorAttributes();
-        cp.pointSizePixels=5
-        cp.legendFlag=0 
-        cp.lightingFlag=1
-        cp.invertColorTable=0
-        index = cluster_num % len(col_tables);
-        cp.colorTableName = col_tables[index];
-        cp.opacity=1
-        SetPlotOptions(cp)
-
-    # Add modes as labels
-    OpenDatabase(modes_file)
-    AddPlot("Label","mode")
-
-    # Get it all plotted
-    DrawPlots()
-
+    
+    # Calling ToggleMaintainViewMode helps
+    # keeping the window from 'jittering'
     if toggled_maintain != True :
         ToggleMaintainViewMode()
         toggled_maintain=True
 
-    # save the source file
-
-    s = GetSaveWindowAttributes()
-    s.fileName="tracking_";
-    s.progressive=1
-    print s
-    SetSaveWindowAttributes(s)
-
-    DrawPlots()
-    SaveWindow()
-    DeleteAllPlots();
+    visitUtils.save_window("source_",1)
 
     # clean up
+    DeleteAllPlots();
 
+    print "    done. (%.2f seconds)" % (time.time()-start_time)
+    print "-- Rendering untracked clusters --"
+    start_time = time.time()
+
+    #
+    # Plot untracked clusters
+    #
+
+    # Re-add the source with "xray"
+    visit3D.add_pseudocolor(vtk_file,"reflectivity","xray",0.1)
+
+    # Add the clusters
+    visit3D.add_clusters(basename,"_cluster_",col_tables)
+
+    # Add centers as labels
+    label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
+    visitUtils.add_labels(label_file,"geometrical_center")
+
+    # Get it all processed and stowed away
+    DrawPlots()
+    visitUtils.save_window("untracked_",1)
+
+    #
+    # clean up
+    #
+
+    DeleteAllPlots();
     ClearWindow()
     CloseDatabase(vtk_file)
-    CloseDatabase(modes_file)
-    for cluster_file in cluster_list:
-        CloseDatabase(cluster_file)
-    #return_code=call("rm *.vtk", shell=True)
+    CloseDatabase(label_file)
+    visitUtils.close_pattern(basename+"*_cluster_*.vtk")
+    return_code=call("rm -f *cluster_*.vtk", shell=True)
 
-    file_count += 1
+    print "    done. (%.2f seconds)" % (time.time()-start_time)
+
+    #
+    # Tracking
+    #
+
+    # if we have a previous scan, run the tracking command
+
+    if run_count > 0:
+        
+        print "-- Tracking --"
+        start_time = time.time()
+    
+        command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + TRACKING_PARAMS
+        command = command + " > tracking_" + str(run_count)+".log"
+        
+        # execute
+        print command
+        return_code = call( command, shell=True)
+
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
+        print "-- Rendering tracked clusters --"
+        start_time = time.time()
+
+        #
+        # Plot tracked clusters
+        #
+
+        # Re-add the source with "xray"
+        visit3D.add_pseudocolor(vtk_file,"reflectivity","xray",0.1)
+
+        # Add the clusters
+        visit3D.add_clusters(basename,"_cluster_",col_tables)
+
+        # Add modes as labels
+        label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
+        visitUtils.add_labels(label_file,"geometrical_center")
+
+        # Get it all processed and stowed away
+        DrawPlots()
+        visit3D.save_window("tracked_",1)
+
+        #
+        # clean up
+        #
+
+        DeleteAllPlots();
+        ClearWindow()
+        CloseDatabase(vtk_file)
+        CloseDatabase(label_file)
+        visitUtils.close_pattern(basename+"*_cluster_*.vtk")
+        return_code=call("rm -f *cluster_*.vtk", shell=True)
+
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
+
+    # keep track
+    last_cluster_file=cluster_file
+
+    # don't forget to increment run counter
+    run_count = run_count + 1
+
+#
+# Create movies
+#
+
+print "Creating movies from slides"
+return_code=call("convert -delay 50 source_*.png source.mpeg")
+return_code=call("convert -delay 50 tracked_*.png tracked.mpeg")
+return_code=call("convert -delay 50 untracked_*.png untracked.mpeg")
 
 print "Done. Closing Visit."
 Close();

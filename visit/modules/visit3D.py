@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# Filename: visit2D.py
+# Filename: visit3D.py
 
 version = '0.1'
 
@@ -19,8 +19,10 @@ import glob
 #
 def add_clusters(basename,infix,col_tables):
 
-    cluster_pattern=basename+"*" + infix + "*.vtk"
-    #print "Looking for cluster files at " + cluster_pattern
+    
+    # now the clusters
+    cluster_pattern=basename+"*"+infix+"*.vtk"
+    print "Looking for cluster files at " + cluster_pattern
     cluster_list=glob.glob(cluster_pattern)
     
     #print "Processing clusters:"
@@ -36,7 +38,7 @@ def add_clusters(basename,infix,col_tables):
         
         try:
             #print "Extracting cluster number from " + cluster_file;
-            start = cluster_file.index(infix,0) + len(infix)
+            start = cluster_file.index("_cluster_",0) + len("_cluster_")
             end = cluster_file.index(".vtk",start)
             cluster_num = int( cluster_file[start:end] );
             #print "Plotting cluster #" + str(cluster_num)
@@ -46,20 +48,16 @@ def add_clusters(basename,infix,col_tables):
         
         OpenDatabase(cluster_file)
         AddPlot("Pseudocolor", "cluster")
-
         cp=PseudocolorAttributes();
-        #cp.minFlag,cp.maxFlag = 1,1
-        #cp.min,cp.max = 10.0, 60.0
         cp.pointSizePixels=5
         cp.legendFlag=0
         cp.lightingFlag=1
         cp.invertColorTable=0
         index = cluster_num % len(col_tables);
         cp.colorTableName = col_tables[index];
-        cp.opacity=0.05
+        cp.opacity=1
         SetPlotOptions(cp)
     return
-
 
 # Add the data of one variable from the given file to
 # the current window.
@@ -67,8 +65,8 @@ def add_clusters(basename,infix,col_tables):
 # @param variable name
 # @param color table
 #
-def add_pseudocolor(vtk_file,variable,color_table_name):
-
+def add_pseudocolor(vtk_file,variable,color_table_name,opacity):
+    
     # open the file and add the plot
     OpenDatabase(vtk_file)
     AddPlot("Pseudocolor", variable)
@@ -80,8 +78,8 @@ def add_pseudocolor(vtk_file,variable,color_table_name):
     #p.invertColorTable=1
     p.minFlag,p.maxFlag = 1,1
     p.min,p.max = 0.0, 50.0
-    p.opacity=1.0
+    p.opacity=opacity
     SetPlotOptions(p)
     return
 
-# End of visit2D.py
+# End of visit3D.py
