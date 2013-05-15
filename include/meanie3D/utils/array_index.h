@@ -32,8 +32,9 @@ namespace m3D {
 #pragma mark Attributes
 
     private:
-        
-        const FeatureSpace<T>       *m_fs;
+
+        typename Point<T>::list     m_points;
+        const CoordinateSystem<T>   *m_coordinate_system;
         array_t                     *m_data;
         
         /** Called by build_index, copy constructor
@@ -54,7 +55,7 @@ namespace m3D {
         /** Called by replace_points.
          */
         void
-        replace_points_recursive(FeatureSpace<T> *fs,
+        replace_points_recursive(typename Point<T>::list &points,
                                  size_t dim_index,
                                  typename CoordinateSystem<T>::GridPoint &gridpoint);
         
@@ -79,6 +80,13 @@ namespace m3D {
          * @param feature space
          */
         ArrayIndex(const FeatureSpace<T> *fs);
+        
+        /** Constructs an array index using coordinate system
+         * and point list instead.
+         * @param coordinate system
+         * @param point list
+         */
+        ArrayIndex(CoordinateSystem<T> *cs, typename Point<T>::list &points);
         
         /** Copy constructor on pointer
          * @param pointer to array index
@@ -106,7 +114,7 @@ namespace m3D {
          * by the points in this index
          */
         void
-        replace_points(FeatureSpace<T> *fs);
+        replace_points(typename Point<T>::list &points);
         
         /** Iterates over the structure and counts the number of non-null
          * entries in the index.

@@ -15,9 +15,12 @@ namespace m3D {
     
 
     template <typename T>
-    ArrayIndex<T>::ArrayIndex(const FeatureSpace<T> *fs) : m_fs(fs), m_data(NULL)
+    ArrayIndex<T>::ArrayIndex(const FeatureSpace<T> *fs)
+    : m_points(fs->points)
+    , m_coordinate_system(fs->coordinate_system)
+    , m_data(NULL)
     {
-        typename CoordinateSystem<T>::GridPoint gp = fs->coordinate_system->newGridPoint();
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
         this->construct_array_recursive( 0, &m_data, gp );
         
@@ -25,9 +28,25 @@ namespace m3D {
     }
     
     template <typename T>
-    ArrayIndex<T>::ArrayIndex(ArrayIndex<T> *o) : m_fs(o->m_fs), m_data(NULL)
+    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs, typename Point<T>::list &points)
+    : m_points(points)
+    , m_coordinate_system(cs)
+    , m_data(NULL)
     {
-        typename CoordinateSystem<T>::GridPoint gp = m_fs->coordinate_system->newGridPoint();
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
+        
+        this->construct_array_recursive( 0, &m_data, gp );
+        
+        this->build_index();
+    }
+    
+    template <typename T>
+    ArrayIndex<T>::ArrayIndex(ArrayIndex<T> *o)
+    : m_points(o->m_points)
+    , m_coordinate_system(o->m_coordinate_system)
+    , m_data(NULL)
+    {
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
 
         this->construct_array_recursive( 0, &m_data, gp, o );
     }
@@ -35,28 +54,28 @@ namespace m3D {
     template <typename T>
     ArrayIndex<T>::~ArrayIndex()
     {
-        typename CoordinateSystem<T>::GridPoint gp = m_fs->coordinate_system->newGridPoint();
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
 
         this->destroy_array_recursive( 0, &m_data, gp );
     }
     
     template <typename T>
     void
-    ArrayIndex<T>::replace_points_recursive(FeatureSpace<T> *fs,
+    ArrayIndex<T>::replace_points_recursive(typename Point<T>::list &points,
                                             size_t dim_index,
                                             typename CoordinateSystem<T>::GridPoint &gridpoint )
     {
-        NcDim dim = m_fs->coordinate_system->dimensions()[dim_index];
+        NcDim dim = m_coordinate_system->dimensions()[dim_index];
         
         size_t dimSize = dim.getSize();
         
-        if (dim_index < (m_fs->coordinate_system->size()-1) )
+        if (dim_index < (m_coordinate_system->size()-1) )
         {
             for ( size_t index = 0; index < dimSize; index++ )
             {
                 gridpoint[dim_index] = index;
                 
-                replace_points_recursive(fs,dim_index+1,gridpoint);
+                replace_points_recursive(points,dim_index+1,gridpoint);
             }
         }
         else
@@ -76,7 +95,7 @@ namespace m3D {
                 {
                     typename Point<T>::ptr copy = PointFactory<T>::get_instance()->copy(p);
                     
-                    fs->points.push_back(copy);
+                    points.push_back(copy);
                 }
             }
         }
@@ -84,13 +103,22 @@ namespace m3D {
     
     template <typename T>
     void
-    ArrayIndex<T>::replace_points(FeatureSpace<T> *fs)
+    ArrayIndex<T>::replace_points(typename Point<T>::list &points)
     {
-        fs->clear_points();
+        // clean the list out
         
-        typename CoordinateSystem<T>::GridPoint gp = fs->coordinate_system->newGridPoint();
+        for (size_t i=0; i < points.size(); i++)
+        {
+            typename Point<T>::ptr p = points[i];
+            
+            points[i] = NULL;
+            
+            delete p;
+        }
+
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
-        this->replace_points_recursive(fs,0,gp);
+        this->replace_points_recursive(points,0,gp);
     }
 
     template <typename T>
@@ -100,11 +128,11 @@ namespace m3D {
                                              typename CoordinateSystem<T>::GridPoint &gridpoint,
                                              ArrayIndex<T> *other)
     {
-        NcDim dim = m_fs->coordinate_system->dimensions()[dim_index];
+        NcDim dim = m_coordinate_system->dimensions()[dim_index];
         
         size_t dimSize = dim.getSize();
         
-        if (dim_index < (m_fs->coordinate_system->size()-1) )
+        if (dim_index < (m_coordinate_system->size()-1) )
         {
             // create array
             
@@ -172,11 +200,11 @@ namespace m3D {
     void
     ArrayIndex<T>::destroy_array_recursive(size_t dim_index, array_t **array, typename CoordinateSystem<T>::GridPoint &gridpoint)
     {
-        NcDim dim = m_fs->coordinate_system->dimensions()[dim_index];
+        NcDim dim = m_coordinate_system->dimensions()[dim_index];
         
         size_t dimSize = dim.getSize();
         
-        if (dim_index < (m_fs->coordinate_system->size()-1) )
+        if (dim_index < (m_coordinate_system->size()-1) )
         {
             if ( dim_index == 0 )
             {
@@ -231,9 +259,9 @@ namespace m3D {
     void
     ArrayIndex<T>::build_index()
     {
-        for (size_t i=0; i<m_fs->points.size(); i++)
+        for (size_t i=0; i < m_points.size(); i++)
         {
-            typename Point<T>::ptr p = m_fs->points[i];
+            typename Point<T>::ptr p = m_points[i];
             
             this->set( p->gridpoint, p );
         }
@@ -295,11 +323,11 @@ namespace m3D {
                                    typename CoordinateSystem<T>::GridPoint &gridpoint,
                                    size_t &count)
     {
-        NcDim dim = m_fs->coordinate_system->dimensions()[dim_index];
+        NcDim dim = m_coordinate_system->dimensions()[dim_index];
         
         size_t dimSize = dim.getSize();
 
-        if (dim_index < (m_fs->coordinate_system->size()-1) )
+        if (dim_index < (m_coordinate_system->size()-1) )
         {
             for ( size_t index = 0; index < dimSize; index++ )
             {
@@ -333,7 +361,7 @@ namespace m3D {
     {
         size_t count = 0;
         
-        typename CoordinateSystem<T>::GridPoint gp = m_fs->coordinate_system->newGridPoint();
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
         count_recursive(0, m_data, gp, count);
         
