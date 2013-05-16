@@ -740,7 +740,7 @@ int main(int argc, char** argv)
     
     // Write out the cluster list
     
-    if ( write_vtk )
+    if ( write_vtk && clusters.clusters.size() > 0)
     {
         boost::filesystem::path path(filename);
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( path.filename().string(), clusters.clusters, ranges, true );

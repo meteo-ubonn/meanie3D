@@ -33,7 +33,6 @@ namespace m3D {
 
     private:
 
-        typename Point<T>::list     m_points;
         const CoordinateSystem<T>   *m_coordinate_system;
         array_t                     *m_data;
         
@@ -59,10 +58,10 @@ namespace m3D {
                                  size_t dim_index,
                                  typename CoordinateSystem<T>::GridPoint &gridpoint);
         
-         /** Constructs the actual index.
-         */
         void
-        build_index();
+        copy_points_recursive(ArrayIndex<T> *otherIndex,
+                              size_t dim_index,
+                              typename CoordinateSystem<T>::GridPoint &gridpoint);
         
         void
         count_recursive(size_t dim_index,
@@ -76,17 +75,17 @@ namespace m3D {
 
     public:
 
-        /** Creates an array index for the given feature-space
-         * @param feature space
+        /** Constructs an array index for the given coordinate system.
+         * @param coordinate system
          */
-        ArrayIndex(const FeatureSpace<T> *fs);
+        ArrayIndex(CoordinateSystem<T> *cs);
         
-        /** Constructs an array index using coordinate system
-         * and point list instead.
+        /** Constructs an array index vor the given coordinate system
+         * and indexes the point list.
          * @param coordinate system
          * @param point list
          */
-        ArrayIndex(CoordinateSystem<T> *cs, typename Point<T>::list &points);
+        ArrayIndex(CoordinateSystem<T> *cs, const typename Point<T>::list &points);
         
         /** Copy constructor on pointer
          * @param pointer to array index
@@ -96,22 +95,42 @@ namespace m3D {
         /** Destructor
          */
         virtual ~ArrayIndex();
-    
+        
+#pragma mark -
+#pragma mark Indexing operation
+
+        /** Indexes the point list. All points are added to the
+         * index (and are copied in the process). Existing points
+         * are overwritten (and released).
+         * @param point list
+         */
+        void
+        index(const typename Point<T>::list &list);
+
 #pragma mark -
 #pragma mark Accessors
     
         typename Point<T>::ptr
         get(const typename CoordinateSystem<T>::GridPoint &gp);
     
+        /** Sets a point in the index at a given grid point. If a point exists
+         * at the given coordinate, it is released and replaced.
+         *
+         * @param grid point vector
+         * @param pointer to the point object
+         * @param if <code>true</code>, a copy is made, if <code>false</code> 
+         *        the pointer is used as is. Defaults to <code>true</code>
+         */
         void
         set(const typename CoordinateSystem<T>::GridPoint &gp,
-            typename Point<T>::ptr p);
+            typename Point<T>::ptr p, bool copy=true);
         
 #pragma mark -
 #pragma mark Misc
         
         /** Remove the points from the given feature-space and replace them
-         * by the points in this index
+         * by the points in this index. The points in the original list are
+         * released. 
          */
         void
         replace_points(typename Point<T>::list &points);

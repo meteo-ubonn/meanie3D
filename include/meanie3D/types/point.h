@@ -81,7 +81,10 @@ namespace m3D {
         operator = (const M3DPoint& o) { M3DPoint<T> copy( o ); return copy; }
 
         /** Destructor */
-        ~M3DPoint();
+        virtual ~M3DPoint()
+        {
+            //cout << "~MDPoint(" << this << ")" << endl;
+        }
         
 #pragma mark -
 #pragma mark Operators

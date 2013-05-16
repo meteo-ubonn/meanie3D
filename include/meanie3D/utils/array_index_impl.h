@@ -13,42 +13,36 @@ namespace m3D {
 	using namespace std;
 	using cfa::meanshift::Point;
     
-
     template <typename T>
-    ArrayIndex<T>::ArrayIndex(const FeatureSpace<T> *fs)
-    : m_points(fs->points)
-    , m_coordinate_system(fs->coordinate_system)
+    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs)
+    : m_coordinate_system(cs)
     , m_data(NULL)
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
         this->construct_array_recursive( 0, &m_data, gp );
-        
-        this->build_index();
     }
     
     template <typename T>
-    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs, typename Point<T>::list &points)
-    : m_points(points)
-    , m_coordinate_system(cs)
+    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs, const typename Point<T>::list &points)
+    : m_coordinate_system(cs)
     , m_data(NULL)
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
         this->construct_array_recursive( 0, &m_data, gp );
         
-        this->build_index();
+        this->index(points);
     }
     
     template <typename T>
     ArrayIndex<T>::ArrayIndex(ArrayIndex<T> *o)
-    : m_points(o->m_points)
-    , m_coordinate_system(o->m_coordinate_system)
+    : m_coordinate_system(o->m_coordinate_system)
     , m_data(NULL)
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
 
-        this->construct_array_recursive( 0, &m_data, gp, o );
+        this->copy_points_recursive(o,0,gp);
     }
     
     template <typename T>
@@ -103,6 +97,43 @@ namespace m3D {
     
     template <typename T>
     void
+    ArrayIndex<T>::copy_points_recursive(ArrayIndex<T> *otherIndex,
+                                         size_t dim_index,
+                                         typename CoordinateSystem<T>::GridPoint &gridpoint)
+    {
+        NcDim dim = m_coordinate_system->dimensions()[dim_index];
+        
+        size_t dimSize = dim.getSize();
+        
+        if (dim_index < (m_coordinate_system->size()-1) )
+        {
+            for ( size_t index = 0; index < dimSize; index++ )
+            {
+                gridpoint[dim_index] = index;
+                
+                copy_points_recursive(otherIndex,dim_index+1,gridpoint);
+            }
+        }
+        else
+        {
+            typename CoordinateSystem<T>::GridPoint gIter = gridpoint;
+            
+            for (size_t i=0; i<dimSize; i++)
+            {
+                gIter[dim_index] = i;
+                
+                typename Point<T>::ptr p = this->otherIndex(gIter);
+                
+                if ( p != NULL )
+                {
+                    this->set(gIter,p,true);
+                }
+            }
+        }
+    }
+
+    template <typename T>
+    void
     ArrayIndex<T>::replace_points(typename Point<T>::list &points)
     {
         // clean the list out
@@ -111,10 +142,12 @@ namespace m3D {
         {
             typename Point<T>::ptr p = points[i];
             
-            points[i] = NULL;
-            
             delete p;
+            
+            points[i] = NULL;
         }
+        
+        points.clear();
 
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
@@ -249,7 +282,15 @@ namespace m3D {
             
             vector<typename Point<T>::ptr> *the_array = (vector<typename Point<T>::ptr> *) super_array->at(super_index);
             
-            delete the_array;
+            for (size_t i = 0; i < the_array->size(); i++)
+            {
+                typename Point<T>::ptr p = the_array->at(i);
+
+                if (p!=NULL)
+                {
+                    delete p;
+                }
+            }
             
             super_array->at(super_index) = NULL;
         }
@@ -257,11 +298,11 @@ namespace m3D {
     
     template <typename T>
     void
-    ArrayIndex<T>::build_index()
+    ArrayIndex<T>::index(const typename Point<T>::list &list)
     {
-        for (size_t i=0; i < m_points.size(); i++)
+        for (size_t i=0; i < list.size(); i++)
         {
-            typename Point<T>::ptr p = m_points[i];
+            typename Point<T>::ptr p = list[i];
             
             this->set( p->gridpoint, p );
         }
@@ -297,7 +338,7 @@ namespace m3D {
     
     template <typename T>
     void
-    ArrayIndex<T>::set(const typename CoordinateSystem<T>::GridPoint &gp, typename Point<T>::ptr p)
+    ArrayIndex<T>::set(const typename CoordinateSystem<T>::GridPoint &gp, typename Point<T>::ptr p, bool copy)
     {
         vector<void *> *array = m_data;
         
@@ -311,7 +352,21 @@ namespace m3D {
             {
                 vector<typename Point<T>::ptr> *points = (vector<typename Point<T>::ptr> *) array;
                 
-                points->at(gp[dim_index]) = p;
+                typename Point<T>::ptr existingPoint = points->at(gp[dim_index]);
+                
+                if (existingPoint!=NULL)
+                {
+                    delete existingPoint;
+                }
+                
+                if (copy)
+                {
+                    points->at(gp[dim_index]) = PointFactory<T>::get_instance()->copy(p);
+                }
+                else
+                {
+                    points->at(gp[dim_index]) = p;
+                }
             }
         }
     }

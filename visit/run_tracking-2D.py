@@ -6,8 +6,16 @@
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
+#DETECT_PARAMS     = "-r 100,100,200 --drf-threshold 0.5 -s 512 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 48,48,200 --drf-threshold 0.5 -s 256 -t 20 -m 10"
+DETECT_PARAMS     = "-r 24,24,200 --drf-threshold 0.5 -s 128 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 12,12,200 --drf-threshold 0.5 -s 64 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 6,6,200 --drf-threshold 0.5 -s 32 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 3,3,200 --drf-threshold 0.5 -s 16 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 2.5,2.5,200 --drf-threshold 0.5 -s 8 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 2,2,200 --drf-threshold 0.5 -s 4 -t 20 -m 10"
 
-# Appending the module path is crucial 
+# Appending the module path is crucial
 sys.path.append(MEANIE3D_HOME+"/visit/modules")
 
 import glob
@@ -18,11 +26,16 @@ import visit2D
 import visitUtils
 from subprocess import call
 
+# TODO: find a more elegant way to resume
+# if > 0 a previous run is resumed
+last_completed_run_count = 53
+
 # RADOLAN
+
 CLUSTERING_PARAMS =  "-d x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
-CLUSTERING_PARAMS += " --write-variables-as-vtk=reflectivity -v reflectivity -w reflectivity"
-CLUSTERING_PARAMS += " -r 12,12,200 --drf-threshold 0.5 -s 64 -t 20 -m 10"
+CLUSTERING_PARAMS += " --write-variables-as-vtk=reflectivity -v reflectivity -w reflectivity "
+CLUSTERING_PARAMS += DETECT_PARAMS
 
 TRACKING_PARAMS = "--verbosity 1 --write-vtk"
 TRACKING_PARAMS += " -t reflectivity"
@@ -37,18 +50,22 @@ print "DYLD_LIBRARY_PATH="+DYLD_LIBRARY_PATH
 toggled_maintain=False
 
 # delete previous results
-print "Cleaning up *.vtk *.nc *.png *.log"
-return_code=call("rm -f *.nc *.vtk *.log *.png", shell=True)
+if last_completed_run_count == 0:
+    print "Cleaning up *.vtk *.nc *.png *.log"
+    return_code=call("rm -f *.nc *.vtk *.log *.png", shell=True)
 
 # binaries
 bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
-detection_bin = bin_prefix + "M3D_HOME" + "/Debug/meanie3D-detect"
-tracking_bin  = bin_prefix + "M3D_HOME" + "/Debug/meanie3D-track"
+detection_bin = bin_prefix + "M3D_HOME" + "/Release/meanie3D-detect"
+tracking_bin  = bin_prefix + "M3D_HOME" + "/Release/meanie3D-track"
+trackplot_bin = bin_prefix + "M3D_HOME" + "/Release/meanie3D-trackplot"
 
 print "Detection Command:"
 print detection_bin
 print "Tracking Command:"
 print tracking_bin
+print "Tracking Evaluation Command:"
+print trackplot_bin
 
 # Cluster color tables
 col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
@@ -81,14 +98,21 @@ run_count = 0
 
 # Process the files one by one
 for netcdf_file in netcdf_list:
+    
+    basename = os.path.basename(netcdf_file)
+    cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
+    vtk_file=os.path.splitext(basename)[0]+".vtk"
+
+    # if there is a resume counter, keep skipping
+    # until the count is right
+    if (last_completed_run_count > 0) and (run_count <= last_completed_run_count):
+        last_cluster_file=cluster_file
+        run_count = run_count + 1
+        continue
 
     print "----------------------------------------------------------"
     print "Processing " + netcdf_file
     print "----------------------------------------------------------"
-
-    basename = os.path.basename(netcdf_file)
-    cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
-    vtk_file=os.path.splitext(basename)[0]+".vtk"
 
     print "-- Clustering --"
     start_time = time.time()
@@ -225,17 +249,23 @@ for netcdf_file in netcdf_list:
     # don't forget to increment run counter
     run_count = run_count + 1
 
-# Compile and plot track data
-
+# TODO: create result structure and move stuff
+#
+return_code=call("mkdir logs && mv *.log logs")
+return_code=call("mkdir netcdf && mv *.nc netcdf")
+return_code=call("mkdir images && mv *.png images")
+return_code=call("mkdir vtk && mv *.vtk images")
 
 #
 # Create movies
 #
 
-print "Creating movies from slides"
-return_code=call("convert -delay 50 source_*.png source.mpeg")
-return_code=call("convert -delay 50 tracked_*.png tracked.mpeg")
-return_code=call("convert -delay 50 untracked_*.png untracked.mpeg")
+return_code=call("mkdir movies")
+return_code=call("/usr/local/bin/convert -delay 50 -quality 100 images/source_*.png movies/source.mpeg")
+return_code=call("/usr/local/bin/convert -delay 50 -quality 100 images/tracked_*.png movies/tracked.mpeg")
+
+# Compile and plot track data
+return_code=call("mkdir tracks")
 
 print "Done. Closing Visit."
 exit()

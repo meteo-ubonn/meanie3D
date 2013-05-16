@@ -41,14 +41,14 @@ namespace m3D {
                                      ArrayIndex<T> *originalIndex,
                                      ArrayIndex<T> *filteredPoints,
                                      vector<size_t> dimensionIndexes,
-                                     size_t fixedDimensionIndex,
                                      size_t dimensionIndex,
                                      typename CoordinateSystem<T>::GridPoint& gridpoint);
         
-        void applyWithArrayIndexForDimension(FeatureSpace<T> *fs,
-                                             ArrayIndex<T> *originalIndex,
-                                             ArrayIndex<T> *filteredPoints,
-                                             size_t fixedDimensionIndex);
+        void
+        applyWithArrayIndexForDimension(FeatureSpace<T> *fs,
+                                        ArrayIndex<T> *originalIndex,
+                                        ArrayIndex<T> *filteredPoints,
+                                        size_t fixedDimensionIndex);
         
         void
         applyWithArrayIndex(FeatureSpace<T> *fs);

@@ -177,6 +177,8 @@ int main(int argc, char** argv)
     
     size_t spatial_dimensions = 0;
     
+    std::string coords_filename;
+    
     if (fs::is_directory(source_path))
     {
         fs::directory_iterator dir_iter(source_path);
@@ -193,6 +195,10 @@ int main(int argc, char** argv)
                 // read the ClusterList from the file
                 
                 cout << "Processing " << f.filename().generic_string() << " ... ";
+                
+                // Remember the last one
+                
+                coords_filename = f.generic_string();
                 
                 typename ClusterList<T>::ptr cluster_list = ClusterList<T>::read( f.generic_string() );
                 
@@ -250,6 +256,44 @@ int main(int argc, char** argv)
             dir_iter++;
         }
         
+        // Construct coordinate system
+        
+        CoordinateSystem<T> *coord_system = NULL;
+        
+        // This file should not be closed until the code has
+        // run through, or netCDF will upchuck exceptions when
+        // accessing coordinate system
+        
+        netCDF::NcFile *coords_file = NULL;
+
+        // collate dimensions
+        vector<NcDim> dimensions;
+        vector<NcVar> dimension_vars;
+        
+        coords_file = new NcFile(coords_filename,NcFile::read);
+        
+        multimap<string,NcDim> dims = coords_file->getDims();
+        multimap<string,NcDim>::iterator di;
+        
+        multimap<string,NcVar> vars = coords_file->getVars();
+        multimap<string,NcVar>::iterator vi;
+        
+        // Only use dimensions, that have a variable of the
+        // exact same name
+        
+        for (di=dims.begin(); di!=dims.end(); di++)
+        {
+            vi = vars.find(di->first);
+            
+            if (vi != vars.end())
+            {
+                dimensions.push_back(di->second);
+                dimension_vars.push_back(vi->second);
+            }
+        }
+        
+        coord_system = new CoordinateSystem<T>(dimensions,dimension_vars);
+        
         // Now we have a cluster map. Let's print it for debug purposes
         
         for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
@@ -270,6 +314,55 @@ int main(int argc, char** argv)
         
         ::m3D::utils::VisitUtils<T>::write_center_tracks_vtk(track_map, basename, spatial_dimensions);
         
+        // Write cumulated tracks as netcdf and vtk files
+        
+        cout << "Cumulating tracks ... ";
+        
+        // Iterate over the collated tracks
+        
+        for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        {
+            typename Tracking<T>::track_t *track = tmi->second;
+        
+            // For each track, create an array index. Start with empty index.
+            
+            typename Point<T>::list cumulated;
+            
+            ArrayIndex<T> index(coord_system,cumulated);
+            
+            // Iterate over the clusters in the track and sum up
+            
+            typename Tracking<T>::track_t::iterator ti;
+            
+            for (ti = track->begin(); ti != track->end(); ++ti)
+            {
+                Cluster<T> cluster = (*ti);
+                
+                // Iterate over the points of the cluster
+                
+                typename Point<T>::list::iterator pi;
+                
+                for (pi = cluster.points.begin(); pi != cluster.points.end(); ++pi)
+                {
+                    Point<T>::ptr p = *pi;
+                    
+                    typename CoordinateSystem<T>::GridPoint gp;
+                    
+                    coord_system->reverse_lookup(p->coordinate, gp);
+                    
+                    typename Point<T>::ptr indexed = index.get(gp);
+                    
+                    indexed->values += p->values;
+                }
+            }
+            
+            // Write out the cumulative file as netcdf and vtk
+        
+        }
+        
+        cout << "done." << endl;
+
+        
         // Free up the map
         
         for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
@@ -280,6 +373,10 @@ int main(int argc, char** argv)
             
             tmi->second = NULL;
         }
+
+        // finally, close this one
+        
+        delete coords_file;
     }
     else
     {

@@ -447,7 +447,6 @@ namespace m3D {
                                                       ArrayIndex<T> *originalIndex,
                                                       ArrayIndex<T> *filteredPoints,
                                                       vector<size_t> dimensionIndexes,
-                                                      size_t fixedDimensionIndex,
                                                       size_t dimensionIndex,
                                                       typename CoordinateSystem<T>::GridPoint& gridpoint)
     {
@@ -475,7 +474,7 @@ namespace m3D {
             {
                 // recurse
 
-                applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, fixedDimensionIndex, dimensionIndex+1, gridpoint);
+                applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, dimensionIndex+1, gridpoint);
             }
             else
             {
@@ -560,11 +559,20 @@ namespace m3D {
                         
                         M3DPoint<T> * m3p = (M3DPoint<T> *) p;
                         
-                        m3p->setIsOriginalPoint(false);
+                        // Did this exist in the original index?
                         
-                        filteredPoints->set(gridpoint,p);
+                        M3DPoint<T> *op = (M3DPoint<T> *) originalIndex->get(gridpoint);
                         
-                        m_created_points++;
+                        bool isOriginal =( op != NULL && op->isOriginalPoint() );
+                        
+                        m3p->setIsOriginalPoint(isOriginal);
+                        
+                        // Since we just created this point, there
+                        // is no need to copy it again
+                        
+                        filteredPoints->set(gridpoint,p,false);
+                        
+                        if (!isOriginal) m_created_points++;
                     }
                     else
                     {
@@ -610,7 +618,7 @@ namespace m3D {
         // Now recurse into the structure, bearing in mind that
         // the dimensions have been re-ordered
         
-        applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, fixedDimensionIndex, 0, gridpoint);
+        applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, 0, gridpoint);
     }
     
     
@@ -619,6 +627,8 @@ namespace m3D {
     ScaleSpaceFilter<T>::applyWithArrayIndex(FeatureSpace<T> *fs)
     {
         using namespace std;
+        
+        CoordinateSystem<T> *cs = fs->coordinate_system;
         
         // index the original
         
@@ -629,24 +639,7 @@ namespace m3D {
             start_timer();
         }
 
-        ArrayIndex<T> *originalIndex = new ArrayIndex<T>(fs);
-        
-        if ( this->show_progress() )
-        {
-            cout << "done. (" << stop_timer() << "s)" << endl;
-        }
-        
-        // Create a copy and index that as well. The results
-        // are going to be stored in the index
-        
-        if ( this->show_progress() )
-        {
-            cout << "Copying feature-space ...";
-            
-            start_timer();
-        }
-        
-        FeatureSpace<T> *filteredSpace = new FeatureSpace<T>(fs,true);
+        ArrayIndex<T> *originalIndex = new ArrayIndex<T>(cs, fs->points);
         
         if ( this->show_progress() )
         {
@@ -660,7 +653,7 @@ namespace m3D {
             start_timer();
         }
 
-        ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(filteredSpace);
+        ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs);
         
         if ( this->show_progress() )
         {
@@ -689,18 +682,19 @@ namespace m3D {
         {
             applyWithArrayIndexForDimension(fs, originalIndex, filteredIndex, dimIndex);
             
-            if (dimIndex < fs->coordinate_system->size() - 1)
+            if (dimIndex < (fs->coordinate_system->size() - 1))
             {
                 delete originalIndex;
             
-                originalIndex = new ArrayIndex<T>(filteredIndex);
+                originalIndex = filteredIndex;
+                
+                filteredIndex = new ArrayIndex<T>(cs);
             }
         }
         
         // replace the points in the original with the filtered
         // array index results
-        
-        filteredIndex->replace_points(fs);
+        filteredIndex->replace_points(fs->points);
         
         if ( this->show_progress() )
         {
@@ -711,15 +705,13 @@ namespace m3D {
             m_progress_bar = NULL;
         }
 #if WRITE_FEATURESPACE
-        string fn = fs->filename() + "_scale_" + boost::lexical_cast<string>(m_scale) + ".vtk";
+        std::string fn = fs->filename() + "_scale_" + boost::lexical_cast<string>(m_scale) + ".vtk";
         ::cfa::utils::VisitUtils<T>::write_featurespace_vtk( fn, fs );
 #endif
         
         // Clean up
         
         delete filteredIndex;
-        
-        delete filteredSpace;
     }
     
     template <typename T>
