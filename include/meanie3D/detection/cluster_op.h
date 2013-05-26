@@ -68,8 +68,8 @@ namespace m3D {
          */
         ClusterList<T> cluster( const SearchParameters *params,
                                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
-                               const int weight_index = ::cfa::meanshift::MeanshiftOperation<T>::NO_WEIGHT,
-                               const double &drf_threshold = 0.95,
+                               const WeightFunction<T> *weight_function = NULL,
+                               const double &drf_threshold = 0.5,
                                const bool show_progress_bar = true );
         
 #pragma mark -

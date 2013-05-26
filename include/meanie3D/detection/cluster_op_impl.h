@@ -70,7 +70,7 @@ namespace m3D {
     ClusterList<T> 
     ClusterOperation<T>::cluster( const SearchParameters *params,
                                   const Kernel<T> *kernel,
-                                  const int weight_index,
+                                  const WeightFunction<T> *weight_function,
                                   const double &drf_threshold,
                                   const bool show_progress_bar )
     {
@@ -140,7 +140,7 @@ namespace m3D {
                                                  this->feature_space->size(),
                                                  params,
                                                  kernel,
-                                                 weight_index,
+                                                 weight_function,
                                                  drf_threshold,
                                                  show_progress_bar) );
             thread.detach();
@@ -171,7 +171,7 @@ namespace m3D {
                                     this->feature_space->size(),
                                     params,
                                     kernel,
-                                    weight_index,
+                                    weight_function,
                                     drf_threshold,
                                     show_progress_bar),
                      tbb::auto_partitioner() );
@@ -186,7 +186,7 @@ namespace m3D {
                           this->feature_space->size(),
                           params,
                           kernel,
-                          weight_index,
+                          weight_function,
                           drf_threshold,
                           show_progress_bar);
         ct();
@@ -209,14 +209,14 @@ namespace m3D {
         
         // Analyse the graph and create clusters
         
-        cluster_list.aggregate_cluster_graph( (size_t)weight_index, this->feature_space, resolution, show_progress_bar );
+        cluster_list.aggregate_cluster_graph( weight_function, this->feature_space, resolution, show_progress_bar );
         
 #if WRITE_BOUNDARIES
-        cluster_list.write_boundaries( (size_t) weight_index, this->feature_space, this->point_index, resolution );
+        cluster_list.write_boundaries( weight_function, this->feature_space, this->point_index, resolution );
 #endif
 
         // Analyze the clusters to create objects
-        cluster_list.aggregate_clusters_by_boundary_analysis( (size_t)weight_index, this->point_index, resolution, drf_threshold, show_progress_bar );
+        cluster_list.aggregate_clusters_by_boundary_analysis( weight_function, this->point_index, resolution, drf_threshold, show_progress_bar );
         
 #if WRITE_MODES
         

@@ -25,12 +25,12 @@ namespace m3D {
     struct ClusterTask
     {
         FeatureSpace<T>         *m_fs;
-        PointIndex<T>    *m_index;
+        PointIndex<T>           *m_index;
         ClusterOperation<T>     *m_op;
         ClusterList<T>          *m_cluster_list;
         
         const Kernel<T>         *m_kernel;
-        const int               m_weight_index;
+        const WeightFunction<T> *m_weight_function;
         const double            m_drf_threshold;
         
         const SearchParameters  *m_search_params;
@@ -52,7 +52,7 @@ namespace m3D {
                      const size_t end_index,
                      const SearchParameters *params,
                      const Kernel<T> *kernel,
-                     const int weight_index,
+                     const WeightFunction<T> *weight_function,
                      const double &drf_threshold,
                      const bool show_progress = true ) :
         m_fs(fs), 
@@ -60,7 +60,7 @@ namespace m3D {
         m_op(op),
         m_cluster_list(cs),
         m_kernel( kernel),
-        m_weight_index(weight_index),
+        m_weight_function(weight_function),
         m_drf_threshold(drf_threshold),
         m_search_params( params ), 
         m_start_index(start_index), 
@@ -79,7 +79,7 @@ namespace m3D {
         m_start_index(other.m_start_index),
         m_end_index(other.m_end_index),
         m_kernel(other.m_kernel),
-        m_weight_index(other.m_weight_index),
+        m_weight_function(other.m_weight_function),
         m_drf_threshold(other.m_drf_threshold),
         m_show_progress(other.m_show_progress)
         {
@@ -95,7 +95,7 @@ namespace m3D {
                      ClusterList<T> *cs,
                      const SearchParameters *params,
                      const Kernel<T> *kernel,
-                     const int weight_index,
+                     const WeightFunction<T> *weight_function,
                      const double &drf_threshold,
                      const bool show_progress = true ) :
         m_fs(fs), 
@@ -106,7 +106,7 @@ namespace m3D {
         m_end_index(0), 
         m_search_params( params ),
         m_kernel( kernel),
-        m_weight_index(weight_index),
+        m_weight_function(weight_function),
         m_drf_threshold( drf_threshold ),
         m_show_progress(show_progress)
         {
@@ -130,7 +130,7 @@ namespace m3D {
                 // to the original feature-space. Not those, who were created in
                 // the scale-space filtering
                 
-                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_index );
+                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
             }
             
             m_op->report_done();
@@ -151,7 +151,7 @@ namespace m3D {
                 
                 typename Point<T>::ptr x = m_fs->points[ index ];
                 
-                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_index );
+                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
             }
             
             m_op->report_done();

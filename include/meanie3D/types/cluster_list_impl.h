@@ -302,9 +302,38 @@ namespace m3D {
                     
                     variable_names.push_back(var.getName());
                     
+                    NcDim *dim = NULL;
+
+                    // Copy data (in case of dimension variables)
+                    // exploiting once more the fact, that dimension variables
+                    // have by convention the same name as the dimension
+                    
+                    for (size_t di=0; di<this->dimensions.size() && dim==NULL; di++)
+                    {
+                        NcDim d = this->dimensions[di];
+                        dim = (d.getName() == var.getName()) ? &d : NULL;
+                    }
+                    
                     // create a dummy variable
                     
-                    NcVar dummyVar = file->addVar( var.getName(), var.getType(), spatial_dim );
+                    NcVar dummyVar;
+                    
+                    if (dim != NULL)
+                    {
+                        dummyVar = file->addVar( var.getName(), var.getType(), *dim);
+                        
+                        T *data = (T*)malloc(sizeof(T) * dim->getSize());
+                        
+                        var.getVar(data);
+                        
+                        dummyVar.putVar(data);
+                        
+                        delete data;
+                    }
+                    else
+                    {
+                        dummyVar = file->addVar( var.getName(), var.getType(), spatial_dim );
+                    }
                     
                     // Copy attributes
                     
@@ -326,6 +355,7 @@ namespace m3D {
                         
                         free(data);
                     }
+                    
                 }
                 
                 file->putAtt("featurespace_variables", to_string(variable_names));
@@ -626,7 +656,7 @@ namespace m3D {
     
     template <typename T>
     void
-    ClusterList<T>::aggregate_cluster_graph( const size_t &variable_index, FeatureSpace<T> *fs, const vector<T> &resolution, const bool& show_progress )
+    ClusterList<T>::aggregate_cluster_graph( const WeightFunction<T> *weight_function, FeatureSpace<T> *fs, const vector<T> &resolution, const bool& show_progress )
     {
         // PointIndex<T>::write_index_searches = true;
         
@@ -682,7 +712,7 @@ namespace m3D {
                 
                 nodes.push_back( current_point );
 
-                M3DPoint<T> *predecessor = (M3DPoint<T> *) predecessor_of( fs, index, resolution, variable_index, current_point );
+                M3DPoint<T> *predecessor = (M3DPoint<T> *) predecessor_of( fs, index, resolution, weight_function, current_point );
                 
                 if ( predecessor->cluster != NULL )
                 {
@@ -743,7 +773,7 @@ namespace m3D {
     ClusterList<T>::predecessor_of( FeatureSpace<T> *fs,
                                     PointIndex<T> *index,
                                     const vector<T> &resolution,
-                                    const size_t &variable_index,
+                                    const WeightFunction<T> *weight_function,
                                     typename Point<T>::ptr p )
     {
         typename Point<T>::ptr result = p;
@@ -764,8 +794,6 @@ namespace m3D {
 
         T max_value = std::numeric_limits<T>::min();
         
-        size_t var_index = p->coordinate.size() + variable_index;
-        
         for ( size_t i=0; i < neighbours->size(); i++ )
         {
             typename Point<T>::ptr n = neighbours->at(i);
@@ -774,13 +802,19 @@ namespace m3D {
             
             if ( n == p ) continue;
             
+            // too far?
+            
             T distance = vector_norm( p->coordinate - n->coordinate );
             
             if ( distance > max_dist ) continue;
             
-            if ( n->values[var_index] > max_value )
+            // Get weight function response
+            
+            T weight_function_response = weight_function->operator()( p->coordinate, p->values );
+            
+            if ( weight_function_response > max_value )
             {
-                max_value = n->values[var_index];
+                max_value = weight_function_response;
                 
                 result = n;
             }
@@ -794,7 +828,7 @@ namespace m3D {
 
     template <typename T>
     typename Cluster<T>::list
-    ClusterList<T>::neighbours_of( typename Cluster<T>::ptr cluster, PointIndex<T> *index, const vector<T> &resolution, const size_t &variable_index )
+    ClusterList<T>::neighbours_of( typename Cluster<T>::ptr cluster, PointIndex<T> *index, const vector<T> &resolution, const WeightFunction<T> *weight_function )
     {
         typename Cluster<T>::list neighbouring_clusters;
         
@@ -928,7 +962,7 @@ namespace m3D {
     bool
     ClusterList<T>::should_merge_neighbouring_clusters( typename Cluster<T>::ptr c1,
                                                         typename Cluster<T>::ptr c2,
-                                                        const size_t &variable_index,
+                                                        const WeightFunction<T> *weight_function,
                                                         PointIndex<T> *index,
                                                         const vector<T> &resolution,
                                                         const double &drf_threshold )
@@ -954,9 +988,9 @@ namespace m3D {
             // the classification of dynamic range of the signal on each side
             // of the boundary
             
-            T c1_dyn_range_factor = dynamic_range_factor( c1, boundary_points, variable_index );
+            T c1_dyn_range_factor = dynamic_range_factor( c1, boundary_points, weight_function );
             
-            T c2_dyn_range_factor = dynamic_range_factor( c2, boundary_points, variable_index );
+            T c2_dyn_range_factor = dynamic_range_factor( c2, boundary_points, weight_function );
             
             bool dynamic_range_test = sup( c1_dyn_range_factor, c2_dyn_range_factor ) >= drf_threshold;
             
@@ -986,10 +1020,10 @@ namespace m3D {
     
     template <typename T>
     void
-    ClusterList<T>::write_boundaries( const size_t &variable_index,
-                                      FeatureSpace<T> *fs,
-                                      PointIndex<T> *index,
-                                      const vector<T> &resolution )
+    ClusterList<T>::write_boundaries(const WeightFunction<T> *weight_function,
+                                     FeatureSpace<T> *fs,
+                                     PointIndex<T> *index,
+                                     const vector<T> &resolution )
     {
         // collate the data
         
@@ -1015,7 +1049,7 @@ namespace m3D {
         {
             typename Cluster<T>::ptr c = *ci;
             
-            typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution, variable_index );
+            typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution, weight_function );
             
             if ( neighbours.size() > 0 )
             {
@@ -1045,16 +1079,16 @@ namespace m3D {
                         boundaries.push_back( boundary_points );
                         
 
-                        var_boundary.push_back( relative_variability( variable_index, boundary_points ) );
+                        var_boundary.push_back( relative_variability( weight_function, boundary_points ) );
                         
-                        var_c1.push_back( relative_variability( variable_index, c->points ) );
+                        var_c1.push_back( relative_variability( weight_function, c->points ) );
 
-                        var_c2.push_back( relative_variability( variable_index, n->points ) );
+                        var_c2.push_back( relative_variability( weight_function, n->points ) );
 
                         
-                        range_factor_c1.push_back( dynamic_range_factor( c, boundary_points, variable_index ) );
+                        range_factor_c1.push_back( dynamic_range_factor( c, boundary_points, weight_function ) );
 
-                        range_factor_c2.push_back( dynamic_range_factor( n, boundary_points, variable_index ) );
+                        range_factor_c2.push_back( dynamic_range_factor( n, boundary_points, weight_function ) );
                         
                         
                         cluster_index_1.push_back(c->id);
@@ -1101,7 +1135,7 @@ namespace m3D {
     
     template <typename T>
     T
-    ClusterList<T>::relative_variability( size_t variable_index, const typename Point<T>::list &points )
+    ClusterList<T>::relative_variability( const WeightFunction<T> *weight_function, const typename Point<T>::list &points )
     {
         // calculate mean
         
@@ -1113,9 +1147,7 @@ namespace m3D {
         {
             typename Point<T>::ptr p = *pi;
             
-            size_t value_index = p->coordinate.size() + variable_index;
-            
-            T value = p->values[ value_index ];
+            T value = weight_function->operator()(p->coordinate,p->values);
             
             mean += value;
         }
@@ -1130,9 +1162,7 @@ namespace m3D {
         {
             typename Point<T>::ptr p = *pi;
             
-            size_t value_index = p->coordinate.size() + variable_index;
-            
-            T value = p->values[ value_index ];
+            T value = weight_function->operator()(p->coordinate,p->values);
         
             standard_deviation += ( value - mean ) * ( value - mean );
         }
@@ -1154,17 +1184,17 @@ namespace m3D {
     T
     ClusterList<T>::dynamic_range_factor( typename Cluster<T>::ptr cluster,
     									  const typename Point<T>::list &points,
-    									  const size_t &variable_index )
+    									  const WeightFunction<T> *weight_function )
     {
         // Obtain the dynamic range if the list
         
         T points_lower_bound, points_upper_bound;
         
-        Point<T>::dynamic_range( points, variable_index, points_lower_bound, points_upper_bound );
+        ClusterList<T>::dynamic_range( points, weight_function, points_lower_bound, points_upper_bound );
         
         T cluster_lower_bound, cluster_upper_bound;
         
-        cluster->dynamic_range( variable_index, cluster_lower_bound, cluster_upper_bound );
+        ClusterList<T>::dynamic_range( cluster, weight_function, cluster_lower_bound, cluster_upper_bound );
 
         // Compare the two ranges
         
@@ -1223,7 +1253,7 @@ namespace m3D {
     
     template <typename T>
     void
-    ClusterList<T>::aggregate_clusters_by_boundary_analysis( const size_t &variable_index,
+    ClusterList<T>::aggregate_clusters_by_boundary_analysis( const WeightFunction<T> *weight_function,
                                                              PointIndex<T> *index,
                                                              const vector<T> &resolution,
                                                              const double &drf_threshold,
@@ -1268,7 +1298,7 @@ namespace m3D {
             {
                 typename Cluster<T>::ptr c = *ci;
                 
-                typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution, variable_index );
+                typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution, weight_function );
                 
                 if ( neighbours.size() > 0 )
                 {
@@ -1288,7 +1318,7 @@ namespace m3D {
                         {
                             boundary_keys.push_back( key );
                         
-                            if ( should_merge_neighbouring_clusters( c, n, variable_index, index2, resolution, drf_threshold ) )
+                            if ( should_merge_neighbouring_clusters( c, n, weight_function, index2, resolution, drf_threshold ) )
                             {
                                 merge_clusters( c, n );
                             
@@ -1367,6 +1397,48 @@ namespace m3D {
         
         assert( point_count == fs->size() );
     };
+    
+#pragma mark -
+#pragma mark Dynamic Range Calculation    
+    
+    template <class T>
+    void
+    ClusterList<T>::dynamic_range( const typename Point<T>::list &points, const WeightFunction<T> *weight_function, T &lower_bound, T&upper_bound )
+    {
+        lower_bound = std::numeric_limits<T>::max();
+        
+        upper_bound = std::numeric_limits<T>::min();
+        
+        typename Point<T>::list::const_iterator pi;
+        
+        for ( pi = points.begin(); pi != points.end(); pi++ )
+        {
+            typename Point<T>::ptr p = *pi;
+            
+            T value = weight_function->operator()(p->coordinate,p->values);
+            
+            if ( value < lower_bound )
+            {
+                lower_bound = value;
+            }
+            
+            if ( value > upper_bound )
+            {
+                upper_bound = value;
+            }
+        }
+    }
+    
+    template <typename T>
+    void
+    ClusterList<T>::dynamic_range(const typename Cluster<T>::ptr cluster,
+                                  const WeightFunction<T> *weight_function,
+                                  T &lower_bound,
+                                  T &upper_bound)
+    {
+        return ClusterList<T>::dynamic_range( cluster->points, weight_function, lower_bound, upper_bound );
+    }
+
 
 }; //namespace
 

@@ -21,6 +21,7 @@ namespace m3D {
     using namespace netCDF;
 	using namespace std;
 	using ::cfa::meanshift::Point;
+    using ::cfa::meanshift::WeightFunction;
 
     /** Cluster of points in feature space. A cluster is a point in feature space,
      * where multiple trajectories of original feature space points end. This end
@@ -229,7 +230,7 @@ namespace m3D {
          * coordinate, the point with the steeper vector (=longer) is
          * chosen. If
          */
-        void aggregate_cluster_graph( const size_t &variable_index,
+        void aggregate_cluster_graph( const WeightFunction<T> *weight_function,
                                      FeatureSpace<T> *fs, const
                                      vector<T> &resolution,
                                      const bool& show_progress );
@@ -241,6 +242,8 @@ namespace m3D {
          * shift (closer to local maximum)
          * @param feature-space
          * @param feature-space index
+         * @param grid resolution
+         * @param weight function (can not be null)
          * @param point
          * @return best predecessor along the shift. Might return the argument,
          *         in which case we have found a mode.
@@ -249,7 +252,7 @@ namespace m3D {
         predecessor_of(FeatureSpace<T> *fs,
                        PointIndex<T> *index,
                        const vector<T> &resolution,
-                       const size_t &variable_index,
+                       const WeightFunction<T> *weight_function,
                        typename Point<T>::ptr p);
         
         /** Find all directly adjacent clusters to the given cluster
@@ -262,7 +265,7 @@ namespace m3D {
         neighbours_of( typename Cluster<T>::ptr cluster,
                       PointIndex<T> *index,
                       const vector<T> &resolution,
-                      const size_t &variable_index );
+                      const WeightFunction<T> *weight_function );
         
         /** Analyses the two clusters and decides, if they actually belong to the same
          * object or not. Make sure this is only invoked on direct neighbours!
@@ -276,7 +279,7 @@ namespace m3D {
         bool
         should_merge_neighbouring_clusters( typename Cluster<T>::ptr c1,
                                            typename Cluster<T>::ptr c2,
-                                           const size_t &variable_index,
+                                           const WeightFunction<T> *weight_function,
                                            PointIndex<T> *index,
                                            const vector<T> &resolution,
                                            const double &drf_threshold);
@@ -299,28 +302,54 @@ namespace m3D {
         /** Calculates the relative variablity of values in the given list
          * of points. High variability indicates strong profile in the given
          * value across the boundary
-         * @param variable_index
+         * @param weight function
          * @param list of points
          * @return CV = s / m
          */
         T
-        relative_variability( size_t variable_index,
+        relative_variability( const WeightFunction<T> *weight_function,
         		  	  	  	  const typename Point<T>::list &points );
         
+        /** Finds the lower and upper bound of the weight function response
+         * @param point list
+         * @param weight function
+         * @param lower_bound (return value)
+         * @param upper_bound (return value)
+         */
+        static void
+        dynamic_range(const typename Point<T>::list &list,
+                      const WeightFunction<T> *weight_function,
+                      T &lower_bound,
+                      T &upper_bound );
+        
+        /** Finds the lower and upper bound of weight function response in the 
+         * whole cluster
+         * @param cluster
+         * @param weight function
+         * @param lower_bound (return value)
+         * @param upper_bound (return value)
+         */
+        static void
+        dynamic_range(const typename Cluster<T>::ptr cluster,
+                      const WeightFunction<T> *weight_function,
+                      T &lower_bound,
+                      T &upper_bound);
+
+        
         /** Classifies the properties of the dynamic range of the given list of points, compared to
-         * the given range in the variable denoted by variable_index.
+         * the given range in the response of the weight function
          * Strong dynamic range component indicates a boundary, that cuts through high signal areas.
          * Weak dynamic range component indicates a more clean cut in a through.
          * @param list of points to check
-         * @param variable_index
+         * @param weight function
          * @param lower bound of comparison range
          * @param upper bound of comparison range
          * @return classification
          */
         T
-        dynamic_range_factor( typename Cluster<T>::ptr cluster,
+        dynamic_range_factor(typename Cluster<T>::ptr cluster,
                              const typename Point<T>::list &points,
-                             const size_t &variable_index );
+                             const WeightFunction<T> *weight_function );
         
         /** Merges the two clusters into a new cluster and removes the mergees from
          * the list of clusters, while inserting the new cluster. The mode of the merged
@@ -340,7 +369,7 @@ namespace m3D {
          * @param feature-space index (for searching)
          * @param resolution (use cluster_resolution)
          */
-        void aggregate_clusters_by_boundary_analysis( const size_t &variable_index,
+        void aggregate_clusters_by_boundary_analysis(const WeightFunction<T> *weight_function,
                                                      PointIndex<T> *index,
                                                      const vector<T> &resolution,
                                                      const double &drf_threshold,
@@ -348,7 +377,7 @@ namespace m3D {
         
         /** Used for analyzing the boundaries and signal correlation
          */
-        void write_boundaries( const size_t &variable_index,
+        void write_boundaries(const WeightFunction<T> *weight_function,
                               FeatureSpace<T> *fs,
                               PointIndex<T> *index,
                               const vector<T> &resolution );

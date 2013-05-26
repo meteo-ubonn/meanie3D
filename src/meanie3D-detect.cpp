@@ -707,9 +707,11 @@ int main(int argc, char** argv)
     // Simple clustering
     //
     
+    WeightFunction<FS_TYPE> *weight_function = new OASEWeightFunction<FS_TYPE>();
+    
     ClusterOperation<FS_TYPE> cop( fs, index );
     
-    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_index, drf, show_progress );
+    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, drf, show_progress );
     
     // Sanity check
     

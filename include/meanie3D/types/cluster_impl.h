@@ -158,13 +158,6 @@ namespace m3D {
         throw "not implemented";
     }
     
-    template <typename T>
-    void
-    Cluster<T>::dynamic_range( const size_t &variable_index, T &lower_bound, T&upper_bound )
-    {
-        return Point<T>::dynamic_range( points, variable_index, lower_bound, upper_bound );
-    }
-    
 #pragma mark -
 #pragma mark Operators
     

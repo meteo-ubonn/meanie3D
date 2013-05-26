@@ -179,6 +179,8 @@ int main(int argc, char** argv)
     
     std::string coords_filename;
     
+    cout << "Collecing track data from NetCDF files: " << endl;
+    
     if (fs::is_directory(source_path))
     {
         fs::directory_iterator dir_iter(source_path);
@@ -256,6 +258,8 @@ int main(int argc, char** argv)
             dir_iter++;
         }
         
+        cout << endl;
+        
         // Construct coordinate system
         
         CoordinateSystem<T> *coord_system = NULL;
@@ -296,6 +300,8 @@ int main(int argc, char** argv)
         
         // Now we have a cluster map. Let's print it for debug purposes
         
+        cout << "Keying up tracks: " << endl;
+        
         for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
             typename Tracking<T>::track_t *track = tmi->second;
@@ -316,19 +322,27 @@ int main(int argc, char** argv)
         
         // Write cumulated tracks as netcdf and vtk files
         
-        cout << "Cumulating tracks ... ";
+        cout << "Cumulating track data: " << endl;
+        
+        // track length
+        
+        map<size_t,size_t> track_lengths;
+        
+        map<size_t,size_t> track_sizes;
         
         // Iterate over the collated tracks
         
         for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
+            size_t points_processed = 0;
+            
             typename Tracking<T>::track_t *track = tmi->second;
-        
+            
+            cout << "Processing track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
+    
             // For each track, create an array index. Start with empty index.
             
-            typename Point<T>::list cumulated;
-            
-            ArrayIndex<T> index(coord_system,cumulated);
+            ArrayIndex<T> index(coord_system);
             
             // Iterate over the clusters in the track and sum up
             
@@ -346,35 +360,133 @@ int main(int argc, char** argv)
                 {
                     Point<T>::ptr p = *pi;
                     
-                    typename CoordinateSystem<T>::GridPoint gp;
+                    if (p->gridpoint.empty())
+                    {
+                        typename CoordinateSystem<T>::GridPoint gp = coord_system->newGridPoint();
+                        
+                        coord_system->reverse_lookup(p->coordinate, gp);
+                        
+                        p->gridpoint = gp;
+                    }
                     
-                    coord_system->reverse_lookup(p->coordinate, gp);
+                    typename Point<T>::ptr indexed = index.get(p->gridpoint);
                     
-                    typename Point<T>::ptr indexed = index.get(gp);
+                    if (indexed==NULL)
+                    {
+                        index.set(p->gridpoint, p);
+                        
+                        indexed = index.get(p->gridpoint);
+                    }
                     
-                    indexed->values += p->values;
+                    // only add up the value range
+                    
+                    for (size_t k = p->gridpoint.size(); k < indexed->values.size(); k++)
+                    {
+                        indexed->values[k] += p->values[k];
+                    }
+                    
+                    points_processed++;
                 }
             }
             
-            // Write out the cumulative file as netcdf and vtk
-        
-        }
-        
-        cout << "done." << endl;
+            // Extract the point list
+            
+            typename Point<T>::list cumulatedList;
+            
+            index.replace_points(cumulatedList);
+            
+            // Count the number of tracks with the given length (where
+            // track length is the number of clusters it is comprised of)
 
-        
-        // Free up the map
-        
-        for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
-        {
-            typename Tracking<T>::track_t *track = tmi->second;
+            size_t track_length = track->size();
+            
+            map<size_t,size_t>::iterator tlfi = track_lengths.find(track_length);
+            
+            if (tlfi==track_lengths.end())
+            {
+                track_lengths[track_length] = 1;
+            }
+            else
+            {
+                track_lengths[track_length] = (tlfi->second + 1);
+            }
+
+            // Count the number of tracks with the given size, where
+            // size is the number of points in it's cumulative list
+            
+            size_t track_size = cumulatedList.size();
+            
+            tlfi = track_sizes.find(track_size);
+            
+            if (tlfi==track_sizes.end())
+            {
+                track_sizes[track_size] = 1;
+            }
+            else
+            {
+                track_sizes[track_size] = (tlfi->second + 1);
+            }
+            
+            // Write out the cumulative file as netcdf and vtk
+            
+            // VTK
+            
+            string vtk_path = basename + "_cumulated_track_"+boost::lexical_cast<string>(tmi->first)+".vtk";
+            
+            ::cfa::meanshift::visit::VisitUtils<T>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>() );
+                               
+            // Don't need it anymore
             
             delete track;
             
-            tmi->second = NULL;
+            // NETCDF
+            
+            cout <<"\t(processed " << points_processed << " points)" << endl;
+            
         }
+        
+        cout << "done." << endl;
+        
+        // Write out statistical data in CSV file(s)
+        
+        string csv_fn = basename+"_trackstats.txt";
+        
+        ofstream csv(csv_fn.c_str());
+        
+        // number of tracks
+        
+        csv << "Tracking report for basename " + basename << endl;
+        csv << endl;
+        
+        csv << "Overall number of tracks: " << track_map.size() << endl;
+        csv << endl;
+        
+        // length of tracks (in time steps)
+        
+        csv << "length,number" << endl;
+        
+        map<size_t,size_t>::iterator si;
+        
+        for (si=track_lengths.begin(); si!=track_lengths.end(); si++)
+        {
+            csv << si->first << "," << si->second << endl;
+        }
+        
+        csv << endl;
+        
+        // size of tracks (in terms of cumulative pixels)
+        
+        csv << "size,number" << endl;
+        
+        for (si=track_sizes.begin(); si!=track_sizes.end(); si++)
+        {
+            csv << si->first << "," << si->second << endl;
+        }
+        
+        csv << endl;
 
-        // finally, close this one
+        // close the cluster file we used to get the coordinate
+        // system data
         
         delete coords_file;
     }

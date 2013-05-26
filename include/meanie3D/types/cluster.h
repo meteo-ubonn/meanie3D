@@ -140,13 +140,6 @@ namespace m3D {
         vector<T>
         weighed_center( const size_t &variable_index );
         
-        /** Finds the lower and upper bound of the values in the given variable
-         * @param variable index
-         * @param lower_bound (return value)
-         * @param upper_bound (return value)
-         */
-        void dynamic_range( const size_t &variable_index, T &lower_bound, T&upper_bound );
-        
 #pragma mark -
 #pragma mark Accessors
         
