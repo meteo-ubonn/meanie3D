@@ -3,37 +3,26 @@ import glob
 import sys
 
 # plot original data
-source_file = "../../data/06.08.2011/netcdf/raa01-rx_10000-1108061550-dwd---bin.nc"
+source_file = "../Debug/raa01-rx_10000-1106221500-dwd---bin.vtk"
 OpenDatabase( source_file )
 
-#a = GetAnnotationAttributes()
-#a.axes2D.visible=0
-#SetAnnotationAttributes(a)
+a = AnnotationAttributes()
+print a
 
-# Add the source data plot
-AddPlot("Pseudocolor", "zh")
+AddPlot("Pseudocolor", "reflectivity")
 p = PseudocolorAttributes()
-p.colorTableName="hot_desaturated"
+p.colorTableName = "xray"
+p.legendFlag=0
+p.lightingFlag=0
 p.invertColorTable=0
-p.legendFlag=1
-p.minFlag, p.maxFlag = 1,1
-p.min,p.max = 0,50
-p.opacity=0.33
+#p.minFlag,p.maxFlag = 1,1
+#p.min,p.max = 0.0, 50.0
 SetPlotOptions(p)
-
-# Add threshold operator
-AddOperator("Threshold")
-t = ThresholdAttributes();
-t.lowerBounds=(10)
-print t
-#t.lbound = 10
-SetOperatorOptions(t)
-
 DrawPlots();
 
 # plot the clusters
-cluster_basename = "Release/*_cluster_*.vtk"
-cluster_basename = "Debug/*_cluster_*.vtk"
+#cluster_basename = "Release/*_cluster_*.vtk"
+cluster_basename = "../Debug/*_cluster_*.vtk"
 list = glob.glob( cluster_basename )
 
 count = 0;
@@ -49,12 +38,12 @@ for fname in list:
     cp=PseudocolorAttributes();
     cp.minFlag,cp.maxFlag = 1,1
     cp.min,cp.max = 0.0, 50.0
-    cp.pointSizePixels=10
+    cp.pointSizePixels=8
     cp.legendFlag, cp.lightingFlag = 0,0
     cp.invertColorTable=0
     index = count % len(col_tables);
     cp.colorTableName = col_tables[index];
-    cp.opacity=0.125
+    cp.opacity=0.02
 
     SetPlotOptions(cp)
     count = count + 1;
