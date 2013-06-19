@@ -304,7 +304,9 @@ namespace m3D { namespace utils {
     
     template <class T>
     void
-    VisitUtils<T>::write_center_tracks_vtk(typename Tracking<T>::trackmap_t &track_map, const std::string &basename, size_t spatial_dimensions)
+    VisitUtils<T>::write_center_tracks_vtk(typename Tracking<T>::trackmap_t &track_map,
+                                           const std::string &basename,
+                                           size_t spatial_dimensions)
     {
         for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
@@ -358,6 +360,81 @@ namespace m3D { namespace utils {
             f.close();
         }
     }
+    
+    template <class T>
+    void
+    VisitUtils<T>::write_cluster_weight_response_vtk(const string &base_name,
+                                                     const typename Cluster<T>::list &clusters,
+                                                     WeightFunction<T> *w,
+                                                     bool useMode)
+    {
+        string basename(base_name);
+        
+        for ( size_t ci = 0; ci < clusters.size(); ci++ )
+        {
+            Cluster<T> *cluster = clusters[ci];
+            
+            vector<T> mode = cluster->mode;
+            
+            // Write cluster out
+            
+            boost::replace_all( basename, "/", "_" );
+            boost::replace_all( basename, "..", "" );
+            
+            string filename = basename + boost::lexical_cast<string>( cluster->id ) + ".vtk";
+            
+            ofstream f( filename.c_str() );
+            f << fixed << setprecision(4);
+            
+            // Write Header
+            f << "# vtk DataFile Version 3.0" << endl;
+            f << "Cluster weight function response" << endl;
+            f << "ASCII" << endl;
+            f << "DATASET UNSTRUCTURED_GRID" << endl;
+            f << "POINTS " << cluster->points.size() << " FLOAT" << endl;
+            
+            // Write point coordinates out as unstructured grid
+            
+            size_t point_dim = cluster->points[0]->coordinate.size();
+            
+            for ( size_t pi = 0; pi < cluster->points.size(); pi++ )
+            {
+                Point<T> *p = cluster->points[pi];
+                
+                for ( size_t vi = 0; vi < point_dim; vi++)
+                {
+                    size_t index = VTK_DIMENSION_INDEXES.empty() ? vi : VTK_DIMENSION_INDEXES[vi];
+                    
+                    f << p->coordinate[index] << "\t";
+                }
+                
+                for (size_t j=p->coordinate.size(); j < 3; j++)
+                {
+                    f << "0.0\t";
+                }
+                
+                f << endl;
+            }
+            
+            // Write point data out. Only take the first value after coordinates
+            
+            
+            T wr = useMode ? cluster->modal_weight_response(w) : cluster->average_weight_response(w);
+            
+            f << endl;
+            f << "POINT_DATA " << cluster->points.size() << endl;
+            f << "SCALARS weight FLOAT" << endl;
+            f << "LOOKUP_TABLE default" << endl;
+            
+            for ( size_t pi = 0; pi < cluster->points.size() - 1 ; pi++ )
+            {
+                f << wr << endl;
+            }
+            
+            f.close();
+        }
+    }
+
 
     
 }};

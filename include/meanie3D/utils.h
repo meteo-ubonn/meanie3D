@@ -4,5 +4,6 @@
 #include <meanie3D/utils/verbosity.h>
 #include <meanie3D/utils/visit.h>
 #include <meanie3D/utils/array_index.h>
+#include <meanie3D/utils/scalar_index.h>
 
 #endif

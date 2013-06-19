@@ -406,6 +406,56 @@ namespace m3D {
         return m_radius;
     }
     
+    template <typename T>
+    T
+    Cluster<T>::modal_weight_response(WeightFunction<T> *w)
+    {
+        T result = 0;
+        
+        // pick the first point of this cluster to figure out the
+        // spatial and value dimensions
+        
+        if (!points.empty() && w!=NULL)
+        {
+            Point<T> *p = points[0];
+            
+            size_t spatial_dim = p->coordinate.size();
+            
+            vector<T> mode_spatial_coord( &mode[0], &mode[ spatial_dim ] );
+            
+            result = w->operator()(mode_spatial_coord,mode);
+        }
+        
+        return result;
+    }
+    
+    template <typename T>
+    T
+    Cluster<T>::average_weight_response(WeightFunction<T> *w)
+    {
+        T result = 0;
+        
+        // pick the first point of this cluster to figure out the
+        // spatial and value dimensions
+        
+        for (size_t i = 0; i < points.size(); i++)
+        {
+            Point<T> *p = points[i];
+            
+            vector<T> mode_spatial_coord( &mode[0], &mode[p->coordinate.size()] );
+            
+            result += w->operator()(mode_spatial_coord,mode);
+        }
+        
+        if (!points.empty())
+        {
+            result /= ((T)points.size());
+        }
+    
+        return result;
+    }
+
+
 }; //namespace
 
 #endif

@@ -18,6 +18,7 @@ namespace m3D {
     using namespace netCDF;
 	using cfa::meanshift::Point;
     using cfa::meanshift::PointIndex;
+    using cfa::meanshift::WeightFunction;
 
     /** Cluster of points in feature space. A cluster is a point in feature space,
      * where multiple trajectories of original feature space points end. This end
@@ -241,6 +242,18 @@ namespace m3D {
          * the point farthest away from it.
          */
         T radius();
+        
+#pragma mark -
+#pragma mark Coalescence Merging
+        
+        /** @return weight function response at the cluster mode
+         */
+        T modal_weight_response(WeightFunction<T> *w);
+        
+        /** @return average weight function response on all points of the
+         * cluster
+         */
+        T average_weight_response(WeightFunction<T> *w);
     };
     
 };

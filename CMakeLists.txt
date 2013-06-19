@@ -226,7 +226,9 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/visit_impl.h
     include/meanie3D/utils/array_index.h
     include/meanie3D/utils/array_index_impl.h
-
+    include/meanie3D/utils/scalar_index.h
+    include/meanie3D/utils/scalar_index_impl.h
+    include/meanie3D/weights/oase_weights.h
     include/meanie3D/implementations.h
 )
 
@@ -236,14 +238,12 @@ TARGET_LINK_LIBRARIES(meanie3D
     ${NETCDF_LIBRARIES}
 )
 
-
 # detection tool
 
 ADD_EXECUTABLE(meanie3D-detect
     cf-algorithms
     numericalrecipes
-    src/meanie3D-detect.cpp
-)
+    src/meanie3D-detect.cpp)
 
 IF(WITH_TBB)
     TARGET_LINK_LIBRARIES(meanie3D-detect

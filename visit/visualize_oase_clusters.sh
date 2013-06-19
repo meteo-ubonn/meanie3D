@@ -14,5 +14,5 @@ then
 fi
 
 ESCAPED_SOURCE_FILE=$(echo $1 | sed -e "s/\//\\\\\//g")
-cat cluster_visualization-oase.template | sed -e "s/SOURCE_FILE/$ESCAPED_SOURCE_FILE/g" > visit_script.py
+cat oase-cluster-template.py | sed -e "s/SOURCE_FILE/$ESCAPED_SOURCE_FILE/g" > visit_script.py
 ${VISIT_EXECUTABLE} -s visit_script.py

@@ -11,7 +11,7 @@ OpenDatabase( source_file )
 #SetAnnotationAttributes(a)
 
 # Add the source data plot
-AddPlot("Pseudocolor", "zh")
+AddPlot("Pseudocolor", "cband_radolan_rx")
 p = PseudocolorAttributes()
 p.colorTableName="hot_desaturated"
 p.invertColorTable=0
@@ -32,7 +32,7 @@ SetOperatorOptions(t)
 DrawPlots();
 
 # plot the clusters
-cluster_basename = "Release/*_cluster_*.vtk"
+# cluster_basename = "Release/*_cluster_*.vtk"
 cluster_basename = "Debug/*_cluster_*.vtk"
 list = glob.glob( cluster_basename )
 

@@ -82,6 +82,21 @@ namespace m3D { namespace utils {
         static
         void
         write_center_tracks_vtk(typename Tracking<T>::trackmap_t &trackmap, const std::string &basename, size_t spatial_dimensions);
+        
+        /** Writes the clusters out with the value of the weight response
+         * for the whole cluster as value. 
+         * @param filename (gets extended by _weight_response_[i].vtk
+         * @param the cluster list
+         * @param if <code>true</code>, uses the weight response of the mode.
+         * If <code>false</code> the average weight response is used.
+    	 */
+        static
+    	void
+        write_cluster_weight_response_vtk(const string &base_name,
+                                          const typename Cluster<T>::list &list,
+                                          WeightFunction<T> *w,
+                                          bool useMode=true);
+
     };
     
 }};

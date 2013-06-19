@@ -504,7 +504,7 @@ namespace m3D {
                 
                 typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
                 
-                for (int varIndex=0; varIndex < fs->variables().size(); varIndex++)
+                for (size_t varIndex=0; varIndex < fs->variables().size(); varIndex++)
                 {
                     T sum = 0.0;
                     
@@ -585,6 +585,30 @@ namespace m3D {
                     if ( p != NULL )
                     {
                         p->values[fs->coordinate_system->size()+varIndex] = sum;
+                        
+                        // Track limits
+
+                        typename map<size_t,T>::iterator m;
+
+                        if ( (m = m_min.find(varIndex)) == m_min.end() )
+                        {
+                            m_min[varIndex] = std::numeric_limits<T>::max();
+                        }
+
+                        if ( (m = m_max.find(varIndex)) == m_max.end() )
+                        {
+                            m_max[varIndex] = std::numeric_limits<T>::min();
+                        }
+
+                        if (sum < m_min[varIndex] )
+                        {
+                            m_min[varIndex] = sum;
+                        }
+                        
+                        if (sum > m_max[varIndex] )
+                        {
+                            m_max[varIndex] = sum;
+                        }
                     }
                 }
             }
@@ -721,6 +745,22 @@ namespace m3D {
         this->applyWithArrayIndex(fs);
     }
     
+#pragma mark -
+#pragma mark After the processing
+    
+    template <typename T>
+    const map<size_t,T> &
+    ScaleSpaceFilter<T>::get_filtered_min()
+    {
+        return m_min;
+    }
+    
+    template <typename T>
+    const map<size_t,T> &
+    ScaleSpaceFilter<T>::get_filtered_max()
+    {
+        return m_max;
+    }
 };
 
 #endif

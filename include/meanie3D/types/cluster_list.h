@@ -375,12 +375,6 @@ namespace m3D {
                                                      const double &drf_threshold,
                                                      const bool& show_progress);
         
-        /** Used for analyzing the boundaries and signal correlation
-         */
-        void write_boundaries(const WeightFunction<T> *weight_function,
-                              FeatureSpace<T> *fs,
-                              PointIndex<T> *index,
-                              const vector<T> &resolution );
 #pragma mark -
 #pragma mark ID helpers
         
@@ -450,7 +444,13 @@ namespace m3D {
         
 #pragma mark -
 #pragma mark Debugging
-        
+
+        /** Used for analyzing the boundaries and signal correlation
+         */
+        void write_boundaries(const WeightFunction<T> *weight_function,
+                              FeatureSpace<T> *fs,
+                              PointIndex<T> *index,
+                              const vector<T> &resolution );
 #if WRITE_MODES
     protected:
         vector< vector<T> >         m_trajectory_endpoints;

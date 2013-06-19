@@ -810,7 +810,7 @@ namespace m3D {
             
             // Get weight function response
             
-            T weight_function_response = weight_function->operator()( p->coordinate, p->values );
+            T weight_function_response = weight_function->operator()( p->gridpoint, p->values );
             
             if ( weight_function_response > max_value )
             {
@@ -1415,7 +1415,7 @@ namespace m3D {
         {
             typename Point<T>::ptr p = *pi;
             
-            T value = weight_function->operator()(p->coordinate,p->values);
+            T value = weight_function->operator()(p->gridpoint,p->values);
             
             if ( value < lower_bound )
             {

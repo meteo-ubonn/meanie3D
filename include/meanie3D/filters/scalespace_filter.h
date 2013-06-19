@@ -26,9 +26,9 @@ namespace m3D {
         
         vector<ScaleSpaceKernel<T> >    m_kernels;          /// Scale-Space kernel
 
-        map<int,T>                      m_min;              /// minimum tracker
+        map<size_t,T>                   m_min;              /// minimum tracker
         
-        map<int,T>                      m_max;              /// maximum tracker
+        map<size_t,T>                   m_max;              /// maximum tracker
         
         boost::progress_display         *m_progress_bar;    /// Progress meter
         
@@ -84,6 +84,21 @@ namespace m3D {
          */
         virtual void apply( FeatureSpace<T> *fs );
         
+#pragma mark -
+#pragma mark After the processing 
+        
+        /** After the filtering, one can retrieve the value ranges
+         * of the filtered scan from these variables. 
+         * @return filtered minimum
+         */
+        const map<size_t,T> &get_filtered_min();
+
+        /** After the filtering, one can retrieve the value ranges
+         * of the filtered scan from these variables.
+         * @return filtered maximum
+         */
+        const map<size_t,T> &get_filtered_max();
+
     };
     
 };

@@ -38,6 +38,7 @@ using namespace cfa::utils::vectors;
 using namespace netCDF;
 using namespace m3D::utils::visit;
 using namespace m3D::utils;
+using namespace m3D::weights;
 
 /** Feature-space data type */
 typedef double FS_TYPE;
@@ -51,12 +52,14 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<NcDim> &dimensions,
                         vector<NcVar> &dimension_variables,
                         vector<NcVar> &variables,
-                        map<NcVar,double> **thresholds,
+                        map<int,double> &lower_thresholds,
+                        map<int,double> &upper_thresholds,
                         double &scale,
                         int &weight_index,
                         string &parameters,
                         SearchParameters **search_params,
                         bool &write_vtk,
+                        bool &write_weight_response,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity,
                         unsigned int &min_cluster_size,
@@ -141,7 +144,15 @@ void parse_commmandline(program_options::variables_map vm,
     
     for ( tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter )
     {
-        variables.push_back( file->getVar( *tok_iter ) );
+        NcVar var = file->getVar( *tok_iter );
+        
+        if (var.isNull())
+        {
+            cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
+            exit(-1);
+        }
+        
+        variables.push_back( var );
     }
     
     parameters = parameters + "variables=" + vm["variables"].as<string>()+ " ";
@@ -227,44 +238,111 @@ void parse_commmandline(program_options::variables_map vm,
         
         parameters = parameters + "knn=" + boost::lexical_cast<string>(k) + ",resolution=" + vm["cluster-resolution"].as<string>();
     }
+
+    // Lower Thresholds
     
-    if ( vm.count("thresholds") > 0 )
+    if ( vm.count("lower-thresholds") > 0 )
     {
-        *thresholds = FeatureSpace<FS_TYPE>::NO_THRESHOLDS;
+        boost::char_separator<char> equals("=");
         
-        map<NcVar,double> *th = new map<NcVar,double>();
-        
-        tokenizer tokens( vm["thresholds"].as<string>(), sep );
-        
-        size_t var_index = 0;
+        tokenizer tokens( vm["lower-thresholds"].as<string>(), sep );
         
         for ( tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter )
         {
-            if ( var_index > (variables.size()-1) )
+            std::string pair = *tok_iter;
+            
+            tokenizer subtokens( pair, equals );
+            
+            tokenizer::iterator subtoken_iter = subtokens.begin();
+            
+            std::string variableName = *subtoken_iter;
+            
+            NcVar variable;
+            
+            for (size_t i=0; i<variables.size(); i++)
             {
-                cerr << "Please provide " << variables.size() << " thresholds values" << endl;
+                if (variables[i].getName()==variableName)
+                {
+                    variable = variables[i];
+                }
+            }
+            
+            if (variable.isNull())
+            {
+                cerr << "No variable named " << variableName << " found. Check --lower-thresholds parameter" << endl;
                 
                 exit( 1 );
             }
             
-            const char* value = (*tok_iter).c_str();
+            subtoken_iter++;
             
-            NcVar var = variables[var_index];
+            if (subtoken_iter == subtokens.end())
+            {
+                cerr << "Missing threshold value for variable " << variableName << endl;
+                
+                exit( 1 );
+            }
             
-            th->operator[](var) = strtod( value, (char **)NULL );
+            const char* value = (*subtoken_iter).c_str();
             
-            var_index++;
+            double doubleValue = strtod( value, (char **)NULL );
+            
+            lower_thresholds[variable.getId()] = doubleValue;
         }
-        
-        if ( th->size() != variables.size() )
-        {
-            cerr << "Please provide " << variables.size() << " thresholds values" << endl;
-            
-            exit( 1 );
-        }
-        
-        *thresholds = th;
     }
+    
+    // Upper Thresholds
+    
+    if ( vm.count("upper-thresholds") > 0 )
+    {
+        boost::char_separator<char> equals("=");
+        
+        tokenizer tokens( vm["upper-thresholds"].as<string>(), sep );
+        
+        for ( tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter )
+        {
+            std::string pair = *tok_iter;
+            
+            tokenizer subtokens( pair, equals );
+            
+            tokenizer::iterator subtoken_iter = subtokens.begin();
+            
+            std::string variableName = *subtoken_iter;
+            
+            NcVar variable;
+            
+            for (size_t i=0; i<variables.size(); i++)
+            {
+                if (variables[i].getName()==variableName)
+                {
+                    variable = variables[i];
+                }
+            }
+            
+            if (variable.isNull())
+            {
+                cerr << "No variable named " << variableName << " found. Check --upper-thresholds parameter" << endl;
+                
+                exit( 1 );
+            }
+            
+            subtoken_iter++;
+            
+            if (subtoken_iter == subtokens.end())
+            {
+                cerr << "Missing threshold value for variable " << variableName << endl;
+                
+                exit( 1 );
+            }
+            
+            const char* value = (*subtoken_iter).c_str();
+            
+            double doubleValue = strtod( value, (char **)NULL );
+            
+            upper_thresholds[variable.getId()] = doubleValue;
+        }
+    }
+
     
     scale = vm["scale"].as<double>();
     
@@ -322,6 +400,8 @@ void parse_commmandline(program_options::variables_map vm,
     // VTK output?
     
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
+    
+    write_weight_response = vm.count("write-cluster-weight-response") > 0;
     
     // VTK dimension mapping
     
@@ -424,7 +504,8 @@ int main(int argc, char** argv)
     ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
     ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
     ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with.")
-    ("thresholds,t", program_options::value<string>(), "Comma-separated list of tresholds, one per variable. Values below this are ignored when constructing feature space")
+    ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
+    ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
     ("ranges,r", program_options::value<string>(), "Using this parameters means, you are choosing the range search method. Comma separated list of (dimensionless) ranges. Use in the order of (dim1,...dimN,var1,...,varN).")
     ("cluster-resolution,c",program_options::value<string>(), "When using KNN, specify the resolution of the clusters as comma separated list of (dimensionless) values. Use in the order of (dim1,...dimN,var1,...,varN).")
     ("drf-threshold",program_options::value<double>()->default_value(0.65), "Dynamic range factor threshold for merging clusters. 1 means nothing is merged (=raw clusters). 0 means everything is merged as soon as it touches.")
@@ -433,6 +514,7 @@ int main(int argc, char** argv)
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Keep only clusters of this minimum size at each pass")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
+    ("write-cluster-weight-response","write out the clusters with weight responses as value")
     ("write-variables-as-vtk",program_options::value<string>(),"Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ;
@@ -464,7 +546,8 @@ int main(int argc, char** argv)
     vector<NcVar> dimension_variables;
     vector<NcVar> variables;
     vector<double> ranges;
-    map<NcVar,double> *thresholds = FeatureSpace<FS_TYPE>::NO_THRESHOLDS;
+    map<int,double> lower_thresholds;   // ncvar.id / value
+    map<int,double> upper_thresholds;   // ncvar.id / value
     vector<NcVar> vtk_variables;
     vector<double> cluster_resolution;
     int weight_index;
@@ -473,6 +556,7 @@ int main(int argc, char** argv)
     string parameters;
     SearchParameters *search_params = NULL;
     bool write_vtk = false;
+    bool write_weight_response = false;
     unsigned int min_cluster_size = 1;
     Verbosity verbosity = VerbosityNormal;
     double scale = NO_SCALE;
@@ -487,12 +571,14 @@ int main(int argc, char** argv)
                            dimensions,
                            dimension_variables,
                            variables,
-                           &thresholds,
+                           lower_thresholds,
+                           upper_thresholds,
                            scale,
                            weight_index,
                            parameters,
                            &search_params,
                            write_vtk,
+                           write_weight_response,
                            vtk_dimension_indexes,
                            verbosity,
                            min_cluster_size,
@@ -601,11 +687,16 @@ int main(int argc, char** argv)
             cout << "\tpre-smoothing data with scale parameter " << scale << " ( kernel width = " << width << " )" << endl;
         }
         
-        if ( thresholds != FeatureSpace<FS_TYPE>::NO_THRESHOLDS )
+        if ( !lower_thresholds.empty() )
         {
-            cout << "\tusing thresholds " << vm["thresholds"].as<string>() << endl;
+            cout << "\tusing lower thresholds " << vm["lower-thresholds"].as<string>() << endl;
         }
-        
+
+        if ( !upper_thresholds.empty() )
+        {
+            cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
+        }
+
         cout << "\tdynamic range factor = " << drf << endl;
         
         cout << "\toutput written to file: " << output_filename << endl;
@@ -659,7 +750,12 @@ int main(int argc, char** argv)
     // TODO: threshold should be applied as a filter somehow
     // this approach seems a little half-cocked
     
-    FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, thresholds, show_progress );
+    FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename,
+                                                          coord_system,
+                                                          variables,
+                                                          lower_thresholds,
+                                                          upper_thresholds,
+                                                          show_progress );
     
     if (!vtk_variables.empty())
     {
@@ -676,6 +772,9 @@ int main(int argc, char** argv)
         cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
     }
     
+    
+    OASEWeightFunction<FS_TYPE> *weight_function = new OASEWeightFunction<FS_TYPE>(fs);
+    
     // Scale-Space smoothing
     
     if (scale != NO_SCALE)
@@ -686,8 +785,18 @@ int main(int argc, char** argv)
         
     	sf.apply(fs);
         
+        // update the weight function
+        
+        weight_function->update_limits(sf.get_filtered_min(),sf.get_filtered_max());
+        
         cout << "\t" << fs->points.size() << " points." << endl;
     }
+    
+#if WRITE_WEIGHT_FUNCTION
+    boost::filesystem::path path(filename);
+    std::string wfname = path.filename().stem().string() + "-weights.vtk";
+    ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
+#endif
 
     if ( verbosity == VerbosityAll )
         fs->print();
@@ -706,9 +815,7 @@ int main(int argc, char** argv)
     //
     // Simple clustering
     //
-    
-    WeightFunction<FS_TYPE> *weight_function = new OASEWeightFunction<FS_TYPE>();
-    
+
     ClusterOperation<FS_TYPE> cop( fs, index );
     
     ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, drf, show_progress );
@@ -754,6 +861,13 @@ int main(int argc, char** argv)
         
         string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk( centers_path, clusters.clusters);
+    }
+    
+    if ( write_weight_response && clusters.clusters.size() > 0 )
+    {
+        string wr_path = path.filename().stem().string() + "-clusters_weight.vtk";
+        
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function);
     }
     
     if ( verbosity > VerbositySilent )
