@@ -473,7 +473,15 @@ void parse_commmandline(program_options::variables_map vm,
             
             try
             {
-                vtk_variables.push_back(file->getVar(bw));
+                NcVar var = file->getVar(bw);
+                
+                if (var.isNull())
+                {
+                    cerr << "Can't open variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
+                    exit(-1);
+                }
+                
+                vtk_variables.push_back(var);
             }
             catch (const netCDF::exceptions::NcException &e)
             {
@@ -757,23 +765,7 @@ int main(int argc, char** argv)
                                                           upper_thresholds,
                                                           show_progress );
     
-    if (!vtk_variables.empty())
-    {
-        string filename_only = boost::filesystem::path(filename).filename().string();
-        
-        boost::filesystem::path destination_path = boost::filesystem::path(".");
-        
-        destination_path /= filename_only;
-        
-        destination_path.replace_extension("vtk");
-        
-        string dest_path = destination_path.generic_string();
-        
-        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
-    }
-    
-    
-    OASEWeightFunction<FS_TYPE> *weight_function = new OASEWeightFunction<FS_TYPE>(fs);
+    fs->off_limits()->write("off_limits.vtk","off_limits");
     
     // Scale-Space smoothing
     
@@ -786,12 +778,30 @@ int main(int argc, char** argv)
     	sf.apply(fs);
         
         // update the weight function
-        
-        weight_function->update_limits(sf.get_filtered_min(),sf.get_filtered_max());
+        // weight_function->update_limits(sf.get_filtered_min(),sf.get_filtered_max());
         
         cout << "\t" << fs->points.size() << " points." << endl;
     }
     
+    if (!vtk_variables.empty())
+    {
+        string filename_only = boost::filesystem::path(filename).filename().string();
+        
+        boost::filesystem::path destination_path = boost::filesystem::path(".");
+        
+        destination_path /= filename_only;
+        
+        //destination_path.replace_extension("vtk");
+        
+        destination_path.replace_extension();
+        
+        string dest_path = destination_path.generic_string();
+        
+        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
+    }
+    
+    OASEWeightFunction<FS_TYPE> *weight_function = new OASEWeightFunction<FS_TYPE>(fs);
+
 #if WRITE_WEIGHT_FUNCTION
     boost::filesystem::path path(filename);
     std::string wfname = path.filename().stem().string() + "-weights.vtk";
@@ -865,9 +875,9 @@ int main(int argc, char** argv)
     
     if ( write_weight_response && clusters.clusters.size() > 0 )
     {
-        string wr_path = path.filename().stem().string() + "-clusters_weight.vtk";
+        string wr_path = path.filename().stem().string() + "-clusters_weight";
         
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function);
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function, false);
     }
     
     if ( verbosity > VerbositySilent )
