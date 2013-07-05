@@ -485,6 +485,11 @@ namespace m3D {
                     m_progress_bar->operator++();
                 }
                 
+                if (fs->off_limits()->get(gridpoint))
+                {
+                    continue;
+                }
+                
                 ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
                 
                 // Find the boundaries. Take care not to step
@@ -516,6 +521,14 @@ namespace m3D {
                         
                         gridIter[realDimIndex] = i;
                         
+                        // Make sure no points originally marked as
+                        // off limits are used.
+                        
+                        if (fs->off_limits()->get(gridIter))
+                        {
+                            continue;
+                        }
+                        
                         // get the point at the current position from
                         // the array index
 
@@ -527,7 +540,9 @@ namespace m3D {
 
                         size_t d = (i <= index) ? (index-i) : (i-index);
                         
-                        sum += g.value(d) * pIter->values[cs->size()+varIndex];
+                        T value = pIter->values[cs->size()+varIndex];
+                        
+                        sum += g.value(d) * value;
                         
                         sumCount++;
                     }

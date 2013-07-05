@@ -256,6 +256,7 @@ namespace m3D {
                        typename Point<T>::ptr p);
         
         /** Find all directly adjacent clusters to the given cluster
+         *
          * @param cluster
          * @param feature-space index for searching
          * @param resolution search radius for finding neighbours (use cluster_resolution)
@@ -264,8 +265,7 @@ namespace m3D {
         typename Cluster<T>::list
         neighbours_of( typename Cluster<T>::ptr cluster,
                       PointIndex<T> *index,
-                      const vector<T> &resolution,
-                      const WeightFunction<T> *weight_function );
+                      const vector<T> &resolution);
         
         /** Analyses the two clusters and decides, if they actually belong to the same
          * object or not. Make sure this is only invoked on direct neighbours!
@@ -310,31 +310,6 @@ namespace m3D {
         relative_variability( const WeightFunction<T> *weight_function,
         		  	  	  	  const typename Point<T>::list &points );
         
-        /** Finds the lower and upper bound of the weight function response
-         * @param point list
-         * @param weight function
-         * @param lower_bound (return value)
-         * @param upper_bound (return value)
-         */
-        static void
-        dynamic_range(const typename Point<T>::list &list,
-                      const WeightFunction<T> *weight_function,
-                      T &lower_bound,
-                      T &upper_bound );
-        
-        /** Finds the lower and upper bound of weight function response in the 
-         * whole cluster
-         * @param cluster
-         * @param weight function
-         * @param lower_bound (return value)
-         * @param upper_bound (return value)
-         */
-        static void
-        dynamic_range(const typename Cluster<T>::ptr cluster,
-                      const WeightFunction<T> *weight_function,
-                      T &lower_bound,
-                      T &upper_bound);
-
         
         /** Classifies the properties of the dynamic range of the given list of points, compared to
          * the given range in the response of the weight function
@@ -374,6 +349,29 @@ namespace m3D {
                                                      const vector<T> &resolution,
                                                      const double &drf_threshold,
                                                      const bool& show_progress);
+#pragma mark -
+#pragma mark Coalescence Merging
+
+        /** If the two clusters have points as close as the given resolution,
+         * they are counted as neighbours.
+         * @param cluster one
+         * @param cluster two
+         * @param index used for searching boundary points
+         * @param vector of the same size as the value vector (or the mode)
+         * @return <code>true</code> if they are neighbours <code>false</code>
+         */
+        bool
+        are_neighbours(const Cluster<T> *c1,
+                       const Cluster<T> *c2,
+                       PointIndex<T> *index,
+                       const vector<T> &resolution);
+        
+        void
+        aggregate_by_coalescence(const WeightFunction<T> *weight_function,
+                                 PointIndex<T> *index,
+                                 const vector<T> &resolution,
+                                 size_t passes=1,
+                                 bool show_progress=true);
         
 #pragma mark -
 #pragma mark ID helpers

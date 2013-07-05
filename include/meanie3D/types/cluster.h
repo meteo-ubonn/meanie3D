@@ -45,8 +45,14 @@ namespace m3D {
         size_t                      m_dimension;                // dimension of the points
         
         size_t                      m_spatial_dimension;        // number of spatial dimensions (always first)
+
+        // Dynamic Range
         
     public:
+
+        bool                        m_weight_range_calculated;     // Is the dynamic range calculated and up-to-date?
+        T                           m_min_weight;
+        T                           m_max_weight;
         
 #pragma mark -
 #pragma mark Type definitions / Constants
@@ -242,18 +248,47 @@ namespace m3D {
          * the point farthest away from it.
          */
         T radius();
+
+#pragma mark -
+#pragma mark DRF merging
         
+        /** Finds the lower and upper bound of the weight function response
+         * @param point list
+         * @param weight function
+         * @param lower_bound (return value)
+         * @param upper_bound (return value)
+         */
+        static void
+        dynamic_range(const typename Point<T>::list &list,
+                      const WeightFunction<T> *weight_function,
+                      T &lower_bound,
+                      T &upper_bound );
+        
+        /** Finds the lower and upper bound of weight function response in the
+         * whole cluster
+         * @param cluster
+         * @param weight function
+         * @param lower_bound (return value)
+         * @param upper_bound (return value)
+         */
+        void
+        dynamic_range(const WeightFunction<T> *weight_function,
+                      T &lower_bound,
+                      T &upper_bound);
+
 #pragma mark -
 #pragma mark Coalescence Merging
         
+        
+        
         /** @return weight function response at the cluster mode
          */
-        T modal_weight_response(WeightFunction<T> *w);
+        T modal_weight_response(const WeightFunction<T> *w) const;
         
         /** @return average weight function response on all points of the
          * cluster
          */
-        T average_weight_response(WeightFunction<T> *w);
+        T average_weight_response(const WeightFunction<T> *w) const;
     };
     
 };

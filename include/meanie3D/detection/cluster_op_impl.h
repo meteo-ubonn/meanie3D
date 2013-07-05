@@ -82,7 +82,19 @@ namespace m3D {
         if ( params->search_type() == SearchTypeRange )
         {
             RangeSearchParams<T> *p = (RangeSearchParams<T> *) params;
-            resolution = p->bandwidth;
+            
+            // Physical grid resolution in the
+            // spatial range
+            resolution = this->feature_space->coordinate_system->resolution();
+            
+            resolution = 4.0 * resolution;
+            
+            // Supplement with bandwidth values for
+            // the value range
+            for (size_t i=resolution.size(); i < p->bandwidth.size(); i++)
+            {
+                resolution.push_back(p->bandwidth[i]);
+            }
         }
         else
         {
@@ -216,7 +228,9 @@ namespace m3D {
 #endif
 
         // Analyze the clusters to create objects
-        cluster_list.aggregate_clusters_by_boundary_analysis( weight_function, this->point_index, resolution, drf_threshold, show_progress_bar );
+//        cluster_list.aggregate_clusters_by_boundary_analysis( weight_function, this->point_index, resolution, drf_threshold, show_progress_bar );
+        
+        cluster_list.aggregate_by_coalescence(weight_function,this->point_index,resolution,1);
         
 #if WRITE_MODES
         

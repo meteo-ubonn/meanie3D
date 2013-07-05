@@ -764,8 +764,9 @@ int main(int argc, char** argv)
                                                           lower_thresholds,
                                                           upper_thresholds,
                                                           show_progress );
-    
+#if WRITE_OFF_LIMITS_MASK
     fs->off_limits()->write("off_limits.vtk","off_limits");
+#endif
     
     // Scale-Space smoothing
     

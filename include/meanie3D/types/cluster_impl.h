@@ -26,16 +26,22 @@ namespace m3D {
     , m_index(NULL)
     , m_dimension(0)
     , m_spatial_dimension(0)
+    , m_weight_range_calculated(false)
+    , m_min_weight(0)
+    , m_max_weight(0)
     {};
     
     template <typename T>
     Cluster<T>::Cluster(const vector<T> &mode, size_t spatial_dimension)
-    : m_radius(numeric_limits<T>::min())
+    : id(NO_ID)
+    , m_radius(numeric_limits<T>::min())
     , m_index(NULL)
     , m_dimension(mode.size())
     , m_spatial_dimension(spatial_dimension)
     , mode(mode)
-    , id(NO_ID)
+    , m_weight_range_calculated(false)
+    , m_min_weight(0)
+    , m_max_weight(0)
     {
         assert( m_dimension > m_spatial_dimension ); // TODO: change on refac #146
     };
@@ -49,6 +55,9 @@ namespace m3D {
     , id(o.id)
     , mode(o.mode)
     , points(o.points)
+    , m_weight_range_calculated(o.m_weight_range_calculated)
+    , m_min_weight(o.m_min_weight)
+    , m_max_weight(o.m_max_weight)
     {
     };
     
@@ -108,12 +117,12 @@ namespace m3D {
                 continue;
             }
             
-            typename Point<T>::list::iterator fi = find( points.begin(), points.end(), p );
-            
-            if ( fi == points.end() )
-            {
+//            typename Point<T>::list::iterator fi = find( points.begin(), points.end(), p );
+//            
+//            if ( fi == points.end() )
+//            {
                 this->add_point( p );
-            }
+//            }
         }
     }
     
@@ -408,7 +417,7 @@ namespace m3D {
     
     template <typename T>
     T
-    Cluster<T>::modal_weight_response(WeightFunction<T> *w)
+    Cluster<T>::modal_weight_response(const WeightFunction<T> *w) const
     {
         T result = 0;
         
@@ -423,7 +432,7 @@ namespace m3D {
             
             vector<T> mode_spatial_coord( &mode[0], &mode[ spatial_dim ] );
             
-            result = w->operator()(mode_spatial_coord,mode);
+            result = w->operator()(mode_spatial_coord);
         }
         
         return result;
@@ -431,7 +440,7 @@ namespace m3D {
     
     template <typename T>
     T
-    Cluster<T>::average_weight_response(WeightFunction<T> *w)
+    Cluster<T>::average_weight_response(const WeightFunction<T> *w) const
     {
         T result = 0;
         
@@ -444,7 +453,7 @@ namespace m3D {
             
             vector<T> mode_spatial_coord( &mode[0], &mode[p->coordinate.size()] );
             
-            result += w->operator()(mode_spatial_coord,mode);
+            result += w->operator()(mode_spatial_coord);
         }
         
         if (!points.empty())
@@ -454,6 +463,57 @@ namespace m3D {
     
         return result;
     }
+    
+#pragma mark -
+#pragma mark Dynamic Range Calculation
+    
+    template <class T>
+    void
+    Cluster<T>::dynamic_range(const typename Point<T>::list &points,
+                              const WeightFunction<T> *weight_function,
+                              T &lower_bound,
+                              T&upper_bound )
+    {
+        lower_bound = std::numeric_limits<T>::max();
+        
+        upper_bound = std::numeric_limits<T>::min();
+        
+        typename Point<T>::list::const_iterator pi;
+        
+        for ( pi = points.begin(); pi != points.end(); pi++ )
+        {
+            typename Point<T>::ptr p = *pi;
+            
+            T value = weight_function->operator()(p);
+            
+            if ( value < lower_bound )
+            {
+                lower_bound = value;
+            }
+            
+            if ( value > upper_bound )
+            {
+                upper_bound = value;
+            }
+        }
+    }
+    
+    template <typename T>
+    void
+    Cluster<T>::dynamic_range(const WeightFunction<T> *weight_function,
+                              T &lower_bound,
+                              T &upper_bound)
+    {
+        if (!m_weight_range_calculated)
+        {
+            Cluster<T>::dynamic_range( this->points, weight_function, m_min_weight, m_max_weight );
+            m_weight_range_calculated=true;
+        }
+        
+        lower_bound = m_min_weight;
+        upper_bound = m_max_weight;
+    }
+
 
 
 }; //namespace

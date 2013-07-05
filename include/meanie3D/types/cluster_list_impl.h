@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <sstream>
 #include <netcdf>
+#include <vector>
+#include <set>
 
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -810,7 +812,7 @@ namespace m3D {
             
             // Get weight function response
             
-            T weight_function_response = weight_function->operator()( p->gridpoint, p->values );
+            T weight_function_response = weight_function->operator()( p );
             
             if ( weight_function_response > max_value )
             {
@@ -828,7 +830,7 @@ namespace m3D {
 
     template <typename T>
     typename Cluster<T>::list
-    ClusterList<T>::neighbours_of( typename Cluster<T>::ptr cluster, PointIndex<T> *index, const vector<T> &resolution, const WeightFunction<T> *weight_function )
+    ClusterList<T>::neighbours_of( typename Cluster<T>::ptr cluster, PointIndex<T> *index, const vector<T> &resolution )
     {
         typename Cluster<T>::list neighbouring_clusters;
         
@@ -1190,11 +1192,11 @@ namespace m3D {
         
         T points_lower_bound, points_upper_bound;
         
-        ClusterList<T>::dynamic_range( points, weight_function, points_lower_bound, points_upper_bound );
+        Cluster<T>::dynamic_range( points, weight_function, points_lower_bound, points_upper_bound );
         
         T cluster_lower_bound, cluster_upper_bound;
         
-        ClusterList<T>::dynamic_range( cluster, weight_function, cluster_lower_bound, cluster_upper_bound );
+        cluster->dynamic_range( weight_function, cluster_lower_bound, cluster_upper_bound );
 
         // Compare the two ranges
         
@@ -1233,19 +1235,26 @@ namespace m3D {
         
         merged_cluster->id = c1->id;
         
-        typename Cluster<T>::list::iterator fi = find( clusters.begin(), clusters.end(), c1 );
+        if (c1->m_weight_range_calculated && c2->m_weight_range_calculated)
+        {
+            merged_cluster->m_min_weight = inf(c1->m_min_weight, c2->m_min_weight);
+            merged_cluster->m_max_weight = sup(c1->m_max_weight, c2->m_max_weight);
+            merged_cluster->m_weight_range_calculated = true;
+        }
         
-        clusters.erase( fi );
-
-        delete c1;
+//        typename Cluster<T>::list::iterator fi = find( clusters.begin(), clusters.end(), c1 );
+//        
+//        clusters.erase( fi );
+//
+//        delete c1;
         
-        fi = find( clusters.begin(), clusters.end(), c2 );
-        
-        clusters.erase( fi );
+//        fi = find( clusters.begin(), clusters.end(), c2 );
+//        
+//        clusters.erase( fi );
+//
+//        delete c2;
 
-        delete c2;
-
-        clusters.push_back( merged_cluster );
+//        clusters.push_back( merged_cluster );
         
         return merged_cluster;
     }
@@ -1272,7 +1281,7 @@ namespace m3D {
 
         if ( show_progress )
         {
-            cout << endl << "Aggregating clusters into objects ...";
+            cout << endl << "Aggregating clusters into objects ..." << endl;
             spinner = new ConsoleSpinner();
             start_timer();
         }
@@ -1286,8 +1295,17 @@ namespace m3D {
         
         boundary_key_t boundary_keys;
         
+        typename Cluster<T>::list scheduledForRemoval;
+        
+        size_t pass_counter = 1;
+        
         do
         {
+            if ( show_progress )
+            {
+                cout << "\tpass #" << pass_counter << " : " << clusters.size() << " -> ";
+            }
+
             had_merge = false;
             
             // Start at the top and work your way down
@@ -1300,44 +1318,80 @@ namespace m3D {
                 
                 typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution, weight_function );
                 
-                if ( neighbours.size() > 0 )
+                Cluster<T> *merged = c;
+
+                // go over the list of neighbours and find candidates for merging
+                // Merge all suitable candidates of c's neighbours together
+                
+                typename Cluster<T>::list::iterator ni;
+                
+                for ( ni = neighbours.begin(); ni != neighbours.end(); ni++ )
                 {
-                    // go over the list of neighbours and find candidates for merging
+                    typename Cluster<T>::ptr n = *ni;
                     
-                    typename Cluster<T>::list::const_iterator ni;
-                    
-                    for ( ni = neighbours.begin(); ni != neighbours.end(); ni++ )
+                    if (should_merge_neighbouring_clusters( c, n, weight_function, index2, resolution, drf_threshold))
                     {
-                        typename Cluster<T>::ptr n = *ni;
+                        scheduledForRemoval.push_back(n);
                         
-                        std::string key = boost::lexical_cast<string>(inf(c->id,n->id)) + "-" + boost::lexical_cast<string>(sup(c->id,n->id));
-                        
-                        typename boundary_key_t::const_iterator fi = find( boundary_keys.begin(), boundary_keys.end(), key );
-                        
-                        if ( fi == boundary_keys.end() )
-                        {
-                            boundary_keys.push_back( key );
-                        
-                            if ( should_merge_neighbouring_clusters( c, n, weight_function, index2, resolution, drf_threshold ) )
-                            {
-                                merge_clusters( c, n );
-                            
-                                had_merge = true;
-                            
-                                merge_count++;
-                            
-                                break;
-                            }
-                        }
+                        merged = merge_clusters( merged, n );
+                    
+                        had_merge = true;
+                    
+                        merge_count++;
                     }
                 }
                 
-                // break out and start over
-                if ( had_merge ) break;
+                if (had_merge)
+                {
+                    scheduledForRemoval.push_back(c);
+                }
+                
+                // remove c and all merged neighbours from the list,
+                // replace them by the merged one and do it over again
+                // until no more merges happened
+                
+                if (had_merge)
+                {
+                    for (size_t i=0; i < scheduledForRemoval.size(); i++)
+                    {
+                        Cluster<T> *rc = scheduledForRemoval[i];
+                        typename Cluster<T>::list::iterator fi = find( clusters.begin(), clusters.end(), rc );
+                        if (fi!=clusters.end())
+                        {
+                            clusters.erase( fi );
+                        }
+                    }
+                    
+                    clusters.push_back(merged);
+                    
+                    break;
+                }
             }
+            
+            if ( show_progress )
+            {
+                cout << clusters.size() << endl;
+            }
+            
+            pass_counter++;
             
         } while (had_merge);
         
+        
+        // Delete the removed clusters
+        
+        // remove duplicates
+        
+        sort( scheduledForRemoval.begin(), scheduledForRemoval.end() );
+        scheduledForRemoval.erase( unique( scheduledForRemoval.begin(), scheduledForRemoval.end() ), scheduledForRemoval.end() );
+        
+        //    delete
+
+        for (size_t i=0; i < scheduledForRemoval.size(); i++)
+        {
+            Cluster<T> *rc = scheduledForRemoval[i];
+            delete rc;
+        }
         
         if ( show_progress )
         {
@@ -1399,45 +1453,336 @@ namespace m3D {
     };
     
 #pragma mark -
-#pragma mark Dynamic Range Calculation    
+#pragma mark Coalescence Merging
     
-    template <class T>
-    void
-    ClusterList<T>::dynamic_range( const typename Point<T>::list &points, const WeightFunction<T> *weight_function, T &lower_bound, T&upper_bound )
+    template <typename T>
+    bool
+    ClusterList<T>::are_neighbours(const Cluster<T> *c1,
+                                   const Cluster<T> *c2,
+                                   PointIndex<T> *index,
+                                   const vector<T> &resolution)
     {
-        lower_bound = std::numeric_limits<T>::max();
+        bool isNeighbour = false;
         
-        upper_bound = std::numeric_limits<T>::min();
+        RangeSearchParams<T> search_params( resolution );
         
         typename Point<T>::list::const_iterator pi;
         
-        for ( pi = points.begin(); pi != points.end(); pi++ )
+        for ( pi = c1->points.begin(); pi != c1->points.end(); pi++ )
         {
-            typename Point<T>::ptr p = *pi;
+        	typename M3DPoint<T>::ptr p = (M3DPoint<T> *) *pi;
             
-            T value = weight_function->operator()(p->gridpoint,p->values);
+            typename Point<T>::list *neighbours = index->search( p->values, &search_params );
             
-            if ( value < lower_bound )
+            typename Point<T>::list::const_iterator ni;
+            
+            for ( ni = neighbours->begin(); ni != neighbours->end(); ni++ )
             {
-                lower_bound = value;
-            }
-            
-            if ( value > upper_bound )
-            {
-                upper_bound = value;
+                M3DPoint<T> *n = (M3DPoint<T> *) *ni;
+                
+                if ( n->cluster == c2 )
+                {
+                    isNeighbour = true;
+                    break;
+                }
             }
         }
+        
+        return isNeighbour;
     }
+
     
+    // Sort all clusters in ascending order by weight response
+
     template <typename T>
-    void
-    ClusterList<T>::dynamic_range(const typename Cluster<T>::ptr cluster,
-                                  const WeightFunction<T> *weight_function,
-                                  T &lower_bound,
-                                  T &upper_bound)
+    class ModalWeightComparator
     {
-        return ClusterList<T>::dynamic_range( cluster->points, weight_function, lower_bound, upper_bound );
+    private:
+        const WeightFunction<T> *m_weight;
+    public:
+        ModalWeightComparator(const WeightFunction<T> *w) {m_weight=w;}
+        
+        bool
+        operator() (const Cluster<T> *c1, const Cluster<T> *c2)
+        {
+            T w1 = c1->modal_weight_response(m_weight);
+            T w2 = c2->modal_weight_response(m_weight);
+            return w1 < w2;
+        }
+    };
+    
+    
+    template <class T>
+    void
+    ClusterList<T>::aggregate_by_coalescence(const WeightFunction<T> *weight_function,
+                                             PointIndex<T> *index,
+                                             const vector<T> &resolution,
+                                             size_t passes,
+                                             bool show_progress)
+    {
+        
+        // Provide a second index for the merge examination. They use a smaller
+        // resolution and would trigger re-calculation of the index every other
+        // step. It's cheaper to provide them with their own index
+        
+        PointIndex<T> *index2 = PointIndex<T>::create( (FeatureSpace<T> *) index->feature_space() );
+
+        // Sort by modal weight function ascending
+        
+        ModalWeightComparator<T> comp(weight_function);
+        
+        sort(clusters.begin(), clusters.end(), comp);
+        
+        // Traverse the list and find the closest neighbour
+        // with higher weight response.
+        
+        typedef Cluster<T> *            cptr_t;
+        typedef set<cptr_t>             cptr_set_t;
+        typedef map<cptr_t,cptr_t>      cptr_match_t;
+        typedef map<cptr_t,cptr_set_t>  cptr_map_t;
+        
+        
+        // Coalescence
+        
+        for (int pass=0; pass < passes; pass++)
+        {
+            // pre-calculate direct neighbours
+            
+            boost::progress_display *progress = NULL;
+            
+            if (show_progress)
+            {
+                cout << endl << "Analysing neighbourhood relationships ...";
+                start_timer();
+                progress = new boost::progress_display( clusters.size() );
+            }
+            
+            cptr_map_t neighbours;
+            
+            for (size_t ci=0; ci < (clusters.size()-1); ci++)
+            {
+                Cluster<T> *c1 = clusters[ci];
+                
+                if (show_progress)
+                {
+                    progress->operator++();
+                }
+                
+                typename Cluster<T>::list direct_neighbours;
+                direct_neighbours = neighbours_of( c1, index2, resolution );
+                
+                if ( direct_neighbours.size() > 0 )
+                {
+                    // go over the list of neighbours and find candidates for merging
+                    
+                    typename Cluster<T>::list::const_iterator ni;
+                    
+                    for ( ni = direct_neighbours.begin(); ni != direct_neighbours.end(); ni++ )
+                    {
+                        cptr_t n = *ni;
+
+                        neighbours[c1].insert(n);
+                        
+                        neighbours[n].insert(c1);
+                    }
+                }
+            }
+            
+            if (show_progress)
+            {
+                cout << endl << "done. " << stop_timer() << "s)" << endl;
+                delete progress;
+            }
+
+            // perform the coalescence search
+            
+            cptr_match_t matches;
+
+            if (show_progress)
+            {
+                cout << endl << "Finding matches ...";
+                start_timer();
+                progress = new boost::progress_display( clusters.size());
+            }
+            
+            for (size_t ci=0; ci < (clusters.size()-1); ci++)
+            {
+                if (show_progress)
+                {
+                    progress->operator++();
+                }
+
+                Cluster<T> *c1 = clusters[ci];
+                
+                // search 'upwards'
+                
+                int highest_index = -1;
+                
+                for (int ni=ci+1; ni < clusters.size(); ni++)
+                {
+                    cptr_t c2 = clusters[ni];
+                    
+                    typename cptr_set_t::iterator fi;
+                    fi = find( neighbours[c1].begin(), neighbours[c1].end(), c2);
+                    
+                    if ( fi != neighbours[c1].end() )
+                    {
+                        // found an "upstream" neighbour
+                        highest_index = ni;
+                    }
+                }
+                
+                // And the winner is ...
+                
+                if (highest_index > 0)
+                {
+                    matches[c1] = clusters[highest_index];
+                }
+            }
+            
+            if (show_progress)
+            {
+                cout << endl << "done. " << stop_timer() << "s)" << endl;
+                delete progress;
+            }
+        
+            // coalesce
+            
+            if (show_progress)
+            {
+                cout << endl << "Coalesce clusters ...";
+                start_timer();
+                progress = new boost::progress_display( matches.size() );
+            }
+            
+            cptr_match_t merged_map;
+            
+            vector<cptr_t> used;
+            
+            typename cptr_match_t::iterator mi;
+            
+#if DEBUG_COALESCENCE_MATCHING
+            for (mi = matches.begin(); mi != matches.end(); mi++)
+            {
+                cout << "Cluster #" << mi->first->id << " goes to " << mi->second->id << endl;
+            }
+#endif
+            
+            for (mi = matches.begin(); mi != matches.end(); mi++)
+            {
+                if (show_progress)
+                {
+                    progress->operator++();
+                }
+
+                //
+                // Figure out, which one to use for merging
+                //
+                
+                // Was this cluster merged with another cluster
+                // before?
+                
+                // TODO: this should not be necessary, because
+                // the clusters are ordered and the upper cluster
+                // never comes before the lower
+                
+                typename cptr_match_t::iterator lc_find;
+                lc_find = merged_map.find(mi->first);
+
+                // if lower cluster was previously merged, use
+                // the merged one. Else use the lower cluster
+                // itself
+                
+                cptr_t lower_cluster = (lc_find == merged_map.end())
+                                     ? mi->first
+                                     : lc_find->second;
+                
+                //
+                // Now for the 'matched' one.
+                //
+                
+                cptr_t upper_cluster = mi->second;
+                    
+                // Was the upper cluster merged with another
+                // cluster before?
+                
+                typename cptr_match_t::const_iterator uc_find;
+                uc_find = merged_map.find(upper_cluster);
+
+                if (uc_find != merged_map.end())
+                {
+                    // Hold on to the previous merged
+                    cptr_t previous_m = uc_find->second;
+                    
+                    // merge with the result of the
+                    // previous merge
+                    cptr_t m = merge_clusters(lower_cluster,previous_m);
+                    
+                    // replace all occurences of previous merge
+                    // in the merged map with the new one
+                    
+                    typename cptr_match_t::iterator it;
+                    
+                    for (it=merged_map.begin(); it!=merged_map.end(); it++)
+                    {
+                        if (it->second == previous_m)
+                        {
+                            it->second = m;
+                        }
+                    }
+                    
+                    // dispose of the previous matched
+                    
+                    delete previous_m;
+                }
+                else
+                {
+                    // merge
+                    cptr_t m = merge_clusters(lower_cluster,upper_cluster);
+                    
+                    // create a new entries in the matching map
+                    merged_map[lower_cluster] = m;
+                    merged_map[upper_cluster] = m;
+                }
+            }
+            
+            if (show_progress)
+            {
+                cout << endl << "done. " << stop_timer() << "s)" << endl;
+                delete progress;
+            }
+            
+            // Extract the merged results by uniquing the merged
+            // map's value set
+            
+            vector<cptr_t> result;
+            
+            for (typename cptr_match_t::iterator it=merged_map.begin(); it!=merged_map.end(); it++)
+            {
+                result.push_back(it->second);
+            }
+            
+            // remove duplicates
+            
+            sort(result.begin(),result.end());
+            unique(result.begin(),result.end());
+            
+            // release original clusters and replace
+            // with the result
+            
+            while (!clusters.empty())
+            {
+                cptr_t c = clusters.back();
+                clusters.pop_back();
+                delete c;
+            }
+            
+            clusters = result;
+            
+        }
     }
+
+    
 
 
 }; //namespace

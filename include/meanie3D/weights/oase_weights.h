@@ -25,7 +25,7 @@ namespace m3D { namespace weights {
         vector<NcVar>       m_vars;     // variables for weighting
         map<size_t,T>       m_min;      // [index,min]
         map<size_t,T>       m_max;      // [index,max]
-        ScalarIndex<T>      m_weight;
+        cfa::utils::ScalarIndex<T,T>      m_weight;
         CoordinateSystem<T> *m_coordinate_system;
         
         void
@@ -45,7 +45,7 @@ namespace m3D { namespace weights {
         
         OASEWeightFunction(FeatureSpace<T> *fs)
         : m_vars(fs->variables())
-        , m_weight(ScalarIndex<T>(fs->coordinate_system))
+        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
             // Get original limits
@@ -89,33 +89,37 @@ namespace m3D { namespace weights {
                 
                 T value = p->values[p->coordinate.size()+var_index];
                 
-                T var_weight = 1.0;
-                
                 if (var.getName() == "cband_radolan_rx")
                 {
-                    sum += (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                    T rx_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                    
+                    sum += rx_weight;
                 }
                 else if (var.getName() == "msevi_l15_ir_108")
                 {
                     if (value < 30)
                     {
-                        sum += (30 - value) / (30 - m_min.at(var_index));
+                        T sev_weight = (30 - value) / (30 - m_min.at(var_index));
+                        
+                        sum += sev_weight;
                     }
                 }
                 else if (var.getName() == "linet_oase_tl")
                 {
                     if (value > 0)
                     {
-                        sum += (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                        T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                        
+                        sum += linet_weight;
                     }
                 }
                 else
                 {
                     // value scaled to [0..1]
                     
-                    T value = p->values[p->coordinate.size()+var_index];
+                    T var_weight = (value - m_min.at(var_index)) / ( m_max.at(var_index) - m_min.at(var_index) );
                     
-                    var_weight = (value - m_min.at(var_index)) / ( m_max.at(var_index) - m_min.at(var_index) );
+                    sum+=var_weight;
                     
                     // value^2
                     //T var_weight = ( sample->at(index)->values[weight_var_index] ) * ( sample->at(index)->values[weight_var_index] );
@@ -138,14 +142,18 @@ namespace m3D { namespace weights {
         /** unfavorable, since it performs a reverse lookup, which is a very
          * time-consuming operation. Use grid points where possible.
          */
-        T operator()( const typename CoordinateSystem<T>::Coordinate &coordinate, const vector<T> &values ) const
+        T operator()( const vector<T> &values ) const
         {
-            return m_weight.get(coordinate);
+            typename CoordinateSystem<T>::GridPoint gp = this->m_coordinate_system->newGridPoint();
+            
+            this->m_coordinate_system->reverse_lookup(values,gp);
+            
+            return m_weight.get(gp);
         }
         
-        T operator()( const typename CoordinateSystem<T>::GridPoint &gp, const vector<T> &values ) const
+        T operator()(const typename Point<T>::ptr p) const
         {
-            return m_weight.get(gp);
+            return m_weight.get(p->gridpoint);
         }
         
     };

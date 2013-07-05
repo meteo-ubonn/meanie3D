@@ -381,7 +381,7 @@ namespace m3D { namespace utils {
             boost::replace_all( basename, "/", "_" );
             boost::replace_all( basename, "..", "" );
             
-            string filename = basename + boost::lexical_cast<string>( cluster->id ) + ".vtk";
+            string filename = basename + "_" + boost::lexical_cast<string>( cluster->id ) + ".vtk";
             
             ofstream f( filename.c_str() );
             f << fixed << setprecision(4);
