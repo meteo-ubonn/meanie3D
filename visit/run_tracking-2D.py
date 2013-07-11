@@ -6,16 +6,9 @@
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
-#DETECT_PARAMS     = "-r 100,100,200 --drf-threshold 0.5 -s 512 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 48,48,200 --drf-threshold 0.5 -s 256 -t 20 -m 10"
-DETECT_PARAMS     = "-r 24,24,200 --drf-threshold 0.5 -s 128 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 12,12,200 --drf-threshold 0.5 -s 64 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 6,6,200 --drf-threshold 0.5 -s 32 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 3,3,200 --drf-threshold 0.5 -s 16 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 2.5,2.5,200 --drf-threshold 0.5 -s 8 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 2,2,200 --drf-threshold 0.5 -s 4 -t 20 -m 10"
 
 # Appending the module path is crucial
+
 sys.path.append(MEANIE3D_HOME+"/visit/modules")
 
 import glob
@@ -26,19 +19,34 @@ import visit2D
 import visitUtils
 from subprocess import call
 
+print [key for key in locals().keys()
+       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
+
 # TODO: find a more elegant way to resume
 # if > 0 a previous run is resumed
-last_completed_run_count = 53
+last_completed_run_count = 0
 
 # RADOLAN
 
+VAR_NAME="reflectivity"
+
+#DETECT_PARAMS     = "-r 100,100,200 --drf-threshold 0.5 -s 512 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 48,48,200 --drf-threshold 0.5 -s 256 -t 20 -m 10"
+DETECT_PARAMS     = "-r 5,5,200 -s 32 --lower-thresholds reflectivity=20 -m 5"
+#DETECT_PARAMS     = "-r 12,12,200 --drf-threshold 0.5 -s 64 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 6,6,200 --drf-threshold 0.5 -s 32 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 3,3,200 --drf-threshold 0.5 -s 16 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 2.5,2.5,200 --drf-threshold 0.5 -s 8 -t 20 -m 10"
+#DETECT_PARAMS     = "-r 2,2,200 --drf-threshold 0.5 -s 4 -t 20 -m 10"
+
 CLUSTERING_PARAMS =  "-d x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
-CLUSTERING_PARAMS += " --write-variables-as-vtk=reflectivity -v reflectivity -w reflectivity "
-CLUSTERING_PARAMS += DETECT_PARAMS
+CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
+CLUSTERING_PARAMS += " -v "+VAR_NAME
+CLUSTERING_PARAMS += " " + DETECT_PARAMS
 
 TRACKING_PARAMS = "--verbosity 1 --write-vtk"
-TRACKING_PARAMS += " -t reflectivity"
+TRACKING_PARAMS += " -t "+VAR_NAME
 TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
 
 # print parameters
@@ -101,7 +109,7 @@ for netcdf_file in netcdf_list:
     
     basename = os.path.basename(netcdf_file)
     cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
-    vtk_file=os.path.splitext(basename)[0]+".vtk"
+    vtk_file=os.path.splitext(basename)[0] + "_" + VAR_NAME + ".vtk"
 
     # if there is a resume counter, keep skipping
     # until the count is right
@@ -127,6 +135,7 @@ for netcdf_file in netcdf_list:
     command = command + " > clustering_" + str(run_count)+".log"
 
     # execute
+    print command
     return_code = call( command, shell=True)
     
     print "    done. (%.2f seconds)" % (time.time()-start_time)
@@ -137,7 +146,7 @@ for netcdf_file in netcdf_list:
     # Plot the source data in color
     #
     
-    visit2D.add_pseudocolor(vtk_file,"reflectivity","hot_desaturated")
+    visit2D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated" )
     DrawPlots()
     
     # Calling ToggleMaintainViewMode helps
@@ -160,7 +169,7 @@ for netcdf_file in netcdf_list:
     #
     
     # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,"reflectivity","xray")
+    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray")
     
     # Add the clusters
     visit2D.add_clusters(basename,"_cluster_",col_tables)
@@ -213,7 +222,7 @@ for netcdf_file in netcdf_list:
     #
 
     # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,"reflectivity","xray")
+    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray")
 
     if run_count > 0:
 
