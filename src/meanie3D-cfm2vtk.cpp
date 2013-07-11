@@ -210,7 +210,9 @@ void convert_composite(const string &filename, const string& variable_name, cons
         
         CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>( dimensions,dim_vars );
         
-        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename, cs, variables);
+        const map<int,double> lower_thresholds,upper_thresholds;
+        
+        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename, cs, variables,lower_thresholds,upper_thresholds);
         
         VisitUtils<FS_TYPE>::write_featurespace_vtk(dest_path, fs, variable_name );
         

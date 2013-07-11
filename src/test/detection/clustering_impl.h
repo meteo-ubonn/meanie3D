@@ -281,8 +281,9 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
             cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
         }
         
-#if WRITE_FEATURESPACE
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+        
+#if WRITE_FEATURESPACE
         string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
         boost::replace_all( fs_filename, "/", "_" );
         cout << "Writing Featurespace to " + fs_filename << " ... ";
@@ -379,7 +380,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( resolution );
         
-        ClusterList<TypeParam> clusters = op.cluster( params, kernel, 0, 0.98 );
+        ClusterList<TypeParam> clusters = op.cluster( params, kernel, NULL, PostAggregationMethodNone );
         
         delete kernel;
         //        delete weight;

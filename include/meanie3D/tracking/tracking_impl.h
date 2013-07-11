@@ -677,7 +677,7 @@ namespace m3D {
                         
                         if (coverOldByNew[n][m] > maxCover)
                         {
-                            maxCover = coverNewByOld[n][m];
+                            maxCover = coverOldByNew[n][m];
                             
                             largestCandidateIndex = n;
                         }

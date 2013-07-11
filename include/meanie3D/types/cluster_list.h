@@ -219,6 +219,30 @@ namespace m3D {
 #pragma mark -
 #pragma mark Clustering by Graph Theory
         
+        void
+        find_neighbours(FeatureSpace<T> *fs,
+                        ArrayIndex<T> &index,
+                        typename Point<T>::list &list,
+                        size_t dim_index,
+                        typename CoordinateSystem<T>::GridPoint &gridpoint);
+        
+        typename Point<T>::list
+        find_neighbours(FeatureSpace<T> *fs,
+                        ArrayIndex<T> &index,
+                        const typename CoordinateSystem<T>::GridPoint &gridpoint);
+        
+        void
+        aggregate_spatial_zeroshift_clusters(FeatureSpace<T> *fs,
+                                             const bool& show_progress);
+        
+        void
+        check_clusters(FeatureSpace<T> *fs, ArrayIndex<T> &index);
+        
+        void
+        aggregate_zeroshifts(FeatureSpace<T> *fs,
+                             ArrayIndex<T> &index,
+                             bool show_progress);
+        
         // TODO: make the API more consistent by ordering the parameters equally
         // TODO: assign access classifiers (private/protected/public) where needed
         
@@ -234,26 +258,6 @@ namespace m3D {
                                      FeatureSpace<T> *fs, const
                                      vector<T> &resolution,
                                      const bool& show_progress );
-        
-        /** Finds the 'best' graph predecessor for given point p. This is done
-         * by adding the 'shift' property to calculate an end point and find
-         * the closest neighbour.
-         * TODO: find the closest n neighbours and pick the one with the smallest
-         * shift (closer to local maximum)
-         * @param feature-space
-         * @param feature-space index
-         * @param grid resolution
-         * @param weight function (can not be null)
-         * @param point
-         * @return best predecessor along the shift. Might return the argument,
-         *         in which case we have found a mode.
-         */
-        typename Point<T>::ptr
-        predecessor_of(FeatureSpace<T> *fs,
-                       PointIndex<T> *index,
-                       const vector<T> &resolution,
-                       const WeightFunction<T> *weight_function,
-                       typename Point<T>::ptr p);
         
         /** Find all directly adjacent clusters to the given cluster
          *

@@ -71,6 +71,7 @@ namespace m3D {
     ClusterOperation<T>::cluster( const SearchParameters *params,
                                   const Kernel<T> *kernel,
                                   const WeightFunction<T> *weight_function,
+                                  const PostAggregationMethod post_aggregation,
                                   const double &drf_threshold,
                                   const bool show_progress_bar )
     {
@@ -87,7 +88,7 @@ namespace m3D {
             // spatial range
             resolution = this->feature_space->coordinate_system->resolution();
             
-            resolution = 4.0 * resolution;
+            resolution = ((T)4.0) * resolution;
             
             // Supplement with bandwidth values for
             // the value range
@@ -206,8 +207,8 @@ namespace m3D {
 #endif
         
 #if WRITE_MEANSHIFT_VECTORS
-        VisitUtils<T>::write_shift_vectors( "meanshift_vectors.vtk", this->feature_space, false );
-        VisitUtils<T>::write_shift_vectors( "meanshift_vectors-spatial.vtk", this->feature_space, true );
+        ::cfa::utils::VisitUtils<T>::write_shift_vectors( "meanshift_vectors.vtk", this->feature_space, false );
+        ::cfa::utils::VisitUtils<T>::write_shift_vectors( "meanshift_vectors-spatial.vtk", this->feature_space, true );
 #endif
         
         if ( show_progress_bar )
@@ -226,11 +227,22 @@ namespace m3D {
 #if WRITE_BOUNDARIES
         cluster_list.write_boundaries( weight_function, this->feature_space, this->point_index, resolution );
 #endif
+        
+        switch(post_aggregation)
+        {
+            case PostAggregationMethodCoalescence:
+                cluster_list.aggregate_by_coalescence(weight_function,this->point_index,resolution,1);
+                break;
+            
+            case PostAggregationMethodDRF:
+                cluster_list.aggregate_clusters_by_boundary_analysis( weight_function, this->point_index, resolution, drf_threshold, show_progress_bar );
+                break;
+            
+            default: {}
+        }
 
         // Analyze the clusters to create objects
-//        cluster_list.aggregate_clusters_by_boundary_analysis( weight_function, this->point_index, resolution, drf_threshold, show_progress_bar );
         
-        cluster_list.aggregate_by_coalescence(weight_function,this->point_index,resolution,1);
         
 #if WRITE_MODES
         
@@ -259,206 +271,6 @@ namespace m3D {
 
         return cluster_list;
     }
-    
-#if 0
-    template <typename T> 
-    typename Cluster<T>::list 
-    ClusterOperation<T>::create_cluster_graph( vector<T>& bandwidth, 
-                                          Kernel<T> &kernel, 
-                                          WeightFunction<T> *weight_function,
-                                          bool show_progress_bar )
-    {
-        typename Cluster<T>::list result;
-        
-        if ( show_progress_bar )
-        {
-            m_progress_bar = new boost::progress_display( 2 * points.size() );
-        }
-        
-        typename Point<T>::listIterator pi;
-        
-        vector<T> resolution = coordinate_system->resolution();
-        
-        // calculate all gradient estimates
-        
-        for ( pi = points.begin(); pi != points.end(); pi++ )
-        {
-            // Grab the sample
-            
-            typename Point<T>::list *sample = m_index->range_search( (*pi)->values, bandwidth );
-            
-            //            cout << "Sample around "; 
-            //            print_vector( (*pi)->values );
-            //            cout << " contains " << sample->size() << " points." << endl;
-            
-            (*pi)->shift = sample_meanshift( (*pi)->values, sample, bandwidth, kernel, weight_function );
-            
-            //            cout << "-> meanshift = ";
-            //            print_vector( (*pi)->shift );
-            //            cout << endl;
-            
-            if ( show_progress_bar )
-            {
-                increment_cluster_progress();
-            }
-            
-            delete sample;
-        }
-        
-        for ( pi = points.begin(); pi != points.end(); pi++ )
-        {
-            // Grab the sample
-            typename Point<T>::list *sample = m_index->range_search( (*pi)->values, bandwidth );
-            
-            // Find the vector xi in the sample, where the angle between | x - xi | 
-            // is closest to the sample meanshift vector
-            // (see Fukunaga, Introduction to statistical pattern recognition
-            //  second edition, pp539 ff)
-            
-            Point<T> *steepest_ascending_point = NULL;
-            
-            T min_angle = std::numeric_limits<T>::max();
-            
-            //            T max_alignment = std::numeric_limits<T>::min();
-            
-            typename Point<T>::listIterator si;
-            
-            vector<T> dx( (*pi)->values.size() );
-            
-            for ( si = sample->begin(); si != sample->end(); si++ )
-            {
-                vector_subtract_r( (*si)->values, (*pi)->values , dx );
-                
-                T angle = vector_angle( (*si)->shift, dx );
-                
-                if ( angle < min_angle )
-                {
-                    min_angle = angle;
-                    
-                    steepest_ascending_point = *si;
-                }
-                
-                //                T alignment = scalar_product( shift, dx );
-                //                
-                //                if ( alignment > max_alignment )
-                //                {
-                //                    steepest_ascending_point = *si;
-                //                    
-                //                    max_alignment = alignment;
-                //                }
-                
-            }
-            
-            // No self-reference allowed here
-            
-            if ( steepest_ascending_point != (*pi) )
-            {
-                (*pi)->next = steepest_ascending_point;
-            }
-            
-            if ( show_progress_bar )
-            {
-                increment_cluster_progress();
-            }
-            
-            delete sample;
-        }
-        
-        if ( show_progress_bar )
-        {
-            delete m_progress_bar;
-            
-            m_progress_bar = NULL;
-        }
-        
-        return result;
-    };    
-
-    template <typename T> 
-    void 
-    ClusterOperation<T>::aggregate_clusters( vector<T>& fuzziness )
-    {
-        vector< Cluster<T> > aggregates;
-        
-        while ( m_clusters.size() > 0 )
-        {
-            Cluster<T> cluster = m_clusters.front();
-            
-            // find all candidates in the vicinity
-            
-            vector< Cluster<T> > candidates;
-            
-            candidates.push_back( cluster );
-            
-            // some vars
-            
-            vector<T> mode = cluster.mode();
-            
-            vector<T> mean_mode( mode.size(), 0 );
-            
-            if ( m_clusters.size() > 1 )
-            {
-                for ( size_t j = 1; j < m_clusters.size(); j++ )
-                {
-                    Cluster<T> candidate = m_clusters[j];
-                    
-                    vector<T> candidate_mode = candidate.mode();
-                    
-                    if ( within_range( mode, candidate_mode, fuzziness ) )
-                    {
-                        candidates.push_back( candidate );
-                    }
-                }
-            }
-            
-            // calculate arithmetic mean of candidate modes
-            
-            for ( size_t j = 0; j < candidates.size(); j++ )
-            {
-                Cluster<T> candidate = candidates[j];
-                
-                for ( size_t ri = 0; ri < mode.size(); ri++ )
-                {
-                    mean_mode[ri] += candidate.mode()[ri];
-                }
-            }
-            
-            vector_mult_scalar( mean_mode, 1.0 / ((T) candidates.size()) );
-            
-            // Create aggregate cluster
-            
-            Cluster<T> new_cluster( mean_mode );
-            
-            for ( size_t j = 0; j < candidates.size(); j++ )
-            {
-                new_cluster.add_points( candidates[j].points() );
-            }
-            
-            aggregates.push_back( new_cluster );
-            
-            // remove the aggregated clusters from the original set
-            
-            for ( size_t j = 0; j < candidates.size(); j++ )
-            {
-                Cluster<T> c = candidates[ j ];
-                
-                typename vector< Cluster<T> >::iterator it = find( m_clusters.begin(), m_clusters.end(), c );
-                
-                m_clusters.erase( it );
-            }
-            
-            cout << "Aggregating " << candidates.size() << " clusters." << endl;
-            cout << "mean mode = ";
-            print_vector( mean_mode );
-            cout << endl;
-            cout << "#clusters remaning = " << m_clusters.size() << endl;
-        }
-        
-        m_clusters = aggregates;
-    }
-    
-#endif
-
 }
 
 #endif

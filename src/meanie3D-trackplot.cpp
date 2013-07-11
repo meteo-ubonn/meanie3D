@@ -342,7 +342,7 @@ int main(int argc, char** argv)
     
             // For each track, create an array index. Start with empty index.
             
-            ArrayIndex<T> index(coord_system);
+            ArrayIndex<T> index(coord_system,false);
             
             // Iterate over the clusters in the track and sum up
             

@@ -111,18 +111,12 @@ namespace m3D {
                 continue;
             }
 #endif
-            
-            if ( !m3p->isOriginalPoint() )
+            if ( !m3p->isOriginalPoint() && addOriginalPointsOnly )
             {
                 continue;
             }
             
-//            typename Point<T>::list::iterator fi = find( points.begin(), points.end(), p );
-//            
-//            if ( fi == points.end() )
-//            {
-                this->add_point( p );
-//            }
+            this->add_point( p );
         }
     }
     

@@ -14,9 +14,10 @@ namespace m3D {
 	using cfa::meanshift::Point;
     
     template <typename T>
-    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs)
+    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs,bool make_copies)
     : m_coordinate_system(cs)
     , m_data(NULL)
+    , m_make_copies(make_copies)
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
@@ -24,9 +25,12 @@ namespace m3D {
     }
     
     template <typename T>
-    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs, const typename Point<T>::list &points)
+    ArrayIndex<T>::ArrayIndex(CoordinateSystem<T> *cs,
+                              const typename Point<T>::list &points,
+                              bool make_copies)
     : m_coordinate_system(cs)
     , m_data(NULL)
+    , m_make_copies(make_copies)
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
@@ -39,6 +43,7 @@ namespace m3D {
     ArrayIndex<T>::ArrayIndex(ArrayIndex<T> *o)
     : m_coordinate_system(o->m_coordinate_system)
     , m_data(NULL)
+    , m_make_copies(o->m_make_copies)
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
 
@@ -222,7 +227,14 @@ namespace m3D {
                     
                     if ( p != NULL )
                     {
-                        new_array->at(i) = PointFactory<T>::get_instance()->copy(p);
+                        if (this->m_make_copies)
+                        {
+                            new_array->at(i) = PointFactory<T>::get_instance()->copy(p);
+                        }
+                        else
+                        {
+                            new_array->at(i) = p;
+                        }
                     }
                 }
             }
@@ -282,13 +294,16 @@ namespace m3D {
             
             vector<typename Point<T>::ptr> *the_array = (vector<typename Point<T>::ptr> *) super_array->at(super_index);
             
-            for (size_t i = 0; i < the_array->size(); i++)
+            if (this->m_make_copies)
             {
-                typename Point<T>::ptr p = the_array->at(i);
-
-                if (p!=NULL)
+                for (size_t i = 0; i < the_array->size(); i++)
                 {
-                    delete p;
+                    typename Point<T>::ptr p = the_array->at(i);
+
+                    if (p!=NULL)
+                    {
+                        delete p;
+                    }
                 }
             }
             
@@ -304,7 +319,7 @@ namespace m3D {
         {
             typename Point<T>::ptr p = list[i];
             
-            this->set( p->gridpoint, p );
+            this->set( p->gridpoint, p, this->m_make_copies );
         }
     }
      

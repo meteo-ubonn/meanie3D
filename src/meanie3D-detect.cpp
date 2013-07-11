@@ -63,6 +63,7 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity,
                         unsigned int &min_cluster_size,
+                        PostAggregationMethod &post_aggregation,
                         double &drf_threshold,
                         vector<NcVar> &vtk_variables)
 {
@@ -490,9 +491,32 @@ void parse_commmandline(program_options::variables_map vm,
             }
         }
     }
+    
+    if (vm.count("post-aggregate-clusters") > 0)
+    {
+        std::string val = vm["post-aggregate-clusters"].as<std::string>();
+        
+        if (val=="coalesce")
+        {
+            post_aggregation = PostAggregationMethodCoalescence;
+        }
+        else if (val == "drf")
+        {
+            post_aggregation = PostAggregationMethodDRF;
+        }
+        else if (val == "none")
+        {
+            post_aggregation = PostAggregationMethodNone;
+        }
+        else
+        {
+            cerr << "Unknown value for --post-aggregate-clusters (coalesce,drf,none)" << endl;
+            exit(-1);
+        }
+    }
 }
 
-/** 
+/**
  *
  *
  */
@@ -516,7 +540,8 @@ int main(int argc, char** argv)
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
     ("ranges,r", program_options::value<string>(), "Using this parameters means, you are choosing the range search method. Comma separated list of (dimensionless) ranges. Use in the order of (dim1,...dimN,var1,...,varN).")
     ("cluster-resolution,c",program_options::value<string>(), "When using KNN, specify the resolution of the clusters as comma separated list of (dimensionless) values. Use in the order of (dim1,...dimN,var1,...,varN).")
-    ("drf-threshold",program_options::value<double>()->default_value(0.65), "Dynamic range factor threshold for merging clusters. 1 means nothing is merged (=raw clusters). 0 means everything is merged as soon as it touches.")
+    ("post-aggregate-clusters,p",program_options::value<string>()->default_value("none"), "Run a post-processing step on raw meanshift clusters. Options are none (default),drf,coalesce")
+    ("drf-threshold",program_options::value<double>()->default_value(0.65), "Used if -p=drf. DRF threshold for merging clusters. 1 means nothing is merged (=raw clusters). 0 means everything is merged as soon as it touches.")
     ("knn,k", program_options::value<long>(), "Using this parameter means, that you are choosing KNN-Method. The parameter value is the number of nearest neighbours to be used.")
     ("weight-variable,w", program_options::value<string>(), "variable to be used to weight meanshift. If none is given, the first variable is picked.")
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Keep only clusters of this minimum size at each pass")
@@ -568,6 +593,7 @@ int main(int argc, char** argv)
     unsigned int min_cluster_size = 1;
     Verbosity verbosity = VerbosityNormal;
     double scale = NO_SCALE;
+    PostAggregationMethod post_aggregation = PostAggregationMethodNone;
     double drf = 0.95;
     
     try
@@ -590,6 +616,7 @@ int main(int argc, char** argv)
                            vtk_dimension_indexes,
                            verbosity,
                            min_cluster_size,
+                           post_aggregation,
                            drf,
                            vtk_variables);
         
@@ -704,9 +731,27 @@ int main(int argc, char** argv)
         {
             cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
         }
-
-        cout << "\tdynamic range factor = " << drf << endl;
         
+        cout << "\tpost-processing of raw clusters: ";
+        switch (post_aggregation)
+        {
+            case m3D::PostAggregationMethodNone:
+                cout << "none.";
+                break;
+                
+            case m3D::PostAggregationMethodCoalescence:
+                cout << "coalescence";
+                break;
+                
+            case m3D::PostAggregationMethodDRF:
+                cout << "dynamic range factor = "<< drf;
+                
+            default:
+                break;
+        }
+        
+        cout << endl;
+
         cout << "\toutput written to file: " << output_filename << endl;
         
         cout << "\tclusters written as vtk: " << (write_vtk ? "yes":"no") << endl;
@@ -768,6 +813,8 @@ int main(int argc, char** argv)
     fs->off_limits()->write("off_limits.vtk","off_limits");
 #endif
     
+    OASEWeightFunction<FS_TYPE> *weight_function = NULL;
+    
     // Scale-Space smoothing
     
     if (scale != NO_SCALE)
@@ -778,12 +825,28 @@ int main(int argc, char** argv)
         
     	sf.apply(fs);
         
-        // update the weight function
-        // weight_function->update_limits(sf.get_filtered_min(),sf.get_filtered_max());
+        if ( verbosity > VerbositySilent )
+            cout << endl << "Constructing OASE weight function ...";
         
-        cout << "\t" << fs->points.size() << " points." << endl;
+        weight_function = new OASEWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(),sf.get_filtered_max());
+        
+        if ( verbosity > VerbositySilent )
+            cout << " done." << endl;
+        
+        WeightThresholdFilter<FS_TYPE> wtf(weight_function,0.01, 10000, true);
+        wtf.apply(fs);
     }
-    
+    else
+    {
+        if ( verbosity > VerbositySilent )
+            cout << endl << "Constructing OASE weight function ...";
+        
+        weight_function = new OASEWeightFunction<FS_TYPE>(fs);
+        
+        if ( verbosity > VerbositySilent )
+            cout << " done." << endl;
+    }
+
     if (!vtk_variables.empty())
     {
         string filename_only = boost::filesystem::path(filename).filename().string();
@@ -798,11 +861,16 @@ int main(int argc, char** argv)
         
         string dest_path = destination_path.generic_string();
         
+        if ( verbosity > VerbositySilent )
+            cout << "Writing featurespace-variables ...";
+        
         cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
+        
+        if ( verbosity > VerbositySilent )
+            cout << " done." << endl;
     }
     
-    OASEWeightFunction<FS_TYPE> *weight_function = new OASEWeightFunction<FS_TYPE>(fs);
-
+    
 #if WRITE_WEIGHT_FUNCTION
     boost::filesystem::path path(filename);
     std::string wfname = path.filename().stem().string() + "-weights.vtk";
@@ -829,7 +897,7 @@ int main(int argc, char** argv)
 
     ClusterOperation<FS_TYPE> cop( fs, index );
     
-    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, drf, show_progress );
+    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, post_aggregation, drf, show_progress );
     
     // Sanity check
     

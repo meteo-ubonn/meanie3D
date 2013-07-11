@@ -5,6 +5,7 @@
 #include <meanie3D/filters/scalespace_kernel_impl.h>
 #include <meanie3D/filters/scalespace_filter_impl.h>
 #include <meanie3D/filters/threshold_filter_impl.h>
+#include <meanie3D/filters/weight_filter_impl.h>
 #include <meanie3D/implementations.h>
 #include <meanie3D/types/cluster_impl.h>
 #include <meanie3D/types/cluster_list_impl.h>

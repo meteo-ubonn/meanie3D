@@ -78,8 +78,8 @@ def add_pseudocolor(vtk_file,variable,color_table_name):
     #p.legendFlag=1
     p.lightingFlag=1
     #p.invertColorTable=1
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = 0.0, 50.0
+    #p.minFlag,p.maxFlag = 1,1
+    #p.min,p.max = 0.0, 50.0
     p.opacity=1.0
     SetPlotOptions(p)
     return

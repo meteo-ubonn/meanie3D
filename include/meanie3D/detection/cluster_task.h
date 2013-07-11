@@ -109,8 +109,28 @@ namespace m3D {
         m_weight_function(weight_function),
         m_drf_threshold( drf_threshold ),
         m_show_progress(show_progress)
+        {};
+        
+        vector<int>
+        gridded_vector(const vector<T> &m) const
         {
-        };
+            size_t spatial_dims = m_fs->coordinate_system->resolution().size();
+            
+            // Obtain the grid version
+            
+            vector<int> gridded_shift(spatial_dims,0);
+            
+            for (size_t ci=0; ci < spatial_dims; ci++)
+            {
+                T resolution = m_fs->coordinate_system->resolution()[ci];
+                
+                int multiplier = round( m[ci] / resolution );
+                
+                gridded_shift[ci] = multiplier;
+            }
+            
+            return gridded_shift;
+        }
         
         void 
         operator()( const tbb::blocked_range<size_t>& r ) const
@@ -131,6 +151,8 @@ namespace m3D {
                 // the scale-space filtering
                 
                 x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
+                
+                x->gridded_shift = gridded_vector(x->shift);
             }
             
             m_op->report_done();
@@ -152,6 +174,8 @@ namespace m3D {
                 typename Point<T>::ptr x = m_fs->points[ index ];
                 
                 x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
+                
+                x->gridded_shift = gridded_vector(x->shift);
             }
             
             m_op->report_done();

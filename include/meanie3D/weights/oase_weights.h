@@ -43,6 +43,10 @@ namespace m3D { namespace weights {
         
     public:
         
+        /** Construct the weight function, using the default values
+         * for valid_min/valid_max
+         * @param featurespace
+         */
         OASEWeightFunction(FeatureSpace<T> *fs)
         : m_vars(fs->variables())
         , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
@@ -61,18 +65,20 @@ namespace m3D { namespace weights {
             build_saliency_field(fs);
         }
         
-        /** Smoothing distorts the value range. In order to keep 
-         * the weight calculation straight, allow users to update
-         * the limits
-         * @param index 
-         * @param min
-         * @param max
+        /** Construct the weight function, using the given values
+         * for valid_min/valid_max
+         * @param featurespace
+         * @param map of lower bounds
+         * @param map of upper bounds
          */
-        void
-        update_limits(const map<size_t,T> &min, const map<size_t,T> &max)
+        OASEWeightFunction(FeatureSpace<T> *fs, const map<size_t,T> &min, const map<size_t,T> &max)
+        : m_vars(fs->variables())
+        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_coordinate_system(fs->coordinate_system)
+        , m_min(min)
+        , m_max(max)
         {
-            m_min = min;
-            m_max = max;
+            build_saliency_field(fs);
         }
         
         /** Actual weight computation happens here

@@ -32,9 +32,10 @@ namespace m3D {
 #pragma mark Attributes
 
     private:
-
+        
         const CoordinateSystem<T>   *m_coordinate_system;
         array_t                     *m_data;
+        bool                        m_make_copies;
         
         /** Called by build_index, copy constructor
          */
@@ -77,18 +78,27 @@ namespace m3D {
 
         /** Constructs an array index for the given coordinate system.
          * @param coordinate system
+         * @param if <code>true</code>, the index makes copies of the
+         *        original points. If <code>false</code> it simply holds
+         *        references
          */
-        ArrayIndex(CoordinateSystem<T> *cs);
+        ArrayIndex(CoordinateSystem<T> *cs, bool make_copies);
         
         /** Constructs an array index vor the given coordinate system
          * and indexes the point list.
          * @param coordinate system
          * @param point list
+         * @param if <code>true</code>, the index makes copies of the
+         *        original points. If <code>false</code> it simply holds
+         *        references
          */
-        ArrayIndex(CoordinateSystem<T> *cs, const typename Point<T>::list &points);
+        ArrayIndex(CoordinateSystem<T> *cs, const typename Point<T>::list &points, bool make_copies);
         
         /** Copy constructor on pointer
          * @param pointer to array index
+         * @param if <code>true</code>, the index makes copies of the
+         *        original points. If <code>false</code> it simply holds
+         *        references
          */
         ArrayIndex(ArrayIndex<T> *other);
         

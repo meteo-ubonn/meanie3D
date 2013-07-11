@@ -79,10 +79,7 @@ namespace m3D {
         /** Unique cluster ID. Used for tracking.
          */
         id_t                        id;
-        
-        // default constructor
-        Cluster();
-        
+
         size_t
         spatial_dimension() { return m_spatial_dimension; };
         
@@ -91,6 +88,10 @@ namespace m3D {
         
 #pragma mark -
 #pragma mark Constructor/Destructor
+        
+        /** Default Constructor
+         */
+        Cluster();
         
         /** Constructor
          * @param the cluster mode in feature-space (not in spatial coordinates!!)

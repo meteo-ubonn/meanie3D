@@ -490,6 +490,8 @@ namespace m3D {
                     continue;
                 }
                 
+                // threshold at weight function response of 1.0
+                
                 ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
                 
                 // Find the boundaries. Take care not to step
@@ -673,26 +675,14 @@ namespace m3D {
         
         if ( this->show_progress() )
         {
-            cout << "Constructing array index ...";
+            cout << endl << "Constructing array indexes ...";
             
             start_timer();
         }
 
-        ArrayIndex<T> *originalIndex = new ArrayIndex<T>(cs, fs->points);
+        ArrayIndex<T> *originalIndex = new ArrayIndex<T>(cs, fs->points, true);
         
-        if ( this->show_progress() )
-        {
-            cout << "done. (" << stop_timer() << "s)" << endl;
-        }
-        
-        if ( this->show_progress() )
-        {
-            cout << "Constructing array index ...";
-            
-            start_timer();
-        }
-
-        ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs);
+        ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs,true);
         
         if ( this->show_progress() )
         {
@@ -727,7 +717,7 @@ namespace m3D {
             
                 originalIndex = filteredIndex;
                 
-                filteredIndex = new ArrayIndex<T>(cs);
+                filteredIndex = new ArrayIndex<T>(cs,true);
             }
         }
         

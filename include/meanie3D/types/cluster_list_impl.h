@@ -54,49 +54,6 @@ namespace m3D {
 #pragma mark -
 #pragma mark Adding / Removing points
     
-    template <typename T> 
-    void 
-    ClusterList<T>::add_trajectory( const typename Point<T>::ptr x,
-                                    Trajectory *trajectory,
-                                    FeatureSpace<T> *fs )
-    {
-        vector<T> mode = trajectory->back();
-        
-        //cout << "Adding mode " << mode << " to cluster list" << endl;
-        
-#if WRITE_MODES
-        m_trajectory_endpoints.push_back( mode );
-        m_trajectory_lengths.push_back( trajectory->size() );
-#endif
-        
-        // Round the mode to resolution
-        
-        fs->round_to_resolution( mode );
-        
-        // Already have this mode?
-
-        typename ClusterMap::iterator cm_node = m_cluster_map.find( mode );
-        
-        typename Cluster<T>::ptr cluster;
-        
-        if ( cm_node != m_cluster_map.end() )
-        {
-            // We have it
-            cluster = cm_node->second;
-        }
-        else
-        {
-            // Don't have it, create it fresh
-            cluster = new Cluster<T>(mode);
-            
-            m_cluster_map[mode] = cluster;
-            
-            clusters.push_back( cluster );
-        }
-        
-        cluster->add_point(x);
-    };
-    
     template <typename T>
     void
     ClusterList<T>::apply_size_threshold( unsigned int min_cluster_size, const bool& show_progress )
@@ -146,78 +103,6 @@ namespace m3D {
     }
     
     template <typename T>
-    void
-    ClusterList<T>::aggregate_with_parent_clusters( const ClusterList<T> &parent_clusters )
-    {
-        vector< vector<T> > used_modes;
-        
-        typename Cluster<T>::list::iterator sci;
-        
-        for ( size_t sc_index = 0; sc_index < clusters.size(); sc_index++ )
-        {
-            size_t point_count = 0;
-            
-            typename Cluster<T>::ptr sc = clusters[sc_index];
-            
-            typename Point<T>::list aggregated_points;
-            
-            size_t matching_cluster_count = 0;
-            
-            for ( size_t pci = 0; pci < parent_clusters.clusters.size(); pci++ )
-            {
-                typename Cluster<T>::ptr parent_cluster = parent_clusters.clusters[pci];
-                
-                // If the parent's mode is this point's value, add it's points
-                // to the list
-                
-                for ( size_t sc_point_index = 0; sc_point_index < sc->points.size(); sc_point_index++ )
-                {
-                    typename Point<T>::ptr sc_point = sc->points[sc_point_index];
-                
-                    if ( parent_cluster->mode == sc_point->values )
-                    {
-                        typename vector< vector<T> >::iterator got_mode = find( used_modes.begin(), used_modes.end(), parent_cluster->mode );
-                        
-                        if ( got_mode != used_modes.end() )
-                        {
-                            cout << "Assigning cluster #" << pci << " at " << parent_cluster->mode << " to supercluster at " << sc->mode << " AGAIN" << endl;
-                        }
-                        
-                        used_modes.push_back( parent_cluster->mode );
-                        
-                        matching_cluster_count++;
-                        
-                        // replace the 'cluster' pointer in the points with
-                        // the supercluster and add those points to the list
-                        // of aggregated points
-                        
-                        // cout << "Point matches mode of cluster at " << parent_cluster->mode << " (" << parent_cluster->points.size() << " points.)" << endl;
-                        
-                        size_t parent_point_count = 0;
-                        
-                        for ( size_t pc_point_index = 0; pc_point_index < parent_cluster->points.size(); pc_point_index++ )
-                        {
-                            typename Point<T>::ptr pc_point = parent_cluster->points[ pc_point_index ];
-                            
-                            aggregated_points.push_back( pc_point );
-                            
-                            pc_point->cluster = sc;
-                            
-                            parent_point_count++;
-                            
-                            point_count++;
-                        }
-                        
-                        // cout << "Added " << parent_point_count << " points to supercluster at " << sc->mode << endl;
-                    }
-                }
-            }
-            
-            sc->points = aggregated_points;
-        }
-    }
-
-    template <typename T> 
     void 
     ClusterList<T>::write( const std::string& path )
     {
@@ -655,16 +540,253 @@ namespace m3D {
     
 #pragma mark -
 #pragma mark Clustering by Graph Theory
+     
+    template <typename T>
+    void
+    ClusterList<T>::find_neighbours(FeatureSpace<T> *fs,
+                                    ArrayIndex<T> &arrayIndex,
+                                    typename Point<T>::list &list,
+                                    size_t dimensionIndex,
+                                    typename CoordinateSystem<T>::GridPoint &gridpoint)
+    {
+        NcDim dim = fs->coordinate_system->dimensions()[dimensionIndex];
+        
+        // iterate over dimensions
+        
+        int start = gridpoint[dimensionIndex] - 1;
+        
+        int end = gridpoint[dimensionIndex] + 1;
+        
+        for ( int index = start; index <= end; index++ )
+        {
+            gridpoint[dimensionIndex] = index;
+            
+            // guard against index error
+            
+            if (index < 0 || index > (dim.getSize()-1))
+            {
+                continue;
+            }
+
+            if ( dimensionIndex < (gridpoint.size()-1) )
+            {
+                // recurse
+                find_neighbours(fs,arrayIndex,list,dimensionIndex+1,gridpoint);
+            }
+            else
+            {
+                // collect
+                
+                //std::cout << gridpoint << endl;
+                
+                typename Point<T>::ptr p = arrayIndex.get(gridpoint);
+                
+                if (p != NULL)
+                {
+                    list.push_back(p);
+                }
+            }
+        }
+        
+        gridpoint[dimensionIndex] = start+1;
+    }
+
+    template <typename T>
+    typename Point<T>::list
+    ClusterList<T>::find_neighbours(FeatureSpace<T> *fs,
+                                    ArrayIndex<T> &index,
+                                    const typename CoordinateSystem<T>::GridPoint &gridpoint)
+    {
+        typename Point<T>::list neighbours;
+        
+        typename CoordinateSystem<T>::GridPoint gp = gridpoint;
+        
+        //cout << "finding neighbours of " << gridpoint << " :" << endl;
+        
+        this->find_neighbours(fs,index,neighbours,0,gp);
+        
+        return neighbours;
+    }
+
+    template <typename T>
+    void
+    ClusterList<T>::aggregate_zeroshifts(FeatureSpace<T> *fs,
+                                         ArrayIndex<T> &index,
+                                         bool show_progress)
+    {
+        boost::progress_display *progress = NULL;
+        
+        if (show_progress)
+        {
+            cout << endl << "Clustering zero-shift areas ...";
+            progress = new boost::progress_display( fs->points.size() );
+            start_timer();
+        }
+
+        for ( size_t i = 0; i < fs->points.size(); i++ )
+        {
+            if (show_progress)
+            {
+                progress->operator++();
+            }
+            
+            M3DPoint<T> *current_point = (M3DPoint<T> *) fs->points[i];
+            
+            if (current_point->cluster != NULL)
+            {
+                continue;
+            }
+            
+            // skip zeroshift to save time
+            
+            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
+            {
+                typename Point<T>::list zeroshift_neighbours;
+                
+                typename Point<T>::list neighbours = find_neighbours(fs,index,current_point->gridpoint);
+                
+                bool found_cluster = false;
+                
+                for (size_t ni = 0; ni < neighbours.size() && !found_cluster; ni++)
+                {
+                    M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
+                    
+                    if (n==current_point) continue;
+                    
+                    if (vector_norm(fs->spatial_component(n->shift)) == 0)
+                    {
+                        
+                        if ( current_point->cluster == NULL && n->cluster == NULL )
+                        {
+                            // Neither current point nor neighbour have cluster
+                            // => create new cluster
+                            
+                            size_t spatial_dims = fs->coordinate_system->size();
+                            
+                            typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,spatial_dims);
+                            
+                            c->add_point(current_point);
+                            
+                            c->add_point(n);
+                            
+                            clusters.push_back(c);
+                        }
+                        else if ( current_point->cluster == NULL && n->cluster != NULL )
+                        {
+                            // neighbour has cluster
+                            // => add current point to neighbour's cluster
+                            n->cluster->add_point(current_point);
+                        }
+                        else if (current_point->cluster !=NULL && n->cluster == NULL)
+                        {
+                            // current point has cluster
+                            // => add neighbour to current point's cluster
+                            current_point->cluster->add_point(n);
+                        }
+                        else if ((current_point->cluster !=NULL && n->cluster != NULL)
+                                 && (current_point->cluster != n->cluster ))
+                        {
+                            // current point's cluster and neighbour's cluster
+                            // => merge current point's cluster into neighbour's cluster
+                            typename Cluster<T>::ptr c = current_point->cluster;
+                            
+                            n->cluster->add_points(c->points,false);
+                            
+                            clusters.erase(find(clusters.begin(),clusters.end(),c));
+                            
+                            delete c;
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (size_t i=0; i < clusters.size(); i++)
+        {
+            typename Cluster<T>::ptr c = clusters.at(i);
+            
+            cout << "Found zeroshift cluster #" << i << " (" << c->points.size() << " points)." << endl;
+        }
+        
+        if ( show_progress )
+        {
+            cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
+            delete progress;
+        }
+    }
     
     template <typename T>
     void
-    ClusterList<T>::aggregate_cluster_graph( const WeightFunction<T> *weight_function, FeatureSpace<T> *fs, const vector<T> &resolution, const bool& show_progress )
+    ClusterList<T>::check_clusters(FeatureSpace<T> *fs, ArrayIndex<T> &index)
+    {
+        // sanity checking
+        
+        typename Cluster<T>::list::iterator ci;
+        
+        for (ci=clusters.begin(); ci!=clusters.end(); ci++)
+        {
+            typename Cluster<T>::ptr c1 = *ci;
+            
+            typename Point<T>::list::iterator pi;
+            
+            for (pi = c1->points.begin(); pi != c1->points.end(); pi++)
+            {
+                M3DPoint<T> *p = (M3DPoint<T> *) *pi;
+                
+                M3DPoint<T> *pred = (M3DPoint<T> *) predecessor_of(fs,index,p);
+                
+                if (pred==NULL) continue;
+                
+                if (pred->cluster != c1)
+                {
+                    cout << "Point " << p->coordinate << " points to " << pred->coordinate << endl;
+                    cout << "Their clusters are not identical!";
+                    
+//                    pred->cluster->add_points(c1->points,false);
+//                    
+//                    clusters.erase(ci);
+//                    
+//                    delete c1;
+//                    
+//                    // start over
+//                    
+//                    ci = clusters.begin();
+                
+                    typename Point<T>::list::iterator pci;
+                    
+                    for (pci = pred->cluster->points.begin(); pci != pred->cluster->points.end(); pci++)
+                    {
+                        M3DPoint<T> *pc = (M3DPoint<T> *) *pci;
+                        
+                        if (p->coordinate == pc->coordinate)
+                        {
+                            cout << "Point " << p << " @ " << p->coordinate
+                                 << " has same coordinate as " << pc->coordinate << " @" << pc->coordinate
+                                 << " but their clusters are not identical"
+                                 << endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    template <typename T>
+    void
+    ClusterList<T>::aggregate_cluster_graph(const WeightFunction<T> *weight_function, FeatureSpace<T> *fs, const vector<T> &resolution, const bool& show_progress )
     {
         // PointIndex<T>::write_index_searches = true;
         
-        size_t cluster_id = 0;
-        
         boost::progress_display *progress = NULL;
+        
+        ArrayIndex<T> index(fs->coordinate_system,fs->points,false);
+        
+        this->aggregate_zeroshifts(fs,index,show_progress);
+        
+        // Sanity checking
+        // this->check_clusters(fs,index);
+        
+        size_t cluster_id = this->clusters.size();
         
         if (show_progress)
         {
@@ -673,10 +795,6 @@ namespace m3D {
             progress = new boost::progress_display( fs->points.size() );
         }
         
-        // Create own index for KNN search
-        
-        PointIndex<T> *index = PointIndex<T>::create( fs );
-        
         for ( size_t i = 0; i < fs->points.size(); i++ )
         {
             if (show_progress)
@@ -684,82 +802,145 @@ namespace m3D {
                 progress->operator++();
             }
             
-            M3DPoint<T> *p = (M3DPoint<T> *) fs->points[i];
+            M3DPoint<T> *current_point = (M3DPoint<T> *) fs->points[i];
             
-            // Skip points that have been assigned already
+            // skip zeroshift to save time
             
-            if ( p->cluster != NULL ) continue;
-            
-            // Skip points, that do not belong to the original
-            // feature-space, but were created by scale-space
-            // filtering etc.
-            
-            if ( ! p->isOriginalPoint()) continue;
-            
-            typename Point<T>::list nodes;
-            
-            bool have_predecessor = true;
-            
-            typename M3DPoint<T>::ptr current_point = p;
-
-            do
+            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
             {
-                // Guard against cycles
-                
-                typename Point<T>::list::const_iterator f = find( nodes.begin(), nodes.end(), current_point );
-                
-                if ( f != nodes.end() ) break;
-                
-                // Add current point to the list and move on
-                
-                nodes.push_back( current_point );
-
-                M3DPoint<T> *predecessor = (M3DPoint<T> *) predecessor_of( fs, index, resolution, weight_function, current_point );
-                
-                if ( predecessor->cluster != NULL )
-                {
-                    // add all points so far to the existing cluster
-                    // and exit
-                    
-                    typename Cluster<T>::ptr c = predecessor->cluster;
-                    
-                    // Do a sanity check
-                    
-                    typename Cluster<T>::list::const_iterator fi = find( this->clusters.begin(), this->clusters.end(), c );
-                    
-                    assert( fi != this->clusters.end() );
-                    
-                    c->add_points( nodes );
-                    
-                    nodes.clear();
-                    
-                    break;
-                }
-                
-                have_predecessor = ( predecessor != current_point );
-                
-                if ( have_predecessor )
-                {
-                    current_point = predecessor;
-                }
-                
-            } while ( have_predecessor );
+                continue;
+            }
             
-            if ( nodes.size() > 0 )
+            // Find the predecessor through gridded shift
+            
+            size_t spatial_dims = fs->coordinate_system->size();
+            
+            vector<size_t> gridpoint(spatial_dims,0);
+            
+            for (size_t k=0; k < spatial_dims; k++)
             {
-                // Create a cluster and add it to the list
+                gridpoint[k] = current_point->gridpoint[k] + current_point->gridded_shift[k];
+            }
+            
+            M3DPoint<T> *predecessor = (M3DPoint<T> *)index.get(gridpoint);
+
+            // Start testing
+            
+            if (predecessor != NULL)
+            {
+                #if DEBUG_GRAPH_AGGREGATION
+                    cout << endl;
+                    cout << "current point : " << current_point << " @ " << current_point->gridpoint << " (" << current_point->cluster << ")" << endl;
+                    cout << "predecessor   : " << predecessor << " @ " << predecessor->gridpoint << " (" << predecessor->cluster << ")" << endl;
+                    // cout << "(reverse lookup of " << x << " = " << gp << ")" << endl;
+                #endif
                 
-                typename Cluster<T>::ptr cluster = new Cluster<T>( nodes.back()->values, this->dimensions.size() );
+                if (current_point->cluster == NULL && predecessor->cluster == NULL)
+                {
+                    // Neither point has a cluster
+                    // => create new one
+                    
+                    typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->size());
+                    c->id = cluster_id++;
+                    c->add_point(current_point);
+                    c->add_point(predecessor);
+                    clusters.push_back(c);
+                    
+                    #if DEBUG_GRAPH_AGGREGATION
+                        cout << "created new cluster " << c << " (" << c->points.size() << " points)" << endl;
+                    #endif
+                }
+                else if (current_point->cluster == NULL && predecessor->cluster != NULL)
+                {
+                    // current point has no cluster, but predecessor has one
+                    // => add current point to predecessor's cluster
+                    
+                    predecessor->cluster->add_point(current_point);
+                    #if DEBUG_GRAPH_AGGREGATION
+                        cout << "added current point to cluster " << predecessor->cluster
+                             << " (" << predecessor->cluster->points.size() << " points)" << endl;
+                    #endif
+                }
+                else if (current_point->cluster != NULL && predecessor->cluster == NULL)
+                {
+                    // current point has a cluster, but predecessor has none
+                    // => add predecessor to current point's cluster
+                    
+                    current_point->cluster->add_point(predecessor);
+
+                    #if DEBUG_GRAPH_AGGREGATION
+                    cout << "added predecessor to cluster " << current_point->cluster << " (" << current_point->cluster->points.size() << " points)" << endl;
+                    #endif
+                }
+                else if (current_point->cluster != NULL
+                         && predecessor->cluster != NULL
+                         && (current_point->cluster != predecessor->cluster))
+                {
+                    // both points have different clusters
+                    // => merge current cluster's points to predecessor's cluster
+                    //    and delete current cluster
+                    
+                    typename Cluster<T>::ptr c1 = current_point->cluster;
+                    
+                    #if DEBUG_GRAPH_AGGREGATION
+                        cout << "merging clusters " << c1 << " (" << c1->points.size() << " points)"
+                             << "into " << predecessor->cluster << " (" << predecessor->cluster->points.size() << " points)"
+                             << endl;
+                    #endif
+                    
+                    // absorb predecessor
                 
-                cluster->add_points( nodes, m_use_original_points_only );
-                
-                cluster->id = cluster_id++;
-                
-                this->clusters.push_back( cluster );
+                    predecessor->cluster->add_points(c1->points,false);
+                    
+                    // remove it
+                    
+                    typename Cluster<T>::list::iterator fi;
+                    
+                    clusters.erase(find(clusters.begin(),clusters.end(),c1));
+                    
+                    delete c1;
+                }
+                else if (current_point->cluster != NULL
+                         && predecessor->cluster != NULL
+                         && (current_point->cluster == predecessor->cluster))
+                {
+                    // both points are already part of the same cluster
+                    // => do nothing
+                    
+                    #if DEBUG_GRAPH_AGGREGATION
+                        cout << "Both points are part of the same cluster. Skip." << endl;
+                    #endif
+                }
             }
         }
         
-        delete index;
+        // Iterate over the clusters and make them modes
+        // the arithmetic mean
+        
+        for (size_t i=0; i < clusters.size(); i++)
+        {
+            typename Cluster<T>::ptr c = clusters.at(i);
+            
+            vector<T> mode = vector<T>( fs->feature_variables().size(), 0.0);
+            
+            for (size_t j=0; j < c->points.size(); j++)
+            {
+                M3DPoint<T> *p = (M3DPoint<T> *) c->points.at(j);
+                
+                mode += p->values;
+            }
+            
+            mode /= ((T) c->points.size());
+            
+            c->mode = mode;
+            
+            c->id = i;
+            
+            cout << "Found zeroshift cluster #" << i << " at " << mode << " (" << c->points.size() << " points)." << endl;
+        }
+        
+        // Sanity checking
+        // this->check_clusters(fs,index);
         
         if ( show_progress )
         {
@@ -770,64 +951,6 @@ namespace m3D {
         // PointIndex<T>::write_index_searches = false;
     }
     
-    template <typename T>
-    typename Point<T>::ptr
-    ClusterList<T>::predecessor_of( FeatureSpace<T> *fs,
-                                    PointIndex<T> *index,
-                                    const vector<T> &resolution,
-                                    const WeightFunction<T> *weight_function,
-                                    typename Point<T>::ptr p )
-    {
-        typename Point<T>::ptr result = p;
-        
-        // Search coordinate
-        vector<T> x = p->values + p->shift;
-        
-        // Find dim^2 closest neighbours
-        
-        KNNSearchParams<T> knn( resolution.size() * resolution.size() );
-        
-        typename Point<T>::list *neighbours = index->search( x, &knn );
-        
-        // In case the search turns up more than one point,
-        // find the strongest point
-        
-        T max_dist = m_predecessor_maxdistance_gridpoints * vector_norm( fs->spatial_component(resolution) );
-
-        T max_value = std::numeric_limits<T>::min();
-        
-        for ( size_t i=0; i < neighbours->size(); i++ )
-        {
-            typename Point<T>::ptr n = neighbours->at(i);
-            
-            // skip yourself and points too far away
-            
-            if ( n == p ) continue;
-            
-            // too far?
-            
-            T distance = vector_norm( p->coordinate - n->coordinate );
-            
-            if ( distance > max_dist ) continue;
-            
-            // Get weight function response
-            
-            T weight_function_response = weight_function->operator()( p );
-            
-            if ( weight_function_response > max_value )
-            {
-                max_value = weight_function_response;
-                
-                result = n;
-            }
-        }
-        
-        delete neighbours;
-        
-        return result;
-    };
-    
-
     template <typename T>
     typename Cluster<T>::list
     ClusterList<T>::neighbours_of( typename Cluster<T>::ptr cluster, PointIndex<T> *index, const vector<T> &resolution )
@@ -955,8 +1078,6 @@ namespace m3D {
             delete neighbours;
         }
     };
-    
-
     
     // Couple of macros
     
@@ -1242,20 +1363,6 @@ namespace m3D {
             merged_cluster->m_weight_range_calculated = true;
         }
         
-//        typename Cluster<T>::list::iterator fi = find( clusters.begin(), clusters.end(), c1 );
-//        
-//        clusters.erase( fi );
-//
-//        delete c1;
-        
-//        fi = find( clusters.begin(), clusters.end(), c2 );
-//        
-//        clusters.erase( fi );
-//
-//        delete c2;
-
-//        clusters.push_back( merged_cluster );
-        
         return merged_cluster;
     }
 
@@ -1316,7 +1423,7 @@ namespace m3D {
             {
                 typename Cluster<T>::ptr c = *ci;
                 
-                typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution, weight_function );
+                typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution );
                 
                 Cluster<T> *merged = c;
 

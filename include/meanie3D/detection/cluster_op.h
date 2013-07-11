@@ -15,6 +15,14 @@ namespace m3D {
 
 	using namespace cfa::meanshift;
 	using namespace boost;
+    
+    // Various available post-aggregation methods
+    
+    typedef enum {
+        PostAggregationMethodNone,
+        PostAggregationMethodCoalescence,
+        PostAggregationMethodDRF
+    } PostAggregationMethod;
 
     template <typename T>
     class ClusterOperation : public Operation<T>
@@ -69,6 +77,7 @@ namespace m3D {
         ClusterList<T> cluster( const SearchParameters *params,
                                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
                                const WeightFunction<T> *weight_function = NULL,
+                               const PostAggregationMethod post_aggregation = PostAggregationMethodNone,
                                const double &drf_threshold = 0.5,
                                const bool show_progress_bar = true );
         
