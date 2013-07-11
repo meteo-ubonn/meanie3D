@@ -213,6 +213,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/filters/scalespace_filter_impl.h
     include/meanie3D/filters/threshold_filter.h
     include/meanie3D/filters/threshold_filter_impl.h
+    include/meanie3D/filters/weight_filter.h
+    include/meanie3D/filters/weight_filter_impl.h
     include/meanie3D/detection.h
     include/meanie3D/detection/cluster_op.h
     include/meanie3D/detection/cluster_op_impl.h
