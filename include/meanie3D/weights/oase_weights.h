@@ -99,7 +99,11 @@ namespace m3D { namespace weights {
                 {
                     T rx_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
                     
-                    sum += rx_weight;
+//                    T rx_weight = pow( 10, value / 10 );
+                    
+                    sum += rx_weight * rx_weight;
+                    
+                    
                 }
                 else if (var.getName() == "msevi_l15_ir_108")
                 {
@@ -122,10 +126,7 @@ namespace m3D { namespace weights {
                 else
                 {
                     // value scaled to [0..1]
-                    
                     T var_weight = (value - m_min.at(var_index)) / ( m_max.at(var_index) - m_min.at(var_index) );
-                    
-                    sum+=var_weight;
                     
                     // value^2
                     //T var_weight = ( sample->at(index)->values[weight_var_index] ) * ( sample->at(index)->values[weight_var_index] );
@@ -138,7 +139,9 @@ namespace m3D { namespace weights {
                     //T var_weight = pow( sample->at(index)->values[weight_var_index], this->feature_space->scale() );
                     
                     // 10^(value/10)
-                    // T var_weight = pow( 10, values[coordinate.size()] / 10 );
+                    // T var_weight = pow( 10, value / 10 );
+                    
+                    sum+=var_weight;
                 }
             }
             
