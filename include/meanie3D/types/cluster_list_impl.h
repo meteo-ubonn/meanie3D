@@ -914,8 +914,9 @@ namespace m3D {
             }
         }
         
-        // Iterate over the clusters and make them modes
-        // the arithmetic mean
+        // Finally remove all points from all clusters, that were
+        // not part of the original data set, as well as make their
+        // modes the arithmetic mean of the remaining points
         
         for (size_t i=0; i < clusters.size(); i++)
         {
@@ -927,7 +928,15 @@ namespace m3D {
             {
                 M3DPoint<T> *p = (M3DPoint<T> *) c->points.at(j);
                 
-                mode += p->values;
+                if (p->isOriginalPoint())
+                {
+                    mode += p->values;
+                }
+                else
+                {
+                    c->points.erase(find(c->points.begin(),c->points.end(),p));
+                    delete p;
+                }
             }
             
             mode /= ((T) c->points.size());
@@ -938,6 +947,7 @@ namespace m3D {
             
             cout << "Found zeroshift cluster #" << i << " at " << mode << " (" << c->points.size() << " points)." << endl;
         }
+        
         
         // Sanity checking
         // this->check_clusters(fs,index);
