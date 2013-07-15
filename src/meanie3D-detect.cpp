@@ -813,6 +813,29 @@ int main(int argc, char** argv)
     fs->off_limits()->write("off_limits.vtk","off_limits");
 #endif
     
+    if (!vtk_variables.empty())
+    {
+        string filename_only = boost::filesystem::path(filename).filename().string();
+        
+        boost::filesystem::path destination_path = boost::filesystem::path(".");
+        
+        destination_path /= filename_only;
+        
+        //destination_path.replace_extension("vtk");
+        
+        destination_path.replace_extension();
+        
+        string dest_path = destination_path.generic_string();
+        
+        if ( verbosity > VerbositySilent )
+            cout << "Writing featurespace-variables ...";
+        
+        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
+        
+        if ( verbosity > VerbositySilent )
+            cout << " done." << endl;
+    }
+    
     OASEWeightFunction<FS_TYPE> *weight_function = NULL;
     
     // Scale-Space smoothing
@@ -847,30 +870,6 @@ int main(int argc, char** argv)
             cout << " done." << endl;
     }
 
-    if (!vtk_variables.empty())
-    {
-        string filename_only = boost::filesystem::path(filename).filename().string();
-        
-        boost::filesystem::path destination_path = boost::filesystem::path(".");
-        
-        destination_path /= filename_only;
-        
-        //destination_path.replace_extension("vtk");
-        
-        destination_path.replace_extension();
-        
-        string dest_path = destination_path.generic_string();
-        
-        if ( verbosity > VerbositySilent )
-            cout << "Writing featurespace-variables ...";
-        
-        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
-        
-        if ( verbosity > VerbositySilent )
-            cout << " done." << endl;
-    }
-    
-    
 #if WRITE_WEIGHT_FUNCTION
     boost::filesystem::path path(filename);
     std::string wfname = path.filename().stem().string() + "-weights.vtk";
