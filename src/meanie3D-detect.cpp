@@ -55,7 +55,6 @@ void parse_commmandline(program_options::variables_map vm,
                         map<int,double> &lower_thresholds,
                         map<int,double> &upper_thresholds,
                         double &scale,
-                        int &weight_index,
                         string &parameters,
                         SearchParameters **search_params,
                         bool &write_vtk,
@@ -63,8 +62,6 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity,
                         unsigned int &min_cluster_size,
-                        PostAggregationMethod &post_aggregation,
-                        double &drf_threshold,
                         vector<NcVar> &vtk_variables)
 {
     if ( vm.count("file") == 0 )
@@ -158,24 +155,7 @@ void parse_commmandline(program_options::variables_map vm,
     
     parameters = parameters + "variables=" + vm["variables"].as<string>()+ " ";
     
-    
-    // Range-Search or KNN?
-    
-    if ( vm.count("knn") == 0 && vm.count("ranges") == 0 )
-    {
-        cerr << "Missing mandatory parameters --knn or --ranges" << endl;
-        
-        exit( -1 );
-    }
-    
-    if ( vm.count("knn") > 0 && vm.count("ranges") > 0 )
-    {
-        cerr << "You must choose either --knn or --ranges" << endl;
-        
-        exit( -1 );
-    }
-    
-    // parse ranges
+    // parse ranges if there
     
     if ( vm.count("ranges") > 0 )
     {
@@ -202,42 +182,6 @@ void parse_commmandline(program_options::variables_map vm,
         RangeSearchParams<FS_TYPE> *p = new RangeSearchParams<FS_TYPE>( ranges );
         
         *search_params = p;
-    }
-    else if ( vm.count("knn") > 0 )
-    {
-        // cluster_resolution
-        
-        if ( vm.count("cluster-resolution") == 0 )
-        {
-            cerr << "When using knn, you must specify --cluster-resolution " << endl;
-            exit( -1 );
-        }
-        
-        size_t k = vm["knn"].as<long>();
-        
-        vector<FS_TYPE> cluster_resolution;
-        
-        tokenizer tokens( vm["cluster-resolution"].as<string>(), sep );
-        
-        for ( tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter )
-        {
-            const char* value = (*tok_iter).c_str();
-            
-            cluster_resolution.push_back( strtod( value, (char **)NULL ) );
-        }
-        
-        if ( cluster_resolution.size() != ( dimension_variables.size() + variables.size() ) )
-        {
-            cerr << "Please provide " << dimension_variables.size() + variables.size() << " cluster-resolution values" << endl;
-            
-            exit( 1 );
-        }
-        
-        KNNSearchParams<FS_TYPE> *p = new KNNSearchParams<FS_TYPE>( k,cluster_resolution );
-        
-        *search_params = p;
-        
-        parameters = parameters + "knn=" + boost::lexical_cast<string>(k) + ",resolution=" + vm["cluster-resolution"].as<string>();
     }
 
     // Lower Thresholds
@@ -344,59 +288,9 @@ void parse_commmandline(program_options::variables_map vm,
         }
     }
 
+    // Scale parameter
     
     scale = vm["scale"].as<double>();
-    
-    drf_threshold = vm["drf-threshold"].as<double>();
-    
-    // get weighing variable
-    
-    if ( vm.count("weight-variable") > 0 )
-    {
-        string var_name = vm["weight-variable"].as<string>();
-        
-        // test if the variable exists
-        
-        NcVar var = file->getVar( var_name );
-        
-        if ( var.isNull() )
-        {
-            cerr << "No such variable " << var_name << endl;
-            
-            exit( -1 );
-        }
-        
-        // test if the variable is in the list of variables
-        
-        int var_index = -1;
-        
-        for ( size_t index=0; index < variables.size(); index++ )
-        {
-            if ( variables[index] == var )
-            {
-                var_index = index;
-                
-                break;
-            }
-        }
-        
-        if ( var_index < 0 )
-        {
-            cerr << "Weight variable must be in the list of variables" << endl;
-            
-            exit(-1);
-        }
-        
-        // figure out the weight_index
-        
-        weight_index = var_index;
-        
-        parameters = parameters + " weight-variable=" + var_name;
-    }
-    else
-    {
-        weight_index = 0;
-    }
     
     // VTK output?
     
@@ -491,29 +385,6 @@ void parse_commmandline(program_options::variables_map vm,
             }
         }
     }
-    
-    if (vm.count("post-aggregate-clusters") > 0)
-    {
-        std::string val = vm["post-aggregate-clusters"].as<std::string>();
-        
-        if (val=="coalesce")
-        {
-            post_aggregation = PostAggregationMethodCoalescence;
-        }
-        else if (val == "drf")
-        {
-            post_aggregation = PostAggregationMethodDRF;
-        }
-        else if (val == "none")
-        {
-            post_aggregation = PostAggregationMethodNone;
-        }
-        else
-        {
-            cerr << "Unknown value for --post-aggregate-clusters (coalesce,drf,none)" << endl;
-            exit(-1);
-        }
-    }
 }
 
 /**
@@ -539,11 +410,6 @@ int main(int argc, char** argv)
     ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
     ("ranges,r", program_options::value<string>(), "Using this parameters means, you are choosing the range search method. Comma separated list of (dimensionless) ranges. Use in the order of (dim1,...dimN,var1,...,varN).")
-    ("cluster-resolution,c",program_options::value<string>(), "When using KNN, specify the resolution of the clusters as comma separated list of (dimensionless) values. Use in the order of (dim1,...dimN,var1,...,varN).")
-    ("post-aggregate-clusters,p",program_options::value<string>()->default_value("none"), "Run a post-processing step on raw meanshift clusters. Options are none (default),drf,coalesce")
-    ("drf-threshold",program_options::value<double>()->default_value(0.65), "Used if -p=drf. DRF threshold for merging clusters. 1 means nothing is merged (=raw clusters). 0 means everything is merged as soon as it touches.")
-    ("knn,k", program_options::value<long>(), "Using this parameter means, that you are choosing KNN-Method. The parameter value is the number of nearest neighbours to be used.")
-    ("weight-variable,w", program_options::value<string>(), "variable to be used to weight meanshift. If none is given, the first variable is picked.")
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Keep only clusters of this minimum size at each pass")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
@@ -574,27 +440,26 @@ int main(int argc, char** argv)
     // Evaluate user input
     
     NcFile *file = NULL;
+    string filename;
+    string output_filename;
+    string parameters;
     vector<NcDim> dimensions;
     vector<size_t> vtk_dimension_indexes;
     vector<NcVar> dimension_variables;
     vector<NcVar> variables;
     vector<double> ranges;
+    unsigned int min_cluster_size = 1;
     map<int,double> lower_thresholds;   // ncvar.id / value
     map<int,double> upper_thresholds;   // ncvar.id / value
+    
+    double scale = NO_SCALE;
+    double decay = 0.01;
+    
     vector<NcVar> vtk_variables;
-    vector<double> cluster_resolution;
-    int weight_index;
-    string filename;
-    string output_filename;
-    string parameters;
     SearchParameters *search_params = NULL;
     bool write_vtk = false;
     bool write_weight_response = false;
-    unsigned int min_cluster_size = 1;
     Verbosity verbosity = VerbosityNormal;
-    double scale = NO_SCALE;
-    PostAggregationMethod post_aggregation = PostAggregationMethodNone;
-    double drf = 0.95;
     
     try
     {
@@ -608,7 +473,6 @@ int main(int argc, char** argv)
                            lower_thresholds,
                            upper_thresholds,
                            scale,
-                           weight_index,
                            parameters,
                            &search_params,
                            write_vtk,
@@ -616,8 +480,6 @@ int main(int argc, char** argv)
                            vtk_dimension_indexes,
                            verbosity,
                            min_cluster_size,
-                           post_aggregation,
-                           drf,
                            vtk_variables);
         
         // Make the mapping known to the visualization routines
@@ -684,9 +546,6 @@ int main(int argc, char** argv)
     //    // DEBUG
     
     
-    
-    RangeSearchParams<FS_TYPE> *p = dynamic_cast<RangeSearchParams<FS_TYPE> *>(search_params);
-    
     if ( verbosity > VerbositySilent )
     {
         cout << "clustering is going to run with the following parameters:" << endl;
@@ -697,17 +556,13 @@ int main(int argc, char** argv)
         
         cout << "\tvariables = " << vm["variables"].as<string>() << endl;
         
-        if ( p != NULL )
+        if (!ranges.empty())
         {
-            cout << "\tranges = " << p->bandwidth << endl;
+            cout << "\tranges = " << ranges << endl;
         }
         else
         {
-            KNNSearchParams<FS_TYPE> *knn = dynamic_cast<KNNSearchParams<FS_TYPE> *>(search_params);
-            
-            cout << "\tknn = " << knn->k << ", resolution = " << knn->resolution << endl;
-        
-            cout << "\tcluster resolution =" << cluster_resolution << endl;
+            cout << "\tautomatic bandwidth selection" << endl;
         }
         
         if ( min_cluster_size > 1 )
@@ -730,24 +585,6 @@ int main(int argc, char** argv)
         if ( !upper_thresholds.empty() )
         {
             cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
-        }
-        
-        cout << "\tpost-processing of raw clusters: ";
-        switch (post_aggregation)
-        {
-            case m3D::PostAggregationMethodNone:
-                cout << "none.";
-                break;
-                
-            case m3D::PostAggregationMethodCoalescence:
-                cout << "coalescence";
-                break;
-                
-            case m3D::PostAggregationMethodDRF:
-                cout << "dynamic range factor = "<< drf;
-                
-            default:
-                break;
         }
         
         cout << endl;
@@ -809,6 +646,37 @@ int main(int argc, char** argv)
                                                           lower_thresholds,
                                                           upper_thresholds,
                                                           show_progress );
+    
+    // if ranges are not explicitly given, figure the out
+    // based on scale
+    
+    if (ranges.empty())
+    {
+        // spatial range first
+        
+        FS_TYPE t = (scale == NO_SCALE) ? 1.0 : scale;
+        
+        FS_TYPE filter_width = sqrt(ceil(-2.0*t*log(0.01)));
+        
+        for (size_t i=0; i < dimensions.size(); i++)
+        {
+            ranges.push_back(filter_width);
+        }
+        
+        // value range
+        
+        for (size_t i=0; i < variables.size(); i++)
+        {
+            FS_TYPE range = fs->valid_max().at(i) - fs->valid_min().at(i);
+            
+            ranges.push_back(range);
+        }
+        
+        cout << "Automatically calculated bandwidth:" << ranges << endl;
+        
+        search_params = new RangeSearchParams<FS_TYPE>(ranges);
+    }
+    
 #if WRITE_OFF_LIMITS_MASK
     fs->off_limits()->write("off_limits.vtk","off_limits");
 #endif
@@ -843,8 +711,10 @@ int main(int argc, char** argv)
     if (scale != NO_SCALE)
     {
         // TODO: make decay a parameter or at least a constant
+
+        FS_TYPE decay = 0.01;
         
-    	ScaleSpaceFilter<FS_TYPE> sf(scale, fs->coordinate_system->resolution(), 0.01, show_progress);
+    	ScaleSpaceFilter<FS_TYPE> sf(scale, fs->coordinate_system->resolution(), decay, show_progress);
         
     	sf.apply(fs);
         
@@ -856,7 +726,11 @@ int main(int argc, char** argv)
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
         
+        // Apply weight function filter
+        // TODO: make that a command line parameter
+        
         WeightThresholdFilter<FS_TYPE> wtf(weight_function,0.01, 10000, true);
+        
         wtf.apply(fs);
     }
     else
@@ -888,15 +762,17 @@ int main(int argc, char** argv)
     fs->weight_sample_points.push_back(sample_point);
 #endif
     
+    RangeSearchParams<FS_TYPE> *p = dynamic_cast<RangeSearchParams<FS_TYPE> *>(search_params);
+
     PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
     
     //
     // Simple clustering
     //
-
+    
     ClusterOperation<FS_TYPE> cop( fs, index );
     
-    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, post_aggregation, drf, show_progress );
+    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, show_progress );
     
     // Sanity check
     

@@ -111,7 +111,7 @@ namespace m3D {
                 continue;
             }
 #endif
-            if ( !m3p->isOriginalPoint() && addOriginalPointsOnly )
+            if ( !m3p->isOriginalPoint && addOriginalPointsOnly )
             {
                 continue;
             }

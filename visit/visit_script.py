@@ -3,7 +3,7 @@ import glob
 import sys
 
 # plot original data
-source_file = "blah"
+source_file = "dsfjkshdf"
 
 weights_file="../Debug/*-weights.vtk"
 list = glob.glob(weights_file)
@@ -18,6 +18,13 @@ p.invertColorTable=0
 p.pointSizePixels=20
 SetPlotOptions(p)
 DrawPlots();
+
+# Modify view parameters                                                                                                                                                                                         
+v = GetView2D()
+v.windowCoords = (-244.462, 376.538, -4551.64, -3806.64)
+v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
+SetView2D(v)
+
 
 # plot the clusters
 #cluster_basename = "Release/*_cluster_*.vtk"
@@ -48,8 +55,8 @@ for fname in list:
     SetPlotOptions(cp)
     count = count + 1;
 
-    #if count > 200:
-    #    break
+    if count > 200:
+        break
 
 OpenDatabase("../Debug/meanshift_vectors-spatial.vtk")
 AddPlot("Vector","vectors")

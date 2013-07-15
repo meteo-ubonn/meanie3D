@@ -47,6 +47,30 @@ namespace m3D {
         ClusterList()
         {};
         
+        /** Recursive helper method fort find_neighbours
+         *
+         */
+        void
+        find_neighbours(typename CoordinateSystem<T>::GridPoint &gridpoint,
+                        size_t dim_index,
+                        ArrayIndex<T> &index,
+                        typename Point<T>::list &list);
+        
+        typename Point<T>::list
+        find_neighbours(const typename CoordinateSystem<T>::GridPoint &gridpoint,
+                        ArrayIndex<T> &index);
+        
+        /** Sanity check / consistency check
+         */
+        void
+        check_clusters(ArrayIndex<T> &index);
+        
+
+        void
+        aggregate_zeroshifts(FeatureSpace<T> *fs,
+                             ArrayIndex<T> &index,
+                             bool show_progress);
+        
     public:
         
 #pragma mark -
@@ -83,14 +107,6 @@ namespace m3D {
         
         // control
         
-        size_t          m_predecessor_maxdistance_gridpoints;
-        
-        // make the width of the boundary half the resolution
-        // that is 0.25 left and right of the boundary = 0.5 * resolution
-        // Note: this will start to generate problems, if the bandwidth
-        // chosen is too small.
-        T               m_neighbourhood_range_search_multiplier;
-        
         bool            m_use_original_points_only;
         
 
@@ -117,16 +133,12 @@ namespace m3D {
         ClusterList(const vector<NcVar> &variables,
                     const vector<NcDim> &dims,
                     const string& sourcefile,
-                    size_t predecessor_maxdistance_gridpoints=3,
-                    T neighbourhood_range_search_multiplier=1.0,
                     bool use_original_points_only=true)
         : ncFile(NULL)
         , feature_variables(variables)
         , dimensions(dims)
         , source_file(sourcefile)
         , tracking_performed(false)
-        , m_predecessor_maxdistance_gridpoints(predecessor_maxdistance_gridpoints)
-        , m_neighbourhood_range_search_multiplier(neighbourhood_range_search_multiplier)
         , m_use_original_points_only(use_original_points_only)
         {};
 
@@ -147,6 +159,7 @@ namespace m3D {
         , source_file(sourcefile)
         , clusters(list)
         , tracking_performed(false)
+        , m_use_original_points_only(true)
         {};
 
         /** Destructor
@@ -178,71 +191,8 @@ namespace m3D {
         typename Cluster<T>::ptr operator[] (size_t index);
         
 #pragma mark -
-#pragma mark Adding / Removing points
-        
-        typedef typename FeatureSpace<T>::Trajectory Trajectory;
-        
-        /** Adds the end point of the trajectory as cluster. If a cluster already
-         * exists, this point is added to it. All points within grid resolution 
-         * along the trajectory are also added as points to this cluster as well.
-         * @param feature space point x (the start point)
-         * @param list of feature space coordinates (trajectory)
-         * @param bandwidth of the iteration
-         * @param fuzziness, which defines how close clusters can get to each other.
-         * @param index
-         */
-        void add_trajectory( const typename Point<T>::ptr x,
-                            Trajectory *trajectory,
-                            FeatureSpace<T> *fs );
-        
-#pragma mark -
-#pragma mark Superclustering
-        
-        /** Aggregate all clusters who's modes are within grid resolution of each other
-         * into superclusters. The resulting superclusters will replace the existing
-         * clusters.
-         * @param Original featurespace
-         * @param How close the clusters must be, in order to be added to the same supercluster.
-         */
-        void
-        aggregate_by_superclustering( const FeatureSpace<T> *fs, const vector<T> &resolution );
-        
-        /** For each cluster in this list, checks the parent_clusters and finds the modes, that
-         * are in the cluster's point list and collects all their points into a list. Finally,
-         * it replaces the cluster's point list with this aggregated list of parent points.
-         * Used to build superclusters hierarchically from smaller clusters.
-         * @param parent cluster
-         * @param min_cluster_size : drop clusters from the result that have fewer points
-         */
-        void aggregate_with_parent_clusters( const ClusterList<T> &parent_clusters );
-        
-#pragma mark -
 #pragma mark Clustering by Graph Theory
-        
-        void
-        find_neighbours(FeatureSpace<T> *fs,
-                        ArrayIndex<T> &index,
-                        typename Point<T>::list &list,
-                        size_t dim_index,
-                        typename CoordinateSystem<T>::GridPoint &gridpoint);
-        
-        typename Point<T>::list
-        find_neighbours(FeatureSpace<T> *fs,
-                        ArrayIndex<T> &index,
-                        const typename CoordinateSystem<T>::GridPoint &gridpoint);
-        
-        void
-        aggregate_spatial_zeroshift_clusters(FeatureSpace<T> *fs,
-                                             const bool& show_progress);
-        
-        void
-        check_clusters(FeatureSpace<T> *fs, ArrayIndex<T> &index);
-        
-        void
-        aggregate_zeroshifts(FeatureSpace<T> *fs,
-                             ArrayIndex<T> &index,
-                             bool show_progress);
-        
+
         // TODO: make the API more consistent by ordering the parameters equally
         // TODO: assign access classifiers (private/protected/public) where needed
         
@@ -254,39 +204,9 @@ namespace m3D {
          * coordinate, the point with the steeper vector (=longer) is
          * chosen. If
          */
-        void aggregate_cluster_graph( const WeightFunction<T> *weight_function,
-                                     FeatureSpace<T> *fs, const
-                                     vector<T> &resolution,
-                                     const bool& show_progress );
-        
-        /** Find all directly adjacent clusters to the given cluster
-         *
-         * @param cluster
-         * @param feature-space index for searching
-         * @param resolution search radius for finding neighbours (use cluster_resolution)
-         * @return list of neighbouring clusters (can be empty)
-         */
-        typename Cluster<T>::list
-        neighbours_of( typename Cluster<T>::ptr cluster,
-                      PointIndex<T> *index,
-                      const vector<T> &resolution);
-        
-        /** Analyses the two clusters and decides, if they actually belong to the same
-         * object or not. Make sure this is only invoked on direct neighbours!
-         * @param cluster 1
-         * @param cluster 2
-         * @param variable index
-         * @param feature-space index
-         * @param search range (use cluster_resolution)
-         * @return yes or no
-         */
-        bool
-        should_merge_neighbouring_clusters( typename Cluster<T>::ptr c1,
-                                           typename Cluster<T>::ptr c2,
-                                           const WeightFunction<T> *weight_function,
-                                           PointIndex<T> *index,
-                                           const vector<T> &resolution,
-                                           const double &drf_threshold);
+        void aggregate_cluster_graph(FeatureSpace<T> *fs,
+                                     const WeightFunction<T> *weight_function,
+                                     bool show_progress=true);
         
         /** Find the boundary points of two clusters.
          * @param cluster 1
@@ -295,40 +215,10 @@ namespace m3D {
          * @param feature-space index
          * @param search range (use cluster resolution)
          */
-        void
-        get_boundary_points( typename Cluster<T>::ptr c1,
+        typename Point<T>::list
+        get_boundary_points(typename Cluster<T>::ptr c1,
                             typename Cluster<T>::ptr c2,
-                            typename Point<T>::list &boundary_points,
-                            PointIndex<T> *index,
-                            const vector<T> &resolution );
-        
-        
-        /** Calculates the relative variablity of values in the given list
-         * of points. High variability indicates strong profile in the given
-         * value across the boundary
-         * @param weight function
-         * @param list of points
-         * @return CV = s / m
-         */
-        T
-        relative_variability( const WeightFunction<T> *weight_function,
-        		  	  	  	  const typename Point<T>::list &points );
-        
-        
-        /** Classifies the properties of the dynamic range of the given list of points, compared to
-         * the given range in the response of the weight function
-         * Strong dynamic range component indicates a boundary, that cuts through high signal areas.
-         * Weak dynamic range component indicates a more clean cut in a through.
-         * @param list of points to check
-         * @param weight function
-         * @param lower bound of comparison range
-         * @param upper bound of comparison range
-         * @return classification
-         */
-        T
-        dynamic_range_factor(typename Cluster<T>::ptr cluster,
-                             const typename Point<T>::list &points,
-                             const WeightFunction<T> *weight_function );
+                            ArrayIndex<T> &index);
         
         /** Merges the two clusters into a new cluster and removes the mergees from
          * the list of clusters, while inserting the new cluster. The mode of the merged
@@ -338,45 +228,31 @@ namespace m3D {
          * @return pointer to the merged cluster
          */
         typename Cluster<T>::ptr
-        merge_clusters( typename Cluster<T>::ptr c1, typename Cluster<T>::ptr c2 );
-        
-        
-        /** Finds the neighbours of each cluster and analyses the boundaries between them.
-         * If the analysis indicates that a merge is due, the clusters are merged and the
-         * procedure starts over. This is repeated, until no more merges are indicated.
-         * @param index of variable used for boundary analysis
-         * @param feature-space index (for searching)
-         * @param resolution (use cluster_resolution)
-         */
-        void aggregate_clusters_by_boundary_analysis(const WeightFunction<T> *weight_function,
-                                                     PointIndex<T> *index,
-                                                     const vector<T> &resolution,
-                                                     const double &drf_threshold,
-                                                     const bool& show_progress);
-#pragma mark -
-#pragma mark Coalescence Merging
+        merge_clusters(typename Cluster<T>::ptr c1,
+                       typename Cluster<T>::ptr c2);
 
-        /** If the two clusters have points as close as the given resolution,
+        /** Find all directly adjacent clusters to the given cluster
+         *
+         * @param cluster
+         * @param feature-space index for searching
+         * @param resolution search radius for finding neighbours (use cluster_resolution)
+         * @return list of neighbouring clusters (can be empty)
+         */
+        typename Cluster<T>::list
+        neighbours_of(typename Cluster<T>::ptr cluster,
+                      ArrayIndex<T> &index);
+
+        /** If the two clusters have neighbouring points in the grid,
          * they are counted as neighbours.
          * @param cluster one
          * @param cluster two
          * @param index used for searching boundary points
-         * @param vector of the same size as the value vector (or the mode)
          * @return <code>true</code> if they are neighbours <code>false</code>
          */
         bool
         are_neighbours(const Cluster<T> *c1,
                        const Cluster<T> *c2,
-                       PointIndex<T> *index,
-                       const vector<T> &resolution);
-        
-        void
-        aggregate_by_coalescence(const WeightFunction<T> *weight_function,
-                                 PointIndex<T> *index,
-                                 const vector<T> &resolution,
-                                 size_t passes=1,
-                                 bool show_progress=true);
-        
+                       ArrayIndex<T> &index);
 #pragma mark -
 #pragma mark ID helpers
         
@@ -394,8 +270,10 @@ namespace m3D {
         /** Iterate through the list of clusters and trow all with smaller number of
          * points than the given number out.
          * @param min number of points
+         * @param show progress indicator
          */
-        void apply_size_threshold( unsigned int min_cluster_size, const bool& show_progress = true );
+        void apply_size_threshold(unsigned int min_cluster_size,
+                                  const bool& show_progress = true);
         
 #pragma mark -
 #pragma mark I/O

@@ -580,9 +580,9 @@ namespace m3D {
                         
                         M3DPoint<T> *op = (M3DPoint<T> *) originalIndex->get(gridpoint);
                         
-                        bool isOriginal =( op != NULL && op->isOriginalPoint() );
+                        bool isOriginal =( op != NULL && op->isOriginalPoint );
                         
-                        m3p->setIsOriginalPoint(isOriginal);
+                        m3p->isOriginalPoint = isOriginal;
                         
                         // Since we just created this point, there
                         // is no need to copy it again

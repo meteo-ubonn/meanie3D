@@ -68,7 +68,8 @@ namespace m3D { namespace utils {
         write_clusters_vtk(const string &base_name,
                            const typename Cluster<T>::list &list,
                            const vector<T> &bandwidths,
-                           bool use_ids = false );
+                           bool use_ids = false,
+                           bool only_boundary = false);
         
     	/** Writes the cluster's points out as .vtk file for visit.
     	 *
@@ -76,7 +77,8 @@ namespace m3D { namespace utils {
         static
         void
         write_clusters_vtk(typename ClusterList<T>::ptr list,
-                           std::string infix="_cluster_" );
+                           std::string infix="_cluster_",
+                           bool only_boundary = false);
         
         /** Write out the track centers */
         static

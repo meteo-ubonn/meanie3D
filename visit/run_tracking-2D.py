@@ -30,14 +30,12 @@ last_completed_run_count = 0
 
 VAR_NAME="reflectivity"
 
-#DETECT_PARAMS     = "-r 100,100,200 --drf-threshold 0.5 -s 512 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 48,48,200 --drf-threshold 0.5 -s 256 -t 20 -m 10"
-DETECT_PARAMS     = "-r 5,5,200 -s 32 --lower-thresholds reflectivity=20 -m 5"
-#DETECT_PARAMS     = "-r 12,12,200 --drf-threshold 0.5 -s 64 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 6,6,200 --drf-threshold 0.5 -s 32 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 3,3,200 --drf-threshold 0.5 -s 16 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 2.5,2.5,200 --drf-threshold 0.5 -s 8 -t 20 -m 10"
-#DETECT_PARAMS     = "-r 2,2,200 --drf-threshold 0.5 -s 4 -t 20 -m 10"
+DETECT_PARAMS      += "--lower-thresholds reflectivity=30 -m 10 "
+#DETECT_PARAMS     = " -s 16" 
+#DETECT_PARAMS     = " -s 32"
+#DETECT_PARAMS     = " -s 64"
+#DETECT_PARAMS     = " -s 128"
+DETECT_PARAMS      = " -s 256"
 
 CLUSTERING_PARAMS =  "-d x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
@@ -93,9 +91,10 @@ a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
 
 # Modify view parameters
-v = GetView3D()
-v.focus=(-238.5,-4222.5,50.0)
-SetView3D(v)
+v = GetView2D()
+v.windowCoords = (-244.462, 376.538, -4551.64, -3806.64)
+v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
+SetView2D(v)
 
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"

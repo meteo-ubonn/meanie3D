@@ -74,11 +74,9 @@ namespace m3D {
          * @param show_progress_bar     : bool flag. if true, clustering progress is printed out in the console.
          * @return vector of clusters
          */
-        ClusterList<T> cluster( const SearchParameters *params,
+        ClusterList<T> cluster(const SearchParameters *params,
                                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
                                const WeightFunction<T> *weight_function = NULL,
-                               const PostAggregationMethod post_aggregation = PostAggregationMethodNone,
-                               const double &drf_threshold = 0.5,
                                const bool show_progress_bar = true );
         
 #pragma mark -

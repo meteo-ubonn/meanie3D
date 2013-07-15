@@ -164,7 +164,11 @@ namespace m3D { namespace utils {
 
     template <class T>
     void
-    VisitUtils<T>::write_clusters_vtk(const string &base_name, const typename Cluster<T>::list &list, const vector<T> &bandwidths, bool use_ids)
+    VisitUtils<T>::write_clusters_vtk(const string &base_name,
+                                      const typename Cluster<T>::list &list,
+                                      const vector<T> &bandwidths,
+                                      bool use_ids,
+                                      bool only_boundary)
     {
         string basename = base_name;
 
@@ -181,13 +185,32 @@ namespace m3D { namespace utils {
 
             ofstream f( filename.c_str() );
             f << fixed << setprecision(4);
+            
+            size_t num_points = list[ci]->points.size();
+            
+            // If it's boundary points only, we need to count them upfront
+            
+            if (only_boundary)
+            {
+                num_points = 0;
+                
+                for ( size_t pi = 0; pi < list[ci]->points.size(); pi++ )
+                {
+                    M3DPoint<T> *p = (M3DPoint<T> *) list[ci]->points[pi];
+                    
+                    if (p->isBoundary)
+                    {
+                        num_points++;
+                    }
+                }
+            }
 
             // Write Header
             f << "# vtk DataFile Version 3.0" << endl;
             f << "Meanshift Clustering Result" << endl;
             f << "ASCII" << endl;
             f << "DATASET UNSTRUCTURED_GRID" << endl;
-            f << "POINTS " << list[ci]->points.size() << " FLOAT" << endl;
+            f << "POINTS " << num_points << " FLOAT" << endl;
 
             // Write point coordinates out as unstructured grid
 
@@ -195,7 +218,9 @@ namespace m3D { namespace utils {
 
             for ( size_t pi = 0; pi < list[ci]->points.size(); pi++ )
             {
-                Point<T> *p = list[ci]->points[pi];
+                M3DPoint<T> *p = (M3DPoint<T> *) list[ci]->points[pi];
+                
+                if (only_boundary && !p->isBoundary) continue;
 
                 for ( size_t vi = 0; vi < point_dim; vi++)
                 {
@@ -215,13 +240,15 @@ namespace m3D { namespace utils {
             // Write point data out. Only take the first value after coordinates
 
             f << endl;
-            f << "POINT_DATA " << list[ci]->points.size() << endl;
+            f << "POINT_DATA " << num_points << endl;
             f << "SCALARS cluster FLOAT" << endl;
             f << "LOOKUP_TABLE default" << endl;
 
             for ( size_t pi = 0; pi < list[ci]->points.size(); pi++ )
             {
-                Point<T> *p = list[ci]->points[pi];
+                M3DPoint<T> *p = (M3DPoint<T> *) list[ci]->points[pi];
+                
+                if (only_boundary && !p->isBoundary) continue;
 
                 // f << p->trajectory_length << endl;
 
@@ -234,7 +261,7 @@ namespace m3D { namespace utils {
     
     template <class T>
     void
-    VisitUtils<T>::write_clusters_vtk( typename ClusterList<T>::ptr list, std::string infix )
+    VisitUtils<T>::write_clusters_vtk( typename ClusterList<T>::ptr list, std::string infix, bool only_boundary )
     {
         string basename = list->source_file;
         
@@ -252,12 +279,31 @@ namespace m3D { namespace utils {
             ofstream f( filename.c_str() );
             f << fixed << setprecision(4);
             
+            size_t num_points = list->clusters[ci]->points.size();
+            
+            // If it's boundary points only, we need to count them upfront
+            
+            if (only_boundary)
+            {
+                num_points = 0;
+                
+                for ( size_t pi = 0; pi < list->clusters[ci]->points.size(); pi++ )
+                {
+                    M3DPoint<T> *p = (M3DPoint<T> *) list->clusters[ci]->points[pi];
+                    
+                    if (p->isBoundary)
+                    {
+                        num_points++;
+                    }
+                }
+            }
+            
             // Write Header
             f << "# vtk DataFile Version 3.0" << endl;
             f << "Meanshift Clustering Result" << endl;
             f << "ASCII" << endl;
             f << "DATASET UNSTRUCTURED_GRID" << endl;
-            f << "POINTS " << list->clusters[ci]->points.size() << " FLOAT" << endl;
+            f << "POINTS " << num_points << " FLOAT" << endl;
             
             // Write point coordinates out as unstructured grid
             
@@ -265,7 +311,9 @@ namespace m3D { namespace utils {
             
             for ( size_t pi = 0; pi < list->clusters[ci]->points.size(); pi++ )
             {
-                Point<T> *p = list->clusters[ci]->points[pi];
+                M3DPoint<T> *p = (M3DPoint<T> *) list->clusters[ci]->points[pi];
+                
+                if (only_boundary && !p->isBoundary) continue;
                 
                 for ( size_t vi = 0; vi < point_dim; vi++)
                 {
@@ -285,13 +333,15 @@ namespace m3D { namespace utils {
             // Write point data out. Only take the first value after coordinates
             
             f << endl;
-            f << "POINT_DATA " << list->clusters[ci]->points.size() << endl;
+            f << "POINT_DATA " << num_points << endl;
             f << "SCALARS cluster FLOAT" << endl;
             f << "LOOKUP_TABLE default" << endl;
             
             for ( size_t pi = 0; pi < list->clusters[ci]->points.size() - 1 ; pi++ )
             {
-                Point<T> *p = list->clusters[ci]->points[pi];
+                M3DPoint<T> *p = (M3DPoint<T> *) list->clusters[ci]->points[pi];
+                
+                if (only_boundary && !p->isBoundary) continue;
                 
                 // f << p->trajectory_length << endl;
                 

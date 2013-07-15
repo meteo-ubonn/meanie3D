@@ -25,7 +25,6 @@ namespace m3D {
         
     private:
         
-        bool    m_isOriginalPoint;
 
     public:
         
@@ -39,6 +38,8 @@ namespace m3D {
 #pragma mark public properties
         
         typename Cluster<T>::ptr    cluster;
+        bool                        isOriginalPoint;
+        bool                        isBoundary;
         
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -46,7 +47,11 @@ namespace m3D {
         /** Default constructor
          */
     	M3DPoint()
-        : Point<T>(),m_isOriginalPoint(true),cluster(NULL) {};
+        : Point<T>()
+        , cluster(NULL)
+        , isOriginalPoint(true)
+        , isBoundary(false)
+        {};
 
         /** Constructor.
          * @param gridpoint
@@ -54,7 +59,11 @@ namespace m3D {
          * @param values
          */
         M3DPoint( vector<size_t> gridpoint, vector<T> &coord, vector<T>& value )
-        : Point<T>(gridpoint,coord,value),m_isOriginalPoint(true),cluster(NULL) {};
+        : Point<T>(gridpoint,coord,value)
+        , cluster(NULL)
+        , isOriginalPoint(true)
+        , isBoundary(false)
+        {};
 
         /** Constructor.
          * @param gridpoint
@@ -62,19 +71,30 @@ namespace m3D {
          * @deprecated
          */
         M3DPoint( vector<T> &coord, vector<T>& value )
-        : Point<T>(coord,value),m_isOriginalPoint(true),cluster(NULL) {};
+        : Point<T>(coord,value)
+        , cluster(NULL)
+        , isOriginalPoint(true)
+        , isBoundary(false)
+        {};
 
         /** Copy constructor
          */
         M3DPoint( const M3DPoint<T> &o )
-        : Point<T>(o),m_isOriginalPoint(o.isOriginalPoint()),cluster( o.cluster ) {};
+        : Point<T>(o)
+        , cluster( o.cluster )
+        , isOriginalPoint(o.isOriginalPoint)
+        , isBoundary(o.isBoundary)
+        {};
         
         /** Copy constructor on pointer
          */
         M3DPoint( const M3DPoint<T> *o )
-        : Point<T>(o),m_isOriginalPoint(o->isOriginalPoint()),cluster( o->cluster ) {};
+        : Point<T>(o)
+        , cluster( o->cluster )
+        , isOriginalPoint(o->isOriginalPoint)
+        , isBoundary(o->isBoundary)
+        {};
 
-        
         /** Copy operator */
         
         M3DPoint<T>
@@ -97,13 +117,6 @@ namespace m3D {
         bool
         operator == (const M3DPoint<T> &o) { return this->values == o.values; };
         
-#pragma mark -
-#pragma mark Accessors
-        
-        bool isOriginalPoint() const {return m_isOriginalPoint;};
-        
-        void setIsOriginalPoint(bool value) { m_isOriginalPoint=value; };
-
     };
 };
 

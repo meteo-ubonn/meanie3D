@@ -82,7 +82,8 @@ namespace m3D {
          *        original points. If <code>false</code> it simply holds
          *        references
          */
-        ArrayIndex(CoordinateSystem<T> *cs, bool make_copies);
+        ArrayIndex(CoordinateSystem<T> *cs,
+                   bool make_copies);
         
         /** Constructs an array index vor the given coordinate system
          * and indexes the point list.
@@ -92,7 +93,9 @@ namespace m3D {
          *        original points. If <code>false</code> it simply holds
          *        references
          */
-        ArrayIndex(CoordinateSystem<T> *cs, const typename Point<T>::list &points, bool make_copies);
+        ArrayIndex(CoordinateSystem<T> *cs,
+                   const typename Point<T>::list &points,
+                   bool make_copies);
         
         /** Copy constructor on pointer
          * @param pointer to array index
@@ -134,6 +137,9 @@ namespace m3D {
         void
         set(const typename CoordinateSystem<T>::GridPoint &gp,
             typename Point<T>::ptr p, bool copy=true);
+        
+        const CoordinateSystem<T> *
+        coordinate_system() {return m_coordinate_system;}
         
 #pragma mark -
 #pragma mark Misc

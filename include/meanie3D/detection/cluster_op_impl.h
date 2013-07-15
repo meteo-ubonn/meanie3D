@@ -71,8 +71,6 @@ namespace m3D {
     ClusterOperation<T>::cluster( const SearchParameters *params,
                                   const Kernel<T> *kernel,
                                   const WeightFunction<T> *weight_function,
-                                  const PostAggregationMethod post_aggregation,
-                                  const double &drf_threshold,
                                   const bool show_progress_bar )
     {
         using namespace cfa::utils::timer;
@@ -185,7 +183,6 @@ namespace m3D {
                                     params,
                                     kernel,
                                     weight_function,
-                                    drf_threshold,
                                     show_progress_bar),
                      tbb::auto_partitioner() );
         
@@ -200,7 +197,6 @@ namespace m3D {
                           params,
                           kernel,
                           weight_function,
-                          drf_threshold,
                           show_progress_bar);
         ct();
         
@@ -222,27 +218,12 @@ namespace m3D {
         
         // Analyse the graph and create clusters
         
-        cluster_list.aggregate_cluster_graph( weight_function, this->feature_space, resolution, show_progress_bar );
+        cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,show_progress_bar);
+        
         
 #if WRITE_BOUNDARIES
         cluster_list.write_boundaries( weight_function, this->feature_space, this->point_index, resolution );
 #endif
-        
-        switch(post_aggregation)
-        {
-            case PostAggregationMethodCoalescence:
-                cluster_list.aggregate_by_coalescence(weight_function,this->point_index,resolution,1);
-                break;
-            
-            case PostAggregationMethodDRF:
-                cluster_list.aggregate_clusters_by_boundary_analysis( weight_function, this->point_index, resolution, drf_threshold, show_progress_bar );
-                break;
-            
-            default: {}
-        }
-
-        // Analyze the clusters to create objects
-        
         
 #if WRITE_MODES
         
