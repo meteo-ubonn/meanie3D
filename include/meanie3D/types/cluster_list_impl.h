@@ -620,6 +620,83 @@ namespace m3D {
             progress = new boost::progress_display( fs->points.size() );
             start_timer();
         }
+        
+        //
+        // #209
+        //
+        
+        // find the original zero-shift points
+//        
+//        typedef set< typename Point<T>::ptr > pset_t;
+//        
+//        pset_t zeroshifts;
+//        
+//        for ( size_t i = 0; i < fs->points.size(); i++ )
+//        {
+//            M3DPoint<T> *current_point = (M3DPoint<T> *) fs->points[i];
+//            
+//            if (current_point->cluster != NULL)
+//            {
+//                continue;
+//            }
+//            
+//            // skip zeroshift to save time
+//            
+//            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
+//            {
+//                zeroshifts.insert(current_point);
+//            }
+//        }
+//
+//        // replace the zero-shift vectors with the average of their neighbours
+//
+//        for (typename pset_t::iterator pi=zeroshifts.begin(); pi!=zeroshifts.end();)
+//        {
+//            
+//            M3DPoint<T> *current_point = (M3DPoint<T> *) *pi;
+//            
+//            typename Point<T>::list neighbours = find_neighbours(current_point->gridpoint,index);
+//            
+//            if ( !neighbours.empty() )
+//            {
+//                vector<T>   m(current_point->values.size(), 0.0);
+//                vector<int> mg(current_point->gridpoint.size(), 0);
+//                
+//                for (size_t ni = 0; ni < neighbours.size(); ni++)
+//                {
+//                    M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
+//                    
+//                    if (n==current_point) continue;
+//                    
+//                    m += n->shift;
+//                    mg += n->gridded_shift;
+//                }
+//
+//                // average, rounded to grid
+//                
+//                current_point->shift = m / ((T)neighbours.size());
+//                
+//                
+//                
+//                
+//                
+//                
+//                current_point->gridded_shift = mg / ((int)neighbours.size());
+//                
+//                // If the point is now no longer a zero-shift point, remove him from the set
+//                
+//                if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
+//                {
+//                    pi++;
+//                }
+//                else
+//                {
+//                    zeroshifts.erase(pi);
+//                }
+//            }
+//        }
+        
+        // TODO: more economically iterate over the zeroshifts only
 
         for ( size_t i = 0; i < fs->points.size(); i++ )
         {
@@ -653,7 +730,6 @@ namespace m3D {
                     
                     if (vector_norm(fs->spatial_component(n->shift)) == 0)
                     {
-                        
                         if ( current_point->cluster == NULL && n->cluster == NULL )
                         {
                             // Neither current point nor neighbour have cluster

@@ -111,27 +111,6 @@ namespace m3D {
         m_show_progress(show_progress)
         {};
         
-        vector<int>
-        gridded_vector(const vector<T> &m) const
-        {
-            size_t spatial_dims = m_fs->coordinate_system->resolution().size();
-            
-            // Obtain the grid version
-            
-            vector<int> gridded_shift(spatial_dims,0);
-            
-            for (size_t ci=0; ci < spatial_dims; ci++)
-            {
-                T resolution = m_fs->coordinate_system->resolution()[ci];
-                
-                int multiplier = round( m[ci] / resolution );
-                
-                gridded_shift[ci] = multiplier;
-            }
-            
-            return gridded_shift;
-        }
-        
         void 
         operator()( const tbb::blocked_range<size_t>& r ) const
         {
@@ -152,7 +131,9 @@ namespace m3D {
                 
                 x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
                 
-                x->gridded_shift = gridded_vector(x->shift);
+                vector<T> spatial_shift = m_fs->spatial_component(x->shift);
+                
+                x->gridded_shift = m_fs->coordinate_system->rounded_gridpoint(spatial_shift);
             }
             
             m_op->report_done();
