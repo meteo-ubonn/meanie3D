@@ -445,9 +445,7 @@ namespace m3D {
         {
             Point<T> *p = points[i];
             
-            vector<T> mode_spatial_coord( &mode[0], &mode[p->coordinate.size()] );
-            
-            result += w->operator()(mode_spatial_coord);
+            result += w->operator()(p->coordinate);
         }
         
         if (!points.empty())
