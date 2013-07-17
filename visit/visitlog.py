@@ -4,7 +4,6 @@ if ScriptVersion != Version():
     print "This script is for VisIt %s. It may not work with version %s" % (ScriptVersion, Version())
 ShowAllWindows()
 Source("visit_script.py")
-HideActivePlots()
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
 View2DAtts.windowCoords = (-236.873, 368.949, -4486.99, -3871.29)
@@ -43,7 +42,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-68.2398, 345.545, -4343.63, -3923.09)
+View2DAtts.windowCoords = (-189.001, 224.784, -4345.21, -3924.67)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -55,7 +54,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-32.3328, 309.638, -4307.14, -3959.59)
+View2DAtts.windowCoords = (-153.094, 188.877, -4308.71, -3961.17)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -67,7 +66,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-2.65767, 279.963, -4276.98, -3989.75)
+View2DAtts.windowCoords = (-123.419, 159.202, -4278.55, -3991.32)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -79,7 +78,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (21.8672, 255.438, -4252.05, -4014.67)
+View2DAtts.windowCoords = (-191.614, 91.0061, -4311.71, -4024.48)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -91,7 +90,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (19.4168, 252.987, -4238.24, -4000.86)
+View2DAtts.windowCoords = (-221.29, 120.681, -4341.87, -3994.32)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -103,7 +102,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (39.6853, 232.719, -4217.64, -4021.46)
+View2DAtts.windowCoords = (-257.196, 156.588, -4378.36, -3957.83)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -115,7 +114,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (56.4362, 215.968, -4200.62, -4038.48)
+View2DAtts.windowCoords = (-300.644, 200.036, -4422.52, -3913.67)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -127,7 +126,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (70.2799, 202.124, -4186.55, -4052.55)
+View2DAtts.windowCoords = (-353.215, 252.607, -4475.95, -3860.24)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -139,7 +138,7 @@ SetView2D(View2DAtts)
 
 # Begin spontaneous state
 View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (34.8195, 166.664, -4186.55, -4052.55)
+View2DAtts.windowCoords = (-369.971, 235.851, -4484.61, -3868.91)
 View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
 View2DAtts.fullFrameAutoThreshold = 100
@@ -149,435 +148,83 @@ View2DAtts.windowValid = 0
 SetView2D(View2DAtts)
 # End spontaneous state
 
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (46.2606, 155.223, -4174.92, -4064.18)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (32.7507, 141.713, -4168.68, -4057.94)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (21.3096, 153.154, -4180.31, -4046.32)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (7.46597, 166.998, -4194.38, -4032.25)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-9.28488, 183.749, -4211.41, -4015.22)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-29.5534, 204.017, -4232, -3994.62)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-54.0783, 228.542, -4256.93, -3969.7)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-29.5534, 204.017, -4232, -3994.62)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-9.28488, 183.749, -4211.41, -4015.22)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (7.46597, 166.998, -4194.38, -4032.25)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-9.28488, 183.749, -4211.41, -4015.22)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-29.5534, 204.017, -4232, -3994.62)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-54.0783, 228.542, -4256.93, -3969.7)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-83.7535, 258.217, -4287.09, -3939.54)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-54.0783, 228.542, -4256.93, -3969.7)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-29.5534, 204.017, -4232, -3994.62)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-9.28488, 183.749, -4211.41, -4015.22)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-29.5534, 204.017, -4232, -3994.62)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-54.0783, 228.542, -4256.93, -3969.7)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-83.7535, 258.217, -4287.09, -3939.54)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-119.66, 294.124, -4323.58, -3903.05)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-163.108, 337.572, -4367.74, -3858.89)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-197.967, 302.713, -4446.53, -3937.68)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-250.538, 355.284, -4499.96, -3884.25)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-314.149, 418.895, -4564.61, -3819.61)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-265.21, 467.835, -4496.09, -3751.09)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-201.599, 404.224, -4431.44, -3815.74)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-149.027, 351.652, -4378.01, -3869.17)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-105.58, 308.205, -4333.86, -3913.32)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-69.6729, 272.298, -4297.36, -3949.82)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-39.9977, 242.623, -4267.2, -3979.97)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (-15.4728, 218.098, -4242.28, -4004.9)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (4.79574, 197.829, -4221.68, -4025.5)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (21.5466, 181.078, -4204.66, -4042.52)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (35.3903, 167.235, -4190.59, -4056.59)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
-# Begin spontaneous state
-View2DAtts = View2DAttributes()
-View2DAtts.windowCoords = (21.9355, 153.78, -4174.49, -4040.5)
-View2DAtts.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-View2DAtts.fullFrameActivationMode = View2DAtts.Auto  # On, Off, Auto
-View2DAtts.fullFrameAutoThreshold = 100
-View2DAtts.xScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.yScale = View2DAtts.LINEAR  # LINEAR, LOG
-View2DAtts.windowValid = 0
-SetView2D(View2DAtts)
-# End spontaneous state
-
+SetActivePlots((67, 71))
+SetActivePlots(67)
+SetActivePlots((1, 67))
+SetActivePlots(1)
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(2)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(3)
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(4)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(5)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(6)
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(7)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(8)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(9)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(10)
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(11)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(12)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(13)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(14)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(15)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(16)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(17)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(18)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(19)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(20)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(21)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(22)
+HideActivePlots()
+HideActivePlots()
+SetActivePlots(23)
+HideActivePlots()
+HideActivePlots()

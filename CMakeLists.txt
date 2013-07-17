@@ -386,6 +386,8 @@ INSTALL(DIRECTORY include/${PROJECT_NAME}
         PATTERN "*.swp" EXCLUDE)
 INSTALL(TARGETS meanie3D LIBRARY DESTINATION "/usr/local/lib")
 INSTALL(TARGETS meanie3D-detect RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-trackplot RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 # Documentation
 

@@ -338,13 +338,23 @@ namespace m3D {
         {
             if ( dim_index < gp.size()-1 )
             {
-                array = (vector<void *> *) array->at(gp[dim_index]);
+                int index = gp[dim_index];
+                
+                if (index >= 0 && index < array->size())
+                {
+                    array = (vector<void *> *) array->at(index);
+                }
             }
             else
             {
                 vector<typename Point<T>::ptr> *points = (vector<typename Point<T>::ptr> *) array;
                 
-                result = points->at(gp[dim_index]);
+                int index = gp[dim_index];
+                
+                if (index >= 0 && index < array->size())
+                {
+                    result = points->at(index);
+                }
             }
         }
         
@@ -361,26 +371,36 @@ namespace m3D {
         {
             if ( dim_index < gp.size()-1 )
             {
-                array = (vector<void *> *) array->at(gp[dim_index]);
+                int index = gp[dim_index];
+                
+                if (index >= 0 && index < array->size())
+                {
+                    array = (vector<void *> *) array->at(index);
+                }
             }
             else
             {
                 vector<typename Point<T>::ptr> *points = (vector<typename Point<T>::ptr> *) array;
                 
-                typename Point<T>::ptr existingPoint = points->at(gp[dim_index]);
+                int index = gp[dim_index];
                 
-                if (existingPoint!=NULL)
+                if (index >= 0 && index < array->size())
                 {
-                    delete existingPoint;
-                }
-                
-                if (copy)
-                {
-                    points->at(gp[dim_index]) = PointFactory<T>::get_instance()->copy(p);
-                }
-                else
-                {
-                    points->at(gp[dim_index]) = p;
+                    typename Point<T>::ptr existingPoint = points->at(index);
+                    
+                    if (existingPoint!=NULL)
+                    {
+                        delete existingPoint;
+                    }
+                    
+                    if (copy)
+                    {
+                        points->at(index) = PointFactory<T>::get_instance()->copy(p);
+                    }
+                    else
+                    {
+                        points->at(index) = p;
+                    }
                 }
             }
         }

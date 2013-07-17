@@ -6,6 +6,7 @@
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
+PARAM_T           = "SCALE"
 
 # Appending the module path is crucial
 
@@ -30,12 +31,8 @@ last_completed_run_count = 0
 
 VAR_NAME="reflectivity"
 
-DETECT_PARAMS      += "--lower-thresholds reflectivity=30 -m 10 "
-#DETECT_PARAMS     = " -s 16" 
-#DETECT_PARAMS     = " -s 32"
-#DETECT_PARAMS     = " -s 64"
-#DETECT_PARAMS     = " -s 128"
-DETECT_PARAMS      = " -s 256"
+DETECT_PARAMS      = " -s "+PARAM_T
+DETECT_PARAMS     += " --lower-thresholds reflectivity=20 -m 5"
 
 CLUSTERING_PARAMS =  "-d x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
@@ -62,9 +59,14 @@ if last_completed_run_count == 0:
 
 # binaries
 bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
-detection_bin = bin_prefix + "M3D_HOME" + "/Release/meanie3D-detect"
-tracking_bin  = bin_prefix + "M3D_HOME" + "/Release/meanie3D-track"
-trackplot_bin = bin_prefix + "M3D_HOME" + "/Release/meanie3D-trackplot"
+
+#detection_bin = bin_prefix + "M3D_HOME/Release/" + "meanie3D-detect"
+#tracking_bin  = bin_prefix + "M3D_HOME/Release/" + "meanie3D-track"
+#trackplot_bin = bin_prefix + "M3D_HOME/Release/" + "meanie3D-trackplot"
+
+detection_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-detect"
+tracking_bin  = bin_prefix + "/usr/local/bin/" + "meanie3D-track"
+trackplot_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-trackplot"
 
 print "Detection Command:"
 print detection_bin
