@@ -484,6 +484,54 @@ namespace m3D { namespace utils {
             f.close();
         }
     }
+    
+    template <class T>
+    void
+    VisitUtils<T>::write_cluster_meanshift_vtk(const string &base_name,
+                                               const typename Cluster<T>::list &clusters,
+                                               bool use_ids,
+                                               bool spatial_only)
+    {
+        std::string basename(base_name);
+        boost::replace_all( basename, "/", "_" );
+        boost::replace_all( basename, "..", "" );
+        
+        for ( size_t ci = 0; ci < clusters.size(); ci++ )
+        {
+            Cluster<T> *cluster = clusters[ci];
+            
+            typedef vector< vector<T> > vvector_t;
+            
+            vvector_t origins;
+            
+            vvector_t shifts;
+            
+            for (size_t pi=0; pi < cluster->points.size(); pi++)
+            {
+                typename Point<T>::ptr p = cluster->points[pi];
+                
+                if (spatial_only)
+                {
+                    origins.push_back(p->coordinate);
+                    
+                    vector<T> shift = p->shift;
+                    
+                    shifts.push_back(vector<T>( &shift[0], &shift[p->coordinate.size()]));
+                }
+                else
+                {
+                    origins.push_back(p->values);
+                    shifts.push_back(p->shift);
+                }
+            }
+            
+            string filename = basename + "_" + boost::lexical_cast<string>( use_ids ? cluster->id : ci ) + ".vtk";
+            
+            ::cfa::utils::VisitUtils<T>::write_vectors_vtk(filename,origins,shifts,"shift");
+        }
+
+    }
+
 
 
     

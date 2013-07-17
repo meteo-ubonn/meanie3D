@@ -656,7 +656,7 @@ int main(int argc, char** argv)
         
         FS_TYPE t = (scale == NO_SCALE) ? 1.0 : scale;
         
-        FS_TYPE filter_width = sqrt(ceil(-2.0*t*log(0.01)));
+        FS_TYPE filter_width = sqrt(ceil(-2.0*t*log(0.01)))/2.0;
         
         for (size_t i=0; i < dimensions.size(); i++)
         {
@@ -800,27 +800,31 @@ int main(int argc, char** argv)
         clusters.print();
     }
     
-    
     // Write out the cluster list
-    
+
     if ( write_vtk && clusters.clusters.size() > 0)
     {
-        boost::filesystem::path path(filename);
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( path.filename().string(), clusters.clusters, ranges, true );
 
         // MODES are needed for tagging with IDs
         
-        string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
+        string modes_path = path.filename().stem().string() + "-clusters_modes";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
-        
-        string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk( centers_path, clusters.clusters);
     }
+    
+#if WRITE_CLUSTER_CENTERS
+    string centers_path = path.filename().stem().string() + "-clusters_centers";
+    ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk( centers_path, clusters.clusters);
+#endif
+    
+#if WRITE_CLUSTER_MEANSHIFT
+    string shifts_path = path.filename().stem().string() + "-clusters_shifts";
+    ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_meanshift_vtk(shifts_path,clusters.clusters);
+#endif
     
     if ( write_weight_response && clusters.clusters.size() > 0 )
     {
         string wr_path = path.filename().stem().string() + "-clusters_weight";
-        
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function, false);
     }
     

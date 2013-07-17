@@ -71,6 +71,13 @@ namespace m3D { namespace utils {
                            bool use_ids = false,
                            bool only_boundary = false);
         
+        static
+        void
+        write_cluster_meanshift_vtk(const string &basename,
+                                    const typename Cluster<T>::list &list,
+                                    bool use_ids = true,
+                                    bool spatial_only = true);
+
     	/** Writes the cluster's points out as .vtk file for visit.
     	 *
     	 */

@@ -23,11 +23,45 @@
 #define DEBUG_CLUSTER_MERGING_DECISION 0
 #define DEBUG_TRACKING 1
 #define DEBUG_HISTOGRAM_CORRELATION 0
-#define DEBUG_COALESCENCE_MATCHING 1
 
+// Write out a files which contain the meanshift
+// vectors. One file contains the threedimensional
+// version, one file the spatial components only
 #define WRITE_MEANSHIFT_VECTORS 1
-#define WRITE_CLUSTERS 0
-#define WRITE_BOUNDARIES 0
+
+// Write out a VTK file that contains 1 and 0 for
+// all points. 1 means, that the point was marked
+// as 'off limits' in the original feature-space
+// (one of the variables outside of valid_range).
 #define WRITE_OFF_LIMITS_MASK 0
+
+// Write out the center of the cluster in a single
+// file per cluster
+#define WRITE_CLUSTER_CENTERS 0
+
+// Write out the result of the initial clustering
+// step into separate files.
+#define WRITE_ZEROSHIFT_CLUSTERS 1
+
+// Write out files containing the mean-shift
+// vectors for individual clusters alone
+#define WRITE_CLUSTER_MEANSHIFT 1
+
+// Enable the replacement of zero-shift vectors
+// with an average of neighboring points
+#define REPLACE_ZEROSHIFT_VECTORS 1
+
+// Figure out the strongest neighbor to the
+// zero-shift cluster and add it to the cluster
+#define ADD_STRONGEST_NEIGHBOUR 1
+
+// Figure out the strongest neighbor cluster to the
+// a cluster and merge, should the one of the adjacent
+// points be stronger in response than the strongest
+// point in the cluster itself (a type of coalescence)
+#define COALESCE_WITH_STRONGEST_NEIGHBOUR 1
+
+
+
 
 #endif
