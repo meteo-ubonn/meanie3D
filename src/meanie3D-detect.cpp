@@ -805,12 +805,13 @@ int main(int argc, char** argv)
     if ( write_vtk && clusters.clusters.size() > 0)
     {
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( path.filename().string(), clusters.clusters, ranges, true );
-
-        // MODES are needed for tagging with IDs
-        
-        string modes_path = path.filename().stem().string() + "-clusters_modes";
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
     }
+
+#if WRITE_CLUSTER_MODES
+    // MODES are needed for tagging with IDs
+    string modes_path = path.filename().stem().string() + "-clusters_modes";
+    ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
+#endif
     
 #if WRITE_CLUSTER_CENTERS
     string centers_path = path.filename().stem().string() + "-clusters_centers";

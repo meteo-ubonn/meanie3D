@@ -259,23 +259,6 @@ for netcdf_file in netcdf_list:
     # don't forget to increment run counter
     run_count = run_count + 1
 
-# TODO: create result structure and move stuff
-#
-return_code=call("mkdir logs && mv *.log logs")
-return_code=call("mkdir netcdf && mv *.nc netcdf")
-return_code=call("mkdir images && mv *.png images")
-return_code=call("mkdir vtk && mv *.vtk images")
-
-#
-# Create movies
-#
-
-return_code=call("mkdir movies")
-return_code=call("/usr/local/bin/convert -delay 50 -quality 100 images/source_*.png movies/source.mpeg")
-return_code=call("/usr/local/bin/convert -delay 50 -quality 100 images/tracked_*.png movies/tracked.mpeg")
-
-# Compile and plot track data
-return_code=call("mkdir tracks")
 
 print "Done. Closing Visit."
 exit()
