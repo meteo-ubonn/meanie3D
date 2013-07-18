@@ -49,8 +49,6 @@
 // vectors for individual clusters alone
 #define WRITE_CLUSTER_MEANSHIFT 1
 
-
-
 // Enable the replacement of zero-shift vectors
 // with an average of neighboring points
 #define REPLACE_ZEROSHIFT_VECTORS 1

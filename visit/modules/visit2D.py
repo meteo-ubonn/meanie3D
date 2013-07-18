@@ -75,7 +75,7 @@ def add_pseudocolor(vtk_file,variable,color_table_name):
     
     p = PseudocolorAttributes()
     p.colorTableName = color_table_name
-    #p.legendFlag=1
+    p.legendFlag=1
     p.lightingFlag=1
     #p.invertColorTable=1
     #p.minFlag,p.maxFlag = 1,1

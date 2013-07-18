@@ -87,7 +87,7 @@ a = GetAnnotationAttributes()
 a.axes2D.visible=1
 a.axes2D.autoSetScaling=0
 a.userInfoFlag=0
-a.timeInfoFlag=0
+a.timeInfoFlag=1
 a.legendInfoFlag=0
 a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
