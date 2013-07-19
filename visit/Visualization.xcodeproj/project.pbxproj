@@ -21,6 +21,8 @@
 		F49936201733E37C00D23B1E /* run_tracking-3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_tracking-3D.sh"; sourceTree = "<group>"; };
 		F49936211733E57700D23B1E /* visit3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit3D.py; sourceTree = "<group>"; };
 		F49936221733E65500D23B1E /* visitUtils.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visitUtils.py; sourceTree = "<group>"; };
+		F4A67D8E1798058C00C2BF5F /* create_radolan_loop.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_radolan_loop.py; sourceTree = "<group>"; };
+		F4A67D8F1798058C00C2BF5F /* create_radolan_loop.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_radolan_loop.sh; sourceTree = "<group>"; };
 		F4FA4E7E17312E420070400B /* visit2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit2D.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -50,6 +52,8 @@
 		F4907924173123CF001E9D17 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				F4A67D8E1798058C00C2BF5F /* create_radolan_loop.py */,
+				F4A67D8F1798058C00C2BF5F /* create_radolan_loop.sh */,
 				F499361F1733E37C00D23B1E /* run_tracking-3D.py */,
 				F49936201733E37C00D23B1E /* run_tracking-3D.sh */,
 				F4907910173117EF001E9D17 /* run_tracking-2D.py */,
