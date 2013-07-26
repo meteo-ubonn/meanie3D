@@ -5,6 +5,7 @@
 
 MEANIE3D_HOME     = "M3D_HOME"
 NETCDF_DIR        = "SOURCE_DIR"
+VAR_NAME          = "RADOLAN_VAR_NAME"  
 
 # Appending the module path is crucial
 
@@ -25,10 +26,6 @@ print [key for key in locals().keys()
 # if > 0 a previous run is resumed
 last_completed_run_count = 0
 
-# RADOLAN
-
-VAR_NAME="reflectivity"
-
 # print parameters
 
 print "Creating loop from files in directory "+NETCDF_DIR
@@ -43,8 +40,8 @@ a = GetAnnotationAttributes()
 a.axes2D.visible=1
 a.axes2D.autoSetScaling=0
 a.userInfoFlag=0
-a.timeInfoFlag=1
-a.legendInfoFlag=0
+a.timeInfoFlag=0
+a.legendInfoFlag=1
 a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
 
@@ -66,21 +63,32 @@ for netcdf_file in netcdf_list:
     print "----------------------------------------------------------"
     print "Processing " + netcdf_file
     print "----------------------------------------------------------"
-
+    
     #
     # Plot the source data in color
     #
     
-    visit2D.add_pseudocolor( netcdf_file, VAR_NAME, "hot_desaturated" )
+    visit2D.add_pseudocolor( netcdf_file, VAR_NAME, "hot_desaturated",1 )
+
+    if VAR_NAME == "RX":
+        cp=PseudocolorAttributes();
+        cp.minFlag,cp.maxFlag = 1,1
+        cp.min,cp.max = -32.5,55.0
+        SetPlotOptions(cp)
+        
     DrawPlots()
-    
+        
     visitUtils.save_window(VAR_NAME+"-",1)
-    
+        
     # clean up
     DeleteAllPlots();
 
     # don't forget to increment run counter
     run_count = run_count + 1
+
+    # memory leak fix
+    if run_count % 100 == 0:
+        CloseComputeEngine()
 
 print "Done. Closing Visit."
 exit()

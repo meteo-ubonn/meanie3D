@@ -3,7 +3,7 @@ import glob
 import sys
 
 # plot original data
-source_file = "../Debug/raa01-rx_10000-1307011600-dwd---bin_reflectivity.vtk"
+source_file = "../../../data/radolan/2013-06-20/rx/netcdf/raa01-rx_10000-1306200000-dwd---bin.nc"
 
 # Modify view parameters                                                                                                                                                                                         
 v = GetView2D()
@@ -15,7 +15,7 @@ SetView2D(v)
 
 OpenDatabase(source_file)
 
-AddPlot("Pseudocolor", "reflectivity")
+AddPlot("Pseudocolor", "RX")
 p = PseudocolorAttributes()
 p.colorTableName = "hot_desaturated"
 p.legendFlag=1

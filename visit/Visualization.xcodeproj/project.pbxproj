@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		F425382017A03E68002E4803 /* visualize_oase_weights.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_oase_weights.py; sourceTree = "<group>"; };
+		F425382117A03E68002E4803 /* visualize_oase_weights.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_weights.sh; sourceTree = "<group>"; };
 		F478904B1761F39E00E2E0DF /* oase-cluster-template.py */ = {isa = PBXFileReference; explicitFileType = text.script.python; path = "oase-cluster-template.py"; sourceTree = SOURCE_ROOT; };
 		F478904C1761F39E00E2E0DF /* cluster_visualization.template */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cluster_visualization.template; sourceTree = SOURCE_ROOT; };
 		F478904E1761F45000E2E0DF /* visualize_oase_clusters.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_clusters.sh; sourceTree = "<group>"; };
@@ -52,6 +54,8 @@
 		F4907924173123CF001E9D17 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				F425382017A03E68002E4803 /* visualize_oase_weights.py */,
+				F425382117A03E68002E4803 /* visualize_oase_weights.sh */,
 				F4A67D8E1798058C00C2BF5F /* create_radolan_loop.py */,
 				F4A67D8F1798058C00C2BF5F /* create_radolan_loop.sh */,
 				F499361F1733E37C00D23B1E /* run_tracking-3D.py */,

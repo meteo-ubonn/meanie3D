@@ -67,7 +67,7 @@ def add_clusters(basename,infix,col_tables):
 # @param variable name
 # @param color table
 #
-def add_pseudocolor(vtk_file,variable,color_table_name):
+def add_pseudocolor(vtk_file,variable,color_table_name,lf):
 
     # open the file and add the plot
     OpenDatabase(vtk_file)
@@ -75,11 +75,8 @@ def add_pseudocolor(vtk_file,variable,color_table_name):
     
     p = PseudocolorAttributes()
     p.colorTableName = color_table_name
-    p.legendFlag=1
-    p.lightingFlag=1
-    #p.invertColorTable=1
-    #p.minFlag,p.maxFlag = 1,1
-    #p.min,p.max = 0.0, 50.0
+    p.legendFlag=lf
+    p.lightingFlag = 1
     p.opacity=1.0
     SetPlotOptions(p)
     return

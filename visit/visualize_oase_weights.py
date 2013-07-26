@@ -15,7 +15,7 @@ SetView2D(v)
 
 OpenDatabase(source_file)
 
-AddPlot("Pseudocolor", "reflectivity")
+AddPlot("Pseudocolor", "RX")
 p = PseudocolorAttributes()
 p.colorTableName = "hot_desaturated"
 p.legendFlag=1

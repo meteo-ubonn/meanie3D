@@ -29,12 +29,12 @@ last_completed_run_count = 0
 
 # RADOLAN
 
-VAR_NAME="reflectivity"
+VAR_NAME="RX"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds reflectivity=20 -m 5"
+DETECT_PARAMS     += " --lower-thresholds RX=30 -m 10"
 
-CLUSTERING_PARAMS =  "-d x,y"
+CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
 CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
 CLUSTERING_PARAMS += " -v "+VAR_NAME
@@ -87,7 +87,7 @@ a = GetAnnotationAttributes()
 a.axes2D.visible=1
 a.axes2D.autoSetScaling=0
 a.userInfoFlag=0
-a.timeInfoFlag=1
+a.timeInfoFlag=0
 a.legendInfoFlag=0
 a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
@@ -147,7 +147,7 @@ for netcdf_file in netcdf_list:
     # Plot the source data in color
     #
     
-    visit2D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated" )
+    visit2D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated",1 )
     DrawPlots()
     
     # Calling ToggleMaintainViewMode helps
@@ -170,7 +170,7 @@ for netcdf_file in netcdf_list:
     #
     
     # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray")
+    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
     
     # Add the clusters
     visit2D.add_clusters(basename,"_cluster_",col_tables)
@@ -223,7 +223,7 @@ for netcdf_file in netcdf_list:
     #
 
     # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray")
+    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
 
     if run_count > 0:
 
