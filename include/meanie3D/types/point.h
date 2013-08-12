@@ -38,7 +38,6 @@ namespace m3D {
 #pragma mark public properties
         
         typename Cluster<T>::ptr    cluster;
-        bool                        isOriginalPoint;
         bool                        isBoundary;
         
 #pragma mark -
@@ -49,7 +48,6 @@ namespace m3D {
     	M3DPoint()
         : Point<T>()
         , cluster(NULL)
-        , isOriginalPoint(true)
         , isBoundary(false)
         {};
 
@@ -61,7 +59,6 @@ namespace m3D {
         M3DPoint( vector<size_t> gridpoint, vector<T> &coord, vector<T>& value )
         : Point<T>(gridpoint,coord,value)
         , cluster(NULL)
-        , isOriginalPoint(true)
         , isBoundary(false)
         {};
 
@@ -73,7 +70,6 @@ namespace m3D {
         M3DPoint( vector<T> &coord, vector<T>& value )
         : Point<T>(coord,value)
         , cluster(NULL)
-        , isOriginalPoint(true)
         , isBoundary(false)
         {};
 
@@ -82,7 +78,6 @@ namespace m3D {
         M3DPoint( const M3DPoint<T> &o )
         : Point<T>(o)
         , cluster( o.cluster )
-        , isOriginalPoint(o.isOriginalPoint)
         , isBoundary(o.isBoundary)
         {};
         
@@ -91,7 +86,6 @@ namespace m3D {
         M3DPoint( const M3DPoint<T> *o )
         : Point<T>(o)
         , cluster( o->cluster )
-        , isOriginalPoint(o->isOriginalPoint)
         , isBoundary(o->isBoundary)
         {};
 

@@ -1200,6 +1200,7 @@ namespace m3D {
                 {
                     c->points.erase(find(c->points.begin(),c->points.end(),p));
                     delete p;
+                    j--;
                 }
             }
             
