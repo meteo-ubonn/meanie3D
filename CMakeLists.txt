@@ -230,7 +230,10 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/array_index_impl.h
     include/meanie3D/utils/scalar_index.h
     include/meanie3D/utils/scalar_index_impl.h
+    include/meanie3D/weights/weights.h
     include/meanie3D/weights/oase_weights.h
+    include/meanie3D/weights/default_weights.h
+    include/meanie3D/weights/inverse_default.h
     include/meanie3D/implementations.h
 )
 

@@ -55,6 +55,7 @@ void parse_commmandline(program_options::variables_map vm,
                         map<int,double> &lower_thresholds,
                         map<int,double> &upper_thresholds,
                         double &scale,
+                        std::string &weight_function_name,
                         string &parameters,
                         SearchParameters **search_params,
                         bool &write_vtk,
@@ -276,7 +277,6 @@ void parse_commmandline(program_options::variables_map vm,
             if (subtoken_iter == subtokens.end())
             {
                 cerr << "Missing threshold value for variable " << variableName << endl;
-                
                 exit( 1 );
             }
             
@@ -291,6 +291,16 @@ void parse_commmandline(program_options::variables_map vm,
     // Scale parameter
     
     scale = vm["scale"].as<double>();
+
+    // Weight Function
+    
+    weight_function_name = vm["weight-function-name"].as<string>();
+    
+    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase"))
+    {
+        cerr << "Illegal weight function name " << weight_function_name << ". Only 'default','inverse' or 'oase' are known." << endl;
+        exit( 1 );
+    }
     
     // VTK output?
     
@@ -406,6 +416,7 @@ int main(int argc, char** argv)
     ("output,o", program_options::value<string>(), "Name of output file for clustering results")
     ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
     ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
+    ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
     ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with.")
     ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
@@ -451,6 +462,7 @@ int main(int argc, char** argv)
     unsigned int min_cluster_size = 1;
     map<int,double> lower_thresholds;   // ncvar.id / value
     map<int,double> upper_thresholds;   // ncvar.id / value
+    std::string weight_function_name = "default";
     
     double scale = NO_SCALE;
     double decay = 0.01;
@@ -473,6 +485,7 @@ int main(int argc, char** argv)
                            lower_thresholds,
                            upper_thresholds,
                            scale,
+                           weight_function_name,
                            parameters,
                            &search_params,
                            write_vtk,
@@ -704,7 +717,7 @@ int main(int argc, char** argv)
             cout << " done." << endl;
     }
     
-    OASEWeightFunction<FS_TYPE> *weight_function = NULL;
+    WeightFunction<FS_TYPE> *weight_function = NULL;
     
     // Scale-Space smoothing
     
@@ -719,9 +732,20 @@ int main(int argc, char** argv)
     	sf.apply(fs);
         
         if ( verbosity > VerbositySilent )
-            cout << endl << "Constructing OASE weight function ...";
+            cout << endl << "Constructing " << weight_function_name << " weight function ...";
         
-        weight_function = new OASEWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(),sf.get_filtered_max());
+        if (weight_function_name == "oase")
+        {
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(),sf.get_filtered_max());
+        }
+        else if (weight_function_name == "inverse")
+        {
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(),sf.get_filtered_max());
+        }
+        else
+        {
+            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(),sf.get_filtered_max());
+        }
         
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
@@ -736,9 +760,20 @@ int main(int argc, char** argv)
     else
     {
         if ( verbosity > VerbositySilent )
-            cout << endl << "Constructing OASE weight function ...";
+            cout << endl << "Constructing " << weight_function_name << " weight function ...";
         
-        weight_function = new OASEWeightFunction<FS_TYPE>(fs);
+        if (weight_function_name == "oase")
+        {
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs);
+        }
+        else if (weight_function_name == "inverse")
+        {
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs);
+        }
+        else
+        {
+            weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
+        }
         
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
