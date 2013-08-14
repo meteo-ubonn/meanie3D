@@ -844,12 +844,12 @@ int main(int argc, char** argv)
 
 #if WRITE_CLUSTER_MODES
     // MODES are needed for tagging with IDs
-    string modes_path = path.filename().stem().string() + "-clusters_modes";
+    string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
     ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
 #endif
     
 #if WRITE_CLUSTER_CENTERS
-    string centers_path = path.filename().stem().string() + "-clusters_centers";
+    string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
     ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk( centers_path, clusters.clusters);
 #endif
     

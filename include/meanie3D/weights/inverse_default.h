@@ -101,7 +101,7 @@ namespace m3D { namespace weights {
                 
                 T var_weight = (m_max.at(var_index) - value) / range;
                 
-                sum += (1 - var_weight) * (1 - var_weight);
+                sum += var_weight * var_weight;
             }
             
             return sum;

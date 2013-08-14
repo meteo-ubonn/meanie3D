@@ -1176,11 +1176,11 @@ namespace m3D {
         }
         
 #endif
-        
-        
         // Finally remove all points from all clusters, that were
         // not part of the original data set, as well as make their
         // modes the arithmetic mean of the remaining points
+        
+        set< Point<T> * > erased;
         
         for (size_t i=0; i < clusters.size(); i++)
         {
@@ -1199,7 +1199,7 @@ namespace m3D {
                 else
                 {
                     c->points.erase(find(c->points.begin(),c->points.end(),p));
-                    delete p;
+                    erased.insert(p);
                     j--;
                 }
             }
@@ -1216,6 +1216,14 @@ namespace m3D {
                 c->mode = mode;
                 c->id = i;
             }
+        }
+        
+        typename set< Point<T> * >::iterator eri;
+        
+        for (eri = erased.begin(); eri != erased.end(); eri++)
+        {
+            Point<T> *p = *eri;
+            delete p;
         }
         
         

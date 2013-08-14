@@ -99,9 +99,9 @@ namespace m3D { namespace weights {
                 
                 T range = (m_max.at(var_index) - m_min.at(var_index));
                 
-                T var_weight = (m_max.at(var_index) - value) / range;
+                T var_weight = (value - m_min.at(var_index)) / range;
 
-                sum += var_weight * var_weight;
+                sum += var_weight; //pow(var_weight, 1.0);
             }
             
             return sum;

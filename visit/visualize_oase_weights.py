@@ -7,7 +7,7 @@ source_file = "SOURCE_FILE"
 
 # Modify view parameters                                                                                                                                                                                         
 v = GetView2D()
-v.windowCoords = (-244.462, 376.538, -4551.64, -3806.64)
+v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
 v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 SetView2D(v)
 
@@ -21,8 +21,7 @@ p.colorTableName = "hot_desaturated"
 p.legendFlag=1
 p.lightingFlag=0
 p.invertColorTable=0
-p.pointSizePixels=5
-p.opacity=0.25
+p.pointSizePixels=10
 SetPlotOptions(p)
 DrawPlots();
 
@@ -30,17 +29,17 @@ DrawPlots();
 
 weights_file="../Debug/*-weights.vtk"
 list = glob.glob(weights_file)
-#OpenDatabase(list[0])
+OpenDatabase(list[0])
 
-#AddPlot("Pseudocolor", "weight")
-#p = PseudocolorAttributes()
-#p.colorTableName = "hot_desaturated"
-#p.legendFlag=1
-#p.lightingFlag=0
-#p.invertColorTable=0
-#p.pointSizePixels=20
-#SetPlotOptions(p)
-#DrawPlots();
+AddPlot("Pseudocolor", "weight")
+p = PseudocolorAttributes()
+p.colorTableName = "hot_desaturated"
+p.legendFlag=1
+p.lightingFlag=0
+p.invertColorTable=0
+p.pointSizePixels=10
+SetPlotOptions(p)
+DrawPlots();
 
 
 # plot the clusters

@@ -37,10 +37,13 @@ DETECT_PARAMS     += " --lower-thresholds RX=30 -m 10"
 CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
 CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
+CLUSTERING_PARAMS += " --weight-function default"
 CLUSTERING_PARAMS += " -v "+VAR_NAME
 CLUSTERING_PARAMS += " " + DETECT_PARAMS
 
+
 TRACKING_PARAMS = "--verbosity 1 --write-vtk"
+TRACKING_PARAMS += " --vtk-dimensions x,y"
 TRACKING_PARAMS += " -t "+VAR_NAME
 TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
 
@@ -94,7 +97,7 @@ SetAnnotationAttributes(a)
 
 # Modify view parameters
 v = GetView2D()
-v.windowCoords = (-244.462, 376.538, -4551.64, -3806.64)
+v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
 v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
 SetView2D(v)
 
@@ -225,7 +228,7 @@ for netcdf_file in netcdf_list:
     # Re-add the source with "xray"
     visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
 
-    if run_count > 0:
+    if (run_count > 0):
 
         # Add the clusters
         visit2D.add_clusters(basename,"_cluster_",col_tables)
@@ -257,7 +260,7 @@ for netcdf_file in netcdf_list:
     last_cluster_file=cluster_file
 
     # don't forget to increment run counter
-    run_count = run_count + 1
+    run_count = (run_count + 1)
 
 
 print "Done. Closing Visit."
