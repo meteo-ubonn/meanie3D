@@ -12,46 +12,13 @@
 
 #include <meanie3D/types/cluster.h>
 #include <meanie3D/tracking/tracking.h>
-#include <meanie3D/utils/verbosity.h>
+#include <meanie3D/utils.h>
 
 namespace m3D {
     
     using namespace utils;
     using namespace netCDF;
 
-    template <typename T>
-    typename Tracking<T>::matrix_t
-    Tracking<T>::create_matrix(size_t width, size_t height)
-    {
-        matrix_t matrix;
-        
-        matrix.resize(width);
-        
-        for (int i=0; i<width; ++i)
-        {
-            matrix[i].resize(height);
-        }
-        
-        return matrix;
-    }
-
-    template <typename T>
-    typename Tracking<T>::flag_matrix_t
-    Tracking<T>::create_flag_matrix(size_t width, size_t height, int defaultValue)
-    {
-        flag_matrix_t matrix;
-        
-        matrix.resize(width);
-        
-        for (size_t i=0; i<width; ++i)
-        {
-            matrix[i].resize(height,defaultValue);
-        }
-        
-        return matrix;
-    }
-    
-    
     template <typename T>
     void
     Tracking<T>::track(typename ClusterList<T>::ptr previous,
@@ -165,14 +132,14 @@ namespace m3D {
         
         // Create result matrices
         
-        matrix_t rank_correlation = create_matrix(new_count,old_count);
-        matrix_t midDisplacement = create_matrix(new_count,old_count);
-        matrix_t histDiff = create_matrix(new_count,old_count);
-        matrix_t sum_prob = create_matrix(new_count,old_count);
-        matrix_t coverOldByNew = create_matrix(new_count,old_count);
-        matrix_t coverNewByOld = create_matrix(new_count,old_count);
+        typename Matrix<T>::matrix_t rank_correlation = Matrix<T>::create_matrix(new_count,old_count);
+        typename Matrix<T>::matrix_t midDisplacement = Matrix<T>::create_matrix(new_count,old_count);
+        typename Matrix<T>::matrix_t histDiff = Matrix<T>::create_matrix(new_count,old_count);
+        typename Matrix<T>::matrix_t sum_prob = Matrix<T>::create_matrix(new_count,old_count);
+        typename Matrix<T>::matrix_t coverOldByNew = Matrix<T>::create_matrix(new_count,old_count);
+        typename Matrix<T>::matrix_t coverNewByOld = Matrix<T>::create_matrix(new_count,old_count);
         
-        flag_matrix_t constraints_satisified = create_flag_matrix(new_count, old_count);
+        typename Matrix<T>::flag_matrix_t constraints_satisified = Matrix<T>::create_flag_matrix(new_count, old_count);
         
         T maxHistD = numeric_limits<T>::min();
         

@@ -38,6 +38,8 @@ CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
 CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
 CLUSTERING_PARAMS += " --weight-function default"
+CLUSTERING_PARAMS += " --write-clusters-as-vtk"
+
 CLUSTERING_PARAMS += " -v "+VAR_NAME
 CLUSTERING_PARAMS += " " + DETECT_PARAMS
 
@@ -135,8 +137,14 @@ for netcdf_file in netcdf_list:
     
     # build the clustering command
     command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + CLUSTERING_PARAMS
-    command = command + " --write-clusters-as-vtk"
+
+    # use previous result to enhance current 
+    if run_count > 0:
+        command = command + " -p " + last_cluster_file
+
     command = command + " > clustering_" + str(run_count)+".log"
+
+
 
     # execute
     print command

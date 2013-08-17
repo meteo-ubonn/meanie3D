@@ -70,8 +70,6 @@ namespace m3D {
             delete progress_bar;
             cout << "done. (" << stop_timer() << "s)" << std::endl;
         }
-
-        
     }
 
 };

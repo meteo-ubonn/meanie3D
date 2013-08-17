@@ -125,10 +125,6 @@ namespace m3D {
                 
                 typename Point<T>::ptr x = m_fs->points[ index ];
                 
-                // only go through with the calculation for points, that belonged
-                // to the original feature-space. Not those, who were created in
-                // the scale-space filtering
-                
                 x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
                 
                 vector<T> spatial_shift = m_fs->spatial_component(x->shift);

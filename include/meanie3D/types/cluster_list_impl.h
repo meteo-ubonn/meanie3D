@@ -549,6 +549,8 @@ namespace m3D {
         
         typename Cluster<T>::list::iterator ci;
         
+        size_t originalPoints = 0;
+        
         for (ci=clusters.begin(); ci!=clusters.end(); ci++)
         {
             typename Cluster<T>::ptr c1 = *ci;
@@ -559,42 +561,11 @@ namespace m3D {
             {
                 M3DPoint<T> *p = (M3DPoint<T> *) *pi;
                 
-                M3DPoint<T> *pred = (M3DPoint<T> *) predecessor_of(index,p);
-                
-                if (pred==NULL) continue;
-                
-                if (pred->cluster != c1)
-                {
-                    cout << "Point " << p->coordinate << " points to " << pred->coordinate << endl;
-                    cout << "Their clusters are not identical!";
-                    
-                    //                    pred->cluster->add_points(c1->points,false);
-                    //
-                    //                    clusters.erase(ci);
-                    //
-                    //                    delete c1;
-                    //
-                    //                    // start over
-                    //
-                    //                    ci = clusters.begin();
-                    
-                    typename Point<T>::list::iterator pci;
-                    
-                    for (pci = pred->cluster->points.begin(); pci != pred->cluster->points.end(); pci++)
-                    {
-                        M3DPoint<T> *pc = (M3DPoint<T> *) *pci;
-                        
-                        if (p->coordinate == pc->coordinate)
-                        {
-                            cout << "Point " << p << " @ " << p->coordinate
-                            << " has same coordinate as " << pc->coordinate << " @" << pc->coordinate
-                            << " but their clusters are not identical"
-                            << endl;
-                        }
-                    }
-                }
+                if (p->isOriginalPoint) originalPoints++;
             }
         }
+        
+        cout << "Original points in clusters: " << originalPoints << endl;
     }
 
     template <typename T>
@@ -1181,26 +1152,36 @@ namespace m3D {
         // modes the arithmetic mean of the remaining points
         
         set< Point<T> * > erased;
-        
+
         for (size_t i=0; i < clusters.size(); i++)
         {
             typename Cluster<T>::ptr c = clusters.at(i);
             
             vector<T> mode = vector<T>( fs->feature_variables().size(), 0.0);
             
-            for (size_t j=0; j < c->points.size(); j++)
+            typename Point<T>::list::iterator pi;
+            
+            for ( pi = c->points.begin(); pi != c->points.end(); )
             {
-                M3DPoint<T> *p = (M3DPoint<T> *) c->points.at(j);
+                Point<T> *p = *pi;
                 
-                if (p->isOriginalPoint)
+                if (!p->isOriginalPoint)
                 {
-                    mode += p->values;
+                    c->points.erase(pi);
+                    
+                    if (erased.find(p) != erased.end())
+                    {
+                        cerr << "WARNING: point "<< p <<" was erased twice" << endl;
+                    }
+                    else
+                    {
+                        erased.insert(p);
+                    }
                 }
                 else
                 {
-                    c->points.erase(find(c->points.begin(),c->points.end(),p));
-                    erased.insert(p);
-                    j--;
+                    mode += p->values;
+                    pi++;
                 }
             }
             
@@ -1218,17 +1199,18 @@ namespace m3D {
             }
         }
         
-        typename set< Point<T> * >::iterator eri;
-        
-        for (eri = erased.begin(); eri != erased.end(); eri++)
+        typename set< Point<T> * >::iterator ei;
+        for (ei=erased.begin(); ei!=erased.end(); ei++)
         {
-            Point<T> *p = *eri;
+            Point<T> *p = *ei;
             delete p;
         }
         
-        
         // Sanity checking
-        // this->check_clusters(fs,index);
+        this->check_clusters(index);
+        
+        cout << "Original points in feature-space: " << fs->count_original_points() << endl;
+
         
         if ( show_progress )
         {

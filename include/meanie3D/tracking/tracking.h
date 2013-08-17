@@ -16,26 +16,6 @@ namespace m3D {
     {
     private:
         
-        // Matrix
-
-        // A matrix is a 2D vector construct in this context
-        typedef vector< vector<T> > matrix_t;
-        
-        /** Creates a new matrix of the given dimensions
-         */
-        matrix_t
-        create_matrix(size_t width, size_t height);
-        
-        // Flag Matrix
-
-        typedef vector< vector<int> > flag_matrix_t;
-        
-        /** Creates a new matrix of the given dimensions
-         */
-        flag_matrix_t
-        create_flag_matrix(size_t width, size_t height, int defaultValue=0 );
-        
-        
         // Member Variables
         
         

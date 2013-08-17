@@ -109,11 +109,9 @@ void parse_commmandline(program_options::variables_map vm,
     
     if ( vm.count("vtk-dimensions") > 0 )
     {
-        
         // Open the file for reading once more
         
         NcFile *file = new NcFile( current_filename, NcFile::read );
-        
         
         // Read "featurespace_dimensions"
         
@@ -138,16 +136,31 @@ void parse_commmandline(program_options::variables_map vm,
         {
             string name = *tok_iter;
             
-            int index = index_of_first( fs_dim_names, name );
+            // Boost::tokenizer has a horrible bug that only hits when
+            // Optimization is above -O2. It appends brackets to the
+            // beginning or end of the token. Totally fucked up shit
             
-            if ( index < 0 )
+            bool found_it = false;
+            
+            for (size_t pi=0; pi<fs_dim_names.size(); pi++)
+            {
+                std::string dim_name = fs_dim_names[pi];
+                
+                if (name.compare(dim_name)==0)
+                {
+                    vtk_dimension_indexes.push_back( (size_t)pi );
+                    found_it = true;
+                    break;
+                }
+            }
+            
+            if ( !found_it )
             {
                 cerr << "Invalid dimension '" << name << "'. Check parameter --vtk-dimensions" << endl;
                 
                 exit(-1);
             }
             
-            vtk_dimension_indexes.push_back( (size_t)index );
         }
         
         delete file;

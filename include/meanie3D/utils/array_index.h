@@ -68,7 +68,8 @@ namespace m3D {
         count_recursive(size_t dim_index,
                         array_t *array,
                         typename CoordinateSystem<T>::GridPoint &gridpoint,
-                        size_t &count);
+                        size_t &count,
+                        bool originalPointsOnly=false);
         
         
 #pragma mark -
@@ -154,7 +155,7 @@ namespace m3D {
         /** Iterates over the structure and counts the number of non-null
          * entries in the index.
          */
-        size_t count();
+        size_t count(bool originalPointsOnly=false);
 
     };
 

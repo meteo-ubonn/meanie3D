@@ -219,6 +219,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/detection/cluster_op.h
     include/meanie3D/detection/cluster_op_impl.h
     include/meanie3D/detection/cluster_task.h
+    include/meanie3D/detection/cluster_utils.h
+    include/meanie3D/detection/cluster_utils_impl.h
     include/meanie3D/tracking.h
     include/meanie3D/tracking/tracking.h
     include/meanie3D/tracking/tracking_impl.h
@@ -230,6 +232,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/array_index_impl.h
     include/meanie3D/utils/scalar_index.h
     include/meanie3D/utils/scalar_index_impl.h
+    include/meanie3D/utils/matrix.h
+    include/meanie3D/utils/matrix_impl.h
     include/meanie3D/weights/weights.h
     include/meanie3D/weights/oase_weights.h
     include/meanie3D/weights/default_weights.h

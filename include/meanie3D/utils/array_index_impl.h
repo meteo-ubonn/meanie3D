@@ -395,7 +395,12 @@ namespace m3D {
                     
                     if (copy)
                     {
-                        points->at(index) = PointFactory<T>::get_instance()->copy(p);
+                        Point<T> *c = PointFactory<T>::get_instance()->copy(p);
+                        points->at(index) = c;
+                        if (p->isOriginalPoint != c->isOriginalPoint)
+                        {
+                            cerr << "Copy ERROR" << endl;
+                        }
                     }
                     else
                     {
@@ -411,7 +416,8 @@ namespace m3D {
     ArrayIndex<T>::count_recursive(size_t dim_index,
                                    array_t *array,
                                    typename CoordinateSystem<T>::GridPoint &gridpoint,
-                                   size_t &count)
+                                   size_t &count,
+                                   bool originalPointsOnly)
     {
         NcDim dim = m_coordinate_system->dimensions()[dim_index];
         
@@ -425,7 +431,7 @@ namespace m3D {
 
                 vector<void *> *a = (vector<void *> *) array->at(index);
                 
-                count_recursive( dim_index+1, a, gridpoint, count);
+                count_recursive( dim_index+1, a, gridpoint, count, originalPointsOnly);
             }
         }
         else
@@ -438,7 +444,10 @@ namespace m3D {
                 
                 if ( p != NULL)
                 {
-                    count++;
+                    if ((originalPointsOnly && p->isOriginalPoint) || !originalPointsOnly)
+                    {
+                        count++;
+                    }
                 }
             }
         }
@@ -447,13 +456,13 @@ namespace m3D {
     
     template <typename T>
     size_t
-    ArrayIndex<T>::count()
+    ArrayIndex<T>::count(bool originalPointsOnly)
     {
         size_t count = 0;
         
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
-        count_recursive(0, m_data, gp, count);
+        count_recursive(0, m_data, gp, count, originalPointsOnly);
         
         return count;
     }

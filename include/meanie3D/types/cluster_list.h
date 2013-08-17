@@ -129,7 +129,7 @@ namespace m3D {
 #pragma mark Constructor/Destructor
 
         /** @constructor
-         * @param all variables used to contruct the points from, in the same order
+         * @param all variables used to construct the points from, in the same order
          * @param all dimensions that were in the featurespace
          * @param name of the file the clusters were created from
          * @param the command line parameters used to cluster

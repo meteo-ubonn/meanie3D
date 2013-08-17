@@ -1,5 +1,9 @@
 #!/bin/bash
 mkdir netcdf && mv *.nc netcdf
+rm *_zeroshift_1*.vtk
+rm *_zeroshift_2*.vtk
+rm *_zeroshift_3*.vtk
+rm *_zeroshift_4*.vtk
 rm *_zeroshift_*.vtk
 rm *_centers.vtk
 rm *_modes.vtk

@@ -58,6 +58,7 @@ void parse_commmandline(program_options::variables_map vm,
                         std::string &weight_function_name,
                         string &parameters,
                         SearchParameters **search_params,
+                        std::string **previous_file,
                         bool &write_vtk,
                         bool &write_weight_response,
                         vector<size_t> &vtk_dimension_indexes,
@@ -349,6 +350,24 @@ void parse_commmandline(program_options::variables_map vm,
         }
     }
     
+    // Previous file
+    
+    if (vm.count("previous-file") > 0)
+    {
+        std::string previous = vm["previous-file"].as<string>();
+        
+        boost::filesystem::path previous_path( previous );
+        
+        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path))
+        {
+            *previous_file = new std::string(previous);
+        }
+        else
+        {
+            cerr << "Illegal value for parameter --previous-file: does not exist or is no regular file" << endl;
+        }
+    }
+    
     // Verbosity
     
     unsigned short vb = vm["verbosity"].as<unsigned short>();
@@ -423,6 +442,7 @@ int main(int argc, char** argv)
     ("ranges,r", program_options::value<string>(), "Using this parameters means, you are choosing the range search method. Comma separated list of (dimensionless) ranges. Use in the order of (dim1,...dimN,var1,...,varN).")
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Keep only clusters of this minimum size at each pass")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
+    ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
     ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
     ("write-cluster-weight-response","write out the clusters with weight responses as value")
     ("write-variables-as-vtk",program_options::value<string>(),"Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
@@ -463,6 +483,7 @@ int main(int argc, char** argv)
     map<int,double> lower_thresholds;   // ncvar.id / value
     map<int,double> upper_thresholds;   // ncvar.id / value
     std::string weight_function_name = "default";
+    std::string *previous_file = NULL;
     
     double scale = NO_SCALE;
     double decay = 0.01;
@@ -488,6 +509,7 @@ int main(int argc, char** argv)
                            weight_function_name,
                            parameters,
                            &search_params,
+                           &previous_file,
                            write_vtk,
                            write_weight_response,
                            vtk_dimension_indexes,
@@ -756,6 +778,10 @@ int main(int argc, char** argv)
         WeightThresholdFilter<FS_TYPE> wtf(weight_function,0.01, 10000, true);
         
         wtf.apply(fs);
+        
+        if ( verbosity > VerbositySilent )
+            cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
+
     }
     else
     {
@@ -797,8 +823,6 @@ int main(int argc, char** argv)
     fs->weight_sample_points.push_back(sample_point);
 #endif
     
-    RangeSearchParams<FS_TYPE> *p = dynamic_cast<RangeSearchParams<FS_TYPE> *>(search_params);
-
     PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
     
     //
@@ -813,18 +837,44 @@ int main(int argc, char** argv)
     
     // clusters.sanity_check( fs );
     
+    // Number the result sequentially to make it easier to follow
+    // previous results in comparison
+    
+    clusters.retag_identifiers();
+
+    // Axe weenies
+    
+    clusters.apply_size_threshold( min_cluster_size );
+
     if ( verbosity == VerbosityAll )
     {
         clusters.print();
     }
+
+    // Collate with previous clusters, if those are provided
     
-    // Axe weenies
-    
-    clusters.apply_size_threshold( min_cluster_size );
-    
-    // Number the result sequentially
-    
-    clusters.retag_identifiers();
+    if (previous_file != NULL)
+    {
+        try
+        {
+            typename ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( *previous_file );
+            
+            ClusterUtils<FS_TYPE> cluster_filter(0.66);
+            
+            cluster_filter.filter_with_previous_clusters(previous, &clusters, weight_function, verbosity);
+        }
+        catch (const std::exception &e)
+        {
+            cerr << "ERROR reading previous cluster file: " << e.what() << endl;
+            exit(-1);
+        }
+        catch (const netCDF::exceptions::NcException &ne)
+        {
+            cerr << "ERROR reading previous cluster file: " << ne.what() << endl;
+            exit(-1);
+        }
+
+    }
     
     // Announce final results
     

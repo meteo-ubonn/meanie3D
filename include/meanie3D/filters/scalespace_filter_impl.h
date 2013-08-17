@@ -485,6 +485,9 @@ namespace m3D {
                     m_progress_bar->operator++();
                 }
                 
+                // exclude points that were off limits
+                // in any of the original data sets 
+                
                 if (fs->off_limits()->get(gridpoint))
                 {
                     continue;
@@ -574,20 +577,23 @@ namespace m3D {
                         
                         p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
                         
-                        M3DPoint<T> * m3p = (M3DPoint<T> *) p;
-                        
                         // Did this exist in the original index?
                         
-                        M3DPoint<T> *op = (M3DPoint<T> *) originalIndex->get(gridpoint);
+                        Point<T> *op = originalIndex->get(gridpoint);
                         
-                        bool isOriginal = (op != NULL && op->isOriginalPoint);
+                        bool isOriginal = false;
                         
-                        m3p->isOriginalPoint = isOriginal;
+                        if (op != NULL)
+                        {
+                            isOriginal = op->isOriginalPoint;
+                        }
+                        
+                        p->isOriginalPoint = isOriginal;
                         
                         // Since we just created this point, there
                         // is no need to copy it again
                         
-                        filteredPoints->set(gridpoint,m3p,false);
+                        filteredPoints->set(gridpoint,p,false);
                         
                         if (!isOriginal) m_created_points++;
                     }
@@ -725,10 +731,16 @@ namespace m3D {
         // array index results
         filteredIndex->replace_points(fs->points);
         
+        size_t originalPoints = 0;
+        for (size_t i=0; i < fs->points.size(); i++)
+        {
+            if (fs->points[i]->isOriginalPoint) originalPoints++;
+        }
+        
         if ( this->show_progress() )
         {
             cout << "done. (" << stop_timer() << "s)" << endl;
-            cout << "Filtered featurespace contains " << fs->size() << " points."
+            cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
                  << "(" << m_created_points << " new points)" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
