@@ -71,6 +71,11 @@ namespace m3D {
                         size_t &count,
                         bool originalPointsOnly=false);
         
+        void
+        clear_recursive(size_t dim_index,
+                        array_t *array,
+                        typename CoordinateSystem<T>::GridPoint &gridpoint,
+                        bool delete_points);
         
 #pragma mark -
 #pragma mark Constructors/Destructors
@@ -141,6 +146,13 @@ namespace m3D {
         
         const CoordinateSystem<T> *
         coordinate_system() {return m_coordinate_system;}
+        
+        /** Clear the index.
+         * @param If <code>true</code> indexed points are deleted. 
+         *        If <code>false</code> they are left alone.
+         */
+        void
+        clear(bool delete_points);
         
 #pragma mark -
 #pragma mark Misc

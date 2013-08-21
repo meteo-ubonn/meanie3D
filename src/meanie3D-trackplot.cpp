@@ -107,6 +107,8 @@ void update_vtk_dimension_mapping(program_options::variables_map vm, const NcFil
     }
 }
 
+
+
 /**
  *
  *
@@ -438,6 +440,8 @@ int main(int argc, char** argv)
             // Don't need it anymore
             
             delete track;
+            
+            index.clear(true);
             
             // NETCDF
             

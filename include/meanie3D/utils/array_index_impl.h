@@ -411,6 +411,62 @@ namespace m3D {
         }
     }
     
+#pragma mark -
+#pragma mark Clear Index
+    
+    template <typename T>
+    void
+    ArrayIndex<T>::clear_recursive(size_t dim_index,
+                                   array_t *array,
+                                   typename CoordinateSystem<T>::GridPoint &gridpoint,
+                                   bool delete_points)
+    {
+        NcDim dim = m_coordinate_system->dimensions()[dim_index];
+        
+        size_t dimSize = dim.getSize();
+        
+        if (dim_index < (m_coordinate_system->size()-1) )
+        {
+            for ( size_t index = 0; index < dimSize; index++ )
+            {
+                gridpoint[dim_index] = index;
+                
+                vector<void *> *a = (vector<void *> *) array->at(index);
+                
+                clear_recursive( dim_index+1, a, gridpoint, delete_points);
+            }
+        }
+        else
+        {
+            vector<typename Point<T>::ptr> *points = (vector<typename Point<T>::ptr> *) array;
+            
+            for ( size_t index = 0; index < dimSize; index++ )
+            {
+                typename Point<T>::ptr p = points->at(index);
+                
+                if ( p != NULL && delete_points )
+                {
+                    delete p;
+                }
+            }
+            
+            points->clear();
+        }
+    }
+
+    
+    template <typename T>
+    void
+    ArrayIndex<T>::clear(bool delete_points)
+    {
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
+        
+        clear_recursive(0, m_data, gp, delete_points);
+    }
+    
+#pragma mark -
+#pragma mark Counting
+    
     template <typename T>
     void
     ArrayIndex<T>::count_recursive(size_t dim_index,

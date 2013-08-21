@@ -56,9 +56,12 @@ void parse_commmandline(program_options::variables_map vm,
                         map<int,double> &upper_thresholds,
                         double &scale,
                         std::string &weight_function_name,
+                        FS_TYPE &wwf_lower_threshold,
+                        FS_TYPE &wwf_upper_threshold,
                         string &parameters,
                         SearchParameters **search_params,
                         std::string **previous_file,
+                        FS_TYPE &cluster_coverage_threshold,
                         bool &write_vtk,
                         bool &write_weight_response,
                         vector<size_t> &vtk_dimension_indexes,
@@ -303,6 +306,10 @@ void parse_commmandline(program_options::variables_map vm,
         exit( 1 );
     }
     
+    wwf_lower_threshold = vm["wwf-lower-threshold"].as<FS_TYPE>();
+    
+    wwf_upper_threshold = vm["wwf-upper-threshold"].as<FS_TYPE>();
+    
     // VTK output?
     
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
@@ -367,6 +374,8 @@ void parse_commmandline(program_options::variables_map vm,
             cerr << "Illegal value for parameter --previous-file: does not exist or is no regular file" << endl;
         }
     }
+    
+    cluster_coverage_threshold = vm["previous-cluster-coverage-threshold"].as<FS_TYPE>();
     
     // Verbosity
     
@@ -434,19 +443,22 @@ int main(int argc, char** argv)
     ("file,f", program_options::value<string>(), "CF-Metadata compliant NetCDF-file")
     ("output,o", program_options::value<string>(), "Name of output file for clustering results")
     ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
+    ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
-    ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
-    ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with.")
     ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
-    ("ranges,r", program_options::value<string>(), "Using this parameters means, you are choosing the range search method. Comma separated list of (dimensionless) ranges. Use in the order of (dim1,...dimN,var1,...,varN).")
-    ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Keep only clusters of this minimum size at each pass")
-    ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
+    ("write-variables-as-vtk",program_options::value<string>(),"Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
+    ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
+    ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
+    ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
+    ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with.")
+    ("ranges,r", program_options::value<string>(), "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
+    ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Discard clusters smaller than this number of points.")
     ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
+    ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66), "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
     ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
     ("write-cluster-weight-response","write out the clusters with weight responses as value")
-    ("write-variables-as-vtk",program_options::value<string>(),"Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
-    ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
+    ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ;
     
     program_options::variables_map vm;
@@ -482,8 +494,11 @@ int main(int argc, char** argv)
     unsigned int min_cluster_size = 1;
     map<int,double> lower_thresholds;   // ncvar.id / value
     map<int,double> upper_thresholds;   // ncvar.id / value
+    FS_TYPE wwf_lower_threshold;
+    FS_TYPE wwf_upper_threshold;
     std::string weight_function_name = "default";
     std::string *previous_file = NULL;
+    FS_TYPE cluster_coverage_threshold = 0.66;
     
     double scale = NO_SCALE;
     double decay = 0.01;
@@ -507,9 +522,12 @@ int main(int argc, char** argv)
                            upper_thresholds,
                            scale,
                            weight_function_name,
+                           wwf_lower_threshold,
+                           wwf_upper_threshold,
                            parameters,
                            &search_params,
                            &previous_file,
+                           cluster_coverage_threshold,
                            write_vtk,
                            write_weight_response,
                            vtk_dimension_indexes,
@@ -716,29 +734,6 @@ int main(int argc, char** argv)
     fs->off_limits()->write("off_limits.vtk","off_limits");
 #endif
     
-    if (!vtk_variables.empty())
-    {
-        string filename_only = boost::filesystem::path(filename).filename().string();
-        
-        boost::filesystem::path destination_path = boost::filesystem::path(".");
-        
-        destination_path /= filename_only;
-        
-        //destination_path.replace_extension("vtk");
-        
-        destination_path.replace_extension();
-        
-        string dest_path = destination_path.generic_string();
-        
-        if ( verbosity > VerbositySilent )
-            cout << "Writing featurespace-variables ...";
-        
-        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
-        
-        if ( verbosity > VerbositySilent )
-            cout << " done." << endl;
-    }
-    
     WeightFunction<FS_TYPE> *weight_function = NULL;
     
     // Scale-Space smoothing
@@ -775,7 +770,7 @@ int main(int argc, char** argv)
         // Apply weight function filter
         // TODO: make that a command line parameter
         
-        WeightThresholdFilter<FS_TYPE> wtf(weight_function,0.01, 10000, true);
+        WeightThresholdFilter<FS_TYPE> wtf(weight_function,wwf_lower_threshold, wwf_upper_threshold, true);
         
         wtf.apply(fs);
         
@@ -804,6 +799,30 @@ int main(int argc, char** argv)
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
     }
+    
+    if (!vtk_variables.empty())
+    {
+        string filename_only = boost::filesystem::path(filename).filename().string();
+        
+        boost::filesystem::path destination_path = boost::filesystem::path(".");
+        
+        destination_path /= filename_only;
+        
+        //destination_path.replace_extension("vtk");
+        
+        destination_path.replace_extension();
+        
+        string dest_path = destination_path.generic_string();
+        
+        if ( verbosity > VerbositySilent )
+            cout << "Writing featurespace-variables ...";
+        
+        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
+        
+        if ( verbosity > VerbositySilent )
+            cout << " done." << endl;
+    }
+
 
 #if WRITE_WEIGHT_FUNCTION
     boost::filesystem::path path(filename);
@@ -859,7 +878,7 @@ int main(int argc, char** argv)
         {
             typename ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( *previous_file );
             
-            ClusterUtils<FS_TYPE> cluster_filter(0.66);
+            ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
             
             cluster_filter.filter_with_previous_clusters(previous, &clusters, weight_function, verbosity);
         }
