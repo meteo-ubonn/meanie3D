@@ -524,6 +524,6 @@ namespace m3D {
     }
 
     
-}; //namespace
+} //namespace
 
 #endif

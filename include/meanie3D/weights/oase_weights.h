@@ -73,10 +73,10 @@ namespace m3D { namespace weights {
          */
         OASEWeightFunction(FeatureSpace<T> *fs, const map<size_t,T> &min, const map<size_t,T> &max)
         : m_vars(fs->variables())
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
-        , m_coordinate_system(fs->coordinate_system)
         , m_min(min)
         , m_max(max)
+        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_coordinate_system(fs->coordinate_system)
         {
             build_saliency_field(fs);
         }
@@ -168,6 +168,6 @@ namespace m3D { namespace weights {
     };
 
     
-}};
+}}
 
 #endif

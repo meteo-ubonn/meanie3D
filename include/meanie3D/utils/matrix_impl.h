@@ -35,6 +35,6 @@ namespace m3D { namespace utils {
         return matrix;
     }
     
-}};
+}}
 
 #endif

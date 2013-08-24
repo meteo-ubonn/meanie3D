@@ -66,6 +66,4 @@
 #define COALESCE_WITH_STRONGEST_NEIGHBOUR 1
 
 
-
-
 #endif

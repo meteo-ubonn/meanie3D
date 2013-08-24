@@ -134,6 +134,6 @@ namespace m3D {
         T correlate_kendall( const typename Histogram<T>::ptr o );
         
     };
-};
+}
 
 #endif

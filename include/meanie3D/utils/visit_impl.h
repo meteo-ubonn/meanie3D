@@ -257,7 +257,7 @@ namespace m3D { namespace utils {
 
             f.close();
         }
-    };
+    }
     
     template <class T>
     void
@@ -350,7 +350,7 @@ namespace m3D { namespace utils {
             
             f.close();
         }
-    };
+    }
     
     template <class T>
     void
@@ -535,6 +535,6 @@ namespace m3D { namespace utils {
 
 
     
-}};
+}}
 
 #endif

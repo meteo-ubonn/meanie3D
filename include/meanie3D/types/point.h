@@ -112,6 +112,6 @@ namespace m3D {
         operator == (const M3DPoint<T> &o) { return this->values == o.values; };
         
     };
-};
+}
 
 #endif

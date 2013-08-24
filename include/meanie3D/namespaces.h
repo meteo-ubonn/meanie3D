@@ -23,12 +23,12 @@ namespace m3D {
 	using ::cfa::meanshift::Kernel;
 
 	namespace detection {
-	};
+	}
 
 	namespace utils { namespace visit {
 		using namespace ::std;
 		using namespace ::boost::locale;
-	}};
-};
+	}}
+}
 
 #endif

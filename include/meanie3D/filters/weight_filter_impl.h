@@ -17,7 +17,7 @@ namespace m3D {
     {}
     
     template <typename T>
-    WeightThresholdFilter<T>::~WeightThresholdFilter() {};
+    WeightThresholdFilter<T>::~WeightThresholdFilter() {}
     
 #pragma mark -
 #pragma mark Abstract filter method
@@ -42,27 +42,36 @@ namespace m3D {
         
         typename Point<T>::list::iterator pit;
         
-        for ( pit = fs->points.begin(); pit != fs->points.end(); )
+        vector< Point<T> * > accepted;
+        vector< Point<T> * > erased;
+        
+        for ( size_t k=0; k < fs->points.size(); k++)
         {
             if ( this->show_progress() )
             {
                 progress_bar->operator++();
             }
             
-            Point<T> *p = *pit;
+            Point<T> *p = fs->points.at(k);
             
             T w = m_weight_function->operator()(p);
             
             if ( w < m_lower_threshold || w > m_upper_threshold)
             {
-                fs->points.erase( pit );
-                
-                delete p;
+                erased.push_back(p);
             }
             else
             {
-                pit++;
+                accepted.push_back(p);
             }
+        }
+        
+        fs->points = accepted;
+        
+        for (size_t i=0; i<erased.size(); i++)
+        {
+            Point<T> *p = erased[i];
+            delete p;
         }
 
         if ( this->show_progress() )
@@ -72,6 +81,6 @@ namespace m3D {
         }
     }
 
-};
+}
 
 #endif

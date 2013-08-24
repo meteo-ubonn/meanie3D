@@ -101,6 +101,6 @@ namespace m3D {
 
     };
     
-};
+}
 
 #endif

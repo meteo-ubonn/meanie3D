@@ -124,6 +124,6 @@ namespace m3D { namespace weights {
             return m_weight.get(p->gridpoint);
         }
     };
-}};
+}}
 
 #endif

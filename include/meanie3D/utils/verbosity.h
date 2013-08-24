@@ -12,6 +12,6 @@ namespace m3D { namespace utils {
         VerbosityAll = 3
     } Verbosity;
 
-}};
+}}
 
 #endif

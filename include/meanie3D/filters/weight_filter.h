@@ -52,6 +52,6 @@ namespace m3D {
         virtual void apply( FeatureSpace<T> *fs );
     };
     
-};
+}
 
 #endif

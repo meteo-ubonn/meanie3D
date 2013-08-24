@@ -64,12 +64,12 @@ namespace m3D {
             
             m_kernels.push_back(kernel);
         }
-    };
+    }
 
     template <typename T>
     ScaleSpaceFilter<T>::~ScaleSpaceFilter()
     {
-    };
+    }
     
 #pragma mark -
 #pragma mark Abstract filter method
@@ -778,6 +778,6 @@ namespace m3D {
     {
         return m_max;
     }
-};
+}
 
 #endif

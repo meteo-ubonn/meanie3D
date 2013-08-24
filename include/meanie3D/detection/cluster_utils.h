@@ -34,7 +34,7 @@ namespace m3D {
                                           WeightFunction<T> *weight_function,
                                           const Verbosity verbosity = VerbosityNormal);
     };
-};
+}
     
 #include "cluster_utils_impl.h"
     

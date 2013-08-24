@@ -60,7 +60,7 @@ namespace m3D {
         boost::mutex::scoped_lock( m_cluster_threadcount_mutex );
 #endif            
         m_cluster_threadcount++;
-    };
+    }
 
     
 #pragma mark -

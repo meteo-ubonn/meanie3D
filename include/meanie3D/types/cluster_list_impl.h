@@ -1338,7 +1338,7 @@ namespace m3D {
                 }
             }
         }
-    };
+    }
     
     
     template <typename T>
@@ -1489,7 +1489,7 @@ namespace m3D {
         {
             clusters[i]->id = Cluster<T>::NO_ID;
         }
-    };
+    }
     
     template <typename T>
     void
@@ -1499,23 +1499,24 @@ namespace m3D {
         {
             clusters[i]->id = i;
         }
-    };
+    }
     
+    template <typename T>
+    struct clear_cluster
+    {
+        void operator() (void *p)
+        {
+            static_cast< M3DPoint<T> * >(p)->cluster = NULL;
+        };
+    };
+
     
     template <typename T>
     void
     ClusterList<T>::reset_clustering( FeatureSpace<T> *fs )
     {
-        struct clear_cluster
-        {
-            void operator() (void *p)
-            {
-                static_cast< M3DPoint<T> * >(p)->cluster = NULL;
-            };
-        } clear_cluster;
-        
-        for_each( fs->points.begin(), fs->points.end(), clear_cluster );
-    };
+        for_each( fs->points.begin(), fs->points.end(), clear_cluster<T>() );
+    }
     
     template <typename T>
     void
@@ -1529,7 +1530,7 @@ namespace m3D {
         }
         
         assert( point_count == fs->size() );
-    };
+    }
     
 #pragma mark -
 #pragma mark Coalescence Merging
@@ -1587,6 +1588,6 @@ namespace m3D {
     };
     
   
-}; //namespace
+} //namespace
 
 #endif

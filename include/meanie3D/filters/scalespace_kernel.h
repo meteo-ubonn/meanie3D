@@ -85,6 +85,6 @@ namespace m3D {
          */
         const T value(T r);
     };    
-};
+}
 
 #endif

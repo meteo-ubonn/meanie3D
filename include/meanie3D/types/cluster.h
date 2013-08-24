@@ -61,7 +61,7 @@ namespace m3D {
         
         typedef vector<ptr>    		list;
         
-        typedef unsigned long long  id_t;
+        typedef unsigned long       id_t;
         
         static const id_t           NO_ID;
         
@@ -292,6 +292,6 @@ namespace m3D {
         T average_weight_response(const WeightFunction<T> *w) const;
     };
     
-};
+}
     
 #endif

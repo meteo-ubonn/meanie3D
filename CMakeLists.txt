@@ -70,20 +70,32 @@ IF (USE_GCC)
     SET(CMAKE_CXX_COMPILER=$CXX)
     IF (APPLE)
         SET(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvmgcc42")
-    ELSE (APPLE)
+        ELSE (APPLE)
       #TODO
     ENDIF (APPLE)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -ftree-vectorize -msse2 -ffast-math")
+    
+    # Normal
+    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+    
+    # Release
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
+
 ELSE (USE_GCC)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -mllvm -vectorize -ffast-math")
+
+    # Normal
+    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
+    
+    # Release
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
+
 ENDIF (USE_GCC)
 
 # Optimization flags
 IF (APPLE)
-   SET(CMAKE_XCODE_ATTRIBUTE_LLVM_LTO[variant=Release] YES)
    SET(CMAKE_XCODE_ATTRIBUTE_GCC_STRICT_ALIASING[variant=Release] YES)
    SET(CMAKE_XCODE_ATTRIBUTE_GCC_UNROLL_LOOPS[variant=Release] YES)
-   SET(CMAKE_XCODE_ATTRIBUTE_GCC_FAST_MATH[variant=Release] YES)   
+   SET(CMAKE_XCODE_ATTRIBUTE_GCC_FAST_MATH[variant=Release] YES)
+   SET(CMAKE_XCODE_ATTRIBUTE_LLVM_LTO[variant=Release] YES)
 ELSE (APPLE)
    #TODO
 ENDIF(APPLE)   
@@ -99,6 +111,8 @@ IF (USE_CPP11)
    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g -Wall")
    SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
    SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
+ELSE()
+   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions")
 ENDIF (USE_CPP11)
 
 # ------------------------------------- 

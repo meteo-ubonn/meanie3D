@@ -29,6 +29,6 @@ namespace m3D { namespace utils {
         create_flag_matrix(size_t width, size_t height, int defaultValue=0 );
     };
     
-}};
+}}
 
 #endif

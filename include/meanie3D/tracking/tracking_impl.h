@@ -316,7 +316,7 @@ namespace m3D {
                     
                     if ( verbosity >= VerbosityNormal )
                     {
-                        printf("\t<ID#%4llu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                        printf("\t<ID#%4lu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                                oldCluster->id,
                                oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
                                midDisplacement[n][m],
@@ -333,7 +333,7 @@ namespace m3D {
                 else
                 {
                     if ( verbosity >= VerbosityDetails )
-                        printf("\t<ID#%4llu>:\toverlap, size or max velocity constraints violated\n", oldCluster->id);
+                        printf("\t<ID#%4lu>:\toverlap, size or max velocity constraints violated\n", oldCluster->id);
                 }
             }
         }
@@ -411,7 +411,7 @@ namespace m3D {
                     
                     if ( verbosity >= VerbosityNormal )
                     {
-                        printf("pairing new blob #%4lu / old blob ID=#%4llu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
+                        printf("pairing new blob #%4lu / old blob ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
                     }
                         
                     new_cluster->id = old_cluster->id;
@@ -425,7 +425,7 @@ namespace m3D {
             {
                 if ( verbosity >= VerbosityNormal )
                 {
-                    printf("pairing new blob #%4lu / old blob ID=#%4llu rejected, cluster was already tagged as #%4llu\n",
+                    printf("pairing new blob #%4lu / old blob ID=#%4lud, cluster was already tagged as #%4lu",
                            maxN, old_cluster->id, new_cluster->id );
                 }
 
@@ -557,10 +557,10 @@ namespace m3D {
                     {
                         typename Cluster<T>::ptr c = previous->clusters[ candidates[i] ];
                         
-                        printf("#%llu ",c->id);
+                        printf("#%lu ",c->id);
                     }
                     
-                    printf("seem to have merged into blob #%llu\n", new_cluster->id );
+                    printf("seem to have merged into blob #%lu\n", new_cluster->id );
                 }
                 
                 // store the given ID
@@ -585,14 +585,14 @@ namespace m3D {
                         new_cluster->id = c->id;
                         
                         if ( verbosity >= VerbosityNormal )
-                            printf("Re-assigned ID#%llu\n", new_cluster->id );
+                            printf("Re-assigned ID#%lu\n", new_cluster->id );
                     }
                     else
                     {
                         new_cluster->id = ++current_id;
                         
                         if ( verbosity >= VerbosityNormal )
-                            printf("Assigned new ID#%llu\n", new_cluster->id );
+                            printf("Assigned new ID#%lu\n", new_cluster->id );
                         
                     }
                     
@@ -657,7 +657,7 @@ namespace m3D {
                 had_splits = true;
                 
                 if ( verbosity >= VerbosityNormal )
-                    printf("Blob ID#%llu seems to have split into blobs ", old_cluster->id);
+                    printf("Blob ID#%lu seems to have split into blobs ", old_cluster->id);
                 
                 for ( int i=0; i < candidates.size(); i++ )
                 {
@@ -666,7 +666,7 @@ namespace m3D {
                     // check if the new blob's IDs are in tracked IDs and
                     // retag / remove them
                     
-                    printf("#%llu",c->id );
+                    printf("#%lu",c->id );
 
                     // check if the tracked id's contains c->id
                     
@@ -698,7 +698,7 @@ namespace m3D {
                             c->id = current_id++;
                             
                             if ( verbosity >= VerbosityNormal )
-                                printf(" (re-tagged as #%llu)",c->id);
+                                printf(" (re-tagged as #%lu)",c->id);
                             
                             current->new_ids.push_back( c->id );
                         }
@@ -719,6 +719,6 @@ namespace m3D {
         current->tracking_performed = true;
     }
     
-};
+}
 
 #endif

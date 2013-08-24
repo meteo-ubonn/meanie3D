@@ -89,7 +89,7 @@ namespace m3D {
 #endif
         
     };
-};
+}
     
 #include "cluster_op_impl.h"
     

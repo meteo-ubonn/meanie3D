@@ -75,12 +75,12 @@ namespace m3D {
         m_index(other.m_index),
         m_op(other.m_op),
         m_cluster_list(other.m_cluster_list),
-        m_search_params(other.m_search_params),
-        m_start_index(other.m_start_index),
-        m_end_index(other.m_end_index),
         m_kernel(other.m_kernel),
         m_weight_function(other.m_weight_function),
         m_drf_threshold(other.m_drf_threshold),
+        m_search_params(other.m_search_params),
+        m_start_index(other.m_start_index),
+        m_end_index(other.m_end_index),
         m_show_progress(other.m_show_progress)
         {
         }
@@ -158,6 +158,6 @@ namespace m3D {
             m_op->report_done();
         }
     };
-};
+}
 
 #endif

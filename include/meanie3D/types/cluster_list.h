@@ -356,6 +356,6 @@ namespace m3D {
 #endif
 
     };
-};
+}
     
 #endif

@@ -60,7 +60,7 @@ namespace m3D {
         }
         
         return array;
-    };
+    }
     
     template <typename T>
     float *
@@ -74,7 +74,7 @@ namespace m3D {
         }
         
         return array;
-    };
+    }
 
     template <typename T>
     T
@@ -197,8 +197,8 @@ namespace m3D {
         
         return new Histogram<T>( bins );
     
-    };
+    }
 
-};
+}
 
 #endif

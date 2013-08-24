@@ -127,6 +127,6 @@ namespace m3D { namespace weights {
     };
     
     
-}};
+}}
 
 #endif

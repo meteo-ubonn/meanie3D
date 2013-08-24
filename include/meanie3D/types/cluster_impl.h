@@ -21,45 +21,45 @@ namespace m3D {
     
     template <typename T>
     Cluster<T>::Cluster()
-    : id(NO_ID)
-    , m_radius(numeric_limits<T>::min())
+    : m_radius(numeric_limits<T>::min())
     , m_index(NULL)
     , m_dimension(0)
     , m_spatial_dimension(0)
     , m_weight_range_calculated(false)
     , m_min_weight(0)
     , m_max_weight(0)
-    {};
+    , id(NO_ID)
+    {}
     
     template <typename T>
     Cluster<T>::Cluster(const vector<T> &mode, size_t spatial_dimension)
-    : id(NO_ID)
-    , m_radius(numeric_limits<T>::min())
+    : m_radius(numeric_limits<T>::min())
     , m_index(NULL)
     , m_dimension(mode.size())
     , m_spatial_dimension(spatial_dimension)
-    , mode(mode)
     , m_weight_range_calculated(false)
     , m_min_weight(0)
     , m_max_weight(0)
+    , mode(mode)
+    , id(NO_ID)
     {
         assert( m_dimension > m_spatial_dimension ); // TODO: change on refac #146
-    };
+    }
     
     template <typename T>
     Cluster<T>::Cluster( const Cluster<T> &o )
-    : m_index(NULL)
-    , m_radius(numeric_limits<T>::min())
+    : m_radius(numeric_limits<T>::min())
+    , m_index(NULL)
     , m_dimension(o.m_dimension)
     , m_spatial_dimension( o.m_spatial_dimension )
-    , id(o.id)
-    , mode(o.mode)
-    , points(o.points)
     , m_weight_range_calculated(o.m_weight_range_calculated)
     , m_min_weight(o.m_min_weight)
     , m_max_weight(o.m_max_weight)
+    , mode(o.mode)
+    , points(o.points)
+    , id(o.id)
     {
-    };
+    }
     
     template <typename T>
     Cluster<T>::~Cluster()
@@ -67,7 +67,7 @@ namespace m3D {
         this->clear_histogram_cache();
 
         this->clear_index();
-    };
+    }
     
 #pragma mark -
 #pragma mark Adding / Removing points
@@ -140,7 +140,7 @@ namespace m3D {
 #endif
             
         }
-    };
+    }
     
     template <typename T>
     bool
@@ -149,7 +149,7 @@ namespace m3D {
         typename Point<T>::list::iterator fi = find( points.begin(), points.end(), point );
         
         return fi != points.end();
-    };
+    }
     
 #pragma mark -
 #pragma mark Derived properties
@@ -169,14 +169,14 @@ namespace m3D {
     Cluster<T>::operator == (const Cluster<T> &o)
     {
         return o.mode() == mode();
-    };
+    }
     
     template <typename T>
     Cluster<T>
     Cluster<T>::operator = (const Cluster<T> &o)
     {
         return Cluster<T>(o);
-    };
+    }
     
 #pragma mark -
 #pragma mark Histograms
@@ -508,6 +508,6 @@ namespace m3D {
 
 
 
-}; //namespace
+} //namespace
 
 #endif

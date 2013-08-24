@@ -1,4 +1,3 @@
-#!/bin/bash
 
 if [ "X$1" = "X" ]
 then

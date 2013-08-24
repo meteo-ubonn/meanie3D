@@ -10,7 +10,7 @@ namespace m3D {
         , m_values(vector<T>(0))
 
     {
-    };
+    }
 
     template <typename T>
     ScaleSpaceKernel<T>::ScaleSpaceKernel(const T& t, const vector<T> &distances)
@@ -22,7 +22,7 @@ namespace m3D {
         {
             m_values[i] = this->value(distances[i]);
         }
-    };
+    }
     
     template <typename T>
     ScaleSpaceKernel<T>::ScaleSpaceKernel(const ScaleSpaceKernel<T> &o)
@@ -33,7 +33,7 @@ namespace m3D {
     }
     
     template <typename T>
-    ScaleSpaceKernel<T>::~ScaleSpaceKernel() {};
+    ScaleSpaceKernel<T>::~ScaleSpaceKernel() {}
     
     template <typename T>
     ScaleSpaceKernel<T>
@@ -50,7 +50,7 @@ namespace m3D {
     ScaleSpaceKernel<T>::values()
     {
         return m_values;
-    };
+    }
     
     template <typename T>
     bool
@@ -77,6 +77,6 @@ namespace m3D {
         return m_gauging_factor * std::exp(-(r*r)/(2*m_t));
     }
     
-};
+}
 
 #endif

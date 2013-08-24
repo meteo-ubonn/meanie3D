@@ -32,10 +32,11 @@ last_completed_run_count = 0
 VAR_NAME="zh"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds zh=10 -m 10"
+DETECT_PARAMS     += " --lower-thresholds zh=30 -m 10"
 
 CLUSTERING_PARAMS =  "-d z,y,x --vtk-dimensions x,y,z"
 CLUSTERING_PARAMS += " --verbosity 1"
+CLUSTERING_PARAMS += " --write-clusters-as-vtk"
 CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
 CLUSTERING_PARAMS += " --weight-function default"
 CLUSTERING_PARAMS += " -v "+VAR_NAME
@@ -96,10 +97,31 @@ a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
 
 # Modify view parameters
-v = GetView2D()
-v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
-v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-SetView2D(v)
+#v = GetView2D()
+#v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
+#v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
+#SetView2D(v)
+
+v = GetView3D();
+v.viewNormal = (0.656802,-0.498223,0.566025)
+v.focus = (-239.212,-4222.9,7.375)
+v.viewUp = (-0.457525,0.333371,0.824339)
+v.viewAngle = 30
+v.parallelScale = 173.528
+v.nearPlane = -347.056
+v.farPlane = 347.056
+v.imagePan = (0, 0)
+v.imageZoom = 1.4641
+v.perspective = 1
+v.eyeAngle = 2
+v.centerOfRotationSet = 0
+v.centerOfRotation = (0, 0, 0)
+v.axis3DScaleFlag = 0
+v.axis3DScales = (1, 1, 1)
+v.shear = (0, 0, 1)
+print "3D View Settings:"
+print v
+SetView3D(v);
 
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"
@@ -135,9 +157,13 @@ for netcdf_file in netcdf_list:
     
     # build the clustering command
     command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + CLUSTERING_PARAMS
-    command = command + " --write-clusters-as-vtk"
+
+    # use previous result to enhance current
+    if run_count > 0:
+        command = command + " -p " + last_cluster_file
+
     command = command + " > clustering_" + str(run_count)+".log"
-    
+
     # execute
     print command
     return_code = call( command, shell=True)

@@ -501,7 +501,6 @@ int main(int argc, char** argv)
     FS_TYPE cluster_coverage_threshold = 0.66;
     
     double scale = NO_SCALE;
-    double decay = 0.01;
     
     vector<NcVar> vtk_variables;
     SearchParameters *search_params = NULL;
@@ -876,7 +875,7 @@ int main(int argc, char** argv)
     {
         try
         {
-            typename ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( *previous_file );
+             ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( *previous_file );
             
             ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
             
@@ -952,7 +951,7 @@ int main(int argc, char** argv)
     delete fs;
     
     return 0;
-};
+}
 
 
 
