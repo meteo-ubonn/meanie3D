@@ -80,7 +80,7 @@ print "Tracking Evaluation Command:"
 print trackplot_bin
 
 # Cluster color tables
-col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
+col_tables = ["Purples","Blues","Oranges","Greens","Reds","Paired"]
 
 # Silent
 SuppressMessages(True)
@@ -176,7 +176,7 @@ for netcdf_file in netcdf_list:
     # Plot the source data in color
     #
     
-    visit3D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated",1 )
+    visit3D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated",0.25 )
     DrawPlots()
     
     # Calling ToggleMaintainViewMode helps
@@ -199,7 +199,7 @@ for netcdf_file in netcdf_list:
     #
     
     # Re-add the source with "xray"
-    visit3D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
+    # visit3D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
     
     # Add the clusters
     visit3D.add_clusters(basename,"_cluster_",col_tables)

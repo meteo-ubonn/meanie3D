@@ -28,7 +28,6 @@ namespace m3D {
     {
         if ( verbosity >= VerbosityNormal )
             cout << endl << "-- Tracking --" << endl;
-
         
         // sanity check
         
@@ -41,7 +40,6 @@ namespace m3D {
                 return;
             }
         }
-        
         
         // figure out tracking variable index
         
@@ -60,8 +58,7 @@ namespace m3D {
 
         track_variable.getAtt("valid_max").getValues( &valid_max );
         
-        
-        // Find the highest id 
+        // Find the highest id
         
         size_t current_id = 0;
 
@@ -84,9 +81,27 @@ namespace m3D {
         if ( verbosity >= VerbosityNormal )
             cout << "next available id is " << current_id << endl;
         
-        // TODO: check time difference and determine displacement restraints
-        // TODO: add timestamp to the cluster file format
-        // TODO: timestamp in the original file other than in the filename? Spec?
+        // check time difference and determine displacement restraints
+        
+        timestamp_t p_time = previous->timestamp;
+        
+        timestamp_t c_time = current->timestamp;
+        
+        // Check c > p
+        
+        if (p_time >= c_time)
+        {
+            cerr << "ERROR:previous timestamp not greater than current timestamp!" << endl;
+            return;
+        }
+        
+        this->m_deltaT = boost::numeric_cast<double>(c_time) - boost::numeric_cast<double>(p_time);
+        
+        if (this->m_deltaT > m_max_deltaT)
+        {
+            cerr << "ERROR:files too far apart in time. Time difference:" << this->m_deltaT << "s, longest accepted:" << m_max_deltaT << "s" << endl;
+            return;
+        }
         
 
         T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
@@ -108,7 +123,6 @@ namespace m3D {
 //        }
         
 //        SPLog(@"\n");
-        
         
         // Minimum object radius for overlap constraint
         // TODO: this point needs to be replaced with velocity
@@ -255,7 +269,6 @@ namespace m3D {
                 {
                     rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
                 }
-                
 
                 // track maxHistD and maxMidD
                 
@@ -569,7 +582,7 @@ namespace m3D {
                 
                 // check if the ID was new?
                 
-                int index = index_of_first( current->new_ids, the_id );
+                int index = index_of_first<id_t>( current->new_ids, the_id );
                 
                 if ( index < 0 )
                 {
@@ -602,7 +615,7 @@ namespace m3D {
                     
                     // and remove from tracked IDs
 
-                    size_t index = index_of_first( current->tracked_ids, the_id );
+                    size_t index = index_of_first<id_t>( current->tracked_ids, the_id );
                     
                     current->tracked_ids.erase( current->tracked_ids.begin() + index );
                 }
@@ -670,7 +683,7 @@ namespace m3D {
 
                     // check if the tracked id's contains c->id
                     
-                    int index = index_of_first( current->tracked_ids, (size_t)c->id );
+                    int index = index_of_first<id_t>( current->tracked_ids, (size_t)c->id );
 
                     // If the largest one of the new clusters is at least 75% of the
                     // size of new previous cluster, the ID of the previous cluster

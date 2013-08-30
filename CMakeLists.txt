@@ -219,6 +219,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/types/point_factory.h
     include/meanie3D/types/histogram.h
     include/meanie3D/types/histogram_impl.h
+    include/meanie3D/types/timestamp.h
     include/meanie3D/filters.h
     include/meanie3D/filters/filter.h
     include/meanie3D/filters/scalespace_kernel.h
@@ -344,6 +345,22 @@ TARGET_LINK_LIBRARIES(meanie3D-copydims
     ${Boost_LIBRARIES}
     ${HDF5_LIBRARIES})
 
+# timestamp update
+
+ADD_EXECUTABLE(meanie3D-timestamp
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-timestamp.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-timestamp
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES})
+
 # VTK-converter
 
 ADD_EXECUTABLE(meanie3D-cfm2vtk
@@ -409,6 +426,7 @@ INSTALL(TARGETS meanie3D LIBRARY DESTINATION "/usr/local/lib")
 INSTALL(TARGETS meanie3D-detect RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-trackplot RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 # Documentation
 

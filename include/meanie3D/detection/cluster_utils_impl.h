@@ -34,7 +34,7 @@ namespace m3D {
         
         size_t new_count = current->clusters.size();
         size_t old_count = previous->clusters.size();
-        ::cfa::meanshift::id_t current_id = current->clusters[current->clusters.size()-1]->id;
+        id_t current_id = current->clusters[current->clusters.size()-1]->id;
         
         typename Matrix<T>::matrix_t coverOldByNew = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t coverNewByOld = Matrix<T>::create_matrix(new_count,old_count);

@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <locale>
 #include <fstream>
+#include <string>
 
 #include <radolan/radolan.h>
 
@@ -35,7 +36,19 @@ namespace m3D { namespace utils {
     	/** Global variable maintaining the dimension mapping
          */
         static vector<size_t> VTK_DIMENSION_INDEXES;
-
+        
+        /** Takes the given list of  dimension names and their re-ordering.
+         * Performs some sanity checks (same number of arguments, same variables)
+         * and updates the field VTK_DIMENSION_INDEXES accordingly. Also updates 
+         * this field in the cf-algorithms counterpart!
+         *
+         * @param dimension names
+         * @param re-ordered dimension names
+         */
+        static
+        void
+        update_vtk_dimension_mapping(vector<string> dim_names, vector<string> vtk_dim_names);
+        
     	/** Writes out the modes of the clusters. The mode is the
          * point, where the mean-shift graph ends. The resulting
          * file can be used with Visit's "Label" plot type to label
@@ -90,7 +103,10 @@ namespace m3D { namespace utils {
         /** Write out the track centers */
         static
         void
-        write_center_tracks_vtk(typename Tracking<T>::trackmap_t &trackmap, const std::string &basename, size_t spatial_dimensions);
+        write_center_tracks_vtk(typename Tracking<T>::trackmap_t &trackmap,
+                                const std::string &basename,
+                                size_t spatial_dimensions,
+                                bool exclude_degenerates = true);
         
         /** Writes the clusters out with the value of the weight response
          * for the whole cluster as value. 

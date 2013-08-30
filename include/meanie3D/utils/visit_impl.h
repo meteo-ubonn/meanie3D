@@ -15,6 +15,47 @@ namespace m3D { namespace utils {
     template <typename T>
 	vector<size_t>
     VisitUtils<T>::VTK_DIMENSION_INDEXES;
+    
+    template <typename T>
+    void
+    VisitUtils<T>::update_vtk_dimension_mapping(vector<string> dim_names, vector<string> vtk_dim_names)
+    {
+        // VTK dimension mapping
+        
+        if (!vtk_dim_names.empty())
+        {
+            vector<size_t> vtk_dimension_indexes;
+            
+            // Number of values should be the same in --dimensions and --vtk-dimensions
+            
+            if (vtk_dim_names.size() != dim_names.size())
+            {
+                cerr << "ERROR: --dimensions and --vtk-dimensions must have the same number of arguments" << endl;
+                exit(-1);
+            }
+            
+            // Check if all dimensions are accounted for in --vtk-dimensions
+            
+            for (size_t i=0; i < vtk_dim_names.size(); i++)
+            {
+                vector<string>::iterator vi = find(dim_names.begin(), dim_names.end(), vtk_dim_names[i]);
+                
+                if (vi == dim_names.end())
+                {
+                    cerr << "ERROR: --vtk-dimensions - entry " << vtk_dim_names[i] << " has no pendant in attribute 'featurespace_dimensions'" << endl;
+                    exit(-1);
+                }
+                
+                int index = index_of_first( dim_names, vtk_dim_names[i] );
+                
+                vtk_dimension_indexes.push_back( (size_t)index );
+            }
+            
+            ::cfa::utils::VisitUtils<T>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+            
+            VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+        }
+    }
 
 	/** Write out the cluster list as list of points. The point's 'value' is the size of the cluster
      * @param full path to filename, including extension '.vtk'
@@ -356,11 +397,17 @@ namespace m3D { namespace utils {
     void
     VisitUtils<T>::write_center_tracks_vtk(typename Tracking<T>::trackmap_t &track_map,
                                            const std::string &basename,
-                                           size_t spatial_dimensions)
+                                           size_t spatial_dimensions,
+                                           bool exclude_degenerates)
     {
         for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
             typename Tracking<T>::track_t *track = tmi->second;
+            
+            if (exclude_degenerates && track->size()==1)
+            {
+                continue;
+            }
             
             string filename = basename + "-track_" + boost::lexical_cast<string>( tmi->first ) + ".vtk";
             
@@ -399,12 +446,15 @@ namespace m3D { namespace utils {
             
             f << endl;
             f << "POINT_DATA " << track->size() << endl;
-            f << "SCALARS number_of_points FLOAT" << endl;
+            f << "SCALARS track_step FLOAT" << endl;
             f << "LOOKUP_TABLE default" << endl;
+            
+            size_t step = 0;
 
             for ( typename Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
             {
-                f << ti->points.size() << endl;
+                //f << ti->points.size() << endl;
+                f << step++ << endl;
             }
             
             f.close();

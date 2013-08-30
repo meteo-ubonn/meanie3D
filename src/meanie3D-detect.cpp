@@ -644,6 +644,8 @@ int main(int argc, char** argv)
         cout << "\toutput written to file: " << output_filename << endl;
         
         cout << "\tclusters written as vtk: " << (write_vtk ? "yes":"no") << endl;
+        
+        // TODO: add newer parameters
     }
     
     // Construct Featurespace
@@ -653,37 +655,9 @@ int main(int argc, char** argv)
     CoordinateSystem<FS_TYPE> *coord_system = new CoordinateSystem<FS_TYPE>( dimensions, dimension_variables );
     Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(1.0);
     
-    // VISUALIZAION
-    //
+    // Get timestamp
     
-    //    vector<double> scales;
-    //    scales.push_back(0);
-    //    scales.push_back(2);
-    //    scales.push_back(4);
-    //    scales.push_back(8);
-    //    scales.push_back(16);
-    //    scales.push_back(32);
-    //    scales.push_back(64);
-    //    scales.push_back(128);
-    //    scales.push_back(256);
-    //    scales.push_back(512);
-    //
-    //    cout << "Running analysis on scales " << scales << endl;
-    //
-    //    for ( size_t i=0; i<scales.size(); i++)
-    //    {
-    //        cout << endl << "== SCALE " << scales[i] << " ==" << endl;
-    //        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>( filename, coord_system, variables, cluster_resolution, thresholds, scales[i], show_progress );
-    //        PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
-    //        ClusterOperation<FS_TYPE> cop( fs, index );
-    //        ClusterOperation<FS_TYPE>::reset_pass_counter();
-    //        ClusterList<FS_TYPE> clusters = cop.cluster( search_params, cluster_resolution, kernel, weight_index, termcrit_epsilon, termcrit_iter, show_progress );
-    //    }
-    
-    //
-    // VISUALIZATION
-    
-    
+    timestamp_t timestamp = get_time(filename);
     
     // Feature Space
     
@@ -822,9 +796,10 @@ int main(int argc, char** argv)
             cout << " done." << endl;
     }
 
+    // used in writing out debug data
+    boost::filesystem::path path(filename);
 
 #if WRITE_WEIGHT_FUNCTION
-    boost::filesystem::path path(filename);
     std::string wfname = path.filename().stem().string() + "-weights.vtk";
     ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
 #endif
@@ -875,7 +850,7 @@ int main(int argc, char** argv)
     {
         try
         {
-             ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( *previous_file );
+            ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( *previous_file );
             
             ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
             
@@ -934,6 +909,10 @@ int main(int argc, char** argv)
     
     if ( verbosity > VerbositySilent )
         cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;
+    
+    // Before writing, set the timestamp!!
+    
+    clusters.timestamp = timestamp;
     
     clusters.write( output_filename );
     

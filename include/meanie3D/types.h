@@ -5,5 +5,6 @@
 #include <meanie3D/types/point_factory.h>
 #include <meanie3D/types/cluster.h>
 #include <meanie3D/types/cluster_list.h>
+#include <meanie3D/types/timestamp.h>
 
 #endif

@@ -8,9 +8,11 @@
 
 /* Begin PBXFileReference section */
 		F4000D2E17BB6F9B000F8849 /* finish.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = finish.sh; sourceTree = "<group>"; };
+		F40BCADF17CDFB3800172279 /* visualize_tracks.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_tracks.py; sourceTree = "<group>"; };
+		F40BCAE017CDFB3800172279 /* visualize_tracks.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_tracks.sh; sourceTree = "<group>"; };
 		F425382017A03E68002E4803 /* visualize_oase_weights.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_oase_weights.py; sourceTree = "<group>"; };
 		F425382117A03E68002E4803 /* visualize_oase_weights.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_weights.sh; sourceTree = "<group>"; };
-		F478904B1761F39E00E2E0DF /* oase-cluster-template.py */ = {isa = PBXFileReference; explicitFileType = text.script.python; path = "oase-cluster-template.py"; sourceTree = SOURCE_ROOT; };
+		F478904B1761F39E00E2E0DF /* visualize_oase_clusters.py */ = {isa = PBXFileReference; explicitFileType = text.script.python; path = visualize_oase_clusters.py; sourceTree = SOURCE_ROOT; };
 		F478904C1761F39E00E2E0DF /* cluster_visualization.template */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cluster_visualization.template; sourceTree = SOURCE_ROOT; };
 		F478904E1761F45000E2E0DF /* visualize_oase_clusters.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_clusters.sh; sourceTree = "<group>"; };
 		F4907910173117EF001E9D17 /* run_tracking-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_tracking-2D.py"; sourceTree = "<group>"; };
@@ -63,9 +65,11 @@
 				F49936201733E37C00D23B1E /* run_tracking-3D.sh */,
 				F4907910173117EF001E9D17 /* run_tracking-2D.py */,
 				F4907911173117EF001E9D17 /* run_tracking-2D.sh */,
-				F478904E1761F45000E2E0DF /* visualize_oase_clusters.sh */,
-				F478904B1761F39E00E2E0DF /* oase-cluster-template.py */,
 				F4000D2E17BB6F9B000F8849 /* finish.sh */,
+				F478904E1761F45000E2E0DF /* visualize_oase_clusters.sh */,
+				F478904B1761F39E00E2E0DF /* visualize_oase_clusters.py */,
+				F40BCADF17CDFB3800172279 /* visualize_tracks.py */,
+				F40BCAE017CDFB3800172279 /* visualize_tracks.sh */,
 			);
 			name = src;
 			sourceTree = "<group>";

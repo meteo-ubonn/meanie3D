@@ -5,6 +5,8 @@ version = '0.1'
 
 from visit import *
 import glob
+import os
+import os.path
 
 # This module bundles python routines for handling Visit3D
 # plotting more comfortably from the various visualization
@@ -58,5 +60,20 @@ def add_labels(file,variable):
     SetPlotOptions(a)
     return
 
+# Extracts the path part from the given filename
+# @param filename
+# @return path
+def path(filename):
+    path = dirname(filename)
+    return path
+
+# extracts the filename WITHOUT extension from the
+# the given filename
+# @param filename
+# @return stripped filename
+def naked_name(filename):
+    base = s.basename(filename)
+    stripped = os.path.splitext(filename)[0]
+    return stripped
 
 # End of visitUtils.py

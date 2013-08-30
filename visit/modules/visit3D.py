@@ -49,13 +49,13 @@ def add_clusters(basename,infix,col_tables):
         OpenDatabase(cluster_file)
         AddPlot("Pseudocolor", "cluster")
         cp=PseudocolorAttributes();
-        cp.pointSizePixels=5
+        cp.pointSizePixels=2
         cp.legendFlag=0
         cp.lightingFlag=1
         cp.invertColorTable=0
         index = cluster_num % len(col_tables);
         cp.colorTableName = col_tables[index];
-        cp.opacity=1
+        cp.opacity=0.25
         SetPlotOptions(cp)
     return
 
@@ -72,12 +72,9 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity):
     AddPlot("Pseudocolor", variable)
     
     p = PseudocolorAttributes()
+    p.pointSizePixels=4
     p.colorTableName = color_table_name
-    #p.legendFlag=1
     p.lightingFlag=1
-    #p.invertColorTable=1
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = 0.0, 50.0
     p.opacity=opacity
     SetPlotOptions(p)
     return

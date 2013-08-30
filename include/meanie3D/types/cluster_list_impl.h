@@ -19,6 +19,7 @@ namespace m3D {
     using namespace cfa::utils::console;
     using namespace cfa::utils::timer;
     using namespace cfa::utils::vectors;
+    using namespace cfa::utils::maps;
     using namespace cfa::utils::visit;
 	using cfa::meanshift::Point;
 	using cfa::meanshift::FeatureSpace;
@@ -26,6 +27,7 @@ namespace m3D {
 	using cfa::meanshift::KNNSearchParams;
 	using cfa::meanshift::RangeSearchParams;
 	using cfa::meanshift::SearchParameters;
+    using cfa::id_t;
 
 #pragma mark -
 #pragma mark Macros
@@ -168,6 +170,10 @@ namespace m3D {
                     file->addDim(d.getName(), d.getSize());
                 }
                 
+                // Add 'time'
+                
+                ::cfa::utils::netcdf::add_time(file,this->timestamp);
+                
                 // Create dummy variables, attributes and other meta-info
                 
                 file->putAtt( "num_clusters", ncInt, (int) clusters.size() );
@@ -256,6 +262,8 @@ namespace m3D {
                 file->putAtt( "tracked_ids", to_string( this->tracked_ids ) );
                 file->putAtt( "new_ids", to_string( this->new_ids ) );
                 file->putAtt( "dropped_ids", to_string( this->dropped_ids ) );
+                file->putAtt( "merges", id_map_to_string(this->merges));
+                file->putAtt( "splits", id_map_to_string(this->splits));
             }
             
             // Add cluster dimensions and variables
@@ -306,6 +314,9 @@ namespace m3D {
                 
                 // id
                 
+                // NOTE: some problem exists with the normal id_t used
+                // everywhere else and NetCDF. Using unsigned long long
+                // produces a compiler warning but also correct results.
                 unsigned long long cid = (unsigned long long) clusters[ci]->id;
                 
                 var.putAtt( "id", ncInt64, cid );
@@ -352,12 +363,20 @@ namespace m3D {
     {
         // meta-info
         
-        vector<NcVar>                   feature_variables;
-        vector<NcDim>                   dimensions;
-        string                          source_file;
-        typename Cluster<T>::list       list;
-        NcFile                          *file = NULL;
-
+        vector<NcVar>               feature_variables;
+        vector<NcDim>               dimensions;
+        string                      source_file;
+        typename Cluster<T>::list   list;
+        NcFile                      *file = NULL;
+        
+        bool        tracking_performed = false;
+        id_vec_t    tracked_ids;
+        id_vec_t    new_ids;
+        id_vec_t    dropped_ids;
+        id_map_t    merges;
+        id_map_t    splits;
+        timestamp_t timestamp = 0;
+        
         // TODO: let this exception go up
         try
         {
@@ -391,6 +410,10 @@ namespace m3D {
                 
                 dimensions.push_back(d);
             }
+            
+            // Read time
+            
+            file->getVar("time").getVar(&timestamp);
 
             // Read global attributes
             
@@ -399,6 +422,37 @@ namespace m3D {
             int number_of_clusters;
             
             file->getAtt("num_clusters").getValues( &number_of_clusters );
+
+            // Tracking-related
+            
+            std::string value;
+            
+            try
+            {
+                file->getAtt("tracking_performed").getValues(value);
+                tracking_performed = value == "yes";
+                
+                if (tracking_performed)
+                {
+                    file->getAtt("tracked_ids").getValues(value);
+                    tracked_ids = from_string<id_t>(value);
+                    
+                    file->getAtt("new_ids").getValues(value);
+                    new_ids = from_string<id_t>(value);
+                    
+                    file->getAtt("dropped_ids").getValues(value);
+                    dropped_ids = from_string<id_t>(value);
+                    
+                    file->getAtt("merges").getValues(value);
+                    merges = id_map_from_string(value);
+                    
+                    file->getAtt("splits").getValues(value);
+                    splits = id_map_from_string(value);
+                }
+            }
+            catch (netCDF::exceptions::NcException &e)
+            {
+            }
             
             // Read the feature-variables
             
@@ -408,11 +462,12 @@ namespace m3D {
             
             for ( vi = vars.begin(); vi != vars.end(); vi++ )
             {
-                if (! boost::starts_with( vi->first, "cluster_"))
+                if (! (boost::starts_with( vi->first, "cluster_") || vi->first == "time"))
                 {
                     feature_variables.push_back( vi->second );
                 }
             }
+            
             
             // Read clusters one by one
             
@@ -519,8 +574,17 @@ namespace m3D {
         }
         
         ClusterList<T>::ptr cl = new ClusterList<T>( list, dimensions, feature_variables, source_file );
-        
         cl->ncFile = file;
+        cl->timestamp = timestamp;
+
+        if (tracking_performed)
+        {
+            cl->tracked_ids = tracked_ids;
+            cl->new_ids = new_ids;
+            cl->dropped_ids = dropped_ids;
+            cl->merges = merges;
+            cl->splits = splits;
+        }
         
         return cl;
     }
@@ -1567,7 +1631,6 @@ namespace m3D {
         
         return isNeighbour;
     }
-
     
     // Sort all clusters in ascending order by weight response
 
@@ -1586,7 +1649,6 @@ namespace m3D {
             T w2 = c2->modal_weight_response(m_weight);            return w1 < w2;
         }
     };
-    
   
 } //namespace
 

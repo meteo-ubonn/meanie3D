@@ -15,6 +15,7 @@
 #include <boost/smart_ptr.hpp>
 
 #include <meanie3D/meanie3D.h>
+#include <cf-algorithms/id.h>
 
 #include <map>
 #include <vector>
@@ -35,11 +36,23 @@ using namespace m3D;
 /** Feature-space data type */
 typedef double T;
 
+typedef vector<size_t> bin_t;
+typedef vector<string> svec_t;
+
 static const double NO_SCALE = numeric_limits<double>::min();
 
 void parse_commmandline(program_options::variables_map vm,
                         string &basename,
-                        string &sourcepath)
+                        string &sourcepath,
+                        svec_t &vtk_dim_names,
+                        bin_t &length_histogram_bins,
+                        bool &create_cluster_stats,
+                        bin_t &cluster_histogram_bins,
+                        bool &include_degenerates,
+                        bool &create_cumulated_size_stats,
+                        bin_t &size_histogram_bins,
+                        bool &write_center_tracks_as_vtk,
+                        bool &write_cumulated_tracks_as_vtk)
 {
     if ( vm.count("basename") == 0 )
     {
@@ -51,62 +64,142 @@ void parse_commmandline(program_options::variables_map vm,
     basename = vm["basename"].as<string>();
    
     sourcepath = vm["sourcepath"].as<string>();
+    
+    // Default is the dimensions
+    
+    if (vm.count("vtk-dimensions") > 0)
+    {
+        vtk_dim_names = vm["vtk-dimensions"].as<svec_t>();
+    }
+    
+    include_degenerates = vm["exclude-degenerates"].as<bool>();
+    
+    length_histogram_bins = vm["length-histogram-classes"].as<bin_t>();
+
+    create_cumulated_size_stats = vm["create-cumulated-size-statistics"].as<bool>();
+    
+    size_histogram_bins = vm["size-histogram-classes"].as<bin_t>();
+    
+    write_center_tracks_as_vtk = vm["write-center-tracks-as-vtk"].as<bool>();
+    
+    write_cumulated_tracks_as_vtk = vm["write-cumulated-tracks-as-vtk"].as<bool>();
+
+    create_cluster_stats = vm["create-cluster-statistics"].as<bool>();
+    
+    cluster_histogram_bins = vm["cluster-histogram-classes"].as<bin_t>();
 }
 
-/** reads the dimensions from command line parameter --vtk-dimensions
- * and updates the graphic output packages.
+/** updates the size histogram
  */
-void update_vtk_dimension_mapping(program_options::variables_map vm, const NcFile *file )
+void add_value_to_histogram(bin_t classes, bin_t &values, size_t size)
 {
-    // VTK dimension mapping
+    bool found_bin = false;
     
-    if ( vm.count("vtk-dimensions") > 0 )
+    for (size_t i=0; i < classes.size() && !found_bin; i++)
     {
-        vector<size_t> vtk_dimension_indexes;
-        
-        // Read "featurespace_dimensions"
-        
-        string fs_dimensions;
-        
-        file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
-        
-        vector<string> fs_dim_names = from_string<string>(fs_dimensions);
-        
-        
-        // parse dimension list
-        
-        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-        
-        boost::char_separator<char> sep(",");
-        
-        string str_value = vm["vtk-dimensions"].as<string>();
-        
-        tokenizer dim_tokens( str_value, sep );
-        
-        for ( tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter )
+        if (i > 0)
         {
-            string name = *tok_iter;
-            
-            int index = index_of_first( fs_dim_names, name );
-            
-            if ( index < 0 )
+            if (size <= classes[i] && size > classes[i-1])
             {
-                cerr << "Invalid dimension '" << name << "'. Check parameter --vtk-dimensions" << endl;
-                
-                exit(-1);
+                values[i] = values[i] + 1;
+                found_bin = true;
             }
-            
-            vtk_dimension_indexes.push_back( (size_t)index );
+        }
+        else
+        {
+            if (size <= classes[0])
+            {
+                values[i] = values[i] + 1;
+                found_bin = true;
+            }
+        }
+    }
+    
+    // not found? add to the last one
+    
+    if (!found_bin)
+    {
+        // Inform user
+        
+        cerr << "WARNING: value bigger than highest histogram class. Adding an 'over' bucket for values higher than " << values[classes.size()-1] << endl;
+        
+        // add the last class with value 0 if required
+        
+        if (values.size() == classes.size())
+        {
+            values.push_back(0);
         }
         
-        ::cfa::utils::VisitUtils<T>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+        // count up the 'over' bucket
         
-        ::m3D::utils::VisitUtils<T>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
-        
-        delete file;
+        values[classes.size()] = values[classes.size()] + 1;
     }
 }
 
+/** Histogram output */
+
+void print_histogram(bin_t classes, bin_t values, ofstream &file)
+{
+    for (size_t i=0; i < classes.size(); i++)
+    {
+        file << classes[i] << "," << values[i] << endl;
+        cout << classes[i] << "," << values[i] << endl;
+    }
+    
+    // 'Over' bucket?
+    
+    if (values.size() > classes.size())
+    {
+        file << " > " << classes[classes.size()-1] << "," << values.back() << endl;
+        cout << " > " << classes[classes.size()-1] << "," << values.back() << endl;
+    }
+}
+
+template <typename T>
+double average(const vector<T> &v)
+{
+    // calculate the mean value
+    double sum = 0.0;
+    for (size_t i=0; i<v.size(); v++)
+    {
+        sum += boost::numeric_cast<double>(v[i]);
+    }
+    return sum / boost::numeric_cast<double>(v.size());
+}
+
+/** Takes the given 'distribution' and calculates the weighed average
+ * @param distribution map
+ * @param If <code>true</code> then the class '1' is ignored. 
+ *        If <code>false</code> it counts normally.
+ */
+template <typename T>
+double average(const map<size_t,size_t> &m, bool ignore_one = true)
+{
+    // calculate the mean value
+    double sum = 0.0;
+    
+    size_t total_count = 0;
+    
+    map<size_t, size_t>::const_iterator mi;
+    
+    for (mi = m.begin(); mi != m.end(); mi++)
+    {
+        size_t key = mi->first;
+        
+        size_t val = mi->second;
+        
+        if (key == 1 && ignore_one)
+        {
+            continue;
+        }
+        
+        total_count += val;
+        
+        sum += boost::numeric_cast<double>(mi->first * mi->second);
+    }
+    
+    return sum / boost::numeric_cast<double>(total_count);
+}
 
 
 /**
@@ -119,14 +212,32 @@ int main(int argc, char** argv)
     using namespace cfa::utils::visit;
     using namespace m3D;
     
+    size_t length_hist_default_values[] = {2,4,6,8,10,15,20,25,30,35,40,75,100,125,150,175,200};
+    bin_t length_hist_default(length_hist_default_values,length_hist_default_values+17);
+    
+    size_t size_hist_default_values[] = {100,200,300,400,500,1000,2000,3000,4000,5000,7500,10000,15000,20000,25000,50000,100000};
+    bin_t size_hist_default(size_hist_default_values,size_hist_default_values+17);
+    
+    size_t cluster_hist_default_values[] = {10,25,50,75,100,250,500,750,1000,1250,1500,1750,2000,2500,5000,7500,10000,15000,20000,50000,100000};
+    bin_t cluster_hist_default(cluster_hist_default_values,cluster_hist_default_values+21);
+
+    
     // Declare the supported options.
     
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
-    ("basename,b", program_options::value<string>(), "Previous cluster file (netCDF)")
-    ("sourcepath,p", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
-    ("vtk-dimensions,d", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
+    ("basename,b", program_options::value<string>()->required(), "Previous cluster file (netCDF)")
+    ("sourcepath,p", program_options::value<string>()->required()->default_value("."), "Current cluster file (netCDF)")
+    ("length-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(length_hist_default),"List of track-length values for histogram bins")
+    ("create-cluster-statistics",program_options::value<bool>()->default_value(true),"Evaluate each cluster in each track in terms of size.")
+    ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default),"List of cluster size values for histogram bins")
+    ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
+    ("create-cumulated-size-statistics",program_options::value<bool>()->default_value(true),"Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
+    ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
+    ("write-center-tracks-as-vtk", program_options::value<bool>()->default_value(false),"Write tracks out as .vtk files")
+    ("write-cumulated-tracks-as-vtk", program_options::value<bool>()->default_value(false),"Write cumulated tracks out as .vtk files. Only has effect if create-cumulated-size-statistics=true")
+    ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ;
     
     program_options::variables_map vm;
@@ -155,16 +266,44 @@ int main(int argc, char** argv)
     // Evaluate user input
     
     string basename,sourcepath;
+    bin_t length_histogram_classes;
+    bin_t size_histogram_classes;
+    bin_t cluster_histogram_classes;
+    bool exclude_degenerates = true;
+    bool write_center_tracks_as_vtk = false;
+    bool write_cumulated_tracks_as_vtk = false;
+    bool create_cumulated_size_statistics = false;
+    bool create_cluster_statistics = false;
+    svec_t vtk_dim_names;
+    size_t number_of_degenerates = 0;
     
     try
     {
-        parse_commmandline(vm, basename, sourcepath);
+        parse_commmandline(vm,
+                           basename,
+                           sourcepath,
+                           vtk_dim_names,
+                           length_histogram_classes,
+                           create_cluster_statistics,
+                           cluster_histogram_classes,
+                           exclude_degenerates,
+                           create_cumulated_size_statistics,
+                           size_histogram_classes,
+                           write_center_tracks_as_vtk,
+                           write_cumulated_tracks_as_vtk);
+        
     }
     catch (const std::exception &e)
     {
         cerr << e.what() << endl;
         exit(-1);
     }
+
+    // initialize histogram values
+    
+    bin_t length_histogram_values(length_histogram_classes.size(),0);
+    bin_t size_histogram_values(size_histogram_classes.size(),0);
+    bin_t cluster_histogram_values(cluster_histogram_classes.size(),0);
     
     // This map contains a mapping from the id type to lists of clusters.
 
@@ -181,7 +320,7 @@ int main(int argc, char** argv)
     
     std::string coords_filename;
     
-    cout << "Collecing track data from NetCDF files: " << endl;
+    cout << "Collecting track data from NetCDF files: " << endl;
     
     if (fs::is_directory(source_path))
     {
@@ -224,7 +363,7 @@ int main(int argc, char** argv)
                 {
                     typename Cluster<T>::ptr cluster = (*ci);
                     
-                    cfa::meanshift::id_t id = cluster->id;
+                    cfa::id_t id = cluster->id;
                     
                     typename Tracking<T>::trackmap_t::const_iterator ti = track_map.find(id);
                     
@@ -262,6 +401,9 @@ int main(int argc, char** argv)
         
         cout << endl;
         
+        cout << endl;
+        cout << "Collating dimensions and dimension data ..." << endl;
+        
         // Construct coordinate system
         
         CoordinateSystem<T> *coord_system = NULL;
@@ -278,8 +420,15 @@ int main(int argc, char** argv)
         
         coords_file = new NcFile(coords_filename,NcFile::read);
         
-        multimap<string,NcDim> dims = coords_file->getDims();
-        multimap<string,NcDim>::iterator di;
+        // Read "featurespace_dimensions"
+        
+        string fs_dimensions;
+        coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
+        vector<string> dim_names = from_string<string>(fs_dimensions);
+        
+        cout << "Attribute 'featurespace_dimensions' = " << dim_names << endl;
+        
+        ::m3D::utils::VisitUtils<T>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
         
         multimap<string,NcVar> vars = coords_file->getVars();
         multimap<string,NcVar>::iterator vi;
@@ -287,15 +436,26 @@ int main(int argc, char** argv)
         // Only use dimensions, that have a variable of the
         // exact same name
         
-        for (di=dims.begin(); di!=dims.end(); di++)
+        for (size_t di = 0; di < dim_names.size(); di++)
         {
-            vi = vars.find(di->first);
+            NcDim dim = coords_file->getDim(dim_names[di]);
             
-            if (vi != vars.end())
+            if (dim.isNull())
             {
-                dimensions.push_back(di->second);
-                dimension_vars.push_back(vi->second);
+                cerr << "ERROR: dimension " << dim_names[di] << " does not exist " << endl;
+                exit(-1);
             }
+            
+            NcVar var = coords_file->getVar(dim_names[di]);
+            
+            if (var.isNull())
+            {
+                cerr << "ERROR: variable " << dim_names[di] << " does not exist " << endl;
+                exit(-1);
+            }
+            
+            dimensions.push_back(dim);
+            dimension_vars.push_back(var);
         }
         
         coord_system = new CoordinateSystem<T>(dimensions,dimension_vars);
@@ -320,7 +480,10 @@ int main(int argc, char** argv)
         
         // Write center tracks
         
-        ::m3D::utils::VisitUtils<T>::write_center_tracks_vtk(track_map, basename, spatial_dimensions);
+        if (write_center_tracks_as_vtk)
+        {
+            ::m3D::utils::VisitUtils<T>::write_center_tracks_vtk(track_map, basename, spatial_dimensions, exclude_degenerates);
+        }
         
         // Write cumulated tracks as netcdf and vtk files
         
@@ -332,6 +495,8 @@ int main(int argc, char** argv)
         
         map<size_t,size_t> track_sizes;
         
+        map<size_t,size_t> cluster_sizes;
+        
         // Iterate over the collated tracks
         
         for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
@@ -340,8 +505,45 @@ int main(int argc, char** argv)
             
             typename Tracking<T>::track_t *track = tmi->second;
             
+            size_t track_length = track->size();
+            
+            if (track_length == 1)
+            {
+                number_of_degenerates++;
+            }
+            
+            if (exclude_degenerates && track_length == 1)
+            {
+                continue;
+            }
+            
             cout << "Processing track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
-    
+            
+            // count up histogram
+            
+            add_value_to_histogram(length_histogram_classes, length_histogram_values, track_length);
+            
+            // add to distribution
+            
+            map<size_t,size_t>::iterator tlfi = track_lengths.find(track_length);
+            
+            if (tlfi==track_lengths.end())
+            {
+                track_lengths[track_length] = 1;
+            }
+            else
+            {
+                track_lengths[track_length] = (tlfi->second + 1);
+            }
+            
+            // Skip the rest if cumulative size statistics and cluster
+            // stats are both off
+            
+            if (!create_cumulated_size_statistics && !create_cluster_statistics)
+            {
+                continue;
+            }
+
             // For each track, create an array index. Start with empty index.
             
             ArrayIndex<T> index(coord_system,false);
@@ -353,6 +555,35 @@ int main(int argc, char** argv)
             for (ti = track->begin(); ti != track->end(); ++ti)
             {
                 Cluster<T> cluster = (*ti);
+                
+                if (create_cluster_statistics)
+                {
+                    size_t cluster_size = cluster.points.size();
+                    
+                    // add to histogram
+                    
+                    add_value_to_histogram(cluster_histogram_classes, cluster_histogram_values, cluster_size);
+                    
+                    // add to distribution
+                    
+                    map<size_t,size_t>::iterator csfi = cluster_sizes.find(cluster_size);
+                    
+                    if (csfi == cluster_sizes.end())
+                    {
+                        cluster_sizes[cluster_size] = 1;
+                    }
+                    else
+                    {
+                        cluster_sizes[cluster_size] = (csfi->second + 1);
+                    }
+                }
+                
+                // Skip the rest if cumulative size statistics are off
+                
+                if (!create_cumulated_size_statistics)
+                {
+                    continue;
+                }
                 
                 // Iterate over the points of the cluster
                 
@@ -397,22 +628,6 @@ int main(int argc, char** argv)
             
             index.replace_points(cumulatedList);
             
-            // Count the number of tracks with the given length (where
-            // track length is the number of clusters it is comprised of)
-
-            size_t track_length = track->size();
-            
-            map<size_t,size_t>::iterator tlfi = track_lengths.find(track_length);
-            
-            if (tlfi==track_lengths.end())
-            {
-                track_lengths[track_length] = 1;
-            }
-            else
-            {
-                track_lengths[track_length] = (tlfi->second + 1);
-            }
-
             // Count the number of tracks with the given size, where
             // size is the number of points in it's cumulative list
             
@@ -429,14 +644,21 @@ int main(int argc, char** argv)
                 track_sizes[track_size] = (tlfi->second + 1);
             }
             
+            // Update histogram
+            
+            add_value_to_histogram(size_histogram_classes, size_histogram_values, track_size);
+            
             // Write out the cumulative file as netcdf and vtk
             
             // VTK
             
-            string vtk_path = basename + "_cumulated_track_"+boost::lexical_cast<string>(tmi->first)+".vtk";
+            if (write_cumulated_tracks_as_vtk)
+            {
+                string vtk_path = basename + "_cumulated_track_"+boost::lexical_cast<string>(tmi->first)+".vtk";
+                
+                ::cfa::meanshift::visit::VisitUtils<T>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>() );
+            }
             
-            ::cfa::meanshift::visit::VisitUtils<T>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>() );
-                               
             // Don't need it anymore
             
             delete track;
@@ -451,44 +673,177 @@ int main(int argc, char** argv)
         
         cout << "done." << endl;
         
-        // Write out statistical data in CSV file(s)
+        // Write out statistical data in file file(s)
         
-        string csv_fn = basename+"_trackstats.txt";
+        string file_fn = basename+"_trackstats.txt";
         
-        ofstream csv(csv_fn.c_str());
+        ofstream file(file_fn.c_str());
         
         // number of tracks
         
-        csv << "Tracking report for basename " + basename << endl;
-        csv << endl;
+        file << "Tracking report for basename " + basename << endl;
+        cout << "Tracking report for basename " + basename << endl;
         
-        csv << "Overall number of tracks: " << track_map.size() << endl;
-        csv << endl;
+        file << "(degenerates are excluded: " << (exclude_degenerates?"yes":"no") << ")" << endl;
+        cout << "(degenerates are excluded: " << (exclude_degenerates?"yes":"no") << ")" << endl;
         
+        file << endl;
+        cout << endl;
+        
+        file << "Overall number of tracks: " << track_map.size() << endl;
+        cout << "Overall number of tracks: " << track_map.size() << endl;
+        
+        file << "Number of degenerate tracks: " << number_of_degenerates << endl;
+        cout << "Number of degenerate tracks: " << number_of_degenerates << endl;
+
+        file << endl;
+        cout << endl;
+        
+        //
         // length of tracks (in time steps)
+        //
         
-        csv << "length,number" << endl;
+        file << "------------------------------------------------" << endl;
+        cout << "------------------------------------------------" << endl;
+        
+        file << "Track length distribution" << endl;
+        cout << "Track length distribution" << endl;
+        
+        file << "------------------------------------------------" << endl;
+        cout << "------------------------------------------------" << endl;
+
+        double avg = average<size_t>(track_lengths,true);
+        file << "(Average track length = " << avg << ")" << endl;
+        cout << "(Average track length = " << avg << ")" << endl;
+
+        map<size_t, size_t>::reverse_iterator rend = track_lengths.rbegin();
+        file << "(Maximum track length = " << rend->first << ")" << endl;
+        cout << "(Maximum track length = " << rend->first << ")" << endl;
+        
+        file << "length,number" << endl;
+        cout << "length,number" << endl;
         
         map<size_t,size_t>::iterator si;
         
         for (si=track_lengths.begin(); si!=track_lengths.end(); si++)
         {
-            csv << si->first << "," << si->second << endl;
-        }
+            file << si->first << "," << si->second << endl;
+            cout << si->first << "," << si->second << endl;        }
         
-        csv << endl;
+        file << endl;
         
-        // size of tracks (in terms of cumulative pixels)
+        // Histogram
         
-        csv << "size,number" << endl;
-        
-        for (si=track_sizes.begin(); si!=track_sizes.end(); si++)
-        {
-            csv << si->first << "," << si->second << endl;
-        }
-        
-        csv << endl;
+        file << endl;
+        cout << endl;
 
+        file << "Length Histogram:" << endl;
+        cout << "Length Histogram:" << endl;
+
+        file << "max length,number" << endl;
+        cout << "max length,number" << endl;
+
+        print_histogram(length_histogram_classes,length_histogram_values,file);
+        
+        
+        //
+        // Cluster sizes
+        //
+        
+        file << endl;
+        cout << endl;
+
+        file << "------------------------------------------------" << endl;
+        cout << "------------------------------------------------" << endl;
+
+        file << "Cluster size distribution" << endl;
+        cout << "Cluster size distribution" << endl;
+        
+        file << "------------------------------------------------" << endl;
+        cout << "------------------------------------------------" << endl;
+        
+        avg = average<size_t>(cluster_sizes,true);
+        file << "(Average cluster size = " << avg << ")" << endl;
+        cout << "(Average cluster size = " << avg << ")" << endl;
+        
+        rend = cluster_sizes.rbegin();
+        file << "(Maximum cluster size = " << rend->first << ")" << endl;
+        cout << "(Maximum cluster size = " << rend->first << ")" << endl;
+        
+        file << "size,number" << endl;
+        cout << "size,number" << endl;
+        
+        for (si=cluster_sizes.begin(); si!=cluster_sizes.end(); si++)
+        {
+            file << si->first << "," << si->second << endl;
+            cout << si->first << "," << si->second << endl;
+        }
+        
+        file << endl;
+        cout << endl;
+        
+        // Histogram
+        
+        file << "Cluster Size Histogram:" << endl;
+        cout << "Cluster Size Histogram:" << endl;
+        
+        file << "max size,number" << endl;
+        cout << "max size,number" << endl;
+        
+        print_histogram(cluster_histogram_classes,cluster_histogram_values,file);
+
+
+        //
+        // Cumulative track stats
+        //
+        
+        
+        if (create_cumulated_size_statistics)
+        {
+            // size of tracks (in terms of cumulative pixels)
+            
+            file << endl;
+            cout << endl;
+
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+
+            file << "Track size distribution" << endl;
+            cout << "Track size distribution" << endl;
+            
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+
+            avg = average<size_t>(track_sizes,false);
+            file << "(Average track size = " << avg << ")" << endl;
+            cout << "(Average track size = " << avg << ")" << endl;
+            
+            rend = track_sizes.rbegin();
+            file << "(Maximum track size = " << rend->first << ")" << endl;
+            cout << "(Maximum track size = " << rend->first << ")" << endl;
+
+            file << "size,number" << endl;
+            cout << "size,number" << endl;
+            
+            for (si=track_sizes.begin(); si!=track_sizes.end(); si++)
+            {
+                file << si->first << "," << si->second << endl;
+                cout << si->first << "," << si->second << endl;
+            }
+            
+            file << endl;
+            cout << endl;
+            
+            file << "Size Histogram:" << endl;
+            cout << "Size Histogram:" << endl;
+            
+            file << "max size,number" << endl;
+            cout << "max size,number" << endl;
+            
+            print_histogram(size_histogram_classes,size_histogram_values,file);
+
+        }
+        
         // close the cluster file we used to get the coordinate
         // system data
         

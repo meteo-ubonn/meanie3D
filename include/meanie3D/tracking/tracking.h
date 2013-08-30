@@ -3,6 +3,8 @@
 
 #include <netcdf>
 
+#include <cf-algorithms/id.h>
+
 #include <meanie3D/types/cluster_list.h>
 #include <meanie3D/utils/verbosity.h>
 
@@ -10,6 +12,7 @@ namespace m3D {
     
     using namespace utils;
     using namespace netCDF;
+    using cfa::id_t;
     
     template <typename T>
     class Tracking
@@ -18,14 +21,15 @@ namespace m3D {
         
         // Member Variables
         
-        
         T   m_dist_weight;  // correlation weight distance
         
         T   m_size_weight;  // correlation weight histogram sum
         
         T   m_corr_weight;  // correlation weight histogram rank correlation
         
-        T   m_deltaT;       // This should in future be calculated properly from timestamps
+        T   m_deltaT;       // What is the time between the given slices (in seconds)
+        
+        T   m_max_deltaT;   // What is the maximum time between slices for valid tracking (in seconds)
 
         bool    m_useMeanVelocityConstraint;        // make use of max velocity constraint?
         
@@ -46,20 +50,21 @@ namespace m3D {
         
     public:
         
-        typedef std::vector< Cluster<T> >                   track_t;
+        typedef std::vector< Cluster<T> >   track_t;
         
-        typedef std::map< cfa::meanshift::id_t, track_t* >  trackmap_t;
+        typedef std::map<id_t, track_t* >   trackmap_t;
         
         /** Constructor
          * @param weight for distance correlation
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking(T wr=1.0, T wd=1.0, T wt=1.0 )
+        Tracking(T wr=1.0, T wd=1.0, T wt=1.0, T max_delta_t = 15*60 )
         : m_dist_weight(wr)
         , m_size_weight(wd)
         , m_corr_weight(wt)
-        , m_deltaT(300)                         // 5 minutes
+        , m_deltaT(0)   
+        , m_max_deltaT(max_delta_t)             // 15 minutes
         , m_useMeanVelocityConstraint(false)    // limit deviation from mean velocity (false)
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
         , m_maxVelocity(100.0)                  // limit max velocity to 30 m/s (~108 km/h)

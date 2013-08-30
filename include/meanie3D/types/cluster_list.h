@@ -13,13 +13,13 @@
 
 #include <cf-algorithms/cf-algorithms.h>
 
-#include <meanie3D/types/cluster.h>
-#include <meanie3D/types/point.h>
+#include <meanie3D/types.h>
 
 namespace m3D {
     
     using namespace netCDF;
 	using namespace std;
+    using namespace cfa;
 	using ::cfa::meanshift::Point;
     using ::cfa::meanshift::WeightFunction;
 
@@ -112,18 +112,18 @@ namespace m3D {
         
         // tracking help
         
-        bool            tracking_performed;
+        bool            tracking_performed; 
+        id_vec_t        tracked_ids;    // IDs that were continues
+        id_vec_t        dropped_ids;    // IDs that were discontinued
+        id_vec_t        new_ids;        // IDs that were added fresh
+        id_map_t        splits;         // contains a mapping from previous id's to a list of current id's.
+        id_map_t        merges;         // contains a mapping of current id to previous ids
         
-        vector<size_t>  tracked_ids;
-        
-        vector<size_t>  dropped_ids;
-        
-        vector<size_t>  new_ids;
+        timestamp_t     timestamp;      // contains the variable 'time(time)' value
         
         // control
         
         bool            m_use_original_points_only;
-        
 
 #pragma mark -
 #pragma mark Constructor/Destructor

@@ -259,11 +259,11 @@ int main(int argc, char** argv)
     
     // Read previous clusters
     
-    typename ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( previous_filename );
+    ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read( previous_filename );
 
     // Read current clusters
     
-    typename ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read( current_filename );
+    ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read( current_filename );
     
     // Check if the feature variables match
     
@@ -342,4 +342,4 @@ int main(int argc, char** argv)
     delete current;
     
     return 0;
-};
+}

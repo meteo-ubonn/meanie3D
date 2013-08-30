@@ -23,7 +23,7 @@ SetView2D(v)
 
 # Add the source data plot
 #AddPlot("Pseudocolor", "cband_radolan_rx")
-AddPlot("Pseudocolor", "RX")
+AddPlot("Pseudocolor", "zh")
 p = PseudocolorAttributes()
 p.colorTableName="xray"
 p.invertColorTable=1
@@ -73,7 +73,7 @@ for fname in list:
     cp.invertColorTable=0
     index = count % len(col_tables);
     cp.colorTableName = col_tables[index];
-    cp.opacity=0.33
+    cp.opacity=0.5
 
     SetPlotOptions(cp)
     count = count + 1;
