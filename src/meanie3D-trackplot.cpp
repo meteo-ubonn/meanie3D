@@ -307,7 +307,7 @@ int main(int argc, char** argv)
     
     // This map contains a mapping from the id type to lists of clusters.
 
-    typename Tracking<T>::trackmap_t track_map;
+    Tracking<T>::trackmap_t track_map;
     
     // Collect all files at sourcepath that start with basename and
     // end with -clusters.nc
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
                 
                 coords_filename = f.generic_string();
                 
-                typename ClusterList<T>::ptr cluster_list = ClusterList<T>::read( f.generic_string() );
+                ClusterList<T>::ptr cluster_list = ClusterList<T>::read( f.generic_string() );
                 
                 if (spatial_dimensions==0)
                 {
@@ -357,17 +357,17 @@ int main(int argc, char** argv)
                 
                 // Iterate over the clusters in the list we just read
                 
-                typename Cluster<T>::list::iterator ci;
+                Cluster<T>::list::iterator ci;
                 
                 for (ci=cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
                 {
-                    typename Cluster<T>::ptr cluster = (*ci);
+                    Cluster<T>::ptr cluster = (*ci);
                     
                     cfa::id_t id = cluster->id;
                     
-                    typename Tracking<T>::trackmap_t::const_iterator ti = track_map.find(id);
+                    Tracking<T>::trackmap_t::const_iterator ti = track_map.find(id);
                     
-                    typename Tracking<T>::track_t * tm = NULL;
+                    Tracking<T>::track_t * tm = NULL;
                     
                     if (ti==track_map.end())
                     {
@@ -464,15 +464,15 @@ int main(int argc, char** argv)
         
         cout << "Keying up tracks: " << endl;
         
-        for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        for (Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
-            typename Tracking<T>::track_t *track = tmi->second;
+            Tracking<T>::track_t *track = tmi->second;
             
             cout << "Track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
             
             size_t i = 0;
             
-            for ( typename Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+            for ( Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
             {
                 cout << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
             }
@@ -499,11 +499,11 @@ int main(int argc, char** argv)
         
         // Iterate over the collated tracks
         
-        for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        for (Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
             size_t points_processed = 0;
             
-            typename Tracking<T>::track_t *track = tmi->second;
+            Tracking<T>::track_t *track = tmi->second;
             
             size_t track_length = track->size();
             
@@ -550,7 +550,7 @@ int main(int argc, char** argv)
             
             // Iterate over the clusters in the track and sum up
             
-            typename Tracking<T>::track_t::iterator ti;
+            Tracking<T>::track_t::iterator ti;
             
             for (ti = track->begin(); ti != track->end(); ++ti)
             {
@@ -587,7 +587,7 @@ int main(int argc, char** argv)
                 
                 // Iterate over the points of the cluster
                 
-                typename Point<T>::list::iterator pi;
+                Point<T>::list::iterator pi;
                 
                 for (pi = cluster.points.begin(); pi != cluster.points.end(); ++pi)
                 {
@@ -595,14 +595,14 @@ int main(int argc, char** argv)
                     
                     if (p->gridpoint.empty())
                     {
-                        typename CoordinateSystem<T>::GridPoint gp = coord_system->newGridPoint();
+                        CoordinateSystem<T>::GridPoint gp = coord_system->newGridPoint();
                         
                         coord_system->reverse_lookup(p->coordinate, gp);
                         
                         p->gridpoint = gp;
                     }
                     
-                    typename Point<T>::ptr indexed = index.get(p->gridpoint);
+                    Point<T>::ptr indexed = index.get(p->gridpoint);
                     
                     if (indexed==NULL)
                     {
@@ -624,7 +624,7 @@ int main(int argc, char** argv)
             
             // Extract the point list
             
-            typename Point<T>::list cumulatedList;
+            Point<T>::list cumulatedList;
             
             index.replace_points(cumulatedList);
             
