@@ -79,4 +79,30 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity):
     SetPlotOptions(p)
     return
 
+#
+# Sets default 2D view params for RADOLAN grid
+#
+def set_view_to_radolan():
+    v = GetView3D();
+    v.viewNormal = (0.656802,-0.498223,0.566025)
+    v.focus = (-239.212,-4222.9,7.375)
+    v.viewUp = (-0.457525,0.333371,0.824339)
+    v.viewAngle = 30
+    v.parallelScale = 173.528
+    v.nearPlane = -347.056
+    v.farPlane = 347.056
+    v.imagePan = (0, 0)
+    v.imageZoom = 1.4641
+    v.perspective = 1
+    v.eyeAngle = 2
+    v.centerOfRotationSet = 0
+    v.centerOfRotation = (0, 0, 0)
+    v.axis3DScaleFlag = 0
+    v.axis3DScales = (1, 1, 1)
+    v.shear = (0, 0, 1)
+    print "3D View Settings:"
+    print v
+    SetView3D(v);
+    return
+
 # End of visit3D.py

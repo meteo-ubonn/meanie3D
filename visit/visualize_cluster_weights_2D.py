@@ -1,48 +1,59 @@
 #!/usr/bin/python
+
+# python script template for tracking
+# TODO: clustering parameters should be passed in from the bash script
+
+MEANIE3D_HOME = "M3D_HOME_P"
+SOURCE_FILE   = "SOURCE_FILE_P"
+VAR_NAME      = "VAR_NAME_P"
+
+# Appending the module path is crucial
+
+sys.path.append(MEANIE3D_HOME+"/visit/modules")
+
 import glob
+import os
 import sys
+import time
+import visit2D
+import visitUtils
+from subprocess import call
 
 # plot original data
-source_file = "SOURCE_FILE"
 
 # Modify view parameters                                                                                                                                                                                         
-v = GetView2D()
-v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
-v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-SetView2D(v)
+visit2D.set_view_to_radolan()
 
 # plot data set with opacity
 
-OpenDatabase(source_file)
-
-VAR_NAME="RX"
+OpenDatabase(SOURCE_FILE)
 
 AddPlot("Pseudocolor", VAR_NAME)
 p = PseudocolorAttributes()
 p.colorTableName = "hot_desaturated"
 p.legendFlag=1
-p.lightingFlag=0
-p.invertColorTable=0
+p.lightingFlag=1
+p.invertColorTable=1
 p.pointSizePixels=4
 SetPlotOptions(p)
 DrawPlots();
 
-# plot weights
+# plot weights?
 
-weights_file="../Debug/*-weights.vtk"
-list = glob.glob(weights_file)
-OpenDatabase(list[0])
+if "no" == "yes":
+    weights_file="../Debug/*-weights.vtk"
+    list = glob.glob(weights_file)
+    OpenDatabase(list[0])
 
-AddPlot("Pseudocolor", "weight")
-p = PseudocolorAttributes()
-p.colorTableName = "hot_desaturated"
-p.legendFlag=1
-p.lightingFlag=0
-p.invertColorTable=0
-p.pointSizePixels=4
-SetPlotOptions(p)
-DrawPlots();
-
+    AddPlot("Pseudocolor", "weight")
+    p = PseudocolorAttributes()
+    p.colorTableName = "hot_desaturated"
+    p.legendFlag=1
+    p.lightingFlag=0
+    p.invertColorTable=0
+    p.pointSizePixels=4
+    SetPlotOptions(p)
+    DrawPlots();
 
 # plot the clusters
 #cluster_basename = "Release/*_cluster_*.vtk"
@@ -58,14 +69,14 @@ for fname in list:
 
     # set plot attributes accordingly                                                                                                                                               
     cp=PseudocolorAttributes();
-    cp.pointSizePixels=10
-    cp.opacity=0.33
+    cp.pointSizePixels=20
+    cp.opacity=0.5
     cp.minFlag=1
     cp.maxFlag=1
     cp.min=0
     cp.max=0.5
     cp.legendFlag=0
-    cp.colorTableName = "contoured";
+    cp.colorTableName = "rainbow";
     if count%2==0:
         cp.invertColorTable=1
     else:
@@ -84,7 +95,7 @@ vp.stride = 1
 vp.scale = 1
 vp.scaleByMagnitude = 1
 vp.autoScale = 0
-vp.headSize = 0.1
+vp.headSize = 0.33
 vp.headOn = 1
 vp.colorByMag = 1
 vp.useLegend = 1

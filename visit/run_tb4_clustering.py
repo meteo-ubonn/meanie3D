@@ -6,7 +6,7 @@
 MEANIE3D_HOME     = "M3D_HOME"
 DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
-PARAM_T           = "SCALE"
+VAR_NAME          = "VAR_P"
 
 # Appending the module path is crucial
 
@@ -29,25 +29,19 @@ last_completed_run_count = 0
 
 # RADOLAN
 
-VAR_NAME="RX"
-
-DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds RX=0 -m 5"
-
-CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
-CLUSTERING_PARAMS += " --verbosity 1"
-CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
-CLUSTERING_PARAMS += " --weight-function default"
-CLUSTERING_PARAMS += " --write-clusters-as-vtk"
-
+CLUSTERING_PARAMS  = " -d lat,lon --vtk-dimensions lon,lat --ranges=1,1,300"
 CLUSTERING_PARAMS += " -v "+VAR_NAME
-CLUSTERING_PARAMS += " " + DETECT_PARAMS
+CLUSTERING_PARAMS += " --write-variables-as-vtk "+VAR_NAME
+CLUSTERING_PARAMS += " --upper-thresholds "+VAR_NAME+"=255"
+CLUSTERING_PARAMS += " --weight-function inverse"
+CLUSTERING_PARAMS += " --write-clusters-as-vtk"
+CLUSTERING_PARAMS += " --write-cluster-weight-response"
+CLUSTERING_PARAMS += " --verbosity 1"
 
-
-TRACKING_PARAMS = "--verbosity 1 --write-vtk"
-TRACKING_PARAMS += " --vtk-dimensions x,y"
-TRACKING_PARAMS += " -t "+VAR_NAME
-TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
+#TRACKING_PARAMS = "--verbosity 1 --write-vtk"
+#TRACKING_PARAMS += " --vtk-dimensions x,y"
+#TRACKING_PARAMS += " -t "+VAR_NAME
+#TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
 
 # print parameters
 
@@ -80,8 +74,8 @@ print tracking_bin
 print "Tracking Evaluation Command:"
 print trackplot_bin
 
-# Cluster color tables
-col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
+#Cluster color tables
+#col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
 
 # Silent
 SuppressMessages(True)
@@ -97,16 +91,16 @@ a.legendInfoFlag=0
 a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
 
-# Modify view parameters
-v = GetView2D()
-v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
-v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-SetView2D(v)
-
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"
 netcdf_list=glob.glob(netcdf_pattern)
 last_cluster_file=""
+
+# Set up viewport
+v = GetView2D()
+v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
+v.windowCoords = (3, 19.8, 45, 55.8)
+SetView2D(v)
 
 run_count = 0
 
@@ -114,8 +108,9 @@ run_count = 0
 for netcdf_file in netcdf_list:
     
     basename = os.path.basename(netcdf_file)
-    cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
-    vtk_file=os.path.splitext(basename)[0] + "_" + VAR_NAME + ".vtk"
+    stripped_name=os.path.splitext(basename)[0];
+    cluster_file=stripped_name+"-clusters.nc"
+    vtk_file=stripped_name + "_" + VAR_NAME + ".vtk"
 
     # if there is a resume counter, keep skipping
     # until the count is right
@@ -137,14 +132,7 @@ for netcdf_file in netcdf_list:
     
     # build the clustering command
     command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + CLUSTERING_PARAMS
-
-    # use previous result to enhance current 
-    if run_count > 0:
-        command = command + " -p " + last_cluster_file
-
     command = command + " > clustering_" + str(run_count)+".log"
-
-
 
     # execute
     print command
@@ -157,97 +145,62 @@ for netcdf_file in netcdf_list:
     #
     # Plot the source data in color
     #
-    
-    visit2D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated",1 )
+
+    # the first file in the specific series caused some trouble
+    # with the viewport. Comment this out as the data becomes
+    # more consistent
+
+    visit2D.add_pseudocolor( netcdf_file, VAR_NAME, "hot_desaturated",1 )
+    cp=PseudocolorAttributes();
+    cp.invertColorTable=1
+    SetPlotOptions(cp)
+
     DrawPlots()
-    
+    RecenterView()
+
     # Calling ToggleMaintainViewMode helps
     # keeping the window from 'jittering'
-    if toggled_maintain != True :
-        ToggleMaintainViewMode()
-        toggled_maintain=True
+    #if toggled_maintain != True :
+        #ToggleMaintainViewMode()
+        #toggled_maintain=True
     
-    visitUtils.save_window("source_",1)
+    #visitUtils.save_window(stripped_name+"_source_",1)
     
-    # clean up
-    DeleteAllPlots();
-
     print "    done. (%.2f seconds)" % (time.time()-start_time)
-    print "-- Rendering untracked clusters --"
+    print "-- Rendering clusters --"
     start_time = time.time()
 
-    #
-    # Plot untracked clusters
-    #
+    # plot the clusters
+    #cluster_basename = "Release/*_cluster_*.vtk"
+
+    cluster_basename = os.path.splitext(basename)[0] + "*-clusters_weight*.vtk"
+    list = glob.glob( cluster_basename )
+
+    count = 0;
+    for fname in list:
     
-    # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
-    
-    # Add the clusters
-    visit2D.add_clusters(basename,"_cluster_",col_tables)
-    
-    # Add modes as labels
-    label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
-    visitUtils.add_labels(label_file,"geometrical_center")
-
-    # Get it all processed and stowed away
-    DrawPlots()
-    visitUtils.save_window("untracked_",1)
-
-    #
-    # clean up
-    #
-
-    DeleteAllPlots();
-    ClearWindow()
-    CloseDatabase(vtk_file)
-    CloseDatabase(label_file)
-    visitUtils.close_pattern(basename+"*_cluster_*.vtk")
-    return_code=call("rm -f *cluster*_*.vtk", shell=True)
-
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
-
-    #
-    # Tracking
-    #
-
-    # if we have a previous scan, run the tracking command
-
-    if run_count > 0:
-
-        print "-- Tracking --"
-        start_time = time.time()
-
-        command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + TRACKING_PARAMS
-        command = command + " > tracking_" + str(run_count)+".log"
+        # add plot
+        OpenDatabase(fname);
+        AddPlot("Pseudocolor", "weight")
         
-        # execute
-        return_code = call( command, shell=True)
+        # set plot attributes accordingly
+        cp=PseudocolorAttributes();
+        cp.pointSizePixels=10
+        cp.opacity=0.25
+        cp.minFlag,cp.maxFlag=1,1
+        cp.min,cp.max=0.0,0.5
+        cp.legendFlag=0
+        cp.colorTableName = "contoured";
+        if count%2==0:
+            cp.invertColorTable=1
+        else:
+            cp.invertColorTable=0
+        SetPlotOptions(cp)
+        count = count+1
 
-        print "    done. (%.2f seconds)" % (time.time()-start_time)
-
-    print "-- Rendering tracked clusters --"
-    start_time = time.time()
-
-    #
-    # Plot tracked clusters
-    #
-
-    # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
-
-    if (run_count > 0):
-
-        # Add the clusters
-        visit2D.add_clusters(basename,"_cluster_",col_tables)
-
-        # Add modes as labels
-        label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
-        visitUtils.add_labels(label_file,"geometrical_center")
-
-    # Get it all processed and stowed away
     DrawPlots()
-    visitUtils.save_window("tracked_",1)
+    RecenterView()
+    visitUtils.save_window(stripped_name+"_clusters_",1)
 
     #
     # clean up
@@ -255,12 +208,10 @@ for netcdf_file in netcdf_list:
 
     DeleteAllPlots();
     ClearWindow()
-    CloseDatabase(vtk_file)
-
-    if run_count > 0:
-        CloseDatabase(label_file)
-        visitUtils.close_pattern(basename+"*_cluster_*.vtk")
-        return_code=call("rm -f *.vtk", shell=True)
+    CloseDatabase(netcdf_file)
+    visitUtils.close_pattern(os.path.splitext(basename)[0]+"*-clusters_weight*.vtk")
+    return_code=call("rm -f *cluster*.vtk", shell=True)
+    return_code=call("rm -f *.vtk", shell=True)
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -269,7 +220,6 @@ for netcdf_file in netcdf_list:
 
     # don't forget to increment run counter
     run_count = (run_count + 1)
-
 
 print "Done. Closing Visit."
 exit()

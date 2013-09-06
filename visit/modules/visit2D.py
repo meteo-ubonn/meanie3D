@@ -84,7 +84,7 @@ def add_pseudocolor(vtk_file,variable,color_table_name,lf):
 #
 # Sets default 2D view params for RADOLAN grid
 #
-def SetViewToRadolan():
+def set_view_to_radolan():
     v = GetView2D()
     v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
     v.viewportCoords = (0.2, 0.95, 0.15, 0.95)

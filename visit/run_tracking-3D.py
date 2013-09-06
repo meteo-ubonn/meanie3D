@@ -20,8 +20,8 @@ import visit3D
 import visitUtils
 from subprocess import call
 
-print [key for key in locals().keys()
-       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
+#print [key for key in locals().keys()
+#    if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
 # TODO: find a more elegant way to resume
 # if > 0 a previous run is resumed
