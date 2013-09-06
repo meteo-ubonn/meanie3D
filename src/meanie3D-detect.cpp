@@ -59,7 +59,7 @@ void parse_commmandline(program_options::variables_map vm,
                         FS_TYPE &wwf_lower_threshold,
                         FS_TYPE &wwf_upper_threshold,
                         string &parameters,
-                        SearchParameters **search_params,
+                        vector<FS_TYPE> &ranges,
                         std::string **previous_file,
                         FS_TYPE &cluster_coverage_threshold,
                         bool &write_vtk,
@@ -166,8 +166,6 @@ void parse_commmandline(program_options::variables_map vm,
     {
         tokenizer bw_tokens( vm["ranges"].as<string>(), sep );
         
-        vector<FS_TYPE> ranges;
-        
         for ( tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter )
         {
             const char* bw = (*tok_iter).c_str();
@@ -183,10 +181,6 @@ void parse_commmandline(program_options::variables_map vm,
         }
         
         parameters = parameters + "ranges=" + vm["ranges"].as<string>();
-        
-        RangeSearchParams<FS_TYPE> *p = new RangeSearchParams<FS_TYPE>( ranges );
-        
-        *search_params = p;
     }
 
     // Lower Thresholds
@@ -524,7 +518,7 @@ int main(int argc, char** argv)
                            wwf_lower_threshold,
                            wwf_upper_threshold,
                            parameters,
-                           &search_params,
+                           ranges,
                            &previous_file,
                            cluster_coverage_threshold,
                            write_vtk,
@@ -551,56 +545,14 @@ int main(int argc, char** argv)
     
     bool show_progress = (verbosity > VerbositySilent);
     
-    
-    // DEBUG
-    //
-    
-    //    vector<double> scales;
-    //    scales.push_back(0);
-    //    scales.push_back(1);
-    //    scales.push_back(10);
-    //    scales.push_back(100);
-    //    scales.push_back(1000);
-    //    scales.push_back(5000);
-    //
-    //    CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>( dimensions, dimension_variables );
-    //
-    //    vector<double>::const_iterator si;
-    //    for ( si=scales.begin(); si!=scales.end(); si++ )
-    //    {
-    //        double t = *si;
-    //
-    //        // Feature Space
-    //        FeatureSpace<double> *sfs = new FeatureSpace<double>( filename, cs, variables, cluster_resolution, thresholds, t, show_progress );
-    //
-    //        delete sfs;
-    //    }
-    //
-    //    delete cs;
-    
-    //
-    // DEBUG
-    
-    //    // DEBUG
-    //    //
-    //
-    //#include <cf-algorithms/utils/console_utils.h>
-    //
-    //    Meanshift::utils::ConsoleSpinner spinner;
-    //
-    //    spinner.start();
-    //
-    //    sleep( 10000 );
-    //
-    //    spinner.stop();
-    //
-    //    //
-    //    // DEBUG
-    
-    
     if ( verbosity > VerbositySilent )
     {
-        cout << "clustering is going to run with the following parameters:" << endl;
+        cout << "----------------------------------------------------" << endl;
+        cout << "Meanie3D-detect" << endl;
+        cout << "----------------------------------------------------" << endl;
+        cout << endl;
+        
+        cout << "Command line options:" << endl;
         
         cout << "\tinput file = " << filename << endl;
         
@@ -617,35 +569,146 @@ int main(int argc, char** argv)
             cout << "\tautomatic bandwidth selection" << endl;
         }
         
-        if ( min_cluster_size > 1 )
+        if ( !lower_thresholds.empty() )
         {
-            cout << "\tminimum cluster size = " << min_cluster_size << endl;
+            cout << "\tusing lower thresholds " << vm["lower-thresholds"].as<string>() << endl;
         }
         
+        if ( !upper_thresholds.empty() )
+        {
+            cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
+        }
+
         if ( scale != NO_SCALE )
         {
             double width = sqrt( ceil( -2.0*scale*log(0.01) ) ) / 2;
             
             cout << "\tpre-smoothing data with scale parameter " << scale << " ( kernel width = " << width << " )" << endl;
         }
-        
-        if ( !lower_thresholds.empty() )
+        else
         {
-            cout << "\tusing lower thresholds " << vm["lower-thresholds"].as<string>() << endl;
-        }
-
-        if ( !upper_thresholds.empty() )
-        {
-            cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
+            cout << "\tno scale-space smoothing" << endl;
         }
         
-        cout << endl;
-
+        cout << "\tweight-function:" << weight_function_name << endl;
+        cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
+        cout << "\t\tupper weight-function threshold: " << wwf_upper_threshold << endl;
+        
+        if (vm.count("previous-file") > 0)
+        {
+            cout << "\tprevious file:" << previous_file << endl;
+            
+            if (vm.count("previous-cluster-coverage-threshold") > 0 )
+            {
+                cout << "\tprevious file coverage threshold:" << cluster_coverage_threshold << endl;
+            }
+        }
+        
+        if ( min_cluster_size > 1 )
+        {
+            cout << "\tminimum cluster size = " << min_cluster_size << endl;
+        }
         cout << "\toutput written to file: " << output_filename << endl;
+        
+        if (!vtk_variables.empty())
+        {
+            cout << "\twriting out these variables as vtk after processing:" << vm["write-variables-as-vtk"].as<string>() << endl;
+        }
         
         cout << "\tclusters written as vtk: " << (write_vtk ? "yes":"no") << endl;
         
-        // TODO: add newer parameters
+        cout << "\twriting cluster weights as vtk: " << (write_weight_response ? "yes":"no") << endl;
+        
+        if (verbosity > VerbosityNormal)
+        {
+            cout << endl;
+            cout << "Compiled options (use -D to switch them on and off)" << endl;
+            
+#if WRITE_BANDWIDTH
+            cout << "\tWRITE_BANDWIDTH=1" << endl;
+#else
+            cout << "\tWRITE_BANDWIDTH=0" << endl;
+#endif
+        
+#if WRITE_CLUSTER_CENTERS
+            cout << "\tWRITE_CLUSTER_CENTERS=1" << endl;
+#else
+            cout << "\tWRITE_CLUSTER_CENTERS=0" << endl;
+#endif
+        
+#if WRITE_CLUSTER_MEANSHIFT
+            cout << "\tWRITE_CLUSTER_MEANSHIFT=1" << endl;
+#else
+            cout << "\tWRITE_CLUSTER_MEANSHIFT=0" << endl;
+#endif
+
+#if WRITE_CLUSTER_MODES
+            cout << "\tWRITE_CLUSTER_MODES=1" << endl;
+#else
+            cout << "\tWRITE_CLUSTER_MODES=0" << endl;
+#endif
+        
+#if WRITE_FEATURESPACE
+            cout << "\tWRITE_FEATURESPACE=1" << endl;
+#else
+            cout << "\tWRITE_FEATURESPACE=0" << endl;
+#endif
+        
+#if WRITE_INDEX
+            cout << "\tWRITE_INDEX=1" << endl;
+#else
+            cout << "\tWRITE_INDEX=0" << endl;
+#endif
+        
+#if WRITE_ITERATION_ORIGINS
+            cout << "\tWRITE_ITERATION_ORIGINS=1" << endl;
+#else
+            cout << "\tWRITE_ITERATION_ORIGINS=0" << endl;
+#endif
+        
+#if WRITE_MEANSHIFT_SAMPLES
+            cout << "\tWRITE_MEANSHIFT_SAMPLES=1" << endl;
+#else
+            cout << "\tWRITE_MEANSHIFT_SAMPLES=0" << endl;
+#endif
+        
+#if WRITE_MEANSHIFT_VECTORS
+            cout << "\tWRITE_MEANSHIFT_VECTORS=1" << endl;
+#else
+            cout << "\tWRITE_MEANSHIFT_VECTORS=0" << endl;
+#endif
+        
+#if WRITE_MEANSHIFT_WEIGHTS
+            cout << "\tWRITE_MEANSHIFT_WEIGHTS=1" << endl;
+#else
+            cout << "\tWRITE_MEANSHIFT_WEIGHTS=0" << endl;
+#endif
+        
+#if WRITE_MODES
+            cout << "\tWRITE_MODES=1" << endl;
+#else
+            cout << "\tWRITE_MODES=0" << endl;
+#endif
+        
+#if WRITE_OFF_LIMITS_MASK
+            cout << "\tWRITE_OFF_LIMITS_MASK=1" << endl;
+#else
+            cout << "\tWRITE_OFF_LIMITS_MASK=0" << endl;
+#endif
+
+#if WRITE_WEIGHT_FUNCTION
+            cout << "\tWRITE_WEIGHT_FUNCTION=1" << endl;
+#else
+            cout << "\tWRITE_WEIGHT_FUNCTION=0" << endl;
+#endif
+        
+#if WRITE_ZEROSHIFT_CLUSTERS
+            cout << "\tWRITE_ZEROSHIFT_CLUSTERS=1" << endl;
+#else
+            cout << "\tWRITE_ZEROSHIFT_CLUSTERS=0" << endl;
+#endif
+            cout << endl;
+        }
     }
     
     // Construct Featurespace
@@ -699,9 +762,10 @@ int main(int argc, char** argv)
         }
         
         cout << "Automatically calculated bandwidth:" << ranges << endl;
-        
-        search_params = new RangeSearchParams<FS_TYPE>(ranges);
     }
+
+    search_params = new RangeSearchParams<FS_TYPE>(ranges);
+
     
 #if WRITE_OFF_LIMITS_MASK
     fs->off_limits()->write("off_limits.vtk","off_limits");
@@ -769,6 +833,15 @@ int main(int argc, char** argv)
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
         
+        // Apply weight function filter
+        
+        WeightThresholdFilter<FS_TYPE> wtf(weight_function,wwf_lower_threshold, wwf_upper_threshold, true);
+        
+        wtf.apply(fs);
+        
+        if ( verbosity > VerbositySilent )
+            cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
+
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
     }

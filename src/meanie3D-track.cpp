@@ -45,6 +45,7 @@ void parse_commmandline(program_options::variables_map vm,
                         FS_TYPE &range_weight,
                         FS_TYPE &size_weight,
                         FS_TYPE &correlation_weight,
+                        FS_TYPE &max_speed,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity)
 {
@@ -119,7 +120,7 @@ void parse_commmandline(program_options::variables_map vm,
 
         file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
 
-        vector<string> fs_dim_names = from_string<string>(fs_dimensions);
+        vector<string> fs_dim_names = ::cfa::utils::vectors::from_string<string>(fs_dimensions);
         
         
         // parse dimension list
@@ -166,6 +167,10 @@ void parse_commmandline(program_options::variables_map vm,
         delete file;
     }
     
+    // max-speed
+    
+    max_speed = vm["max-speed"].as<FS_TYPE>();
+    
     // --write-vtk
     
     write_vtk = vm.count("write-vtk") > 0;
@@ -196,6 +201,7 @@ int main(int argc, char** argv)
     ("wr", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for range correlation [0..1]")
     ("ws", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for size correlation [0..1]")
     ("wt", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for histogram rank correlation [0..1]")
+    ("max-speed",program_options::value<FS_TYPE>()->default_value(50.0), "Maximum allowed object speed (m/s)")
     ("write-vtk,k","Write out the clusters as .vtk files for visit")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
@@ -231,7 +237,7 @@ int main(int argc, char** argv)
     bool write_vtk = false;
     vector<size_t> vtk_dimension_indexes;
     
-    FS_TYPE range_weight, size_weight, correlation_weight;
+    FS_TYPE range_weight, size_weight, correlation_weight, max_speed;
 
     
     try
@@ -244,6 +250,7 @@ int main(int argc, char** argv)
                            range_weight,
                            size_weight,
                            correlation_weight,
+                           max_speed,
                            vtk_dimension_indexes,
                            verbosity);
         
@@ -256,6 +263,25 @@ int main(int argc, char** argv)
         cerr << e.what() << endl;
         exit(-1);
     }
+    
+    if ( verbosity > VerbositySilent )
+    {
+        cout << "----------------------------------------------------" << endl;
+        cout << "Meanie3D-track" << endl;
+        cout << "----------------------------------------------------" << endl;
+        cout << endl;
+        
+        cout << "Command line options:" << endl;
+        
+        cout << "\tprevious cluster file = " << previous_filename << endl;
+        cout << "\tcurrent cluster file = " << current_filename << endl;
+        cout << "\tvariable name for histogram comparison: " << tracking_variable_name << endl;
+        cout << "\tcorrelation weights: wr=" << range_weight << " ws=" << size_weight << " wt=" << correlation_weight << endl;
+        cout << "\tmaximum speed: " << max_speed << " [m/s]" << endl;
+        cout << "\twriting results out as vtk:" << (write_vtk?"yes":"no") << endl;
+        cout << endl;
+    }
+
     
     // Read previous clusters
     
@@ -316,6 +342,8 @@ int main(int argc, char** argv)
     // Perform tracking
     
     Tracking<FS_TYPE> tracking(range_weight,size_weight,correlation_weight);
+    
+    tracking.setMaxTrackingSpeed(max_speed);
     
     tracking.track( previous, current, tracking_var, verbosity );
     

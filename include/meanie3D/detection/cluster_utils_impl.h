@@ -59,7 +59,7 @@ namespace m3D {
                 
                 if (overlap > 0)
                 {
-                    printf("old #%4lu with new #%4lu overlap = %3.2f\n", oldCluster->id, newCluster->id, overlap);
+                    printf("old #%4u with new #%4u overlap = %3.2f\n", oldCluster->id, newCluster->id, overlap);
                 }
                 
                 coverNewByOld[n][m] = overlap;
@@ -95,11 +95,11 @@ namespace m3D {
             {
                 if ( verbosity >= VerbosityNormal )
                 {
-                    printf("Old cluster ID#%4lu seems to have split into new clusters IDs ", old_cluster->id);
+                    printf("Old cluster ID#%4u seems to have split into new clusters IDs ", old_cluster->id);
                     for ( int i=0; i < candidates.size(); i++ )
                     {
                         typename Cluster<T>::ptr c = current->clusters[candidates[i]];
-                        printf("#%lu ",c->id );
+                        printf("#%u ",c->id );
                     }
                     cout << endl;
                 }

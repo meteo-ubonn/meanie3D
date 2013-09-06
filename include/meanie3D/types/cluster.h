@@ -61,10 +61,6 @@ namespace m3D {
         
         typedef vector<ptr>    		list;
         
-        typedef unsigned long       id_t;
-        
-        static const id_t           NO_ID;
-        
 #pragma mark -
 #pragma mark Public properties
         
@@ -78,7 +74,7 @@ namespace m3D {
         
         /** Unique cluster ID. Used for tracking.
          */
-        id_t                        id;
+        cfa::id_t                   id;
 
         size_t
         spatial_dimension() { return m_spatial_dimension; };

@@ -20,6 +20,7 @@ namespace m3D {
     using namespace cfa::utils::timer;
     using namespace cfa::utils::vectors;
     using namespace cfa::utils::maps;
+    using namespace cfa::utils::sets;
     using namespace cfa::utils::visit;
 	using cfa::meanshift::Point;
 	using cfa::meanshift::FeatureSpace;
@@ -28,6 +29,7 @@ namespace m3D {
 	using cfa::meanshift::RangeSearchParams;
 	using cfa::meanshift::SearchParameters;
     using cfa::id_t;
+
 
 #pragma mark -
 #pragma mark Macros
@@ -265,6 +267,11 @@ namespace m3D {
                 file->putAtt( "merges", id_map_to_string(this->merges));
                 file->putAtt( "splits", id_map_to_string(this->splits));
             }
+
+            // Save highest ID
+            
+            unsigned long long hid = boost::numeric_cast<unsigned long long>(this->highest_id);
+            file->putAtt("highest_id", ncUint64, hid);
             
             // Add cluster dimensions and variables
             
@@ -311,6 +318,33 @@ namespace m3D {
                 // size
                 
                 var.putAtt( "size", ncInt, (int) clusters[ci]->points.size() );
+                
+                // check if there's any merge
+                
+                id_map_t::iterator mi = this->merges.find(clusters[ci]->id);
+                
+                if (mi != this->merges.end())
+                {
+                    std::string merged_from = ::cfa::utils::sets::to_string(mi->second);
+                    
+                    var.putAtt( "merged_from", merged_from );
+                }
+                
+                // check if there's any split
+                
+                for (mi = this->splits.begin(); mi != this->splits.end(); mi++)
+                {
+                    id_set_t csplits = mi->second;
+                    
+                    if (csplits.find(clusters[ci]->id) != csplits.end())
+                    {
+                        std::string split_from = boost::lexical_cast<string>(mi->first);
+
+                        var.putAtt( "split_from", split_from );
+                        
+                        break;
+                    }
+                }
                 
                 // id
                 
@@ -370,12 +404,13 @@ namespace m3D {
         NcFile                      *file = NULL;
         
         bool        tracking_performed = false;
-        id_vec_t    tracked_ids;
-        id_vec_t    new_ids;
-        id_vec_t    dropped_ids;
+        id_set_t    tracked_ids;
+        id_set_t    new_ids;
+        id_set_t    dropped_ids;
         id_map_t    merges;
         id_map_t    splits;
         timestamp_t timestamp = 0;
+        cfa::id_t   highest_id;
         
         // TODO: let this exception go up
         try
@@ -402,7 +437,7 @@ namespace m3D {
             
             // Fill the dimensions vector from that
             
-            vector<string> fs_dim_names = from_string<string>(dim_str);
+            vector<string> fs_dim_names = ::cfa::utils::vectors::from_string<string>(dim_str);
             
             for (size_t di=0; di < fs_dim_names.size(); di++)
             {
@@ -435,19 +470,23 @@ namespace m3D {
                 if (tracking_performed)
                 {
                     file->getAtt("tracked_ids").getValues(value);
-                    tracked_ids = from_string<id_t>(value);
+                    tracked_ids = ::cfa::utils::sets::from_string<id_t>(value);
                     
                     file->getAtt("new_ids").getValues(value);
-                    new_ids = from_string<id_t>(value);
+                    new_ids = ::cfa::utils::sets::from_string<id_t>(value);
                     
                     file->getAtt("dropped_ids").getValues(value);
-                    dropped_ids = from_string<id_t>(value);
+                    dropped_ids = ::cfa::utils::sets::from_string<id_t>(value);
                     
                     file->getAtt("merges").getValues(value);
                     merges = id_map_from_string(value);
                     
                     file->getAtt("splits").getValues(value);
                     splits = id_map_from_string(value);
+                    
+                    unsigned long long hid;
+                    file->getAtt("highest_id").getValues(&hid);
+                    highest_id = boost::numeric_cast<cfa::id_t>(hid);
                 }
             }
             catch (netCDF::exceptions::NcException &e)
@@ -1551,7 +1590,7 @@ namespace m3D {
     {
         for ( size_t i=0; i < clusters.size(); i++ )
         {
-            clusters[i]->id = Cluster<T>::NO_ID;
+            clusters[i]->id = cfa::NO_ID;
         }
     }
     
@@ -1559,9 +1598,13 @@ namespace m3D {
     void
     ClusterList<T>::retag_identifiers()
     {
+        cfa::id_t cid = cfa::MIN_ID;
+        
         for ( size_t i=0; i < clusters.size(); i++ )
         {
-            clusters[i]->id = i;
+            clusters[i]->id = next_id(cid);
+            
+            this->highest_id = clusters[i]->id;
         }
     }
     

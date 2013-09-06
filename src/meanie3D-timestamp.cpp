@@ -46,7 +46,9 @@ typedef enum {
     TimestampFormatRadolan,
     TimestampFormatOASE2D,
     TimestampFormatOASE3D,
-    TimestampFormatAutomatic
+    TimestampFormatHErZTB4,
+    TimestampFormatAutomatic,
+    
 } TimestampFormat;
 
 
@@ -80,6 +82,11 @@ void parse_commmandline(program_options::variables_map vm,
     {
         ts_format = TimestampFormatRadolan;
     }
+    else if (fmt == "tb4")
+    {
+        ts_format = TimestampFormatHErZTB4;
+    }
+    
     else if (fmt == "auto")
     {
         ts_format = TimestampFormatAutomatic;
@@ -126,8 +133,12 @@ const std::string OASE_2D_FORMAT = "%Y%m%d%tH%Mz";
 const std::string OASE_2D_EXAMPLE = "20110622t1500z";
 
 const std::string OASE_3D_PREFIX = "herz-oase-";
-const std::string OASE_3D_FORMAT = "%Y%m%d%tH%Mutc";
-const std::string OASE_3D_EXAMPLE = "20110605t1555utc";
+const std::string OASE_3D_FORMAT = "%Y%m%dt%H%M";
+const std::string OASE_3D_EXAMPLE = "20110605t1555";
+
+const std::string TB4_PREFIX = "tb_";
+const std::string TB4_FORMAT = "%Y%m%d%H";
+const std::string TB4_EXAMPLE = "2011060618";
 
 /** 
  */
@@ -143,7 +154,7 @@ timestamp_t parse_timestamp(std::string filename, TimestampFormat format)
     {
         case TimestampFormatAutomatic:
         {
-            if (filename.find_first_of(RADOLAN_PREFIX) !=std::string::npos )
+            if (boost::starts_with(filename,RADOLAN_PREFIX))
             {
                 // raa01-rx_10000-1307010740-dwd---bin.nc
                 
@@ -151,17 +162,23 @@ timestamp_t parse_timestamp(std::string filename, TimestampFormat format)
                 dateformat = RADOLAN_FORMAT;
                 example = RADOLAN_EXAMPLE;
             }
-            else if (filename.find_first_of(OASE_2D_PREFIX) !=std::string::npos)
+            else if (boost::starts_with(filename,OASE_2D_PREFIX))
             {
                 prefix = OASE_2D_PREFIX;
                 dateformat = OASE_2D_FORMAT;
                 example = OASE_2D_EXAMPLE;
             }
-            else if (filename.find_first_of(OASE_3D_PREFIX) !=std::string::npos)
+            else if (boost::starts_with(filename,OASE_3D_PREFIX))
             {
                 prefix = OASE_3D_PREFIX;
                 dateformat = OASE_3D_FORMAT;
                 example = OASE_3D_EXAMPLE;
+            }
+            else if (boost::starts_with(filename,TB4_PREFIX))
+            {
+                prefix = TB4_PREFIX;
+                dateformat = TB4_FORMAT;
+                example = TB4_EXAMPLE;
             }
             else
             {
@@ -199,8 +216,16 @@ timestamp_t parse_timestamp(std::string filename, TimestampFormat format)
             example = OASE_3D_EXAMPLE;
             
         } break;
+
+        case TimestampFormatHErZTB4:
+        {
+            // tb_2011060618_150ghz.nc
             
-        
+            prefix = TB4_PREFIX;
+            dateformat = TB4_FORMAT;
+            example = TB4_EXAMPLE;
+            
+        } break;
     }
     
     std::string str = filename.substr( prefix.size(),example.size());
@@ -213,6 +238,14 @@ timestamp_t parse_timestamp(std::string filename, TimestampFormat format)
         exit(-1);
     }
     
+    // HErZ-TB4 has no minute/second
+    
+    if (format == TimestampFormatHErZTB4)
+    {
+        ts->tm_min = 0;
+        ts->tm_sec = 0;
+    }
+
     result = timegm(ts);
     
     delete ts;
@@ -329,32 +362,15 @@ int main(int argc, char** argv)
             progress->operator++();
         }
         
-        // Open NetCDF file
-        
         fs::path path = *it;
         
         std::string fn = path.generic_string();
         
-        NcFile *file = NULL;
-        
-        try
-        {
-            file = new NcFile( fn, NcFile::write );
-        }
-        catch (const netCDF::exceptions::NcException &e)
-        {
-            cerr << "ERROR:could not open file '" << fn << "' for writing: " << e.what() << endl;
-            continue;
-        }
-        
         // Add a dimension 'time'
         
         timestamp_t ts = parse_timestamp(boost::filesystem::basename(fn), format);
-        ::cfa::utils::netcdf::add_time(file, ts);
+        ::cfa::utils::netcdf::add_time(fn, ts);
         
-        // close file
-        
-        delete file;
     }
     
     if (progress != NULL)

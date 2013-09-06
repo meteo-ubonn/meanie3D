@@ -113,11 +113,12 @@ namespace m3D {
         // tracking help
         
         bool            tracking_performed; 
-        id_vec_t        tracked_ids;    // IDs that were continues
-        id_vec_t        dropped_ids;    // IDs that were discontinued
-        id_vec_t        new_ids;        // IDs that were added fresh
+        id_set_t        tracked_ids;    // IDs that were continues
+        id_set_t        dropped_ids;    // IDs that were discontinued
+        id_set_t        new_ids;        // IDs that were added fresh
         id_map_t        splits;         // contains a mapping from previous id's to a list of current id's.
         id_map_t        merges;         // contains a mapping of current id to previous ids
+        cfa::id_t       highest_id;     // Highest used ID
         
         timestamp_t     timestamp;      // contains the variable 'time(time)' value
         
@@ -154,6 +155,7 @@ namespace m3D {
         , dimensions(dims)
         , source_file(sourcefile)
         , tracking_performed(false)
+        , highest_id(0)
         , m_use_original_points_only(use_original_points_only)
         {};
 
@@ -174,6 +176,7 @@ namespace m3D {
         , source_file(sourcefile)
         , clusters(list)
         , tracking_performed(false)
+        , highest_id(0)
         , m_use_original_points_only(true)
         {};
 

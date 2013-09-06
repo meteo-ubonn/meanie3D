@@ -37,11 +37,13 @@ namespace m3D {
         
         T       m_maxVelocity;                      // physical maximum speed of objects in m/s
         
-        bool    m_useOverlapConstraint;             // make use of max velocity constraint?
+        float   m_max_size_deviation;       // how many percent may the objects vary in size (number of points) between scans?
+
+        bool    m_useOverlapConstraint;     // make use of max velocity constraint?
         
-        float   m_merge_threshold;
+        float   m_ms_threshold;             //
         
-        float   m_max_size_deviation;               // how many percent may the objects vary in size (number of points) between scans?
+        float   m_msc_threshold;            // How many percent of coverage is required in splits/merges for track continuation?
         
         
         /** Private default constructor 
@@ -68,9 +70,10 @@ namespace m3D {
         , m_useMeanVelocityConstraint(false)    // limit deviation from mean velocity (false)
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
         , m_maxVelocity(100.0)                  // limit max velocity to 30 m/s (~108 km/h)
-        , m_useOverlapConstraint(true)
-        , m_merge_threshold(0.33)               // percentage coverage old/new for merge/split (33%)
         , m_max_size_deviation(2.5)             // how many percent may the objects vary in size (number of points) between scans (250%)
+        , m_useOverlapConstraint(true)
+        , m_ms_threshold(0.33)                  // percentage coverage old/new for merge/split (33%)
+        , m_msc_threshold(0.75)                 // percentage coverage old/new in merge/split for continuing track (75%)
         {};
         
         /** Compares two cluster lists and propagates or assigns new identifiers.
@@ -83,6 +86,17 @@ namespace m3D {
                    const NcVar &track_variable,
                    Verbosity verbosity = VerbosityNormal);
         
+        // Accessors
+        
+        T maxTrackingSpeed() { return m_maxVelocity; }
+        void setMaxTrackingSpeed(T speed) { m_maxVelocity = speed;}
+        
+        float mergeSplitThreshold() {return m_ms_threshold;}
+        void setMergeSplitThreshold(float value) {m_ms_threshold=value;}
+        
+        float mergeSplitContinuationThreshold() {return m_msc_threshold;}
+        void setMergeSplitContinuationThreshold(float value) {m_msc_threshold=value;}
+
     private:
         
 

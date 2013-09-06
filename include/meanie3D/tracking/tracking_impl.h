@@ -28,20 +28,20 @@ namespace m3D {
     {
         if ( verbosity >= VerbosityNormal )
             cout << endl << "-- Tracking --" << endl;
-        
-        // sanity check
+
+
+#pragma mark -
+#pragma mark Preliminaries        
         
         if ( current->clusters.size() == 0 )
         {
             if ( verbosity >= VerbosityNormal )
-            {
                 cout << "No current clusters. Skipping tracking." << endl;
-                
-                return;
-            }
+            
+            return;
         }
         
-        // figure out tracking variable index
+        // figure out tracking variable index (for histogram)
         
         int index = index_of_first( current->feature_variables, track_variable );
         
@@ -50,41 +50,39 @@ namespace m3D {
         size_t tracking_var_index = (size_t) index;
         
         
-        // Valid min/max
+        // Valid min/max of tracking variable
         
         T valid_min, valid_max;
         
-        track_variable.getAtt("valid_min").getValues( &valid_min );
-
-        track_variable.getAtt("valid_max").getValues( &valid_max );
+        get_valid_range(track_variable, valid_min, valid_max );
         
-        // Find the highest id
+        // TODO: handle units dynamically (see #230)
         
-        size_t current_id = 0;
-
+        T unit_multiplier = 1000.0; // km -> m
+        
         // Find out the highest id from the previous list
         
-        typename Cluster<T>::list::iterator ci;
+        size_t highest_id = previous->highest_id;
         
-        for ( ci = previous->clusters.begin(); ci != previous->clusters.end(); ci++ )
+        if (highest_id == NO_ID || (highest_id == 0 && previous->clusters.size() > 0))
         {
-            typename Cluster<T>::ptr c = *ci;
+            // figure it out from the highest found ID
             
-            if ( c->id > current_id )
+            for (size_t ci=0; ci < previous->clusters.size(); ci++)
             {
-                current_id = c->id;
+                if (previous->clusters[ci]->id > highest_id)
+                {
+                    highest_id = previous->clusters[ci]->id;
+                }
             }
         }
         
-        current_id++;
-        
         if ( verbosity >= VerbosityNormal )
-            cout << "next available id is " << current_id << endl;
+            cout << "Highest used ID is " << highest_id << endl;
         
         // check time difference and determine displacement restraints
         
         timestamp_t p_time = previous->timestamp;
-        
         timestamp_t c_time = current->timestamp;
         
         // Check c > p
@@ -102,7 +100,6 @@ namespace m3D {
             cerr << "ERROR:files too far apart in time. Time difference:" << this->m_deltaT << "s, longest accepted:" << m_max_deltaT << "s" << endl;
             return;
         }
-        
 
         T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         
@@ -144,7 +141,8 @@ namespace m3D {
         if ( verbosity >= VerbosityNormal )
             cout << "Matching " << new_count << " new clusters against " << old_count << " old clusters" << endl;
         
-        // Create result matrices
+#pragma mark -
+#pragma mark Compute correlation matrixes and constraints
         
         typename Matrix<T>::matrix_t rank_correlation = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t midDisplacement = Matrix<T>::create_matrix(new_count,old_count);
@@ -156,10 +154,7 @@ namespace m3D {
         typename Matrix<T>::flag_matrix_t constraints_satisified = Matrix<T>::create_flag_matrix(new_count, old_count);
         
         T maxHistD = numeric_limits<T>::min();
-        
         T maxMidD = numeric_limits<T>::min();
-        
-        // compute correlation matrix
         
         int n,m;
         
@@ -194,7 +189,7 @@ namespace m3D {
 //                //
 //                
 //                // Processes in nature develop within certain bounds. It is not possible
-//                // that a cloud covers 10 pixels in one scan and 1000 in the next. The
+//                // that a cloud covers 10 pixels in one scan and unit_multiplier in the next. The
 //                // size deviation constraint is created to prohibit matches between objects,
 //                // which vary too much in size
 //                
@@ -225,10 +220,9 @@ namespace m3D {
 
                 if (m_useOverlapConstraint)
                 {
-                    T radius = 1000 * oldCluster->radius();
+                    T radius = unit_multiplier * oldCluster->radius();
                     
                     bool requires_overlap = (radius >= overlap_constraint_radius);
-                    
                     
                     bool overlap_constraint_satisfied = true;
                     
@@ -256,7 +250,7 @@ namespace m3D {
                 // TODO: calculate the max displacement in the same dimension
                 // as the dimension variables
                 
-                T displacement = 1000.0 * midDisplacement[n][m];
+                T displacement = unit_multiplier * midDisplacement[n][m];
                 
                 if ( displacement > maxDisplacement ) continue;
 
@@ -290,14 +284,13 @@ namespace m3D {
         
         // Can't have zeros here
         
-        if (maxHistD==0) maxHistD = 1;
+        if (maxHistD==0)
+        {
+            maxHistD = 1;
+        }
         
-        // normalise maxMidD with maximum possible distance
-        // why?
-        
-        // maxMidD = sqrt( 2*200*200 );
-
-        // calculate the final probability
+#pragma mark -
+#pragma mark Calculate probabilities
         
         if ( verbosity >= VerbosityDetails )
             cout << endl << "-- Correlation Table --" << endl;
@@ -308,7 +301,7 @@ namespace m3D {
             
             if ( verbosity >= VerbosityNormal )
             {
-                cout << endl << "Correlating new Blob #" << n
+                cout << endl << "Correlating new Cluster #" << n
                 << " (histogram size " << newCluster->histogram(tracking_var_index,valid_min,valid_max)->sum() << ")"
                 << " at " << newCluster->mode << endl;
             }
@@ -323,8 +316,11 @@ namespace m3D {
                 if ( constraints_satisified[n][m] )
                 {
                     float prob_r = m_dist_weight * erfc( midDisplacement[n][m] / maxMidD );
+                    
                     float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
+                    
                     float prob_t = m_corr_weight * rank_correlation[n][m];
+                    
                     sum_prob[n][m] = prob_t + prob_r + prob_h;
                     
                     if ( verbosity >= VerbosityNormal )
@@ -350,10 +346,13 @@ namespace m3D {
                 }
             }
         }
+
+#pragma mark -
+#pragma mark Matchmaking
         
         float velocitySum = 0;
         
-        int velocityBlobCount = 0;
+        int velocityClusterCount = 0;
         
         float currentMaxProb = numeric_limits<float>::max();
         
@@ -361,11 +360,9 @@ namespace m3D {
         
         int iterations = 0;
         
-        // NSMutableSet* usedOldBlobs = [[NSMutableSet alloc] init];
-        
         set< typename Cluster<T>::ptr > used_clusters;
         
-        if ( verbosity >= VerbosityDetails )
+        if ( verbosity >= VerbosityNormal )
             printf("\n-- Matching Results --\n");
         
         while ( iterations <= maxIterations )
@@ -405,7 +402,7 @@ namespace m3D {
 
             typename Cluster<T>::ptr old_cluster = previous->clusters[maxM];
             
-            if ( new_cluster->id == Cluster<T>::NO_ID )
+            if ( new_cluster->id == cfa::NO_ID )
             {
                 // new cluster not tagged yet
                 
@@ -416,32 +413,23 @@ namespace m3D {
                     // TODO: calculate velocity in the same units as the dimension
                     // variables
                     
-                    float velocity = 1000 * midDisplacement[maxN][maxM] / this->m_deltaT;
+                    float velocity = unit_multiplier * midDisplacement[maxN][maxM] / this->m_deltaT;
                 
                     velocitySum += velocity;
                         
-                    velocityBlobCount++;
+                    velocityClusterCount++;
                     
                     if ( verbosity >= VerbosityNormal )
                     {
-                        printf("pairing new blob #%4lu / old blob ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
+                        printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
                     }
                         
                     new_cluster->id = old_cluster->id;
                     
                     used_clusters.insert( old_cluster );
                     
-                    current->tracked_ids.push_back( new_cluster->id );
+                    current->tracked_ids.insert( new_cluster->id );
                 }
-            }
-            else
-            {
-                if ( verbosity >= VerbosityNormal )
-                {
-                    printf("pairing new blob #%4lu / old blob ID=#%4lud, cluster was already tagged as #%4lu",
-                           maxN, old_cluster->id, new_cluster->id );
-                }
-
             }
             
             currentMaxProb = maxProb;
@@ -451,13 +439,14 @@ namespace m3D {
 
 //        // update mean velocity
 //        float newMeanVelocity = 0;
-//        if (velocityBlobCount>0) newMeanVelocity = velocitySum/velocityBlobCount;
+//        if (velocityClusterCount>0) newMeanVelocity = velocitySum/velocityClusterCount;
 //        if (newMeanVelocity > 2.0) meanVelocity = newMeanVelocity;
 //
 //        SPLog(@"\ncurrent mean velocity: %4.2f m/s",meanVelocity);
         
-        // all new blobs without id now get one
-        
+#pragma mark -
+#pragma mark Tag unmatched clusters
+
         if ( verbosity >= VerbosityNormal )
             printf("\n-- New ID assignments --\n");
         
@@ -465,11 +454,11 @@ namespace m3D {
         {
             typename Cluster<T>::ptr c = current->clusters[n];
             
-            if ( c->id == Cluster<T>::NO_ID )
+            if ( c->id == cfa::NO_ID )
             {
-                c->id = current_id;
+                c->id = next_id(highest_id);
                 
-                current->new_ids.push_back( c->id );
+                current->new_ids.insert( c->id );
                 
                 if ( verbosity >= VerbosityNormal )
                 {
@@ -479,14 +468,15 @@ namespace m3D {
                          << " is assigned new ID #" << c->id
                          << endl;
                 }
-                
-                current_id++;
             }
         }
 
-        // list those old blobs not being lined up again
+#pragma mark -
+#pragma mark Determine drop-outs
         
         bool hadGoners = false;
+        
+        typename Cluster<T>::list::iterator ci;
         
         if ( verbosity >= VerbosityNormal )
             cout << "\n-- Goners --" << endl;
@@ -502,7 +492,7 @@ namespace m3D {
             if ( verbosity >= VerbosityNormal )
                 cout << "#" << c->id << " at " << c->mode << " |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum() << endl;
             
-            current->dropped_ids.push_back(c->id);
+            current->dropped_ids.insert(c->id);
 
             hadGoners = true;
             
@@ -512,12 +502,13 @@ namespace m3D {
             cout << "none." << endl;
         }
         
-        // handle merging
+#pragma mark -
+#pragma mark Merging
         
         if ( verbosity >= VerbosityNormal )
             cout << endl << "-- Merges --" << endl;
         
-        // for each new blob check coverage of old blobs
+        // for each new Cluster check coverage of old Clusters
         
         bool had_merges = false;
         
@@ -541,7 +532,7 @@ namespace m3D {
                 {
                     T overlap = coverOldByNew[n][m];
                     
-                    if ( overlap > this->m_merge_threshold )
+                    if ( overlap > this->m_ms_threshold )
                     {
                         candidates.push_back(m);
                         
@@ -558,23 +549,16 @@ namespace m3D {
             if (candidates.size() > 1 )
             {
                 had_merges = true;
+                
+                // collect merged cluster ids
 
-                // remove the merged old blobs from the matching process
-                // and print them out.
+                id_set_t merged_from;
+                
+                for ( int i=0; i < candidates.size(); i++ )
+                    merged_from.insert(previous->clusters[candidates[i]]->id);
                 
                 if ( verbosity >= VerbosityNormal )
-                {
-                    cout << "Blobs ";
-                
-                    for ( int i=0; i < candidates.size(); i++ )
-                    {
-                        typename Cluster<T>::ptr c = previous->clusters[ candidates[i] ];
-                        
-                        printf("#%lu ",c->id);
-                    }
-                    
-                    printf("seem to have merged into blob #%lu\n", new_cluster->id );
-                }
+                    cout << "clusters " << merged_from << " seem to have merged into cluster " << new_cluster->id << endl;
                 
                 // store the given ID
                 
@@ -582,43 +566,52 @@ namespace m3D {
                 
                 // check if the ID was new?
                 
-                int index = index_of_first<id_t>( current->new_ids, the_id );
+                id_set_t::const_iterator it = current->new_ids.find(the_id);
                 
-                if ( index < 0 )
+                if ( it == current->new_ids.end() )
                 {
-                    // not new => was tracked
-                    
-                    // if the biggest congruence is at least 75%, continue
-                    // the track
-                    
-                    if ( maxCover > 0.75 )
+                    if ( maxCover > this->m_msc_threshold )
                     {
+                        // if the biggest congruence is at least 75%, continue the track
+
                         typename Cluster<T>::ptr c = previous->clusters[ largestCandidateIndex ];
                         
                         new_cluster->id = c->id;
                         
+                        current->tracked_ids.insert(new_cluster->id);
+                        
                         if ( verbosity >= VerbosityNormal )
-                            printf("Re-assigned ID#%lu\n", new_cluster->id );
+                            printf("\ttrack ID#%lu continues\n", new_cluster->id );
                     }
                     else
                     {
-                        new_cluster->id = ++current_id;
+                        // Otherwise dish out a fresh tag and add to new IDs
                         
+                        new_cluster->id = next_id(highest_id);
+                        
+                        current->new_ids.insert(new_cluster->id);
+                        
+                        // as well as remove from tracked IDs
+                        
+                        id_set_t::iterator fi = current->tracked_ids.find(the_id);
+                        if (fi!=current->tracked_ids.end())
+                        {
+                            current->tracked_ids.erase(the_id);
+                        }
+
                         if ( verbosity >= VerbosityNormal )
-                            printf("Assigned new ID#%lu\n", new_cluster->id );
-                        
+                            printf("\ttrack ID#%lu ends. new track ID#%lu begins\n", the_id, new_cluster->id );
                     }
-                    
-                    // tag fresh and add to new IDs
-
-                    current->new_ids.push_back(new_cluster->id);
-                    
-                    // and remove from tracked IDs
-
-                    size_t index = index_of_first<id_t>( current->tracked_ids, the_id );
-                    
-                    current->tracked_ids.erase( current->tracked_ids.begin() + index );
                 }
+                else
+                {
+                    if ( verbosity >= VerbosityNormal )
+                        printf("\ttrack ID#%lu continues\n", new_cluster->id );
+                }
+                
+                // store the merge in the current cluster file
+                
+                current->merges[new_cluster->id] = merged_from;
             }
         }
         
@@ -626,12 +619,13 @@ namespace m3D {
             if ( verbosity >= VerbosityNormal )
                 cout << "none." << endl;
         
-        // handle merging
+#pragma mark -
+#pragma mark Splitting
         
         if ( verbosity >= VerbosityNormal )
             cout << endl << "-- Splits --" << endl;
         
-        // for each new blob check coverage of old blobs
+        // for each new Cluster check coverage of old Clusters
         
         bool had_splits = false;
         
@@ -651,7 +645,7 @@ namespace m3D {
                 {
                     T overlap = coverNewByOld[n][m];
 
-                    if ( overlap > this->m_merge_threshold )
+                    if ( overlap > this->m_ms_threshold )
                     {
                         candidates.push_back(n);
                         
@@ -669,67 +663,71 @@ namespace m3D {
             {
                 had_splits = true;
                 
+                id_set_t split_into;
+                
+                for ( int i=0; i < candidates.size(); i++ )
+                    split_into.insert(current->clusters[candidates[i]]->id);
+                
                 if ( verbosity >= VerbosityNormal )
-                    printf("Blob ID#%lu seems to have split into blobs ", old_cluster->id);
+                    cout << "cluster " << old_cluster->id << " seems to have split into clusters " << split_into << endl;
                 
                 for ( int i=0; i < candidates.size(); i++ )
                 {
                     typename Cluster<T>::ptr c = current->clusters[ candidates[i] ];
                     
-                    // check if the new blob's IDs are in tracked IDs and
-                    // retag / remove them
-                    
-                    printf("#%lu",c->id );
-
                     // check if the tracked id's contains c->id
                     
-                    int index = index_of_first<id_t>( current->tracked_ids, (size_t)c->id );
+                    cfa::id_t the_id = c->id;
+                    
+                    id_set_t::iterator it = current->tracked_ids.find(the_id);
 
                     // If the largest one of the new clusters is at least 75% of the
                     // size of new previous cluster, the ID of the previous cluster
                     // is continued in the largest candidate
                     
-                    bool continueID = (candidates[i] == largestCandidateIndex) && (maxCover > 0.75);
+                    bool continueID = (candidates[i] == largestCandidateIndex) && (maxCover > this->m_msc_threshold);
                     
                     if (continueID)
                     {
                         c->id = old_cluster->id;
                     
-                        if (index < 0)
-                        {
-                            current->tracked_ids.push_back(c->id);
-                        }
+                        current->tracked_ids.insert(c->id);
+                        
+                        if ( verbosity >= VerbosityNormal )
+                            printf("\ttrack ID#%lu continues\n", c->id );
                     }
                     else
                     {
-                        if ( index >= 0 )
+                        if ( it != current->tracked_ids.end() )
                         {
                             // remove from tracked id's, re-tag and add to new IDs
                             
-                            current->tracked_ids.erase( current->tracked_ids.begin() + index );
+                            current->tracked_ids.erase(it);
                             
-                            c->id = current_id++;
+                            c->id = next_id(highest_id);
                             
                             if ( verbosity >= VerbosityNormal )
-                                printf(" (re-tagged as #%lu)",c->id);
+                                printf("\tnew track ID#%lu begins\n", c->id );
                             
-                            current->new_ids.push_back( c->id );
+                            current->new_ids.insert( c->id );
                         }
                     }
-                    
-                    if (i<candidates.size()-1)
-                        cout << ",";
                 }
-            
-                cout << endl;
+                
+                current->splits[old_cluster->id] = split_into;
             }
         }
         
         if ( ! had_splits)
             if ( verbosity >= VerbosityNormal )
                 cout << "none." << endl;
+
+#pragma mark -
+#pragma mark Store tracking data
         
         current->tracking_performed = true;
+        
+        current->highest_id = highest_id;
     }
     
 }

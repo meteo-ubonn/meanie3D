@@ -13,9 +13,6 @@ namespace m3D {
 	using namespace std;
 	using cfa::meanshift::Point;
 
-    template <typename T>
-    const typename Cluster<T>::id_t Cluster<T>::NO_ID = numeric_limits<id_t>::max();
-    
 #pragma mark -
 #pragma mark Constructor/Destructor
     

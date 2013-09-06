@@ -33,19 +33,27 @@ using namespace boost;
 using namespace netCDF;
 using namespace m3D;
 
+#pragma mark -
+#pragma mark type definitions
+
 /** Feature-space data type */
 typedef double T;
 
+typedef vector<float> fvec_t;
 typedef vector<size_t> bin_t;
 typedef vector<string> svec_t;
 
-static const double NO_SCALE = numeric_limits<double>::min();
+#pragma mark -
+#pragma mark comand line parsing
 
 void parse_commmandline(program_options::variables_map vm,
                         string &basename,
                         string &sourcepath,
                         svec_t &vtk_dim_names,
+                        bool &create_length_stats,
                         bin_t &length_histogram_bins,
+                        bool &create_speed_stats,
+                        fvec_t &speed_histogram_bins,
                         bool &create_cluster_stats,
                         bin_t &cluster_histogram_bins,
                         bool &include_degenerates,
@@ -62,8 +70,10 @@ void parse_commmandline(program_options::variables_map vm,
     }
     
     basename = vm["basename"].as<string>();
-   
     sourcepath = vm["sourcepath"].as<string>();
+    write_center_tracks_as_vtk = vm["write-center-tracks-as-vtk"].as<bool>();
+    write_cumulated_tracks_as_vtk = vm["write-cumulated-tracks-as-vtk"].as<bool>();
+    include_degenerates = vm["exclude-degenerates"].as<bool>();
     
     // Default is the dimensions
     
@@ -72,44 +82,51 @@ void parse_commmandline(program_options::variables_map vm,
         vtk_dim_names = vm["vtk-dimensions"].as<svec_t>();
     }
     
-    include_degenerates = vm["exclude-degenerates"].as<bool>();
-    
+    create_length_stats = vm["create-length-statistics"].as<bool>();
     length_histogram_bins = vm["length-histogram-classes"].as<bin_t>();
 
+    create_speed_stats = vm["create-speed-statistics"].as<bool>();
+    speed_histogram_bins = vm["speed-histogram-classes"].as<fvec_t>();
+
     create_cumulated_size_stats = vm["create-cumulated-size-statistics"].as<bool>();
-    
     size_histogram_bins = vm["size-histogram-classes"].as<bin_t>();
     
-    write_center_tracks_as_vtk = vm["write-center-tracks-as-vtk"].as<bool>();
-    
-    write_cumulated_tracks_as_vtk = vm["write-cumulated-tracks-as-vtk"].as<bool>();
-
     create_cluster_stats = vm["create-cluster-statistics"].as<bool>();
-    
     cluster_histogram_bins = vm["cluster-histogram-classes"].as<bin_t>();
 }
 
+#pragma mark -
+#pragma mark histogram helpers
+
 /** updates the size histogram
+ * @param classes
+ * @param counts
+ * @param value
+ * @param exceeded_max_class contains <code>true</code> if the
+ *        value was added to the 'over' bucket. <code>false</code> else
  */
-void add_value_to_histogram(bin_t classes, bin_t &values, size_t size)
+template <typename T>
+void add_value_to_histogram(const vector<T> &classes, bin_t &counts, T value, bool &exceeded_max_class)
 {
     bool found_bin = false;
+    
+    exceeded_max_class = false;
     
     for (size_t i=0; i < classes.size() && !found_bin; i++)
     {
         if (i > 0)
         {
-            if (size <= classes[i] && size > classes[i-1])
+            if (value <= classes[i] && value > classes[i-1])
             {
-                values[i] = values[i] + 1;
+                counts[i] = counts[i] + 1;
                 found_bin = true;
             }
         }
         else
         {
-            if (size <= classes[0])
+            if (value <= classes[0])
             {
-                values[i] = values[i] + 1;
+                counts[i] = counts[i] + 1;
                 found_bin = true;
             }
         }
@@ -119,26 +136,26 @@ void add_value_to_histogram(bin_t classes, bin_t &values, size_t size)
     
     if (!found_bin)
     {
-        // Inform user
-        
-        cerr << "WARNING: value bigger than highest histogram class. Adding an 'over' bucket for values higher than " << values[classes.size()-1] << endl;
-        
         // add the last class with value 0 if required
-        
-        if (values.size() == classes.size())
+
+        if (counts.size() == classes.size())
         {
-            values.push_back(0);
+            counts.push_back(0);
+            cerr << "WARNING: value bigger than highest histogram class. Adding an 'over' bucket for values higher than " << classes[classes.size()-1] << endl;
         }
         
         // count up the 'over' bucket
         
-        values[classes.size()] = values[classes.size()] + 1;
+        counts[classes.size()] = counts[classes.size()] + 1;
+        
+        exceeded_max_class = true;
     }
 }
 
 /** Histogram output */
 
-void print_histogram(bin_t classes, bin_t values, ofstream &file)
+template <typename T>
+void print_histogram(const vector<T> &classes, const bin_t &values, ofstream &file)
 {
     for (size_t i=0; i < classes.size(); i++)
     {
@@ -173,18 +190,18 @@ double average(const vector<T> &v)
  *        If <code>false</code> it counts normally.
  */
 template <typename T>
-double average(const map<size_t,size_t> &m, bool ignore_one = true)
+double average(const map<T,size_t> &m, bool ignore_one = true)
 {
     // calculate the mean value
     double sum = 0.0;
     
     size_t total_count = 0;
     
-    map<size_t, size_t>::const_iterator mi;
+    typename std::map<T,size_t>::const_iterator mi;
     
     for (mi = m.begin(); mi != m.end(); mi++)
     {
-        size_t key = mi->first;
+        T key = mi->first;
         
         size_t val = mi->second;
         
@@ -201,6 +218,8 @@ double average(const map<size_t,size_t> &m, bool ignore_one = true)
     return sum / boost::numeric_cast<double>(total_count);
 }
 
+#pragma mark -
+#pragma mark main
 
 /**
  *
@@ -221,20 +240,31 @@ int main(int argc, char** argv)
     size_t cluster_hist_default_values[] = {10,25,50,75,100,250,500,750,1000,1250,1500,1750,2000,2500,5000,7500,10000,15000,20000,50000,100000};
     bin_t cluster_hist_default(cluster_hist_default_values,cluster_hist_default_values+21);
 
+    float speed_hist_default_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.5, 15.0, 17.5, 20.0, 22.5, 25.0, 27.5, 30.0, 35.0, 40.0, 45.0, 50.0};
+    fvec_t speed_hist_default(speed_hist_default_values,speed_hist_default_values+22);
+
     
     // Declare the supported options.
     
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
-    ("basename,b", program_options::value<string>()->required(), "Previous cluster file (netCDF)")
-    ("sourcepath,p", program_options::value<string>()->required()->default_value("."), "Current cluster file (netCDF)")
+    ("basename,b", program_options::value<string>(), "Previous cluster file (netCDF)")
+    ("sourcepath,p", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
+    ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
+    
+    ("create-length-statistics",program_options::value<bool>()->default_value(true),"Create a statistic of track lengths.")
     ("length-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(length_hist_default),"List of track-length values for histogram bins")
+    
+    ("create-speed-statistics",program_options::value<bool>()->default_value(true),"Evaluate speeds of clusters in tracks, based on geometric center point")
+    ("speed-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(speed_hist_default),"speed histogram. Values in m/s.")
+
     ("create-cluster-statistics",program_options::value<bool>()->default_value(true),"Evaluate each cluster in each track in terms of size.")
     ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default),"List of cluster size values for histogram bins")
-    ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
+    
     ("create-cumulated-size-statistics",program_options::value<bool>()->default_value(true),"Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
     ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
+    
     ("write-center-tracks-as-vtk", program_options::value<bool>()->default_value(false),"Write tracks out as .vtk files")
     ("write-cumulated-tracks-as-vtk", program_options::value<bool>()->default_value(false),"Write cumulated tracks out as .vtk files. Only has effect if create-cumulated-size-statistics=true")
     ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
@@ -266,16 +296,24 @@ int main(int argc, char** argv)
     // Evaluate user input
     
     string basename,sourcepath;
-    bin_t length_histogram_classes;
-    bin_t size_histogram_classes;
-    bin_t cluster_histogram_classes;
     bool exclude_degenerates = true;
+    
+    bool create_length_statistics = true;
+    bin_t length_histogram_classes;
+
+    bool create_cluster_statistics = false;
+    bin_t cluster_histogram_classes;
+    
+    bool create_speed_statistics = false;
+    fvec_t speed_histogram_classes;
+
+    bool create_cumulated_size_statistics = false;
+    bin_t size_histogram_classes;
+
     bool write_center_tracks_as_vtk = false;
     bool write_cumulated_tracks_as_vtk = false;
-    bool create_cumulated_size_statistics = false;
-    bool create_cluster_statistics = false;
     svec_t vtk_dim_names;
-    size_t number_of_degenerates = 0;
+    
     
     try
     {
@@ -283,7 +321,10 @@ int main(int argc, char** argv)
                            basename,
                            sourcepath,
                            vtk_dim_names,
+                           create_length_statistics,
                            length_histogram_classes,
+                           create_speed_statistics,
+                           speed_histogram_classes,
                            create_cluster_statistics,
                            cluster_histogram_classes,
                            exclude_degenerates,
@@ -299,11 +340,13 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    // initialize histogram values
+    // initialize values
     
-    bin_t length_histogram_values(length_histogram_classes.size(),0);
-    bin_t size_histogram_values(size_histogram_classes.size(),0);
-    bin_t cluster_histogram_values(cluster_histogram_classes.size(),0);
+    size_t number_of_degenerates = 0;
+    bin_t length_histogram(length_histogram_classes.size(),0);
+    bin_t size_histogram(size_histogram_classes.size(),0);
+    bin_t cluster_histogram(cluster_histogram_classes.size(),0);
+    bin_t speed_histogram(speed_histogram_classes.size(),0);
     
     // This map contains a mapping from the id type to lists of clusters.
 
@@ -424,7 +467,7 @@ int main(int argc, char** argv)
         
         string fs_dimensions;
         coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
-        vector<string> dim_names = from_string<string>(fs_dimensions);
+        vector<string> dim_names = ::cfa::utils::vectors::from_string<string>(fs_dimensions);
         
         cout << "Attribute 'featurespace_dimensions' = " << dim_names << endl;
         
@@ -497,6 +540,8 @@ int main(int argc, char** argv)
         
         map<size_t,size_t> cluster_sizes;
         
+        map<float,size_t> speeds;
+        
         // Iterate over the collated tracks
         
         for (Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
@@ -521,25 +566,30 @@ int main(int argc, char** argv)
             
             // count up histogram
             
-            add_value_to_histogram(length_histogram_classes, length_histogram_values, track_length);
-            
-            // add to distribution
-            
-            map<size_t,size_t>::iterator tlfi = track_lengths.find(track_length);
-            
-            if (tlfi==track_lengths.end())
+            if (create_length_statistics)
             {
-                track_lengths[track_length] = 1;
-            }
-            else
-            {
-                track_lengths[track_length] = (tlfi->second + 1);
+                bool exceeded_max_class = false;
+                
+                add_value_to_histogram(length_histogram_classes, length_histogram, track_length, exceeded_max_class);
+            
+                // add to distribution
+                
+                map<size_t,size_t>::iterator tlfi = track_lengths.find(track_length);
+                
+                if (tlfi==track_lengths.end())
+                {
+                    track_lengths[track_length] = 1;
+                }
+                else
+                {
+                    track_lengths[track_length] = (tlfi->second + 1);
+                }
             }
             
-            // Skip the rest if cumulative size statistics and cluster
-            // stats are both off
+            // Skip the rest if cumulative size statistics and cluster / speed
+            // stats are all off
             
-            if (!create_cumulated_size_statistics && !create_cluster_statistics)
+            if (!create_cumulated_size_statistics && !create_cluster_statistics && !create_speed_statistics)
             {
                 continue;
             }
@@ -552,17 +602,29 @@ int main(int argc, char** argv)
             
             Tracking<T>::track_t::iterator ti;
             
+            Cluster<T>::ptr previous_cluster = NULL;
+            
             for (ti = track->begin(); ti != track->end(); ++ti)
             {
-                Cluster<T> cluster = (*ti);
+                Cluster<T>::ptr cluster = &(*ti);
                 
                 if (create_cluster_statistics)
                 {
-                    size_t cluster_size = cluster.points.size();
+                    size_t cluster_size = cluster->points.size();
                     
                     // add to histogram
                     
-                    add_value_to_histogram(cluster_histogram_classes, cluster_histogram_values, cluster_size);
+                    bool exceeded_max_class = false;
+
+                    add_value_to_histogram(cluster_histogram_classes, cluster_histogram, cluster_size, exceeded_max_class);
+                    
+                    if (exceeded_max_class)
+                    {
+                        cout << "Cluster #" << cluster->id
+                             << " (size " << cluster->points.size() << ")"
+                             << " exceeded max cluster size"
+                             << cluster_histogram_classes.back() << endl;
+                    }
                     
                     // add to distribution
                     
@@ -578,6 +640,56 @@ int main(int argc, char** argv)
                     }
                 }
                 
+                if (create_speed_statistics)
+                {
+                    if (previous_cluster!=NULL)
+                    {
+                        // calculate speed in m/s. All vectors 2D at this time
+                        
+                        vector<T> p1 = previous_cluster->geometrical_center(2);
+                        vector<T> p2 = cluster->geometrical_center(2);
+                        
+                        // RADOLAN is in km. -> Tranform to meters
+                        T dS = vector_norm(p2 - p1) * 1000;
+                        
+                        // TODO: this information must come from somewhere!!
+                        // => Cluster files need dT info! See ticket #227
+                        
+                        T dT = 300.0;
+                        
+                        // Average speed
+                        T speed = dS / dT;
+                        
+                        bool exceeded_max_class = false;
+                        
+                        add_value_to_histogram<float>(speed_histogram_classes, speed_histogram, speed, exceeded_max_class);
+                        
+                        if (exceeded_max_class)
+                        {
+                            cout << "Cluster #" << cluster->id
+                            << " (speed " << speed << " m/s)"
+                            << " exceeded max speed "
+                            << speed_histogram_classes.back() << " m/s"
+                            << endl;
+                        }
+                        
+                        map<float,size_t>::iterator si = speeds.find(track_length);
+                        
+                        if (si==speeds.end())
+                        {
+                            speeds[speed] = 1;
+                        }
+                        else
+                        {
+                            speeds[speed] = (si->second + 1);
+                        }
+                    }
+                    
+                    previous_cluster = cluster;
+
+                }
+                
+                
                 // Skip the rest if cumulative size statistics are off
                 
                 if (!create_cumulated_size_statistics)
@@ -589,7 +701,7 @@ int main(int argc, char** argv)
                 
                 Point<T>::list::iterator pi;
                 
-                for (pi = cluster.points.begin(); pi != cluster.points.end(); ++pi)
+                for (pi = cluster->points.begin(); pi != cluster->points.end(); ++pi)
                 {
                     Point<T>::ptr p = *pi;
                     
@@ -633,7 +745,7 @@ int main(int argc, char** argv)
             
             size_t track_size = cumulatedList.size();
             
-            tlfi = track_sizes.find(track_size);
+            map<size_t,size_t>::iterator tlfi = track_sizes.find(track_size);
             
             if (tlfi==track_sizes.end())
             {
@@ -646,7 +758,9 @@ int main(int argc, char** argv)
             
             // Update histogram
             
-            add_value_to_histogram(size_histogram_classes, size_histogram_values, track_size);
+            bool exceeded_max_class = false;
+
+            add_value_to_histogram(size_histogram_classes, size_histogram, track_size, exceeded_max_class);
             
             // Write out the cumulative file as netcdf and vtk
             
@@ -743,9 +857,54 @@ int main(int argc, char** argv)
         file << "max length,number" << endl;
         cout << "max length,number" << endl;
 
-        print_histogram(length_histogram_classes,length_histogram_values,file);
+        print_histogram(length_histogram_classes,length_histogram,file);
+
+        //
+        // speed
+        //
         
+        file << "------------------------------------------------" << endl;
+        cout << "------------------------------------------------" << endl;
         
+        file << "Speed distribution" << endl;
+        cout << "Speed distribution" << endl;
+        
+        file << "------------------------------------------------" << endl;
+        cout << "------------------------------------------------" << endl;
+        
+        avg = average<float>(speeds,true);
+        file << "(Average speed = " << avg << ")" << endl;
+        cout << "(Average speed = " << avg << ")" << endl;
+        
+        map<float, size_t>::reverse_iterator srend = speeds.rbegin();
+        file << "(Maximum speed = " << srend->first << ")" << endl;
+        cout << "(Maximum speed = " << srend->first << ")" << endl;
+        
+        file << "speed,number" << endl;
+        cout << "speed,number" << endl;
+        
+        map<float,size_t>::iterator spi;
+        
+        for (spi=speeds.begin(); spi!=speeds.end(); spi++)
+        {
+            file << spi->first << "," << spi->second << endl;
+            cout << spi->first << "," << spi->second << endl;        }
+        
+        file << endl;
+        
+        // Histogram
+        
+        file << endl;
+        cout << endl;
+        
+        file << "Speed Histogram:" << endl;
+        cout << "Speed Histogram:" << endl;
+        
+        file << "speed class,number" << endl;
+        cout << "speed class,number" << endl;
+        
+        print_histogram<float>(speed_histogram_classes,speed_histogram,file);
+
         //
         // Cluster sizes
         //
@@ -790,7 +949,7 @@ int main(int argc, char** argv)
         file << "max size,number" << endl;
         cout << "max size,number" << endl;
         
-        print_histogram(cluster_histogram_classes,cluster_histogram_values,file);
+        print_histogram(cluster_histogram_classes,cluster_histogram,file);
 
 
         //
@@ -840,7 +999,7 @@ int main(int argc, char** argv)
             file << "max size,number" << endl;
             cout << "max size,number" << endl;
             
-            print_histogram(size_histogram_classes,size_histogram_values,file);
+            print_histogram(size_histogram_classes,size_histogram,file);
 
         }
         
