@@ -445,7 +445,8 @@ int main(int argc, char** argv)
     ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
-    ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with.")
+    ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
+    ("filter-size,l", program_options::value<double>()->default_value(0.0), "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
     ("ranges,r", program_options::value<string>(), "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Discard clusters smaller than this number of points.")
     ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
@@ -889,7 +890,9 @@ int main(int argc, char** argv)
     fs->weight_sample_points.push_back(sample_point);
 #endif
     
-    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
+    // PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
+    
+    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs,PointIndex<FS_TYPE>::IndexTypeRectilinearGrid);
     
     //
     // Simple clustering

@@ -12,7 +12,6 @@
 #include <meanie3D/types/histogram_impl.h>
 #include <meanie3D/utils/visit_impl.h>
 #include <meanie3D/utils/matrix_impl.h>
-#include <meanie3D/utils/array_index_impl.h>
 #include <meanie3D/tracking/tracking_impl.h>
 #include <meanie3D/detection/cluster_utils_impl.h>
 

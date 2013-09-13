@@ -243,8 +243,6 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/utils/visit_impl.h
-    include/meanie3D/utils/array_index.h
-    include/meanie3D/utils/array_index_impl.h
     include/meanie3D/utils/scalar_index.h
     include/meanie3D/utils/scalar_index_impl.h
     include/meanie3D/utils/matrix.h

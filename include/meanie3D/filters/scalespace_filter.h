@@ -5,11 +5,15 @@
 #include <meanie3D/namespaces.h>
 
 #include <meanie3D/filters/filter.h>
-#include <meanie3D/utils/array_index.h>
+
 #include <cf-algorithms/cf-algorithms.h>
+
 #include <boost/progress.hpp>
 
 namespace m3D {
+    
+    using ::cfa::meanshift::ArrayIndex;
+    using ::cfa::utils::CoordinateSystem;
 
     /** Smoothes the data with a scale-space filter. This filter does NOT create
      * new points. Only the existing points are smoothed out.
@@ -38,8 +42,8 @@ namespace m3D {
         
         void
         applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
-                                     ArrayIndex<T> *originalIndex,
-                                     ArrayIndex<T> *filteredPoints,
+                                     ::cfa::meanshift::ArrayIndex<T> *originalIndex,
+                                     ::cfa::meanshift::ArrayIndex<T> *filteredPoints,
                                      vector<size_t> dimensionIndexes,
                                      size_t dimensionIndex,
                                      typename CoordinateSystem<T>::GridPoint& gridpoint);
