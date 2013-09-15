@@ -156,6 +156,14 @@ IF (WITH_TBB)
    ENDIF(NOT TBB_FOUND)
 ENDIF(WITH_TBB)
 
+# VTK
+FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
+IF (NOT VTK_FOUND)
+   MESSAGE(FATAL_ERROR "VTK not found")
+ELSE(NOT VTK_FOUND)
+    INCLUDE(${VTK_USE_FILE})
+ENDIF(NOT VTK_FOUND)
+
 # -------------------------------------
 # Submodules
 # -------------------------------------
@@ -177,7 +185,8 @@ IF(WITH_TBB)
 		${numericalrecipes_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
-		${TBB_INCLUDE_DIRS})
+		${TBB_INCLUDE_DIRS}
+        ${VTK_INCLUDE_DIRS})
 ELSE()
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/include
@@ -185,7 +194,8 @@ ELSE()
 		${cf-algorithms_SOURCE_DIR}/radolan/include
 		${numericalrecipes_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
-		${HDF5_INCLUDE_DIR})
+		${HDF5_INCLUDE_DIR}
+        ${VTK_INCLUDE_DIRS})
 ENDIF()
 
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
@@ -258,6 +268,8 @@ TARGET_LINK_LIBRARIES(meanie3D
     cf-algorithms
     numericalrecipes
     ${NETCDF_LIBRARIES}
+    ${BOOST_LIBRARIES}
+    ${VTK_LIBRARIES}
 )
 
 # detection tool
@@ -274,14 +286,16 @@ IF(WITH_TBB)
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
-        ${TBB_LIBRARIES})
+        ${TBB_LIBRARIES}
+        ${VTK_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3D-detect
         meanie3D
     	cf-algorithms
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES})
+        ${HDF5_LIBRARIES}
+        ${VTK_LIBRARIES})
 ENDIF()
 
 # tracking tool
@@ -300,7 +314,8 @@ IF(WITH_TBB)
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
-	${TBB_LIBRARIES})
+        ${VTK_LIBRARIES}
+        ${TBB_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3D-track
         meanie3D
@@ -308,7 +323,8 @@ ELSE()
         numericalrecipes
         ${NETCDF_LIBRARIES}
         ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES})
+        ${HDF5_LIBRARIES}
+        ${VTK_LIBRARIES})
 ENDIF()
 
 # trackplot
@@ -325,7 +341,8 @@ TARGET_LINK_LIBRARIES(meanie3D-trackplot
     numericalrecipes
     ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES})
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
 
 # copydims
 
@@ -341,7 +358,8 @@ TARGET_LINK_LIBRARIES(meanie3D-copydims
     numericalrecipes
     ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES})
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
 
 # timestamp update
 
@@ -357,7 +375,8 @@ TARGET_LINK_LIBRARIES(meanie3D-timestamp
     numericalrecipes
     ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES})
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
 
 # VTK-converter
 
@@ -369,6 +388,7 @@ TARGET_LINK_LIBRARIES(meanie3D-cfm2vtk
     meanie3D
     cf-algorithms
     ${Boost_LIBRARIES}
+    ${VTK_LIBRARIES}
 )
 
 # Unit Tests
@@ -397,7 +417,8 @@ IF(WITH_TBB)
         ${NETCDF_LIBRARIES}
         ${HDF5_LIBRARIES}
         ${GTEST_LIBRARIES}
-        ${TBB_LIBRARIES})
+        ${TBB_LIBRARIES}
+        ${VTK_LIBRARIES})
 ELSE()
     TARGET_LINK_LIBRARIES(meanie3d-detection-test
         meanie3D
@@ -406,6 +427,7 @@ ELSE()
         ${Boost_LIBRARIES}
         ${NETCDF_LIBRARIES}
         ${HDF5_LIBRARIES}
+        ${VTK_LIBRARIES}
         ${GTEST_LIBRARIES})
 ENDIF()
 

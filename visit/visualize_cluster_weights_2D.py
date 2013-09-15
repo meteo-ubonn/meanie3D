@@ -33,7 +33,7 @@ p = PseudocolorAttributes()
 p.colorTableName = "hot_desaturated"
 p.legendFlag=1
 p.lightingFlag=1
-p.invertColorTable=1
+p.invertColorTable=0
 p.pointSizePixels=4
 SetPlotOptions(p)
 DrawPlots();
@@ -51,7 +51,7 @@ if "no" == "yes":
     p.legendFlag=1
     p.lightingFlag=0
     p.invertColorTable=0
-    p.pointSizePixels=4
+    p.pointSizePixels=3
     SetPlotOptions(p)
     DrawPlots();
 
@@ -69,7 +69,7 @@ for fname in list:
 
     # set plot attributes accordingly                                                                                                                                               
     cp=PseudocolorAttributes();
-    cp.pointSizePixels=20
+    cp.pointSizePixels=3
     cp.opacity=0.5
     cp.minFlag=1
     cp.maxFlag=1

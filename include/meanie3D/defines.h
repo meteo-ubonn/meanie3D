@@ -27,7 +27,7 @@
 // Write out a files which contain the meanshift
 // vectors. One file contains the threedimensional
 // version, one file the spatial components only
-#define WRITE_MEANSHIFT_VECTORS 0
+#define WRITE_MEANSHIFT_VECTORS 1
 
 // Write out a VTK file that contains 1 and 0 for
 // all points. 1 means, that the point was marked
@@ -49,7 +49,7 @@
 
 // Write out files containing the mean-shift
 // vectors for individual clusters alone
-#define WRITE_CLUSTER_MEANSHIFT 0
+#define WRITE_CLUSTER_MEANSHIFT 1
 
 // Enable the replacement of zero-shift vectors
 // with an average of neighboring points

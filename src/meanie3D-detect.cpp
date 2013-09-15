@@ -890,7 +890,7 @@ int main(int argc, char** argv)
     fs->weight_sample_points.push_back(sample_point);
 #endif
     
-    // PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
+    //PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
     
     PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs,PointIndex<FS_TYPE>::IndexTypeRectilinearGrid);
     
@@ -997,12 +997,12 @@ int main(int argc, char** argv)
     
     // mop up
     
-    delete coord_system;
-    
     delete kernel;
     
     delete index;
-    
+
+    delete coord_system;
+
     delete fs;
     
     return 0;
