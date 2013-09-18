@@ -890,9 +890,9 @@ int main(int argc, char** argv)
     fs->weight_sample_points.push_back(sample_point);
 #endif
     
-    //PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
+    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create( fs );
     
-    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs,PointIndex<FS_TYPE>::IndexTypeRectilinearGrid);
+    //PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs,PointIndex<FS_TYPE>::IndexTypeRectilinearGrid);
     
     //
     // Simple clustering
@@ -958,7 +958,8 @@ int main(int argc, char** argv)
 
     if ( write_vtk && clusters.clusters.size() > 0)
     {
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( path.filename().string(), clusters.clusters, ranges, true );
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk(clusters, coord_system, path.filename().string());
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(clusters, coord_system, path.filename().string());
     }
 
 #if WRITE_CLUSTER_MODES

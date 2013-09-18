@@ -32,7 +32,7 @@ last_completed_run_count = 0
 VAR_NAME="RX"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds RX=0 -m 5"
+DETECT_PARAMS     += " --lower-thresholds RX=35 -m 5"
 
 CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
@@ -115,7 +115,8 @@ for netcdf_file in netcdf_list:
     
     basename = os.path.basename(netcdf_file)
     cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
-    vtk_file=os.path.splitext(basename)[0] + "_" + VAR_NAME + ".vtk"
+    #vtk_file=os.path.splitext(basename)[0] + "_" + VAR_NAME + ".vtk"
+    vtk_file=os.path.splitext(basename)[0] + ".vtr"
 
     # if there is a resume counter, keep skipping
     # until the count is right
@@ -184,7 +185,7 @@ for netcdf_file in netcdf_list:
     visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
     
     # Add the clusters
-    visit2D.add_clusters(basename,"_cluster_",col_tables)
+    visit2D.add_clusters(basename,"_cluster_",col_tables,0.5)
     
     # Add modes as labels
     label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
@@ -235,11 +236,15 @@ for netcdf_file in netcdf_list:
 
     # Re-add the source with "xray"
     visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
+    p = PseudocolorAttributes()
+    p.opacity=0.25
+    SetPlotOptions(p)
+
 
     if (run_count > 0):
 
         # Add the clusters
-        visit2D.add_clusters(basename,"_cluster_",col_tables)
+        visit2D.add_clusters(basename,"_cluster_",col_tables,0.5)
 
         # Add modes as labels
         label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"

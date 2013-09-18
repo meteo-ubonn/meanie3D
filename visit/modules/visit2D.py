@@ -17,7 +17,7 @@ import glob
 # @param infix (e.g. "_untracked_clusters_"
 # @param color tables
 #
-def add_clusters(basename,infix,col_tables):
+def add_clusters(basename,infix,col_tables,opacity):
 
     cluster_pattern=basename+"*" + infix + "*.vtk"
     #print "Looking for cluster files at " + cluster_pattern
@@ -50,13 +50,13 @@ def add_clusters(basename,infix,col_tables):
         cp=PseudocolorAttributes();
         #cp.minFlag,cp.maxFlag = 1,1
         #cp.min,cp.max = 10.0, 60.0
-        cp.pointSizePixels=5
+        cp.pointSizePixels=2
         cp.legendFlag=0
         cp.lightingFlag=1
         cp.invertColorTable=0
         index = cluster_num % len(col_tables);
         cp.colorTableName = col_tables[index];
-        cp.opacity=0.05
+        cp.opacity=opacity
         SetPlotOptions(cp)
     return
 

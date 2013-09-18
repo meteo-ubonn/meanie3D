@@ -73,16 +73,17 @@ namespace m3D { namespace utils {
                                               const typename Cluster<T>::list &list);
 
 
-    	/** Writes the cluster's points out as .vtk file for visit.
-    	 *
-    	 */
-        static
-    	void
-        write_clusters_vtk(const string &base_name,
-                           const typename Cluster<T>::list &list,
-                           const vector<T> &bandwidths,
-                           bool use_ids = false,
-                           bool only_boundary = false);
+//    	/** Writes the cluster's points out as .vtk file for visit.
+//         *
+//    	 * @deprecated
+//    	 */
+//        static
+//    	void
+//        write_clusters_vtk(const string &base_name,
+//                           const typename Cluster<T>::list &list,
+//                           const vector<T> &bandwidths,
+//                           bool use_ids = false,
+//                           bool only_boundary = false);
         
         static
         void
@@ -91,14 +92,46 @@ namespace m3D { namespace utils {
                                     bool use_ids = true,
                                     bool spatial_only = true);
 
-    	/** Writes the cluster's points out as .vtk file for visit.
-    	 *
+    	/** Writes the cluster's points out as unstructured grid
+         * of 2D quadrilaterals or 3D orthogonal parallelepiped
+         * @param cluster list
+         * @param coordinate system (required for resolution)
+    	 * @param infix for cluster filenames
+         * @param only_bounday: If <code>true</code> only points marked
+         * as boundary points are written out. If <code>false</code> all
+         * points are written out (default).
+         * @param write_ascii If <code>true</code>, the files is written as
+         * legacy ascii (expensive). If <code>false</code> (default) the more
+         * efficient xml format is used.
+    	 */
+        static
+    	void
+        write_clusters_vtk(const ClusterList<T> &list,
+                           CoordinateSystem<T> *cs,
+                           const string &base_name,
+                           bool use_ids = true,
+                           bool only_boundary = false,
+                           bool write_ascii = false);
+        
+    	/** Writes the cluster's points out as rectilinear grid
+         * @param cluster list
+         * @param coordinate system (required for resolution)
+    	 * @param infix for cluster filenames
+         * @param only_bounday: If <code>true</code> only points marked
+         * as boundary points are written out. If <code>false</code> all
+         * points are written out (default).
+         * @param write_ascii If <code>true</code>, the files is written as
+         * legacy ascii (expensive). If <code>false</code> (default) the more
+         * efficient xml format is used.
     	 */
         static
         void
-        write_clusters_vtk(typename ClusterList<T>::ptr list,
-                           std::string infix="_cluster_",
-                           bool only_boundary = false);
+        write_clusters_vtr(const ClusterList<T> &list,
+                           CoordinateSystem<T> *cs,
+                           const string &base_name,
+                           bool use_ids=true,
+                           bool only_boundary=false,
+                           bool write_ascii=false);
         
         /** Write out the track centers */
         static

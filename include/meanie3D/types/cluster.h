@@ -54,6 +54,8 @@ namespace m3D {
         T                           m_min_weight;
         T                           m_max_weight;
         
+        
+        
 #pragma mark -
 #pragma mark Type definitions / Constants
         
