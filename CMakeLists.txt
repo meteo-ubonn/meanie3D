@@ -361,6 +361,23 @@ TARGET_LINK_LIBRARIES(meanie3D-copydims
     ${HDF5_LIBRARIES}
     ${VTK_LIBRARIES})
 
+# map data
+
+ADD_EXECUTABLE(meanie3D-mapdata
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-mapdata.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-mapdata
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
+
 # timestamp update
 
 ADD_EXECUTABLE(meanie3D-timestamp

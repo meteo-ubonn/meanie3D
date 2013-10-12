@@ -64,6 +64,7 @@ void parse_commmandline(program_options::variables_map vm,
                         FS_TYPE &cluster_coverage_threshold,
                         bool &write_vtk,
                         bool &write_weight_response,
+                        bool &write_cluster_centers,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity,
                         unsigned int &min_cluster_size,
@@ -308,6 +309,8 @@ void parse_commmandline(program_options::variables_map vm,
     
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
     
+    write_cluster_centers = vm.count("write-cluster-centers") > 0;
+    
     write_weight_response = vm.count("write-cluster-weight-response") > 0;
     
     // VTK dimension mapping
@@ -441,7 +444,6 @@ int main(int argc, char** argv)
     ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
     ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
-    ("write-variables-as-vtk",program_options::value<string>(),"Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
     ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
@@ -451,7 +453,9 @@ int main(int argc, char** argv)
     ("min-cluster-size,m",program_options::value<unsigned int>()->default_value(1u), "Discard clusters smaller than this number of points.")
     ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
     ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66), "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
+    ("write-variables-as-vtk",program_options::value<string>(),"Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
     ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
+    ("write-cluster-centers", "write cluster centers out in .vtk file format (useful for visualization with visit for example)")
     ("write-cluster-weight-response","write out the clusters with weight responses as value")
     ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
     ;
@@ -501,6 +505,7 @@ int main(int argc, char** argv)
     SearchParameters *search_params = NULL;
     bool write_vtk = false;
     bool write_weight_response = false;
+    bool write_cluster_centers = false;
     Verbosity verbosity = VerbosityNormal;
     
     try
@@ -524,6 +529,7 @@ int main(int argc, char** argv)
                            cluster_coverage_threshold,
                            write_vtk,
                            write_weight_response,
+                           write_cluster_centers,
                            vtk_dimension_indexes,
                            verbosity,
                            min_cluster_size,
@@ -617,7 +623,7 @@ int main(int argc, char** argv)
         }
         
         cout << "\tclusters written as vtk: " << (write_vtk ? "yes":"no") << endl;
-        
+        cout << "\twrite cluster centers as vtk: " << (write_cluster_centers ? "yes":"no") << endl;
         cout << "\twriting cluster weights as vtk: " << (write_weight_response ? "yes":"no") << endl;
         
         if (verbosity > VerbosityNormal)
@@ -629,12 +635,6 @@ int main(int argc, char** argv)
             cout << "\tWRITE_BANDWIDTH=1" << endl;
 #else
             cout << "\tWRITE_BANDWIDTH=0" << endl;
-#endif
-        
-#if WRITE_CLUSTER_CENTERS
-            cout << "\tWRITE_CLUSTER_CENTERS=1" << endl;
-#else
-            cout << "\tWRITE_CLUSTER_CENTERS=0" << endl;
 #endif
         
 #if WRITE_CLUSTER_MEANSHIFT
@@ -864,7 +864,7 @@ int main(int argc, char** argv)
         if ( verbosity > VerbositySilent )
             cout << "Writing featurespace-variables ...";
         
-        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables );
+        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables,false );
         
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
@@ -958,8 +958,8 @@ int main(int argc, char** argv)
 
     if ( write_vtk && clusters.clusters.size() > 0)
     {
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk(clusters, coord_system, path.filename().string());
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(clusters, coord_system, path.filename().string());
+        //::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk(clusters, coord_system, path.filename().string());
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr( &clusters, coord_system, path.filename().string());
     }
 
 #if WRITE_CLUSTER_MODES
@@ -968,10 +968,11 @@ int main(int argc, char** argv)
     ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk( modes_path, clusters.clusters, true );
 #endif
     
-#if WRITE_CLUSTER_CENTERS
-    string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
-    ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk( centers_path, clusters.clusters);
-#endif
+    if (write_cluster_centers)
+    {
+        string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk( centers_path, clusters.clusters);
+    }
     
 #if WRITE_CLUSTER_MEANSHIFT
     string shifts_path = path.filename().stem().string() + "-clusters_shifts";

@@ -289,7 +289,9 @@ int main(int argc, char** argv)
 
     // Read current clusters
     
-    ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read( current_filename );
+    CoordinateSystem<FS_TYPE> *cs;
+    
+    ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read( current_filename, &cs );
     
     // Check if the feature variables match
     
@@ -353,7 +355,7 @@ int main(int argc, char** argv)
     
     if ( write_vtk )
     {
-        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk( current );
+        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr( current, cs, current->source_file );
         boost::filesystem::path path( current_filename );
         
         string modes_path = path.filename().stem().string() + "_modes.vtk";

@@ -227,7 +227,7 @@ namespace m3D {
                     }
                     else
                     {
-                        dummyVar = file->addVar( var.getName(), var.getType(), spatial_dim );
+                        dummyVar = file->addVar( var.getName(), var.getType(), dimensions );
                     }
                     
                     // Copy attributes
@@ -393,11 +393,12 @@ namespace m3D {
 
     template <typename T> 
     typename ClusterList<T>::ptr
-    ClusterList<T>::read(const std::string& path)
+    ClusterList<T>::read(const std::string& path, CoordinateSystem<T> **cs_ptr)
     {
         // meta-info
         
         vector<NcVar>               feature_variables;
+        vector<NcVar>               dimension_variables;
         vector<NcDim>               dimensions;
         string                      source_file;
         typename Cluster<T>::list   list;
@@ -444,6 +445,10 @@ namespace m3D {
                 NcDim d = file->getDim(fs_dim_names[di]);
                 
                 dimensions.push_back(d);
+                
+                NcVar v = file->getVar(fs_dim_names[di]);
+                
+                dimension_variables.push_back(v);
             }
             
             // Read time
@@ -505,6 +510,15 @@ namespace m3D {
                 {
                     feature_variables.push_back( vi->second );
                 }
+            }
+            
+            // Coordinate system wanted?
+            
+            CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions,dimension_variables);
+
+            if (cs_ptr != NULL)
+            {
+                *cs_ptr = cs;
             }
             
             
@@ -601,10 +615,21 @@ namespace m3D {
                     
                     Point<T> *p = PointFactory<T>::get_instance()->create( coordinate, values );
                     
+                    typename CoordinateSystem<T>::GridPoint gp = cs->newGridPoint();
+                    
+                    cs->reverse_lookup(p->coordinate,gp);
+                    
+                    p->gridpoint = gp;
+                    
                     cluster->add_point(p);
                 }
                 
                 list.push_back( cluster );
+            }
+            
+            if (cs_ptr == NULL)
+            {
+                delete cs;
             }
         }
         catch (const std::exception &e)
@@ -1306,6 +1331,13 @@ namespace m3D {
         for (ei=erased.begin(); ei!=erased.end(); ei++)
         {
             Point<T> *p = *ei;
+            
+            typename Point<T>::list::iterator fsi = find(fs->points.begin(),fs->points.end(), p);
+            if (fsi != fs->points.end())
+            {
+                fs->points.erase(fsi);
+            }
+                
             delete p;
         }
         

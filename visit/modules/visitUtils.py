@@ -45,14 +45,14 @@ def add_labels(file,variable):
     OpenDatabase(file)
     AddPlot("Label",variable)
     a = LabelAttributes()
-    #a.legendFlag = 1
+    a.legendFlag = 0
     #a.showNodes = 0
     #a.showCells = 1
     a.restrictNumberOfLabels = 0
     #a.numberOfLabels = 200
     a.specifyTextColor1 = 0
     a.textColor1 = (255, 0, 0, 0)
-    a.textHeight1 = 0.03
+    a.textHeight1 = 0.035
     #a.specifyTextColor2 = 0
     #a.textColor2 = (0, 0, 255, 0)
     #a.textHeight2 = 0.03
@@ -75,5 +75,53 @@ def naked_name(filename):
     base = s.basename(filename)
     stripped = os.path.splitext(filename)[0]
     return stripped
+
+# Create a color table
+# @param name
+# @param control points
+def make_rgb_colortable(name, ct):
+    ccpl = ColorControlPointList()
+    index=0;
+    for pt in ct:
+        p = ColorControlPoint()
+        p.colors = (pt[0], pt[1], pt[2], pt[3])
+        p.position = 0.2 + (0.2 * index)
+        ccpl.AddControlPoints(p)
+        index=index+1
+    AddColorTable(name, ccpl)
+    return
+
+def create_cluster_colortable(name):
+    opacity=1*255
+    rgb_colors = ((255, 0,      0,      opacity),   #plain red
+                  (255, 255,    0,      opacity),   #yellow
+                  (255, 0,      255,    opacity),   #purple
+                  (0,   255,    0,      opacity),   #green
+                  (0,   153,    255,    opacity))   #blue
+    
+    # Each control point is: (r,g,b,t)
+    make_rgb_colortable(name,rgb_colors)
+    return len(rgb_colors)
+
+def create_topography_colortable():
+    opacity=255
+    rgb = ((0,   0,    100,    opacity),   #sea
+           (120, 120,   83,    opacity),   #lowlands
+           (49,  22,     0,    opacity),   #midlands
+           (100, 100,  100,    opacity),   #foothills
+           (255, 255,  255,    opacity))   #mountains
+
+    pos=(0.0, 0.0375, 0.30, 0.50, 0.85)
+
+    ccpl = ColorControlPointList()
+    index=0;
+    for pt in rgb:
+        p = ColorControlPoint()
+        p.colors = (pt[0], pt[1], pt[2], pt[3])
+        p.position = pos[index]
+        ccpl.AddControlPoints(p)
+        index=index+1
+    AddColorTable("topography", ccpl)
+    return
 
 # End of visitUtils.py

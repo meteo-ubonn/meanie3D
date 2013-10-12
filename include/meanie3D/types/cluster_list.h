@@ -307,14 +307,13 @@ namespace m3D {
         
         /** Static method for reading cluster lists back in.
          * @param path      : path to the cluster file
-         * @param list      : contains the clusters after reading
-         * @param source    : contains the source file attribute's value after reading
-         * @param parameters: contains the run's parameter list after reading
-         * @param var_names : contains the list of variables used after reading
+         * @param pointer to a pointer of coordinate system. 
+         * If not null, this is initialized with an instance
+         * of coordinate system after the reading
          */
         static
         typename ClusterList<T>::ptr
-        read(const string& path );
+        read(const string& path, CoordinateSystem<T> **cs_ptr=NULL );
         
         /** Prints the cluster list out to console
          */

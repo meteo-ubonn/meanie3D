@@ -5,17 +5,41 @@
 #include <stdlib.h>
 #include <vector>
 
+#include <vtkRenderer.h>
+#include <vtkActor.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderWindow.h>
+#include <vtkDataSetMapper.h>
+#include <vtkProperty.h>
+
 #include <vtkCellArray.h>
+#include <vtkCellData.h>
+#include <vtkCleanPolyData.h>
+#include <vtkDataArray.h>
+#include <vtkDataSetSurfaceFilter.h>
+#include <vtkDelaunay3D.h>
+#include <vtkDelaunay2D.h>
+#include <vtkDoubleArray.h>
+#include <vtkFieldData.h>
+#include <vtkGeometryFilter.h>
+#include <vtkHexahedron.h>
+#include <vtkLookupTable.h>
 #include <vtkPointData.h>
+#include <vtkPolyDataConnectivityFilter.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkQuad.h>
 #include <vtkSmartPointer.h>
+#include <vtkDataSetSurfaceFilter.h>
 #include <vtkType.h>
+#include <vtkUnsignedCharArray.h>
 #include <vtkUnstructuredGrid.h>
 #include <vtkUnstructuredGridWriter.h>
 #include <vtkVersion.h>
 #include <vtkVertex.h>
 #include <vtkVoxel.h>
-#include <vtkQuad.h>
+#include <vtkXMLPolyDataWriter.h>
 #include <vtkXMLUnstructuredGridWriter.h>
+
 
 #include <meanie3D/types/cluster.h>
 #include <meanie3D/types/cluster_list.h>
@@ -148,7 +172,8 @@ namespace m3D { namespace utils {
     template <class T>
     void
     VisitUtils<T>::write_geometrical_cluster_centers_vtk(const string &filename,
-                                                         const typename Cluster<T>::list &list)
+                                                         const typename Cluster<T>::list &list,
+                                                         bool at_max_height)
     {
         ofstream f( filename.c_str() );
         f << fixed << setprecision(4);
@@ -173,6 +198,21 @@ namespace m3D { namespace utils {
             // obtain the geometrical center
             
             vector<T> mode = c->geometrical_center(spatial_dims);
+            
+            if (spatial_dims==3 && at_max_height)
+            {
+                T max = 0;
+                for (size_t pi=0; pi<c->points.size(); pi++)
+                {
+                    Point<T> *p = c->points.at(pi);
+                    if (p->coordinate[0] > max)
+                    {
+                        max = p->coordinate[0];
+                    }
+                }
+                
+                mode[0] = 1.5 * max;
+            }
             
             size_t dims_plotted = 0;
             
@@ -225,7 +265,7 @@ namespace m3D { namespace utils {
     //    {
     //        string basename = base_name;
     //
-    //        for ( size_t ci = 0; ci < list.size(); ci++ )
+    //        for ( size_t ci = 0; ci < list->size(); ci++ )
     //        {
     //            vector<T> mode = list[ci]->mode;
     //
@@ -313,27 +353,67 @@ namespace m3D { namespace utils {
     //    }
     
     
+    static vtkSmartPointer<vtkLookupTable> _vtk_cluster_table = NULL;
     
+    template <typename T>
+    vtkSmartPointer<vtkLookupTable>
+    VisitUtils<T>::cluster_lookup_table()
+    {
+        if (_vtk_cluster_table==NULL)
+        {
+            // Lookup table
+            _vtk_cluster_table = vtkSmartPointer<vtkLookupTable>::New();
+            _vtk_cluster_table->SetNumberOfTableValues(6);
+            
+            // Red
+            _vtk_cluster_table->SetTableValue(0, 255.0/255.0, 0.0/255.0, 0.0/255.0);
+            
+            // Purple
+            _vtk_cluster_table->SetTableValue(1, 205.0/255.0, 255.0/255.0, 0.0/255.0);
+            
+            // Green
+            _vtk_cluster_table->SetTableValue(2, 0.0/255.0, 255.0/255.0, 0.0/255.0);
+            
+            // Orange
+            _vtk_cluster_table->SetTableValue(3, 255.0/255.0, 102.0/255.0, 0.0/255.0);
+            
+            // Blue
+            _vtk_cluster_table->SetTableValue(4, 0.0/255.0, 187.0/255.0, 255.0/255.0);
+            
+            // Yellow
+            _vtk_cluster_table->SetTableValue(5, 255.0/255.0, 255.0/255.0, 0.0/255.0);
+            
+            _vtk_cluster_table->Build();
+        }
+        
+        return _vtk_cluster_table;
+    }
     
     template <typename T>
     void
-    VisitUtils<T>::write_clusters_vtk(const ClusterList<T> &list,
+    VisitUtils<T>::write_clusters_vtu(const ClusterList<T> *list,
                                       CoordinateSystem<T> *cs,
                                       const string &base_name,
+                                      unsigned int max_colors,
                                       bool use_ids,
-                                      bool only_boundary,
-                                      bool write_ascii)
+                                      bool include_boundary,
+                                      bool write_xml)
     {
         // escape dangerous characters from basename
         string basename = base_name;
         boost::replace_all( basename, "/", "_" );
         boost::replace_all( basename, "..", "" );
         
-        for ( size_t ci = 0; ci < list.clusters.size(); ci++ )
+        for ( size_t ci = 0; ci < list->clusters.size(); ci++ )
         {
-            string filename = basename + "_cluster_" + boost::lexical_cast<string>( use_ids ? list.clusters[ci]->id : ci ) + ".vtu";
+            cfa::id_t id = use_ids ? list->clusters[ci]->id : ci;
+            size_t num_points = list->clusters[ci]->points.size();
+            int color = id % 6;
             
-            size_t point_dim = list.clusters[ci]->points[0]->coordinate.size();
+            string mesh_filename = basename + "_cluster_" + boost::lexical_cast<string>(id) + (write_xml?".vtu":".vtk");
+            string poly_filename = basename + "_boundary_" + boost::lexical_cast<string>(id) + (write_xml?".vtu":".vtk");
+            
+            size_t point_dim = list->clusters[ci]->points[0]->coordinate.size();
             
             // Only process 2D/3D for now
             assert(point_dim == 2 || point_dim == 3);
@@ -341,11 +421,27 @@ namespace m3D { namespace utils {
             vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
             vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
             
-            for ( size_t pi = 0; pi < list.clusters[ci]->points.size(); pi++ )
+            vtkSmartPointer<vtkDoubleArray> pointData = vtkSmartPointer<vtkDoubleArray>::New();
+            pointData->SetName("point_data");
+            
+            vtkSmartPointer<vtkDoubleArray> cellData = vtkSmartPointer<vtkDoubleArray>::New();
+            cellData->SetName("cell_data");
+            
+            vtkSmartPointer<vtkIntArray> pointColors = vtkSmartPointer<vtkIntArray>::New();
+            pointColors->SetName("point_color");
+            pointColors->SetLookupTable(cluster_lookup_table());
+
+            vtkSmartPointer<vtkIntArray> cellColors = vtkSmartPointer<vtkIntArray>::New();
+            cellColors->SetName("cell_color");
+            cellColors->SetLookupTable(cluster_lookup_table());
+            
+            for ( vtkIdType pi = 0; pi < num_points; pi++ )
             {
-                M3DPoint<T> *p = (M3DPoint<T> *) list.clusters[ci]->points[pi];
+                M3DPoint<T> *p = (M3DPoint<T> *) list->clusters[ci]->points[pi];
                 
-                if (only_boundary && !p->isBoundary) continue;
+                double scalarValue = p->values[point_dim];
+                cellData->InsertNextValue(scalarValue);
+                cellColors->InsertNextValue(color);
                 
                 T x,y,z;
                 
@@ -359,9 +455,20 @@ namespace m3D { namespace utils {
                     T ry = cs->resolution()[::cfa::utils::VisitUtils<T>::index_of(1)] / 2.0 ;
                     
                     vtkIdType p1 = points->InsertNextPoint(x-rx, y-ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
                     vtkIdType p2 = points->InsertNextPoint(x+rx, y-ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
                     vtkIdType p3 = points->InsertNextPoint(x+rx, y+ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+                    
                     vtkIdType p4 = points->InsertNextPoint(x-rx, y+ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
                     
                     // Create a quad on the four points
                     vtkSmartPointer<vtkQuad> quad = vtkSmartPointer<vtkQuad>::New();
@@ -369,8 +476,9 @@ namespace m3D { namespace utils {
                     quad->GetPointIds()->SetId(1,p2);
                     quad->GetPointIds()->SetId(2,p3);
                     quad->GetPointIds()->SetId(3,p4);
-                    
+
                     cellArray->InsertNextCell(quad);
+
                 }
                 else
                 {
@@ -379,16 +487,40 @@ namespace m3D { namespace utils {
                     T rz = cs->resolution()[::cfa::utils::VisitUtils<T>::index_of(2)] / 2.0;
                     
                     vtkIdType p1 = points->InsertNextPoint(x-rx, y-ry, z-rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
                     vtkIdType p2 = points->InsertNextPoint(x+rx, y-ry, z-rz);
-                    vtkIdType p3 = points->InsertNextPoint(x+rx, y+ry, z-rz);
-                    vtkIdType p4 = points->InsertNextPoint(x-rx, y+ry, z-rz);
-                    vtkIdType p5 = points->InsertNextPoint(x-rx, y-ry, z+rz);
-                    vtkIdType p6 = points->InsertNextPoint(x+rx, y-ry, z+rz);
-                    vtkIdType p7 = points->InsertNextPoint(x+rx, y+ry, z+rz);
-                    vtkIdType p8 = points->InsertNextPoint(x-rx, y+ry, z+rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
                     
+                    vtkIdType p3 = points->InsertNextPoint(x+rx, y+ry, z-rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+                    
+                    vtkIdType p4 = points->InsertNextPoint(x-rx, y+ry, z-rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+                    
+                    vtkIdType p5 = points->InsertNextPoint(x-rx, y-ry, z+rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+                    
+                    vtkIdType p6 = points->InsertNextPoint(x+rx, y-ry, z+rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+                    
+                    vtkIdType p7 = points->InsertNextPoint(x+rx, y+ry, z+rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+                    
+                    vtkIdType p8 = points->InsertNextPoint(x-rx, y+ry, z+rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+                    
+
                     // Create a voxel on the eight points
-                    vtkSmartPointer<vtkQuad> voxel = vtkSmartPointer<vtkQuad>::New();
+                    vtkSmartPointer<vtkHexahedron> voxel = vtkSmartPointer<vtkHexahedron>::New();
                     voxel->GetPointIds()->SetId(0,p1);
                     voxel->GetPointIds()->SetId(1,p2);
                     voxel->GetPointIds()->SetId(2,p3);
@@ -406,35 +538,109 @@ namespace m3D { namespace utils {
             // Create an unstructured grid and write it off
             
             vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+            
+            // Set point data
             unstructuredGrid->SetPoints(points);
+            
+            // Set cell data
             if (point_dim==2)
             {
                 unstructuredGrid->SetCells(VTK_QUAD, cellArray);
             }
-            
-            // Write file
-            
-            if (write_ascii)
+            else
             {
-                throw "not implemented";
+                unstructuredGrid->SetCells(VTK_HEXAHEDRON, cellArray);
+            }
+            
+            unstructuredGrid->GetPointData()->AddArray(pointData);
+            unstructuredGrid->GetPointData()->AddArray(pointColors);
+            
+            unstructuredGrid->GetCellData()->AddArray(cellData);
+            unstructuredGrid->GetCellData()->AddArray(cellColors);
+
+            
+            // Extract the envelope
+            
+            vtkSmartPointer<vtkAlgorithm> enveloper;
+
+            if (include_boundary)
+            {
+                // Geometry filter
+                vtkSmartPointer<vtkGeometryFilter> geometry = vtkSmartPointer<vtkGeometryFilter>::New();
+                geometry->SetInputData(unstructuredGrid);
+                
+                vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
+                cleaner->SetInputConnection(geometry->GetOutputPort());
+                
+                // Delauny 2D/3D
+
+                if (point_dim==2)
+                {
+                    vtkSmartPointer<vtkDelaunay2D> delauny = vtkSmartPointer<vtkDelaunay2D>::New();
+                    delauny->SetInputConnection(cleaner->GetOutputPort());
+                    enveloper = delauny;
+                }
+                else
+                {
+                    vtkSmartPointer<vtkDelaunay3D> delauny = vtkSmartPointer<vtkDelaunay3D>::New();
+                    delauny->SetInputConnection(cleaner->GetOutputPort());
+                    enveloper = delauny;
+                }
+            }
+
+            
+//            vtkSmartPointer<vtkDataSetMapper> mapper = vtkSmartPointer<vtkDataSetMapper>::New();
+//			mapper->SetInputConnection(enveloper->GetOutputPort());
+//			vtkSmartPointer<vtkActor> triangulation = vtkSmartPointer<vtkActor>::New();
+//			triangulation->SetMapper(mapper);
+//			triangulation->GetProperty()->SetRepresentationToWireframe();
+//			vtkSmartPointer<vtkRenderer> ren1 = vtkSmartPointer<vtkRenderer>::New();
+//			vtkSmartPointer<vtkRenderWindow> renWin = vtkSmartPointer<vtkRenderWindow>::New();
+//			renWin->AddRenderer(ren1);
+//			vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+//			iren->SetRenderWindow(renWin);
+//			ren1->AddActor(triangulation);
+//			ren1->SetBackground(1, 1, 1);
+//			renWin->SetSize(800, 800);
+//			renWin->Render();
+//			iren->Initialize();
+//			iren->Start();
+            
+            // Write .vtu file
+            
+            if (write_xml)
+            {
+                
+                vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+                writer->SetFileName(mesh_filename.c_str());
+                writer->SetInputData(unstructuredGrid);
+                writer->Write();
+                if (include_boundary)
+                {
+                    writer->SetFileName(poly_filename.c_str());
+                    writer->SetInputConnection(enveloper->GetOutputPort());
+                    writer->Write();
+                }
             }
             else
             {
-                vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-                writer->SetFileName(filename.c_str());
-#if VTK_MAJOR_VERSION <= 5
-                writer->SetInput(unstructuredGrid);
-#else
+                vtkSmartPointer<vtkUnstructuredGridWriter> writer = vtkSmartPointer<vtkUnstructuredGridWriter>::New();
+                writer->SetFileName(mesh_filename.c_str());
                 writer->SetInputData(unstructuredGrid);
-#endif
                 writer->Write();
+                if (include_boundary)
+                {
+                    writer->SetFileName(poly_filename.c_str());
+                    writer->SetInputConnection(enveloper->GetOutputPort());
+                    writer->Write();
+                }
             }
         }
     }
     
     template <typename T>
     void
-    VisitUtils<T>::write_clusters_vtr(const ClusterList<T> &list,
+    VisitUtils<T>::write_clusters_vtr(const ClusterList<T> *list,
                                       CoordinateSystem<T> *cs,
                                       const string &base_name,
                                       bool use_ids,
@@ -449,11 +655,13 @@ namespace m3D { namespace utils {
         int nx,ny,nz;
         ::cfa::utils::VisitUtils<T>::get_vtk_image_dimensions(cs,nx,ny,nz);
         
-        for ( size_t ci = 0; ci < list.clusters.size(); ci++ )
+        for ( size_t ci = 0; ci < list->clusters.size(); ci++ )
         {
-            string filename = basename + "_cluster_" + boost::lexical_cast<string>( use_ids ? list.clusters[ci]->id : ci );
+            cfa::id_t cluster_id = (use_ids ? list->clusters[ci]->id : ci);
             
-            size_t point_dim = list.clusters[ci]->points[0]->coordinate.size();
+            string filename = basename + "_cluster_" + boost::lexical_cast<string>( cluster_id );
+            
+            size_t point_dim = list->clusters[ci]->points[0]->coordinate.size();
             
             // Only process 2D/3D for now
             assert(point_dim == 2 || point_dim == 3);
@@ -468,15 +676,13 @@ namespace m3D { namespace utils {
             
             // Color by number
             
-            bool is_even = (ci % 2 == 0);
+            T value = cluster_id % 5;
             
-            T value = is_even ? (ci % 16) + 1 : (15-(ci % 16)) + 1;
+            //boost::numeric_cast<int>(use_ids ? list->clusters[ci]->id : ci);
             
-            //boost::numeric_cast<int>(use_ids ? list.clusters[ci]->id : ci);
-            
-            for ( size_t pi = 0; pi < list.clusters[ci]->points.size(); pi++ )
+            for ( size_t pi = 0; pi < list->clusters[ci]->points.size(); pi++ )
             {
-                M3DPoint<T> *p = (M3DPoint<T> *) list.clusters[ci]->points[pi];
+                M3DPoint<T> *p = (M3DPoint<T> *) list->clusters[ci]->points[pi];
                 
                 if (only_boundary && !p->isBoundary) continue;
                 

@@ -30,6 +30,8 @@ using namespace boost;
 using namespace cfa::meanshift;
 using namespace cfa::utils::visit;
 using namespace cfa::utils::vectors;
+using namespace m3D;
+
 using namespace netCDF;
 using namespace std;
 
@@ -48,7 +50,9 @@ void parse_commmandline(program_options::variables_map vm,
                         string &destination,
                         string &variable,
                         vector<size_t> &vtk_dimension_indexes,
-                        FileType &type)
+                        FileType &type,
+                        bool &extract_skin,
+                        bool &write_as_xml)
 {
     // filename
     
@@ -109,6 +113,14 @@ void parse_commmandline(program_options::variables_map vm,
         type = FileTypeUnknown;
     }
     
+    // Delauney filtering?
+    
+    extract_skin = vm["extract-skin"].as<bool>();
+
+    // xml?
+    
+    write_as_xml = vm["write-as-xml"].as<bool>();
+    
     // VTK dimension mapping
     
     if ( vm.count("vtk-dimensions") > 0 )
@@ -167,8 +179,27 @@ void parse_commmandline(program_options::variables_map vm,
 
 }
 
-void convert_clusters(const string &filename, const string& variable_name, const string &destination)
+void convert_clusters(const string &filename,
+                      const string& variable_name,
+                      const string &destination,
+                      bool extract_skin,
+                      bool write_as_xml)
 {
+    CoordinateSystem<FS_TYPE> *cs = NULL;
+    
+    ClusterList<FS_TYPE> *list = ClusterList<FS_TYPE>::read(filename, &cs);
+    
+    //::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(list, cs, list->source_file, true, false, true);
+    
+    ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
+    
+    boost::filesystem::path path(filename);
+    string centers_path = path.filename().stem().string() + "_centers.vtk";
+    ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, list->clusters);
+    
+    delete list;
+    
+    delete cs;
 }
 
 void convert_composite(const string &filename, const string& variable_name, const string &destination)
@@ -214,7 +245,7 @@ void convert_composite(const string &filename, const string& variable_name, cons
         
         FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename, cs, variables,lower_thresholds,upper_thresholds);
         
-        VisitUtils<FS_TYPE>::write_featurespace_vtk(dest_path, fs, variable_name );
+        ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename, fs, variables);
         
         delete cs;
  
@@ -248,7 +279,9 @@ int main(int argc, char** argv)
     ("help,h", "produce help message")
     ("file,f", program_options::value<string>(), "CF-Metadata compliant NetCDF-file or a Meanie3D-cluster file")
     ("variable,v", program_options::value<string>(), "Name of the variable to be used")
+    ("extract-skin,s", program_options::value<bool>()->default_value(false), "Use delaunay filter to extract skin file")
     ("destination,d", program_options::value<string>()->default_value("."), "Name of output directory for the converted files (default '.')")
+    ("write-as-xml,x", program_options::value<bool>()->default_value(false), "Write files in xml instead of ascii")
     ("type,t", program_options::value<string>(), "'clusters' or 'composite'")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
 
@@ -280,20 +313,25 @@ int main(int argc, char** argv)
     FileType type;
     string variable;
     vector<size_t> vtk_dimension_indexes;
+    bool extract_skin = false;
+    bool write_as_xml = false;
 
     try
     {
-        parse_commmandline( vm, filename, destination, variable, vtk_dimension_indexes, type );
+        parse_commmandline( vm, filename, destination, variable, vtk_dimension_indexes, type, extract_skin,write_as_xml );
 
         // Make the mapping known to the visualization routines
         
         ::cfa::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
         ::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
         
+        // Select the correct point factory
+        PointFactory<FS_TYPE>::set_instance( new M3DPointFactory<FS_TYPE>() );
+        
         switch (type)
         {
             case FileTypeClusters:
-                convert_clusters(filename, variable, destination);
+                convert_clusters(filename, variable, destination, extract_skin, write_as_xml);
                 break;
 
             case FileTypeComposite:

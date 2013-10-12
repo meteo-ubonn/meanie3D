@@ -1,18 +1,17 @@
+#!/bin/bash
 
 if [ "X$1" = "X" ]
 then
-echo "run_tracking.sh <path to directory containing composite files>"
-echo "Creates a python script for cluster creation and tracking and runs it in Visit"
-exit 0
+    echo "run_tracking.sh <path to directory containing composite files>"
+    echo "Creates a python script for cluster creation and tracking and runs it in Visit"
+    exit 0
 fi
 
 if [ "X$2" = "X" ]
 then
-echo "run_tracking.sh <path to directory containing composite files> <scale>"
-echo "Creates a python script for cluster creation and tracking and runs it in Visit"
-exit 0
-exit 0
-
+    echo "run_tracking.sh <path to directory containing composite files> <scale>"
+    echo "Creates a python script for cluster creation and tracking and runs it in Visit"
+    exit 0
 fi
 
 if [ "X${VISIT_EXECUTABLE}" = "X" ]
@@ -26,6 +25,8 @@ then
     exit 0
 fi
 
+SKIP_VISUALIZATION=1
+
 #DL_PATH=$MEANIE3D_HOME/Release
 DL_PATH=/usr/local/lib
 
@@ -34,6 +35,6 @@ ESCAPED_SOURCE_DIR=$(echo $1 | sed -e "s/\//\\\\\//g")
 ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 ESCAPED_DL_PATH=$(echo $DL_PATH | sed -e "s/\//\\\\\//g")
 
-cat $MEANIE3D_HOME/visit/run_tracking-3D.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" | sed -e "s/SCALE/$2/g" > $SCRIPTFILE
+cat $MEANIE3D_HOME/visit/run_tracking-3D.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" | sed -e "s/SCALE/$2/g" | sed -e "s/SKIP_VISUALIZATION/${SKIP_VISUALIZATION}/g" > $SCRIPTFILE
 ${VISIT_EXECUTABLE} -cli -nowin -s $SCRIPTFILE
 #${VISIT_EXECUTABLE} -s $SCRIPTFILE

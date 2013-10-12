@@ -20,8 +20,8 @@ import visit2D
 import visitUtils
 from subprocess import call
 
-print [key for key in locals().keys()
-       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
+# TODO: pase from params
+visualize=False
 
 # TODO: find a more elegant way to resume
 # if > 0 a previous run is resumed
@@ -39,10 +39,10 @@ CLUSTERING_PARAMS += " --verbosity 1"
 CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
 CLUSTERING_PARAMS += " --weight-function default"
 CLUSTERING_PARAMS += " --write-clusters-as-vtk"
+CLUSTERING_PARAMS += " --write-cluster-centers"
 
 CLUSTERING_PARAMS += " -v "+VAR_NAME
 CLUSTERING_PARAMS += " " + DETECT_PARAMS
-
 
 TRACKING_PARAMS = "--verbosity 1 --write-vtk"
 TRACKING_PARAMS += " --vtk-dimensions x,y"
@@ -80,9 +80,6 @@ print tracking_bin
 print "Tracking Evaluation Command:"
 print trackplot_bin
 
-# Cluster color tables
-col_tables = ["Purples","Blues","Oranges","Greens","Reds"]
-
 # Silent
 SuppressMessages(True)
 SuppressQueryOutputOn()
@@ -93,15 +90,17 @@ a.axes2D.visible=1
 a.axes2D.autoSetScaling=0
 a.userInfoFlag=0
 a.timeInfoFlag=0
-a.legendInfoFlag=0
+a.legendInfoFlag=1
 a.databaseInfoFlag=1
 SetAnnotationAttributes(a)
 
-# Modify view parameters
-v = GetView2D()
-v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
-v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-SetView2D(v)
+# Set view to nationwide composite
+visit2D.set_view_to_radolan();
+
+print "-- Creating colortables ---"
+num_colors = visitUtils.create_cluster_colortable("cluster_colors")
+visitUtils.create_topography_colortable()
+print "    done."
 
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"
@@ -114,6 +113,7 @@ run_count = 0
 for netcdf_file in netcdf_list:
     
     basename = os.path.basename(netcdf_file)
+    label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
     cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
     #vtk_file=os.path.splitext(basename)[0] + "_" + VAR_NAME + ".vtk"
     vtk_file=os.path.splitext(basename)[0] + ".vtr"
@@ -145,68 +145,87 @@ for netcdf_file in netcdf_list:
 
     command = command + " > clustering_" + str(run_count)+".log"
 
-
-
     # execute
     print command
     return_code = call( command, shell=True)
-    
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
-    print "-- Rendering source data --"
-    start_time = time.time()
-    
-    #
-    # Plot the source data in color
-    #
-    
-    visit2D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated",1 )
-    DrawPlots()
-    
-    # Calling ToggleMaintainViewMode helps
-    # keeping the window from 'jittering'
-    if toggled_maintain != True :
-        ToggleMaintainViewMode()
-        toggled_maintain=True
-    
-    visitUtils.save_window("source_",1)
-    
-    # clean up
-    DeleteAllPlots();
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
-    print "-- Rendering untracked clusters --"
-    start_time = time.time()
 
-    #
-    # Plot untracked clusters
-    #
-    
-    # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
-    
-    # Add the clusters
-    visit2D.add_clusters(basename,"_cluster_",col_tables,0.5)
-    
-    # Add modes as labels
-    label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
-    visitUtils.add_labels(label_file,"geometrical_center")
+    if visualize==True:
+        print "-- Rendering source data --"
+        start_time = time.time()
 
-    # Get it all processed and stowed away
-    DrawPlots()
-    visitUtils.save_window("untracked_",1)
+        #
+        # Plot the source data in color
+        #
 
-    #
-    # clean up
-    #
+        # add topograpy
+        visit2D.add_topography("national_topo_2D")
 
-    DeleteAllPlots();
-    ClearWindow()
-    CloseDatabase(vtk_file)
-    CloseDatabase(label_file)
-    visitUtils.close_pattern(basename+"*_cluster_*.vtk")
-    return_code=call("rm -f *cluster*_*.vtk", shell=True)
+        visit2D.add_pseudocolor( vtk_file, VAR_NAME, "hot_desaturated",1,1 )
 
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
+        AddOperator("Threshold")
+        t = ThresholdAttributes();
+        t.lowerBounds=(0.1)
+        SetOperatorOptions(t)
+
+        p = PseudocolorAttributes()
+        p.minFlag,p.maxFlag = 0,1
+        p.min,p.max = 0,40
+        SetPlotOptions(p)
+
+        DrawPlots()
+        
+        # Calling ToggleMaintainViewMode helps
+        # keeping the window from 'jittering'
+        if toggled_maintain != True :
+            ToggleMaintainViewMode()
+            toggled_maintain=True
+        
+        visitUtils.save_window("source_",1)
+
+        # clean up
+        DeleteAllPlots();
+
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
+        print "-- Rendering untracked clusters --"
+        start_time = time.time()
+
+        #
+        # Plot untracked clusters
+        #
+        
+        # Re-add the source with "xray"
+        visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0,1)
+        AddOperator("Threshold")
+        t = ThresholdAttributes();
+        t.lowerBounds=(0.1)
+        SetOperatorOptions(t)
+
+        # Add the clusters
+        basename = "./"
+        visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
+
+        # Add modes as labels
+        visitUtils.add_labels(label_file,"geometrical_center")
+
+        # Get it all processed and stowed away
+        DrawPlots()
+        visitUtils.save_window("untracked_",1)
+
+        #
+        # clean up
+        #
+
+        DeleteAllPlots();
+        ClearWindow()
+        CloseDatabase(vtk_file)
+        CloseDatabase(label_file)
+        visitUtils.close_pattern(basename+"*_cluster_*.vtk")
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
+
+    # clean up files
+    return_code=call("rm -f *.vt*", shell=True)
 
     #
     # Tracking
@@ -227,54 +246,58 @@ for netcdf_file in netcdf_list:
 
         print "    done. (%.2f seconds)" % (time.time()-start_time)
 
-    print "-- Rendering tracked clusters --"
-    start_time = time.time()
+    if visualize==True:
 
-    #
-    # Plot tracked clusters
-    #
+        print "-- Rendering tracked clusters --"
+        start_time = time.time()
 
-    # Re-add the source with "xray"
-    visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0)
-    p = PseudocolorAttributes()
-    p.opacity=0.25
-    SetPlotOptions(p)
+        #
+        # Plot tracked clusters
+        #
 
+        # add topograpy
+        visit2D.add_topography("national_topo_2D")
 
-    if (run_count > 0):
+        # Re-add the source with "xray"
+        visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",1,1)
+        p = PseudocolorAttributes()
+        p.opacity=0.25
+        SetPlotOptions(p)
 
-        # Add the clusters
-        visit2D.add_clusters(basename,"_cluster_",col_tables,0.5)
+        if (run_count > 0):
 
-        # Add modes as labels
-        label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
-        visitUtils.add_labels(label_file,"geometrical_center")
+            # Add the clusters
+            basename = "./"
+            visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
-    # Get it all processed and stowed away
-    DrawPlots()
-    visitUtils.save_window("tracked_",1)
+            # Add modes as labels
+            visitUtils.add_labels(label_file,"geometrical_center")
 
-    #
-    # clean up
-    #
+        # Get it all processed and stowed away
+        DrawPlots()
+        visitUtils.save_window("tracked_",1)
 
-    DeleteAllPlots();
-    ClearWindow()
-    CloseDatabase(vtk_file)
+        #
+        # clean up
+        #
 
-    if run_count > 0:
-        CloseDatabase(label_file)
-        visitUtils.close_pattern(basename+"*_cluster_*.vtk")
-        return_code=call("rm -f *.vtk", shell=True)
+        DeleteAllPlots();
+        ClearWindow()
+        CloseDatabase(vtk_file)
 
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
+        if run_count > 0:
+            CloseDatabase(label_file)
+            visitUtils.close_pattern(basename+"*_cluster_*.vtk")
+
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
+
+    return_code=call("rm -f *.vtk", shell=True)
 
     # keep track
     last_cluster_file=cluster_file
 
     # don't forget to increment run counter
     run_count = (run_count + 1)
-
 
 print "Done. Closing Visit."
 exit()

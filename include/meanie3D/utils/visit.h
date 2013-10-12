@@ -9,6 +9,9 @@
 #include <boost/locale.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
+#include <vtkSmartPointer.h>
+#include <vtkLookupTable.h>
+
 #include <stdlib.h>
 #include <vector>
 #include <iostream>
@@ -36,7 +39,11 @@ namespace m3D { namespace utils {
     	/** Global variable maintaining the dimension mapping
          */
         static vector<size_t> VTK_DIMENSION_INDEXES;
-        
+
+        /**
+         */
+        static vtkSmartPointer<vtkLookupTable> cluster_lookup_table();
+
         /** Takes the given list of  dimension names and their re-ordering.
          * Performs some sanity checks (same number of arguments, same variables)
          * and updates the field VTK_DIMENSION_INDEXES accordingly. Also updates 
@@ -70,7 +77,8 @@ namespace m3D { namespace utils {
         static
     	void
         write_geometrical_cluster_centers_vtk(const string &filename,
-                                              const typename Cluster<T>::list &list);
+                                              const typename Cluster<T>::list &list,
+                                              bool at_max_height=true);
 
 
 //    	/** Writes the cluster's points out as .vtk file for visit.
@@ -106,12 +114,13 @@ namespace m3D { namespace utils {
     	 */
         static
     	void
-        write_clusters_vtk(const ClusterList<T> &list,
+        write_clusters_vtu(const ClusterList<T> *list,
                            CoordinateSystem<T> *cs,
                            const string &base_name,
+                           unsigned int max_colors=5,
                            bool use_ids = true,
                            bool only_boundary = false,
-                           bool write_ascii = false);
+                           bool write_xml = false);
         
     	/** Writes the cluster's points out as rectilinear grid
          * @param cluster list
@@ -126,7 +135,7 @@ namespace m3D { namespace utils {
     	 */
         static
         void
-        write_clusters_vtr(const ClusterList<T> &list,
+        write_clusters_vtr(const ClusterList<T> *list,
                            CoordinateSystem<T> *cs,
                            const string &base_name,
                            bool use_ids=true,

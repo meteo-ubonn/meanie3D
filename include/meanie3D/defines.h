@@ -37,7 +37,7 @@
 
 // Write out the center of the cluster in a single
 // file per cluster
-#define WRITE_CLUSTER_CENTERS 1
+#define WRITE_CLUSTER_CENTERS 0
 
 // Write out the modes of the clusters in a single
 // file per cluster
