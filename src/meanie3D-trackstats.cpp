@@ -16,6 +16,7 @@
 
 #include <meanie3D/meanie3D.h>
 #include <cf-algorithms/id.h>
+#include <radolan/radolan.h>
 
 #include <map>
 #include <vector>
@@ -32,6 +33,7 @@ using namespace std;
 using namespace boost;
 using namespace netCDF;
 using namespace m3D;
+using namespace Radolan;
 
 #pragma mark -
 #pragma mark type definitions
@@ -54,6 +56,8 @@ void parse_commmandline(program_options::variables_map vm,
                         bin_t &length_histogram_bins,
                         bool &create_speed_stats,
                         fvec_t &speed_histogram_bins,
+                        bool & create_direction_stats,
+                        fvec_t &direction_histogram_classes,
                         bool &create_cluster_stats,
                         bin_t &cluster_histogram_bins,
                         bool &include_degenerates,
@@ -71,8 +75,9 @@ void parse_commmandline(program_options::variables_map vm,
     
     basename = vm["basename"].as<string>();
     sourcepath = vm["sourcepath"].as<string>();
-    write_center_tracks_as_vtk = vm["write-center-tracks-as-vtk"].as<bool>();
-    write_cumulated_tracks_as_vtk = vm["write-cumulated-tracks-as-vtk"].as<bool>();
+    
+    write_center_tracks_as_vtk = vm.count("write-center-tracks-as-vtk") > 0;
+    write_cumulated_tracks_as_vtk = vm.count("write-cumulated-tracks-as-vtk") > 0;
     include_degenerates = vm["exclude-degenerates"].as<bool>();
     
     // Default is the dimensions
@@ -82,16 +87,19 @@ void parse_commmandline(program_options::variables_map vm,
         vtk_dim_names = vm["vtk-dimensions"].as<svec_t>();
     }
     
-    create_length_stats = vm["create-length-statistics"].as<bool>();
+    create_length_stats = vm.count("create-length-statistics") > 0;
     length_histogram_bins = vm["length-histogram-classes"].as<bin_t>();
 
-    create_speed_stats = vm["create-speed-statistics"].as<bool>();
+    create_speed_stats = vm.count("create-speed-statistics") > 0;
     speed_histogram_bins = vm["speed-histogram-classes"].as<fvec_t>();
 
-    create_cumulated_size_stats = vm["create-cumulated-size-statistics"].as<bool>();
+    create_direction_stats = vm.count("create-direction-statistics") > 0;
+    direction_histogram_classes = vm["direction-histogram-classes"].as<fvec_t>();
+
+    create_cumulated_size_stats = vm.count("create-cumulated-size-statistics") > 0;
     size_histogram_bins = vm["size-histogram-classes"].as<bin_t>();
     
-    create_cluster_stats = vm["create-cluster-statistics"].as<bool>();
+    create_cluster_stats = vm.count("create-cluster-statistics") > 0;
     cluster_histogram_bins = vm["cluster-histogram-classes"].as<bin_t>();
 }
 
@@ -243,6 +251,8 @@ int main(int argc, char** argv)
     float speed_hist_default_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.5, 15.0, 17.5, 20.0, 22.5, 25.0, 27.5, 30.0, 35.0, 40.0, 45.0, 50.0};
     fvec_t speed_hist_default(speed_hist_default_values,speed_hist_default_values+22);
 
+    float direction_hist_default_values[] = {30,60,90,120,150,180,210,240,270,300,330,360};
+    fvec_t direction_hist_default(direction_hist_default_values,direction_hist_default_values+12);
     
     // Declare the supported options.
     
@@ -253,20 +263,24 @@ int main(int argc, char** argv)
     ("sourcepath,p", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
     ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
     
-    ("create-length-statistics",program_options::value<bool>()->default_value(true),"Create a statistic of track lengths.")
+    ("create-length-statistics","Create a statistic of track lengths.")
     ("length-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(length_hist_default),"List of track-length values for histogram bins")
     
-    ("create-speed-statistics",program_options::value<bool>()->default_value(true),"Evaluate speeds of clusters in tracks, based on geometric center point")
-    ("speed-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(speed_hist_default),"speed histogram. Values in m/s.")
+    ("create-speed-statistics","Evaluate speeds of clusters in tracks, based on geometric center point")
+    ("speed-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(speed_hist_default),"Speed histogram. Values in [m/s]")
 
-    ("create-cluster-statistics",program_options::value<bool>()->default_value(true),"Evaluate each cluster in each track in terms of size.")
+    ("create-direction-statistics","Evaluate directions of clusters in tracks, based on geometric center point")
+    ("direction-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(direction_hist_default),"Direction histogram. Values in [deg]. Use with radolan grid only!!")
+
+    ("create-cluster-statistics","Evaluate each cluster in each track in terms of size.")
     ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default),"List of cluster size values for histogram bins")
     
-    ("create-cumulated-size-statistics",program_options::value<bool>()->default_value(true),"Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
+    ("create-cumulated-size-statistics","Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
     ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
     
-    ("write-center-tracks-as-vtk", program_options::value<bool>()->default_value(false),"Write tracks out as .vtk files")
-    ("write-cumulated-tracks-as-vtk", program_options::value<bool>()->default_value(false),"Write cumulated tracks out as .vtk files. Only has effect if create-cumulated-size-statistics=true")
+    ("write-center-tracks-as-vtk", "Write tracks out as .vtk files")
+    ("write-cumulated-tracks-as-vtk", "Write cumulated tracks out as .vtk files. Only has effect if --create-cumulated-size-statistics is used")
+    
     ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ;
     
@@ -298,7 +312,7 @@ int main(int argc, char** argv)
     string basename,sourcepath;
     bool exclude_degenerates = true;
     
-    bool create_length_statistics = true;
+    bool create_length_statistics = false;
     bin_t length_histogram_classes;
 
     bool create_cluster_statistics = false;
@@ -306,6 +320,9 @@ int main(int argc, char** argv)
     
     bool create_speed_statistics = false;
     fvec_t speed_histogram_classes;
+
+    bool create_direction_statistics = false;
+    fvec_t direction_histogram_classes;
 
     bool create_cumulated_size_statistics = false;
     bin_t size_histogram_classes;
@@ -325,6 +342,8 @@ int main(int argc, char** argv)
                            length_histogram_classes,
                            create_speed_statistics,
                            speed_histogram_classes,
+                           create_direction_statistics,
+                           direction_histogram_classes,
                            create_cluster_statistics,
                            cluster_histogram_classes,
                            exclude_degenerates,
@@ -347,6 +366,7 @@ int main(int argc, char** argv)
     bin_t size_histogram(size_histogram_classes.size(),0);
     bin_t cluster_histogram(cluster_histogram_classes.size(),0);
     bin_t speed_histogram(speed_histogram_classes.size(),0);
+    bin_t direction_histogram(direction_histogram_classes.size(),0);
     
     // This map contains a mapping from the id type to lists of clusters.
 
@@ -542,6 +562,8 @@ int main(int argc, char** argv)
         
         map<float,size_t> speeds;
         
+        map<float,size_t> directions;
+        
         // Iterate over the collated tracks
         
         for (Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
@@ -589,7 +611,7 @@ int main(int argc, char** argv)
             // Skip the rest if cumulative size statistics and cluster / speed
             // stats are all off
             
-            if (!create_cumulated_size_statistics && !create_cluster_statistics && !create_speed_statistics)
+            if (!create_cumulated_size_statistics && !create_cluster_statistics && !create_speed_statistics && !create_direction_statistics)
             {
                 continue;
             }
@@ -684,12 +706,99 @@ int main(int argc, char** argv)
                             speeds[speed] = (si->second + 1);
                         }
                     }
-                    
-                    previous_cluster = cluster;
-
                 }
                 
+                // Directional Statistics
+                if (create_direction_statistics)
+                {
+                    // Using the standard nationwide composite here
+                    // NOTE: by doing this, the code is made dependant of the
+                    // radolan code and fixed to the radolan coordinate system
+                    // (which is BAD).
+                    
+                    // TODO: find a more generic way to deal with this problem
+                    // (see #
+                    
+                    RDCoordinateSystem *rcs = new RDCoordinateSystem(RD_RX);
+                    
+                    if (previous_cluster!=NULL)
+                    {
+                        // calculate speed in m/s. All vectors 2D at this time
+                        
+                        vector<T> p1 = previous_cluster->geometrical_center(2);
+                        vector<T> p2 = cluster->geometrical_center(2);
+                        
+                        vector<T> dP = p1 - p2;
+                        
+                        RDCartesianPoint p;
+
+                        // Assuming --vtk-dimensions=x,y
+                        
+                        p.x = p1.at(::m3D::utils::VisitUtils<T>::VTK_DIMENSION_INDEXES.at(0));
+                        p.y = p1.at(::m3D::utils::VisitUtils<T>::VTK_DIMENSION_INDEXES.at(1));
+                        
+                        // Obtain geographical coordinate
+                        RDGeographicalPoint c = rcs->geographicalCoordinate(p);
+                        
+                        // move north 1 degree
+                        RDGeographicalPoint cn = c;
+                        cn.latitude = cn.latitude + 1.0;
+                        
+                        // Transform back
+                        RDCartesianPoint pn = rcs->cartesianCoordinate(cn);
+                        
+                        // obtain difference vector and normalize it.
+                        // this will point north
+                        
+                        vector<T> n(2);
+                        n[0] = pn.x - p.x;
+                        n[1] = pn.y - p.y;
+                        
+                        n = n / vector_norm(n);
+                        
+                        // obtain the angle beta between the radolan grid
+                        // and north at the distance vector's origin
+                        
+                        vector<T> ey(2);
+                        ey[0] = 0;
+                        ey[1] = 1;
+                        
+                        float beta = acos( ey * n );
+                        
+                        // calculate angle alpha between the distance vector
+                        // and the grid
+                        
+                        float alpha = acos( (ey * dP) / vector_norm(dP) );
+                        
+                        // the direction with north is the sum of the two vectors
+                        // in DEG
+                        
+                        float direction = 180.0 * (alpha + beta) / M_PI_2;
+                        
+                        if (direction > 360.0)
+                        {
+                            direction -= 360.0;
+                        }
+                        
+                        bool exceeded_max_class = false;
+                        
+                        add_value_to_histogram<float>(direction_histogram_classes, direction_histogram, direction, exceeded_max_class);
+                        
+                        map<float,size_t>::iterator si = directions.find(direction);
+                        
+                        if (si==directions.end())
+                        {
+                            directions[direction] = 1;
+                        }
+                        else
+                        {
+                            directions[direction] = (si->second + 1);
+                        }
+                    }
+                }
                 
+                previous_cluster = cluster;
+
                 // Skip the rest if cumulative size statistics are off
                 
                 if (!create_cumulated_size_statistics)
@@ -782,7 +891,6 @@ int main(int argc, char** argv)
             // NETCDF
             
             cout <<"\t(processed " << points_processed << " points)" << endl;
-            
         }
         
         cout << "done." << endl;
@@ -817,145 +925,200 @@ int main(int argc, char** argv)
         // length of tracks (in time steps)
         //
         
-        file << "------------------------------------------------" << endl;
-        cout << "------------------------------------------------" << endl;
-        
-        file << "Track length distribution" << endl;
-        cout << "Track length distribution" << endl;
-        
-        file << "------------------------------------------------" << endl;
-        cout << "------------------------------------------------" << endl;
-
-        double avg = average<size_t>(track_lengths,true);
-        file << "(Average track length = " << avg << ")" << endl;
-        cout << "(Average track length = " << avg << ")" << endl;
-
-        map<size_t, size_t>::reverse_iterator rend = track_lengths.rbegin();
-        file << "(Maximum track length = " << rend->first << ")" << endl;
-        cout << "(Maximum track length = " << rend->first << ")" << endl;
-        
-        file << "length,number" << endl;
-        cout << "length,number" << endl;
-        
-        map<size_t,size_t>::iterator si;
-        
-        for (si=track_lengths.begin(); si!=track_lengths.end(); si++)
+        if (create_length_statistics)
         {
-            file << si->first << "," << si->second << endl;
-            cout << si->first << "," << si->second << endl;        }
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+            
+            file << "Track length distribution" << endl;
+            cout << "Track length distribution" << endl;
+            
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+
+            double avg = average<size_t>(track_lengths,true);
+            file << "(Average track length = " << avg << ")" << endl;
+            cout << "(Average track length = " << avg << ")" << endl;
+
+            map<size_t, size_t>::reverse_iterator rend = track_lengths.rbegin();
+            file << "(Maximum track length = " << rend->first << ")" << endl;
+            cout << "(Maximum track length = " << rend->first << ")" << endl;
+            
+            file << "length,number" << endl;
+            cout << "length,number" << endl;
+            
+            map<size_t,size_t>::iterator si;
+            
+            for (si=track_lengths.begin(); si!=track_lengths.end(); si++)
+            {
+                file << si->first << "," << si->second << endl;
+                cout << si->first << "," << si->second << endl;        }
+            
+            file << endl;
+            
+            // Histogram
+            
+            file << endl;
+            cout << endl;
+
+            file << "Length Histogram:" << endl;
+            cout << "Length Histogram:" << endl;
+
+            file << "max length,number" << endl;
+            cout << "max length,number" << endl;
+
+            print_histogram(length_histogram_classes,length_histogram,file);
+        }
         
-        file << endl;
-        
-        // Histogram
-        
-        file << endl;
-        cout << endl;
-
-        file << "Length Histogram:" << endl;
-        cout << "Length Histogram:" << endl;
-
-        file << "max length,number" << endl;
-        cout << "max length,number" << endl;
-
-        print_histogram(length_histogram_classes,length_histogram,file);
-
         //
         // speed
         //
         
-        file << "------------------------------------------------" << endl;
-        cout << "------------------------------------------------" << endl;
-        
-        file << "Speed distribution" << endl;
-        cout << "Speed distribution" << endl;
-        
-        file << "------------------------------------------------" << endl;
-        cout << "------------------------------------------------" << endl;
-        
-        avg = average<float>(speeds,true);
-        file << "(Average speed = " << avg << ")" << endl;
-        cout << "(Average speed = " << avg << ")" << endl;
-        
-        map<float, size_t>::reverse_iterator srend = speeds.rbegin();
-        file << "(Maximum speed = " << srend->first << ")" << endl;
-        cout << "(Maximum speed = " << srend->first << ")" << endl;
-        
-        file << "speed,number" << endl;
-        cout << "speed,number" << endl;
-        
-        map<float,size_t>::iterator spi;
-        
-        for (spi=speeds.begin(); spi!=speeds.end(); spi++)
+        if (create_speed_statistics)
         {
-            file << spi->first << "," << spi->second << endl;
-            cout << spi->first << "," << spi->second << endl;        }
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+            
+            file << "Speed distribution" << endl;
+            cout << "Speed distribution" << endl;
+            
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+            
+            double avg = average<float>(speeds,true);
+            file << "(Average speed = " << avg << ")" << endl;
+            cout << "(Average speed = " << avg << ")" << endl;
+            
+            map<float, size_t>::reverse_iterator srend = speeds.rbegin();
+            file << "(Maximum speed = " << srend->first << ")" << endl;
+            cout << "(Maximum speed = " << srend->first << ")" << endl;
+            
+            file << "speed,number" << endl;
+            cout << "speed,number" << endl;
+            
+            map<float,size_t>::iterator spi;
+            
+            for (spi=speeds.begin(); spi!=speeds.end(); spi++)
+            {
+                file << spi->first << "," << spi->second << endl;
+                cout << spi->first << "," << spi->second << endl;        }
+            
+            file << endl;
+            
+            // Histogram
+            
+            file << endl;
+            cout << endl;
+            
+            file << "Speed Histogram:" << endl;
+            cout << "Speed Histogram:" << endl;
+            
+            file << "speed class,number" << endl;
+            cout << "speed class,number" << endl;
+            
+            print_histogram<float>(speed_histogram_classes,speed_histogram,file);
+        }
         
-        file << endl;
+        //
+        // directions
+        //
         
-        // Histogram
-        
-        file << endl;
-        cout << endl;
-        
-        file << "Speed Histogram:" << endl;
-        cout << "Speed Histogram:" << endl;
-        
-        file << "speed class,number" << endl;
-        cout << "speed class,number" << endl;
-        
-        print_histogram<float>(speed_histogram_classes,speed_histogram,file);
+        if (create_direction_statistics)
+        {
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+            
+            file << "Direction distribution" << endl;
+            cout << "Direction distribution" << endl;
+            
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+            
+            double avg = average<float>(directions,true);
+            file << "(Average direction = " << avg << ")" << endl;
+            cout << "(Average direction = " << avg << ")" << endl;
+            
+            file << "direction,number" << endl;
+            cout << "direction,number" << endl;
+            
+            map<float,size_t>::iterator spi;
+            
+            for (spi=directions.begin(); spi!=directions.end(); spi++)
+            {
+                file << spi->first << "," << spi->second << endl;
+                cout << spi->first << "," << spi->second << endl;        }
+            
+            file << endl;
+            
+            // Histogram
+            
+            file << endl;
+            cout << endl;
+            
+            file << "Direction Histogram:" << endl;
+            cout << "Direction Histogram:" << endl;
+            
+            file << "direction class,number" << endl;
+            cout << "direction class,number" << endl;
+            
+            print_histogram<float>(direction_histogram_classes,direction_histogram,file);
+        }
 
+        
         //
         // Cluster sizes
         //
         
-        file << endl;
-        cout << endl;
-
-        file << "------------------------------------------------" << endl;
-        cout << "------------------------------------------------" << endl;
-
-        file << "Cluster size distribution" << endl;
-        cout << "Cluster size distribution" << endl;
-        
-        file << "------------------------------------------------" << endl;
-        cout << "------------------------------------------------" << endl;
-        
-        avg = average<size_t>(cluster_sizes,true);
-        file << "(Average cluster size = " << avg << ")" << endl;
-        cout << "(Average cluster size = " << avg << ")" << endl;
-        
-        rend = cluster_sizes.rbegin();
-        file << "(Maximum cluster size = " << rend->first << ")" << endl;
-        cout << "(Maximum cluster size = " << rend->first << ")" << endl;
-        
-        file << "size,number" << endl;
-        cout << "size,number" << endl;
-        
-        for (si=cluster_sizes.begin(); si!=cluster_sizes.end(); si++)
+        if (create_cluster_statistics)
         {
-            file << si->first << "," << si->second << endl;
-            cout << si->first << "," << si->second << endl;
-        }
-        
-        file << endl;
-        cout << endl;
-        
-        // Histogram
-        
-        file << "Cluster Size Histogram:" << endl;
-        cout << "Cluster Size Histogram:" << endl;
-        
-        file << "max size,number" << endl;
-        cout << "max size,number" << endl;
-        
-        print_histogram(cluster_histogram_classes,cluster_histogram,file);
+            file << endl;
+            cout << endl;
 
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+
+            file << "Cluster size distribution" << endl;
+            cout << "Cluster size distribution" << endl;
+            
+            file << "------------------------------------------------" << endl;
+            cout << "------------------------------------------------" << endl;
+            
+            double avg = average<size_t>(cluster_sizes,true);
+            file << "(Average cluster size = " << avg << ")" << endl;
+            cout << "(Average cluster size = " << avg << ")" << endl;
+            
+            map<size_t, size_t>::reverse_iterator rend = cluster_sizes.rbegin();
+            file << "(Maximum cluster size = " << rend->first << ")" << endl;
+            cout << "(Maximum cluster size = " << rend->first << ")" << endl;
+            
+            file << "size,number" << endl;
+            cout << "size,number" << endl;
+            
+            map<size_t,size_t>::iterator si;
+            
+            for (si=cluster_sizes.begin(); si!=cluster_sizes.end(); si++)
+            {
+                file << si->first << "," << si->second << endl;
+                cout << si->first << "," << si->second << endl;
+            }
+            
+            file << endl;
+            cout << endl;
+            
+            // Histogram
+            
+            file << "Cluster Size Histogram:" << endl;
+            cout << "Cluster Size Histogram:" << endl;
+            
+            file << "max size,number" << endl;
+            cout << "max size,number" << endl;
+            
+            print_histogram(cluster_histogram_classes,cluster_histogram,file);
+        }
 
         //
         // Cumulative track stats
         //
-        
         
         if (create_cumulated_size_statistics)
         {
@@ -973,16 +1136,18 @@ int main(int argc, char** argv)
             file << "------------------------------------------------" << endl;
             cout << "------------------------------------------------" << endl;
 
-            avg = average<size_t>(track_sizes,false);
+            double avg = average<size_t>(track_sizes,false);
             file << "(Average track size = " << avg << ")" << endl;
             cout << "(Average track size = " << avg << ")" << endl;
             
-            rend = track_sizes.rbegin();
+            map<size_t, size_t>::reverse_iterator rend = track_sizes.rbegin();
             file << "(Maximum track size = " << rend->first << ")" << endl;
             cout << "(Maximum track size = " << rend->first << ")" << endl;
 
             file << "size,number" << endl;
             cout << "size,number" << endl;
+            
+            map<size_t,size_t>::iterator si;
             
             for (si=track_sizes.begin(); si!=track_sizes.end(); si++)
             {

@@ -297,10 +297,14 @@ namespace m3D {
 #pragma mark I/O
         
         /** Writes out the cluster list into a NetCDF-file.
+         *
          * For the format, check documentation at
          * http://git.meteo.uni-bonn.de/projects/meanie3d/wiki/Cluster_File
          * @param full path to filename, including extension '.nc'
-         * @param feature space
+         * @param if the flag is <code>true</code> then the original file is moved
+         * aside, a new file is created and all stuff copied over etc. This is 
+         * necessary because NetCDF does not allow renaming of variables and dimensions
+         * which is a requirement for fulfilling issue request #236
          * @param parameters used in the run
          */
         void write( const string& path );
@@ -348,6 +352,7 @@ namespace m3D {
                               FeatureSpace<T> *fs,
                               PointIndex<T> *index,
                               const vector<T> &resolution );
+
 #if WRITE_MODES
     protected:
         vector< vector<T> >         m_trajectory_endpoints;

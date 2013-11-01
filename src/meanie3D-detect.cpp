@@ -603,7 +603,7 @@ int main(int argc, char** argv)
         
         if (vm.count("previous-file") > 0)
         {
-            cout << "\tprevious file:" << previous_file << endl;
+            cout << "\tprevious file:" << *previous_file << endl;
             
             if (vm.count("previous-cluster-coverage-threshold") > 0 )
             {
@@ -629,7 +629,7 @@ int main(int argc, char** argv)
         if (verbosity > VerbosityNormal)
         {
             cout << endl;
-            cout << "Compiled options (use -D to switch them on and off)" << endl;
+            cout << "Compiled options (use -D to switch them on and off during compile time)" << endl;
             
 #if WRITE_BANDWIDTH
             cout << "\tWRITE_BANDWIDTH=1" << endl;
