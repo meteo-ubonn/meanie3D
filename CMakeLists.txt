@@ -327,15 +327,15 @@ ELSE()
         ${VTK_LIBRARIES})
 ENDIF()
 
-# trackplot
+# trackstats
 
-ADD_EXECUTABLE(meanie3D-trackplot
+ADD_EXECUTABLE(meanie3D-trackstats
     cf-algorithms
     numericalrecipes
-    src/meanie3D-trackplot.cpp
+    src/meanie3D-trackstats.cpp
 )
 
-TARGET_LINK_LIBRARIES(meanie3D-trackplot
+TARGET_LINK_LIBRARIES(meanie3D-trackstats
     meanie3D
     cf-algorithms
     numericalrecipes
@@ -462,7 +462,7 @@ INSTALL(DIRECTORY include/${PROJECT_NAME}
 INSTALL(TARGETS meanie3D LIBRARY DESTINATION "/usr/local/lib")
 INSTALL(TARGETS meanie3D-detect RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
-INSTALL(TARGETS meanie3D-trackplot RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-trackstats RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 # Documentation
