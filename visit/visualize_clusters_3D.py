@@ -138,7 +138,7 @@ for netcdf_file in netcdf_files:
     visit3D.add_topography("local_topo_3D")
 
     # re-plot source data as canvas
-    visit3D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.1, 0 )
+    visit3D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.25, 0 )
 
     # threshold as before
     AddOperator("Threshold")
@@ -161,6 +161,8 @@ for netcdf_file in netcdf_files:
     visitUtils.save_window("tracking_",1)
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
+
+    exit(0);
 
     # clean up
     DeleteAllPlots();
