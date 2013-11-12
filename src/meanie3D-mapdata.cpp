@@ -27,6 +27,7 @@
 #include <limits>
 #include <stdlib.h>
 #include <netcdf>
+#include <set>
 
 using namespace std;
 using namespace boost;
@@ -560,6 +561,10 @@ void add_national_mapstuff_2D(NcFile &mapfile)
     for (size_t iy=0; iy < 900; iy++)
         for (size_t ix=0; ix < 900; ix++)
             river_data[iy][ix] = z_fillValue;
+
+    typedef set<CoordinateSystem<double>::GridPoint> gp_set_t;
+    
+    gp_set_t line_points;
     
     for (size_t i=0; i < rd.getSize(); i++)
     {
@@ -567,24 +572,54 @@ void add_national_mapstuff_2D(NcFile &mapfile)
         coord[0] = river_x[i];
         coord[1] = river_y[i];
         
-        cout << "Coordinate=" << coord;
-        
         if (isnan(coord[0]) || isnan(coord[1]))
         {
-            cout << " isNan => skipping" << endl;
-            continue;
-        }
+            // plot the line
+            
+            gp_set_t::iterator li;
+            
+            CoordinateSystem<double>::GridPoint *lp = NULL;
+            
+            cout << "drawing line:" << endl;
+            
+            for (li=line_points.begin(); li!=line_points.end(); li++)
+            {
+                CoordinateSystem<double>::GridPoint p = *li;
+                
+                cout << p << endl;
+                
+                if (lp!=NULL)
+                {
+                    int min_x = lp->at(0) < p[0] ? lp->at(0) : p[0];
+                    int max_x = lp->at(0) > p[0] ? lp->at(0) : p[0];
+                    
+                    int min_y = lp->at(1) < p[1] ? lp->at(1) : p[1];
+                    int max_y = lp->at(1) > p[1] ? lp->at(1) : p[1];
+                    
+                    for (int x=min_x; x <= max_x; x++)
+                    {
+                        for (int y=min_y; y <= max_y; y++)
+                        {
+                            river_data[y][x] = 1.0;
+                        }
+                    }
+                }
 
-        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
-        cs->reverse_lookup(coord, gp);
-        
-        cout << " => gridpoint=" << gp << endl;
-        
-        // Mark river position with 1.0
-        int ix = gp[0];
-        int iy = gp[1];
-        
-        river_data[iy][ix] = 1.0;
+                lp = &p;
+            }
+            
+            line_points.clear();
+        }
+        else
+        {
+            CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+
+            cs->reverse_lookup(coord, gp);
+            
+            cout << "coordinate=" << coord << " => gridpoint=" << gp << endl;
+            
+            line_points.insert(gp);
+        }
     }
     
     // Write data off
@@ -593,41 +628,41 @@ void add_national_mapstuff_2D(NcFile &mapfile)
     
     // Borders
     
-    float border_x[rd.getSize()];
-    float border_y[rd.getSize()];
-    
-    mapstuff_file.getVar("border_x").getVar(&border_x[0]);
-    mapstuff_file.getVar("border_y").getVar(&border_y[0]);
-    
-    static double border_data[900][900];
-    
-    for (size_t iy=0; iy < 900; iy++)
-        for (size_t ix=0; ix < 900; ix++)
-            border_data[iy][ix] = z_fillValue;
-    
-    for (size_t i=0; i < bd.getSize(); i++)
-    {
-        if (border_x[i] == std::numeric_limits<float>::quiet_NaN()
-            || border_y[i] == std::numeric_limits<float>::quiet_NaN())
-            continue;
-        
-        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
-        coord[0] = border_x[i];
-        coord[1] = border_y[i];
-        
-        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
-        cs->reverse_lookup(coord, gp);
-        
-        // Mark border position with 1.0
-        int ix = gp[0];
-        int iy = gp[1];
-        
-        border_data[iy][ix] = 1.0;
-    }
-    
-    // Write data off
-    
-    borders.putVar(&border_data[0][0]);
+//    float border_x[rd.getSize()];
+//    float border_y[rd.getSize()];
+//    
+//    mapstuff_file.getVar("border_x").getVar(&border_x[0]);
+//    mapstuff_file.getVar("border_y").getVar(&border_y[0]);
+//    
+//    static double border_data[900][900];
+//    
+//    for (size_t iy=0; iy < 900; iy++)
+//        for (size_t ix=0; ix < 900; ix++)
+//            border_data[iy][ix] = z_fillValue;
+//    
+//    for (size_t i=0; i < bd.getSize(); i++)
+//    {
+//        if (border_x[i] == std::numeric_limits<float>::quiet_NaN()
+//            || border_y[i] == std::numeric_limits<float>::quiet_NaN())
+//            continue;
+//        
+//        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
+//        coord[0] = border_x[i];
+//        coord[1] = border_y[i];
+//        
+//        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+//        cs->reverse_lookup(coord, gp);
+//        
+//        // Mark border position with 1.0
+//        int ix = gp[0];
+//        int iy = gp[1];
+//        
+//        border_data[iy][ix] = 1.0;
+//    }
+//    
+//    // Write data off
+//    
+//    borders.putVar(&border_data[0][0]);
 
     
     delete cs;
