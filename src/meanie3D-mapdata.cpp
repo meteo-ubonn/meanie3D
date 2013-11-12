@@ -6,13 +6,14 @@
 //  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
-#include <boost/tokenizer.hpp>
-#include <boost/program_options.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/info.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/program_options.hpp>
 #include <boost/smart_ptr.hpp>
+#include <boost/tokenizer.hpp>
 
 #include <meanie3D/meanie3D.h>
 
@@ -489,6 +490,161 @@ void add_national_topography(NcFile &mapfile)
     delete z_data;
 }
 
+void add_national_mapstuff_2D(NcFile &mapfile)
+{
+    NcFile topography_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc",NcFile::read);
+    NcFile mapstuff_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/radolan_mapstuff.nc",NcFile::read);
+    
+    vector<NcDim> dimensions;
+    vector<NcDim> local_dimensions;
+    vector<NcVar> variables;
+    
+    multimap<string,NcDim> topo_dims_map = topography_file.getDims();
+    multimap<string,NcDim>::iterator di;
+    for (di=topo_dims_map.begin(); di!=topo_dims_map.end(); ++di)
+    {
+        if (di->first == "t") continue;
+        dimensions.push_back(di->second);
+        variables.push_back(topography_file.getVar(di->first));
+    }
+
+    local_dimensions.push_back(mapfile.getDim("national_y"));
+    local_dimensions.push_back(mapfile.getDim("national_x"));
+
+    // Might use this for converting between grid
+    // and projection coordinate
+    CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions, variables);
+
+    double z_fillValue = -9999.0f;
+    
+    // create the output file with dims/vars
+    
+    nc_redef(mapfile.getId());
+    
+    // Rivers
+    
+    NcDim rd = mapfile.addDim("riverdim", mapstuff_file.getDim("riverdim").getSize());
+    NcVar rivers = mapfile.addVar("national_rivers_2D", ncFloat, local_dimensions);
+    rivers.putAtt("_FillValue", ncFloat, z_fillValue);
+    rivers.putAtt("units", "km");
+    rivers.putAtt("long_name", "national_rivers_2D");
+    rivers.putAtt("valid_min", ncFloat, 0.0);
+    rivers.putAtt("valid_max", ncFloat, 1.0);
+    rivers.putAtt("scale_factor", ncFloat, 1.0);
+    rivers.putAtt("add_offset", ncFloat, 0.0);
+
+    // Borders
+    
+    NcDim bd = mapfile.addDim("borderdim", mapstuff_file.getDim("borderdim").getSize());
+    NcVar borders = mapfile.addVar("national_borders_2D", ncFloat, local_dimensions);
+    borders.putAtt("_FillValue", ncFloat, z_fillValue);
+    borders.putAtt("units", "km");
+    borders.putAtt("long_name", "national_borders_2D");
+    borders.putAtt("valid_min", ncFloat, 0.0);
+    borders.putAtt("valid_max", ncFloat, 1.0);
+    borders.putAtt("scale_factor", ncFloat, 1.0);
+    borders.putAtt("add_offset", ncFloat, 0.0);
+
+    nc_enddef(mapfile.getId());
+
+    // Rivers
+
+    float river_x[rd.getSize()];
+    float river_y[rd.getSize()];
+    
+    mapstuff_file.getVar("river_x").getVar(&river_x[0]);
+    mapstuff_file.getVar("river_y").getVar(&river_y[0]);
+    
+    static double river_data[900][900];
+    
+    for (size_t iy=0; iy < 900; iy++)
+        for (size_t ix=0; ix < 900; ix++)
+            river_data[iy][ix] = z_fillValue;
+    
+    for (size_t i=0; i < rd.getSize(); i++)
+    {
+        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
+        coord[0] = river_x[i];
+        coord[1] = river_y[i];
+        
+        cout << "Coordinate=" << coord;
+        
+        if (isnan(coord[0]) || isnan(coord[1]))
+        {
+            cout << " isNan => skipping" << endl;
+            continue;
+        }
+
+        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+        cs->reverse_lookup(coord, gp);
+        
+        cout << " => gridpoint=" << gp << endl;
+        
+        // Mark river position with 1.0
+        int ix = gp[0];
+        int iy = gp[1];
+        
+        river_data[iy][ix] = 1.0;
+    }
+    
+    // Write data off
+    
+    rivers.putVar(&river_data[0][0]);
+    
+    // Borders
+    
+    float border_x[rd.getSize()];
+    float border_y[rd.getSize()];
+    
+    mapstuff_file.getVar("border_x").getVar(&border_x[0]);
+    mapstuff_file.getVar("border_y").getVar(&border_y[0]);
+    
+    static double border_data[900][900];
+    
+    for (size_t iy=0; iy < 900; iy++)
+        for (size_t ix=0; ix < 900; ix++)
+            border_data[iy][ix] = z_fillValue;
+    
+    for (size_t i=0; i < bd.getSize(); i++)
+    {
+        if (border_x[i] == std::numeric_limits<float>::quiet_NaN()
+            || border_y[i] == std::numeric_limits<float>::quiet_NaN())
+            continue;
+        
+        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
+        coord[0] = border_x[i];
+        coord[1] = border_y[i];
+        
+        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+        cs->reverse_lookup(coord, gp);
+        
+        // Mark border position with 1.0
+        int ix = gp[0];
+        int iy = gp[1];
+        
+        border_data[iy][ix] = 1.0;
+    }
+    
+    // Write data off
+    
+    borders.putVar(&border_data[0][0]);
+
+    
+    delete cs;
+}
+
+void do_it()
+{
+    NcFile mapfile("oase-mapdata.nc",NcFile::replace,NcFile::classic);
+    mapfile.putAtt("conventions","CF-1.6");
+    mapfile.putAtt("authors","Jürgen Simon, Malte Diederich");
+    mapfile.putAtt("created","Oct 5th 2013 18:25:00 CET");
+    mapfile.putAtt("version","1.0");
+    
+    add_local_topography(mapfile);
+    add_national_topography(mapfile);
+    add_national_mapstuff_2D(mapfile);
+}
 
 /**
  *
@@ -503,14 +659,13 @@ int main(int argc, char** argv)
     // Select the correct point factory
     PointFactory<T>::set_instance( new M3DPointFactory<T>() );
     
-    NcFile mapfile("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc",NcFile::replace,NcFile::classic);
-    mapfile.putAtt("conventions","CF-1.6");
-    mapfile.putAtt("authors","Jürgen Simon, Malte Diederich");
-    mapfile.putAtt("created","Oct 5th 2013 18:25:00 CET");
-    mapfile.putAtt("version","1.0");
-
-    add_local_topography(mapfile);
-    add_national_topography(mapfile);
-    
+    try
+    {
+        do_it();
+    }
+    catch (std::exception &e)
+    {
+        cerr << "ERROR:" << e.what() << endl;
+    }
     return 0;
 };

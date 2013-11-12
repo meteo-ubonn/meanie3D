@@ -113,6 +113,7 @@ namespace m3D {
         // tracking help
         
         bool            tracking_performed; 
+        int             tracking_time_difference; // time difference between the two files in [s]
         id_set_t        tracked_ids;    // IDs that were continues
         id_set_t        dropped_ids;    // IDs that were discontinued
         id_set_t        new_ids;        // IDs that were added fresh

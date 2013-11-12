@@ -100,6 +100,8 @@ namespace m3D {
             cerr << "ERROR:files too far apart in time. Time difference:" << this->m_deltaT << "s, longest accepted:" << m_max_deltaT << "s" << endl;
             return;
         }
+        
+        current->tracking_time_difference = boost::numeric_cast<int>(m_deltaT);
 
         T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         

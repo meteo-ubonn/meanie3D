@@ -59,6 +59,9 @@ a.axes3D.yAxis.title.visible=0
 a.axes3D.zAxis.title.visible=0
 SetAnnotationAttributes(a)
 
+# Add gray/black background gradient
+visitUtils.add_background_gradient();
+
 print "Cleaning up *.vtk *.vtr *.png"
 return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
 
@@ -100,23 +103,14 @@ for netcdf_file in netcdf_files:
         print "Cluster file does not exist. Skipping."
         continue
 
-    start_time = time.time()
-    print "-- Converting clusters to .vtr --"
-
-    # build the clustering command
-    command=conversion_bin+" -f "+cluster_file+" "+CONVERSION_PARAMS
-    print command
-    return_code = call( command, shell=True)
-
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
-    print "-- Rendering cluster scene --"
-    start_time = time.time()
-
     # add topograpy
     visit2D.add_topography("national_topo_2D")
 
     # now plot the data
     OpenDatabase(netcdf_file);
+
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
 
     # Re-add the source with "xray"
     visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",0.75,1)
@@ -131,11 +125,22 @@ for netcdf_file in netcdf_files:
     DeleteAllPlots()
     ClearWindow()
 
-    # add 3D topograpy
+    start_time = time.time()
+    print "-- Converting clusters to .vtr --"
+
+    # build the clustering command
+    command=conversion_bin+" -f "+cluster_file+" "+CONVERSION_PARAMS
+    print command
+    return_code = call( command, shell=True)
+
+    print "    done. (%.2f seconds)" % (time.time()-start_time)
+    print "-- Rendering cluster scene --"
+    start_time = time.time()
+
+    # add 2D topograpy
     visit2D.add_topography("national_topo_2D")
 
     # re-plot source data as canvas
-
     visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.1, 0 )
 
     # threshold as before
@@ -143,6 +148,9 @@ for netcdf_file in netcdf_files:
     t = ThresholdAttributes();
     t.lowerBounds=(VAR_MIN)
     SetOperatorOptions(t)
+
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
 
     # Add the clusters
     basename = CLUSTER_DIR+"/"

@@ -67,6 +67,9 @@ print "-- Creating colortables ---"
 num_colors = visitUtils.create_cluster_colortable("cluster_colors")
 visitUtils.create_topography_colortable()
 
+# Add gray/black background gradient
+visitUtils.add_background_gradient();
+
 print
 print "    done."
 
@@ -100,21 +103,6 @@ for netcdf_file in netcdf_files:
         print "Cluster file does not exist. Skipping."
         continue
 
-    start_time = time.time()
-    print "-- Converting clusters to .vtr --"
-
-    # build the clustering command
-    command=conversion_bin+" -f "+cluster_file+" "+CONVERSION_PARAMS
-    print command
-    return_code = call( command, shell=True)
-
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
-    print "-- Rendering cluster scene --"
-    start_time = time.time()
-
-    # Start by plotting the 'backdrop'
-    #visitUtils.add_topography()
-
     # add 3D topograpy
     visit3D.add_topography("local_topo_3D")
 
@@ -128,11 +116,26 @@ for netcdf_file in netcdf_files:
     t.lowerBounds=(VAR_MIN)
     SetOperatorOptions(t)
 
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
+
     DrawPlots()
     visitUtils.save_window("source_",1)
-
     DeleteAllPlots()
     ClearWindow()
+
+    start_time = time.time()
+    print "-- Converting clusters to .vtr --"
+
+    # build the clustering command
+    command=conversion_bin+" -f "+cluster_file+" "+CONVERSION_PARAMS
+    print command
+    return_code = call( command, shell=True)
+
+    print "    done. (%.2f seconds)" % (time.time()-start_time)
+    print "-- Rendering cluster scene --"
+    start_time = time.time()
+
 
     # add 3D topograpy
     visit3D.add_topography("local_topo_3D")
@@ -145,6 +148,9 @@ for netcdf_file in netcdf_files:
     t = ThresholdAttributes();
     t.lowerBounds=(VAR_MIN)
     SetOperatorOptions(t)
+
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
 
     # Add the clusters
     basename = CLUSTER_DIR+"/"
@@ -161,8 +167,6 @@ for netcdf_file in netcdf_files:
     visitUtils.save_window("tracking_",1)
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
-
-    exit(0);
 
     # clean up
     DeleteAllPlots();

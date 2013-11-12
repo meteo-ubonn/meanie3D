@@ -7,11 +7,14 @@ from visit import *
 import glob
 import os
 import os.path
+import string
 
 # This module bundles python routines for handling Visit3D
 # plotting more comfortably from the various visualization
 # routines
 
+# module variable holding a reference
+datetime_annotation="not_set"
 
 # Saves PNG file
 # @param basename for the file
@@ -123,5 +126,71 @@ def create_topography_colortable():
         index=index+1
     AddColorTable("topography", ccpl)
     return
+
+## Add a 2D text annotation of height 2%
+# @param x position
+# @param y position
+# @param text message
+def add_text_annotation(x,y,message):
+
+    print "Annotations:"
+    print GetAnnotationObjectNames()
+
+    text="";
+    try:
+        text = GetAnnotationObject("Text2D1")
+        print "Obtained existing annotation object"
+
+    except visit.VisItException:
+        text = CreateAnnotationObject("Text2D")
+        print "Creating new annotation object"
+
+    text.text = message;
+    text.position = (x,y)
+    text.height = 0.02
+    print text
+    return
+
+## Add background gradient from dark (middle)
+# to light gray (outside)
+def add_background_gradient():
+    a = AnnotationAttributes()
+    a.backgroundMode = a.Gradient
+    a.gradientBackgroundStyle = a.Radial
+    a.gradientColor1 = (0,0,0,255)
+    a.gradientColor2 = (192,192,192,255)
+    SetAnnotationAttributes(a)
+    return
+
+# Extracts the date/time from a filename according
+# to the oase 3D composite format and adds it to
+# the currenty image
+def add_datetime(filename):
+    
+    # OASE 3D
+    # herz-oase-20110605t2355utc-0500m-bonnjue-3d-v01a.nc
+    baseIndex=string.find(filename,"herz-oase")
+    if baseIndex >= 0:
+        year = filename[baseIndex+10:baseIndex+14]
+        month = filename[baseIndex+14:baseIndex+16]
+        day = filename[baseIndex+16:baseIndex+18]
+        hour = filename[baseIndex+19:baseIndex+21]
+        minute = filename[baseIndex+21:baseIndex+23]
+        text = day+"."+month+"."+year+" "+hour+":"+minute+" UTC"
+        add_text_annotation(0.725,0.95,text);
+        return
+
+    # RADOLAN
+    #raa01-rx_10000-1307010555-dwd---bin.nc
+    baseIndex=string.find(filename,"raa01-rx_10000")
+    if baseIndex >= 0:
+        year = filename[baseIndex+15:baseIndex+17]
+        month = filename[baseIndex+17:baseIndex+19]
+        day = filename[baseIndex+19:baseIndex+21]
+        hour = filename[baseIndex+21:baseIndex+23]
+        minute = filename[baseIndex+23:baseIndex+25]
+        text = day+"."+month+".'"+year+" "+hour+":"+minute+" UTC"
+        add_text_annotation(0.725,0.95,text);
+        return
 
 # End of visitUtils.py

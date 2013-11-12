@@ -114,15 +114,19 @@ namespace m3D {
         {
             NcFile *file = NULL;
             
+            bool file_existed = boost::filesystem::exists(path);
+            
             try
             {
-                if (this->ncFile != NULL)
-                {
-                    delete this->ncFile;
-                    this->ncFile = NULL;
-                }
+                // Be aware of the fact that this->ncFile is probably
+                // open from the tracking at this point. It also needs
+                // to be open, because the dimensions etc. are referencing
+                // it. This creates a paradoxical situation, which is solved
+                // by creating a new file with an altered name first, writing
+                // it off and finally deleting the original when done, replacing
+                // the original in that way.
                 
-                file = new NcFile( path, NcFile::replace );
+                file = new NcFile( (file_existed?path+"-new":path), NcFile::replace );
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
@@ -245,6 +249,7 @@ namespace m3D {
             if ( this->tracking_performed )
             {
                 file->putAtt( "tracking_performed", "yes" );
+                file->putAtt( "tracking_time_difference", ncInt, this->tracking_time_difference);
                 file->putAtt( "tracked_ids", to_string( this->tracked_ids ) );
                 file->putAtt( "new_ids", to_string( this->new_ids ) );
                 file->putAtt( "dropped_ids", to_string( this->dropped_ids ) );
@@ -259,11 +264,9 @@ namespace m3D {
             
             // Record IDs in attribute
 
-            vector<cfa::id_t> cluster_ids;
+            id_set_t cluster_ids;
             for ( size_t ci = 0; ci < clusters.size(); ci++ )
-                cluster_ids.push_back(clusters[ci]->id);
-            
-            std::sort(cluster_ids.begin(), cluster_ids.end());
+                cluster_ids.insert(clusters[ci]->id);
             
             file->putAtt( "cluster_ids", to_string(cluster_ids) );
             
@@ -367,6 +370,19 @@ namespace m3D {
                 }
             }
             
+            if (file_existed)
+            {
+                // close the original and delete it
+                if (this->ncFile != NULL)
+                {
+                    delete this->ncFile;
+                    this->ncFile = NULL;
+                }
+                
+                boost::filesystem::remove(path);
+                boost::filesystem::rename(path+"-new", path);
+            }
+            
         }
         catch (const std::exception &e)
         {
@@ -384,7 +400,7 @@ namespace m3D {
         vector<NcVar>               dimension_variables;
         vector<NcDim>               dimensions;
         string                      source_file;
-        vector<cfa::id_t>           cluster_ids;
+        id_set_t                    cluster_ids;
         typename Cluster<T>::list   list;
         NcFile                      *file = NULL;
         
@@ -394,6 +410,7 @@ namespace m3D {
         id_set_t    dropped_ids;
         id_map_t    merges;
         id_map_t    splits;
+        int         tracking_time_difference;
         timestamp_t timestamp = 0;
         cfa::id_t   highest_id;
         
@@ -450,7 +467,7 @@ namespace m3D {
             std::string value;
 
             file->getAtt("cluster_ids").getValues(value);
-            cluster_ids = cfa::utils::vectors::from_string<cfa::id_t>(value);
+            cluster_ids = cfa::utils::sets::from_string<cfa::id_t>(value);
 
             // Tracking-related
             
@@ -479,6 +496,8 @@ namespace m3D {
                     unsigned long long hid;
                     file->getAtt("highest_id").getValues(&hid);
                     highest_id = boost::numeric_cast<cfa::id_t>(hid);
+                    
+                    file->getAtt("tracking_time_difference").getValues(&tracking_time_difference);
                 }
             }
             catch (netCDF::exceptions::NcException &e)
@@ -511,10 +530,13 @@ namespace m3D {
             
             // Read clusters one by one
             
-            for ( size_t i = 0; i < cluster_ids.size(); i++ )
+            id_set_t::iterator cid_iter;
+            
+            for ( cid_iter = cluster_ids.begin(); cid_iter != cluster_ids.end(); cid_iter++ )
             {
                 // Identifier
-                cfa::id_t cid = cluster_ids[i];
+                
+                cfa::id_t cid = *cid_iter;
                 
                 // cluster dimension
                 

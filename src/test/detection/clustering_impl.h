@@ -243,7 +243,9 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         
         start_timer();
         
-        //        VariableWeighed<TypeParam> *weight = new VariableWeighed<TypeParam>( this->m_file, this->coordinate_system, this->m_variables.front() );
+        WeightFunction<TypeParam> *weight = new VariableWeighed<TypeParam>(this->m_file,
+                                                                           this->coordinate_system(),
+                                                                           this->m_variables.front());
         
         
         // Create 'bandwidth' parameter from grid resolution and
@@ -260,9 +262,9 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         
         // KNNSearchParams *params = new KNNSearchParams( 200 );
         
-        ClusterOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
+        ClusterOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex);
         
-        ClusterList<TypeParam> clusters = op.cluster( params, kernel, 0 );
+        ClusterList<TypeParam> clusters = op.cluster( params, kernel, weight );
         
         delete kernel;
         
