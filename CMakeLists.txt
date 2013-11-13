@@ -124,13 +124,13 @@ MESSAGE(STATUS "Resolving dependencies for Meanie3D")
 # netcdf
 FIND_PACKAGE(NETCDF)
 IF (NOT NETCDF_FOUND)
-   MESSAGE(FATAL_ERROR "netcdf not found INCLUDE_DIR=${NETCDF_INCLUDE_DIR} LIBRARIES=${NETCDF_LIBRARIES}")
+   MESSAGE(FATAL_ERROR "netcdf(cxx) not found (http://www.unidata.ucar.edu/software/netcdf/docs/netcdf-cxx/)")
 ENDIF()
 
 # HDF5
 FIND_PACKAGE(HDF5)
 IF (NOT HDF5_FOUND)
-   MESSAGE(FATAL_ERROR "HDF5 not found INCLUDE_DIR=${HDF5_INCLUDE_DIR} LIBRARIES=${HDF5_LIBRARIES}")
+   MESSAGE(FATAL_ERROR "HDF5 not found (http://www.hdfgroup.org/HDF5/)")
 ENDIF()
 
 # Boost
@@ -142,27 +142,31 @@ ENDIF()
 # GTest
 FIND_PACKAGE(GTest)
 IF (NOT GTEST_FOUND)
-   MESSAGE(FATAL_ERROR "libgtest not found INCLUDE_DIR=${GTEST_INCLUDE_DIR} LIBRARIES=${GTEST_LIBRARIES}")
+   MESSAGE(FATAL_ERROR "libgtest not found (http://code.google.com/p/googletest/)")
 ENDIF()
 
 # TBB
 IF (WITH_TBB)
     MESSAGE(STATUS "Looking for TBB")
-   FIND_PACKAGE(TBB)
-   IF (NOT TBB_FOUND)
+    FIND_PACKAGE(TBB)
+    IF (NOT TBB_FOUND)
         MESSAGE(FATAL_ERROR "TBB not found (http://threadingbuildingblocks.org)")
-   ELSE(NOT TBB_FOUND)
-        MESSAGE(STATUS "TBB_LIBRARIES = ${TBB_LIBRARIES}")
-   ENDIF(NOT TBB_FOUND)
+    ENDIF (NOT TBB_FOUND)
 ENDIF(WITH_TBB)
 
 # VTK
 FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
 IF (NOT VTK_FOUND)
-   MESSAGE(FATAL_ERROR "VTK not found")
+   MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/VTK/resources/software.html)")
 ELSE(NOT VTK_FOUND)
     INCLUDE(${VTK_USE_FILE})
 ENDIF(NOT VTK_FOUND)
+
+# Osmium/osmpbf
+FIND_PACKAGE(osmpbf)
+IF (NOT osmpbf_FOUND)
+    MESSAGE(FATAL_ERROR "osmpbf not found (http://wiki.openstreetmap.org/wiki/Osmium/Quick_Start)")
+ENDIF(NOT osmpbf_FOUND)
 
 # -------------------------------------
 # Submodules
@@ -186,6 +190,7 @@ IF(WITH_TBB)
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
 		${TBB_INCLUDE_DIRS}
+        ${osmpbf_INCLUDE_DIRS}
         ${VTK_INCLUDE_DIRS})
 ELSE()
 	INCLUDE_DIRECTORIES(
@@ -195,6 +200,7 @@ ELSE()
 		${numericalrecipes_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
+        ${osmpbf_INCLUDE_DIRS}
         ${VTK_INCLUDE_DIRS})
 ENDIF()
 
@@ -376,7 +382,8 @@ TARGET_LINK_LIBRARIES(meanie3D-mapdata
     ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${VTK_LIBRARIES}
+    ${osmpbf_LIBRARIES})
 
 # timestamp update
 
