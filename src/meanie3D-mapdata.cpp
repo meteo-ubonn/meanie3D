@@ -614,11 +614,17 @@ void add_national_mapstuff_2D(NcFile &mapfile)
         {
             CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
 
-            cs->reverse_lookup(coord, gp);
+            try
+            {
+                cs->reverse_lookup(coord, gp);
+                cout << "coordinate=" << coord << " => gridpoint=" << gp << endl;
+                line_points.insert(gp);
+            }
+            catch (std::out_of_range)
+            {
+                cout << "coordinate=" << coord << " out of the box. Skipping." << endl;
+            }
             
-            cout << "coordinate=" << coord << " => gridpoint=" << gp << endl;
-            
-            line_points.insert(gp);
         }
     }
     
