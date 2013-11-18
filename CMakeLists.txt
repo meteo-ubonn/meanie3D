@@ -168,6 +168,12 @@ IF (NOT osmpbf_FOUND)
     MESSAGE(FATAL_ERROR "osmpbf not found (http://wiki.openstreetmap.org/wiki/Osmium/Quick_Start)")
 ENDIF(NOT osmpbf_FOUND)
 
+# Shapefile
+FIND_PACKAGE(SHP)
+IF (NOT SHP_FOUND)
+   MESSAGE(FATAL_ERROR "Shapefile not found INCLUDE_DIR=${SHP_INCLUDE_DIR} LIBRARIES=${SHP_LIBRARIES}")
+ENDIF()
+
 # -------------------------------------
 # Submodules
 # -------------------------------------
@@ -189,9 +195,11 @@ IF(WITH_TBB)
 		${numericalrecipes_SOURCE_DIR}/include
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
-		${TBB_INCLUDE_DIRS}
         ${osmpbf_INCLUDE_DIRS}
-        ${VTK_INCLUDE_DIRS})
+        ${SHP_INCLUDE_DIR}
+        ${VTK_INCLUDE_DIRS}
+        ${TBB_INCLUDE_DIRS}
+        )
 ELSE()
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/include
@@ -201,6 +209,7 @@ ELSE()
 		${NETCDF_INCLUDE_DIR}
 		${HDF5_INCLUDE_DIR}
         ${osmpbf_INCLUDE_DIRS}
+        ${SHP_INCLUDE_DIR}
         ${VTK_INCLUDE_DIRS})
 ENDIF()
 
@@ -383,7 +392,8 @@ TARGET_LINK_LIBRARIES(meanie3D-mapdata
     ${Boost_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${VTK_LIBRARIES}
-    ${osmpbf_LIBRARIES})
+    ${osmpbf_LIBRARIES}
+    ${SHP_LIBRARIES})
 
 # timestamp update
 

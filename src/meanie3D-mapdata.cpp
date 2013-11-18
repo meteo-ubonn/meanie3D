@@ -29,6 +29,8 @@
 #include <netcdf>
 #include <set>
 
+#include <shapefil.h>
+
 using namespace std;
 using namespace boost;
 using namespace netCDF;
