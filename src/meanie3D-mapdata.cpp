@@ -36,10 +36,17 @@ using namespace boost;
 using namespace netCDF;
 using namespace m3D;
 
+#define DEBUG 0
+
 /** Feature-space data type */
+
 typedef double T;
+//typedef set<CoordinateSystem<double>::GridPoint> gp_set_t;
+typedef vector<CoordinateSystem<double>::GridPoint> gp_vec_t;
 
 static const double NO_SCALE = numeric_limits<double>::min();
+
+static double const x_marks_the_spot = 1.0;
 
 void parse_commmandline(program_options::variables_map vm,
                         NcFile **filePtr,
@@ -111,11 +118,8 @@ void parse_commmandline(program_options::variables_map vm,
     }
 }
 
-void add_local_topography(NcFile &mapfile)
+void add_local_topography(NcFile &mapfile, NcFile &topography_file)
 {
-    NcFile topography_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc",NcFile::read);
-    NcFile mapstuff_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/radolan_mapstuff.nc",NcFile::read);
-    
     const size_t NX=510;
     const size_t NY=472;
     const size_t NZ=60;
@@ -178,34 +182,34 @@ void add_local_topography(NcFile &mapfile)
     
     // Create 2D topo variable
     
-    vector<NcDim> dims_2D;
-    dims_2D.push_back(dy);
-    dims_2D.push_back(dx);
-    
-    NcVar topo_2D = mapfile.addVar("local_topo_2D", ncDouble, dims_2D);
-    topo_2D.putAtt("_FillValue", ncDouble, z_fillValue);
-    topo_2D.putAtt("units", "m");
-    topo_2D.putAtt("long_name", "height above sea level");
-    topo_2D.putAtt("valid_min", ncDouble, -163.0);
-    topo_2D.putAtt("valid_max", ncDouble, 14750.0f);
-    topo_2D.putAtt("scale_factor", ncDouble, 1.0);
-    topo_2D.putAtt("add_offset", ncDouble, 0.0);
-    
-    // Create 3D topo variable
-    
-    vector<NcDim> dims_3D;
-    dims_3D.push_back(dz);
-    dims_3D.push_back(dy);
-    dims_3D.push_back(dx);
-    
-    NcVar topo_3D = mapfile.addVar("local_topo_3D", ncDouble, dims_3D);
-    topo_3D.putAtt("_FillValue", ncDouble, z_fillValue);
-    topo_3D.putAtt("units", "m");
-    topo_3D.putAtt("long_name", "height above sea level");
-    topo_3D.putAtt("valid_min", ncDouble, -163.0f);
-    topo_3D.putAtt("valid_max", ncDouble, 14750.0f);
-    topo_3D.putAtt("scale_factor", ncDouble, 1.0);
-    topo_3D.putAtt("add_offset", ncDouble, 0.0);
+//    vector<NcDim> dims_2D;
+//    dims_2D.push_back(dy);
+//    dims_2D.push_back(dx);
+//    
+//    NcVar topo_2D = mapfile.addVar("local_topo_2D", ncDouble, dims_2D);
+//    topo_2D.putAtt("_FillValue", ncDouble, z_fillValue);
+//    topo_2D.putAtt("units", "m");
+//    topo_2D.putAtt("long_name", "height above sea level");
+//    topo_2D.putAtt("valid_min", ncDouble, -163.0);
+//    topo_2D.putAtt("valid_max", ncDouble, 14750.0f);
+//    topo_2D.putAtt("scale_factor", ncDouble, 1.0);
+//    topo_2D.putAtt("add_offset", ncDouble, 0.0);
+//    
+//    // Create 3D topo variable
+//    
+//    vector<NcDim> dims_3D;
+//    dims_3D.push_back(dz);
+//    dims_3D.push_back(dy);
+//    dims_3D.push_back(dx);
+//    
+//    NcVar topo_3D = mapfile.addVar("local_topo_3D", ncDouble, dims_3D);
+//    topo_3D.putAtt("_FillValue", ncDouble, z_fillValue);
+//    topo_3D.putAtt("units", "m");
+//    topo_3D.putAtt("long_name", "height above sea level");
+//    topo_3D.putAtt("valid_min", ncDouble, -163.0f);
+//    topo_3D.putAtt("valid_max", ncDouble, 14750.0f);
+//    topo_3D.putAtt("scale_factor", ncDouble, 1.0);
+//    topo_3D.putAtt("add_offset", ncDouble, 0.0);
     
     nc_enddef(mapfile.getId());
 
@@ -239,6 +243,10 @@ void add_local_topography(NcFile &mapfile)
     {
         cerr << e.what() << endl;
     }
+    
+    // vv REMOVE THIS vv
+    return;
+    // ^^ REMOVE THIS ^^
     
     // Write variables
     
@@ -322,20 +330,17 @@ void add_local_topography(NcFile &mapfile)
     
     // Write data off
     
-    topo_2D.putVar(&topo_data_2D[0][0]);
-    
-    topo_3D.putVar(&topo_data_3D[0][0][0]);
+//    topo_2D.putVar(&topo_data_2D[0][0]);
+//    
+//    topo_3D.putVar(&topo_data_3D[0][0][0]);
     
     delete x_data;
     delete y_data;
     delete z_data;
 }
 
-void add_national_topography(NcFile &mapfile)
+void add_national_topography(NcFile &mapfile, NcFile &topography_file)
 {
-    NcFile topography_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc",NcFile::read);
-    NcFile mapstuff_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/radolan_mapstuff.nc",NcFile::read);
-    
     vector<NcDim> dimensions;
     vector<NcVar> variables;
     
@@ -400,34 +405,34 @@ void add_national_topography(NcFile &mapfile)
     
     // Create 2D topo variable
     
-    vector<NcDim> dims_2D;
-    dims_2D.push_back(dy);
-    dims_2D.push_back(dx);
-    
-    NcVar topo_2D = mapfile.addVar("national_topo_2D", ncDouble, dims_2D);
-    topo_2D.putAtt("_FillValue", ncDouble, z_fillValue);
-    topo_2D.putAtt("units", "m");
-    topo_2D.putAtt("long_name", "height above sea level");
-    topo_2D.putAtt("valid_min", ncDouble, -163.0);
-    topo_2D.putAtt("valid_max", ncDouble, 14750.0f);
-    topo_2D.putAtt("scale_factor", ncDouble, 1.0);
-    topo_2D.putAtt("add_offset", ncDouble, 0.0);
-    
-    // Create 3D topo variable
-    
-    vector<NcDim> dims_3D;
-    dims_3D.push_back(dz);
-    dims_3D.push_back(dy);
-    dims_3D.push_back(dx);
-    
-    NcVar topo_3D = mapfile.addVar("national_topo_3D", ncDouble, dims_3D);
-    topo_3D.putAtt("_FillValue", ncDouble, z_fillValue);
-    topo_3D.putAtt("units", "m");
-    topo_3D.putAtt("long_name", "height above sea level");
-    topo_3D.putAtt("valid_min", ncDouble, -163.0f);
-    topo_3D.putAtt("valid_max", ncDouble, 14750.0f);
-    topo_3D.putAtt("scale_factor", ncDouble, 1.0);
-    topo_3D.putAtt("add_offset", ncDouble, 0.0);
+//    vector<NcDim> dims_2D;
+//    dims_2D.push_back(dy);
+//    dims_2D.push_back(dx);
+//    
+//    NcVar topo_2D = mapfile.addVar("national_topo_2D", ncDouble, dims_2D);
+//    topo_2D.putAtt("_FillValue", ncDouble, z_fillValue);
+//    topo_2D.putAtt("units", "m");
+//    topo_2D.putAtt("long_name", "height above sea level");
+//    topo_2D.putAtt("valid_min", ncDouble, -163.0);
+//    topo_2D.putAtt("valid_max", ncDouble, 14750.0f);
+//    topo_2D.putAtt("scale_factor", ncDouble, 1.0);
+//    topo_2D.putAtt("add_offset", ncDouble, 0.0);
+//    
+//    // Create 3D topo variable
+//    
+//    vector<NcDim> dims_3D;
+//    dims_3D.push_back(dz);
+//    dims_3D.push_back(dy);
+//    dims_3D.push_back(dx);
+//    
+//    NcVar topo_3D = mapfile.addVar("national_topo_3D", ncDouble, dims_3D);
+//    topo_3D.putAtt("_FillValue", ncDouble, z_fillValue);
+//    topo_3D.putAtt("units", "m");
+//    topo_3D.putAtt("long_name", "height above sea level");
+//    topo_3D.putAtt("valid_min", ncDouble, -163.0f);
+//    topo_3D.putAtt("valid_max", ncDouble, 14750.0f);
+//    topo_3D.putAtt("scale_factor", ncDouble, 1.0);
+//    topo_3D.putAtt("add_offset", ncDouble, 0.0);
     
     nc_enddef(mapfile.getId());
     
@@ -451,6 +456,10 @@ void add_national_topography(NcFile &mapfile)
     {
         cerr << e.what() << endl;
     }
+    
+    // vv REMOVE THIS vv
+    return;
+    // ^^ REMOVE THIS ^^
     
     // Write variables
     
@@ -485,208 +494,548 @@ void add_national_topography(NcFile &mapfile)
     
     // Write data off
     
-    topo_2D.putVar(&topo_data_2D[0][0]);
-    
-    topo_3D.putVar(&topo_data_3D[0][0][0]);
+//    topo_2D.putVar(&topo_data_2D[0][0]);
+//    
+//    topo_3D.putVar(&topo_data_3D[0][0][0]);
     
     delete cs;
     delete z_data;
 }
 
-void add_national_mapstuff_2D(NcFile &mapfile)
+std::string shape_type(int shapeTypeID)
 {
-    NcFile topography_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc",NcFile::read);
-    NcFile mapstuff_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/radolan_mapstuff.nc",NcFile::read);
+    std::string result = "UNKNOWN";
+    
+    switch (shapeTypeID)
+    {
+        case SHPT_ARC:
+            result = "SHPT_ARC";
+            break;
+        case SHPT_ARCM:
+            result = "SHPT_SHPT_ARCM";
+            break;
+        case SHPT_ARCZ:
+            result = "SHPT_ARCZ";
+            break;
+        case SHPT_MULTIPATCH:
+            result = "SHPT_MULTIPATCH";
+            break;
+        case SHPT_MULTIPOINT:
+            result = "SHPT_MULTIPOINT";
+            break;
+        case SHPT_MULTIPOINTM:
+            result = "SHPT_SHPT_MULTIPOINTM";
+            break;
+        case SHPT_MULTIPOINTZ:
+            result = "SHPT_MULTIPOINTZ";
+            break;
+        case SHPT_POINT:
+            result = "SHPT_POINT";
+            break;
+        case SHPT_POINTM:
+            result = "SHPT_POINTM";
+            break;
+        case SHPT_POINTZ:
+            result = "SHPT_POINTZ";
+            break;
+        case SHPT_POLYGON:
+            result = "SHPT_POLYGON";
+            break;
+        case SHPT_POLYGONM:
+            result = "SHPT_POLYGONM";
+            break;
+        case SHPT_POLYGONZ:
+            result = "SHPT_POLYGONZ";
+            break;
+        case SHPT_NULL:
+            result = "SHPT_NULL";
+            break;
+    }
+    
+    return result;
+}
+
+template<std::size_t N, std::size_t M>
+void
+draw_line_in_grid_2D(double (&data)[N][M],gp_vec_t &line_points, NcVar &var)
+{
+#if DEBUG
+    cout << "\tdrawing line (" << line_points.size() << " vertices)" << endl;
+#endif
+    
+    CoordinateSystem<double>::GridPoint lp;
+    bool have_last_point = false;
+    gp_vec_t::iterator li;
+    
+    size_t j = 0;
+    
+    for (li=line_points.begin(); li!=line_points.end(); li++)
+    {
+        CoordinateSystem<double>::GridPoint p = *li;
+        
+        // cout << p << endl;
+        
+        if (have_last_point)
+        {
+#if DEBUG
+            cout << "\t\tdrawing segment #" << j++ << " from (" << lp[1] << "," << lp[0] << ") "
+            << "to (" << p[1] << "," << p[0] << ")" << endl;
+#endif
+            // which direction is x going?
+            
+            int dx = 0;
+            
+            if (lp[1] < p[1])
+                dx = 1;
+            else if (lp[1] > p[1])
+                dx = -1;
+            
+            // which direction is y going?
+            
+            int dy = 0;
+            
+            if (lp[0] < p[0])
+                dy = 1;
+            else if (lp[0] > p[0])
+                dy = -1;
+            
+            // on the starting block
+            
+            size_t x = lp[1];
+            size_t y = lp[0];
+            
+#if DEBUG
+            cout << "\t\t\t(" << x << "," << y << ")" << endl;
+#endif
+            data[y][x] = x_marks_the_spot;
+
+            // go
+            
+            while (x != p[1] && y != p[0])
+            {
+                // propose walking x
+                vector<size_t> x_next(2);
+                x_next[1] = x + dx;
+                x_next[0] = y;
+                
+                // propose walking y
+                vector<size_t> y_next(2);
+                y_next[1] = x;
+                y_next[0] = y + dy;
+                
+                // which one gets closer to end?
+                double dist_x = vector_norm(p-x_next);
+                double dist_y = vector_norm(p-y_next);
+                
+                if (dist_x < dist_y)
+                {
+                    // walking x gets us closer
+                    x = x + dx;
+                }
+                else if (dist_x > dist_y)
+                {
+                    // walking y gets us closer
+                    y = y + dy;
+                }
+                else
+                {
+                    // same difference, so walk both
+                    x = x + dx;
+                    y = y + dy;
+                }
+                
+                // X marks the spot
+                data[y][x] = x_marks_the_spot;
+#if DEBUG
+                cout << "\t\t\t(" << x << "," << y << ")" << endl;
+#endif
+            }
+        }
+        
+        lp = p;
+        have_last_point = true;
+    }
+    
+}
+
+
+/** Add river arcs from a file provided by the following website:
+ * http://www.naturalearthdata.com
+ *
+ * This method expects the dimensions and dimension vars
+ * to be in place
+ */
+void add_national_river_data(NcFile &mapfile, const char *river_file)
+{
+    SHPHandle file = SHPOpen( river_file, "rb" );
+    
+    if (!file)
+    {
+        cerr << "ERROR:can't open " << river_file << endl;
+        return;
+    }
+    
+//    int numEntities = 0;
+//    int shapeType = 0;
+//    double min_bounds[3] = {0,0,0};
+//    double max_bounds[3] = {0,0,0};
+//
+//    SHPGetInfo(file, &numEntities, &shapeType, &min_bounds[0], &max_bounds[0]);
+
+#if DEBUG
+    cout << "River shapefile " << river_file << endl;
+    cout << "\tnumber of enties: " << file->nRecords << endl;
+    cout << "\tshape type: " << shape_type(file->nShapeType) << endl;
+    cout << "\tmin_bounds: ";
+    cfa::utils::array::print_array(file->adBoundsMin, 3);
+    cout << endl;
+    cout << "\tmax_bounds: ";
+    cfa::utils::array::print_array(file->adBoundsMax, 3);
+    cout << endl;
+#endif
+    
+    // Obtain NetCDF data and create river variable
     
     vector<NcDim> dimensions;
-    vector<NcDim> local_dimensions;
-    vector<NcVar> variables;
+    dimensions.push_back(mapfile.getDim("national_y"));
+    dimensions.push_back(mapfile.getDim("national_x"));
     
-    multimap<string,NcDim> topo_dims_map = topography_file.getDims();
-    multimap<string,NcDim>::iterator di;
-    for (di=topo_dims_map.begin(); di!=topo_dims_map.end(); ++di)
-    {
-        if (di->first == "t") continue;
-        dimensions.push_back(di->second);
-        variables.push_back(topography_file.getVar(di->first));
-    }
-
-    local_dimensions.push_back(mapfile.getDim("national_y"));
-    local_dimensions.push_back(mapfile.getDim("national_x"));
-
-    // Might use this for converting between grid
-    // and projection coordinate
-    CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions, variables);
+    vector<NcVar> variables;
+    variables.push_back(mapfile.getVar("national_y"));
+    variables.push_back(mapfile.getVar("national_x"));
+    
+    CoordinateSystem<double> *cs = new CoordinateSystem<double>(dimensions,variables);
 
     double z_fillValue = -9999.0f;
     
-    // create the output file with dims/vars
+    // Need to go into definition mode because of a
+    // bug in the c++ NetCDF interface
     
     nc_redef(mapfile.getId());
     
-    // Rivers
+    // Create river variable
     
-    NcDim rd = mapfile.addDim("riverdim", mapstuff_file.getDim("riverdim").getSize());
-    NcVar rivers = mapfile.addVar("national_rivers_2D", ncFloat, local_dimensions);
-    rivers.putAtt("_FillValue", ncFloat, z_fillValue);
-    rivers.putAtt("units", "km");
-    rivers.putAtt("long_name", "national_rivers_2D");
-    rivers.putAtt("valid_min", ncFloat, 0.0);
-    rivers.putAtt("valid_max", ncFloat, 1.0);
-    rivers.putAtt("scale_factor", ncFloat, 1.0);
-    rivers.putAtt("add_offset", ncFloat, 0.0);
-
-    // Borders
+    NcVar rivers_2D = mapfile.addVar("national_rivers_2D", ncFloat, dimensions);
+    rivers_2D.putAtt("_FillValue", ncFloat, z_fillValue);
+    rivers_2D.putAtt("units", "km");
+    rivers_2D.putAtt("long_name", "national_rivers_2D");
+    rivers_2D.putAtt("valid_min", ncFloat, 0.0);
+    rivers_2D.putAtt("valid_max", ncFloat, x_marks_the_spot);
+    rivers_2D.putAtt("scale_factor", ncFloat, 1.0);
+    rivers_2D.putAtt("add_offset", ncFloat, 0.0);
     
-    NcDim bd = mapfile.addDim("borderdim", mapstuff_file.getDim("borderdim").getSize());
-    NcVar borders = mapfile.addVar("national_borders_2D", ncFloat, local_dimensions);
-    borders.putAtt("_FillValue", ncFloat, z_fillValue);
-    borders.putAtt("units", "km");
-    borders.putAtt("long_name", "national_borders_2D");
-    borders.putAtt("valid_min", ncFloat, 0.0);
-    borders.putAtt("valid_max", ncFloat, 1.0);
-    borders.putAtt("scale_factor", ncFloat, 1.0);
-    borders.putAtt("add_offset", ncFloat, 0.0);
-
     nc_enddef(mapfile.getId());
 
-    // Rivers
-
-    float river_x[rd.getSize()];
-    float river_y[rd.getSize()];
-    
-    mapstuff_file.getVar("river_x").getVar(&river_x[0]);
-    mapstuff_file.getVar("river_y").getVar(&river_y[0]);
+    // allocate data and initialize
     
     static double river_data[900][900];
-    
     for (size_t iy=0; iy < 900; iy++)
         for (size_t ix=0; ix < 900; ix++)
             river_data[iy][ix] = z_fillValue;
 
-    typedef set<CoordinateSystem<double>::GridPoint> gp_set_t;
+    // Iterate over the content of the shapefile
     
-    gp_set_t line_points;
-    
-    for (size_t i=0; i < rd.getSize(); i++)
+    // Radolan coordinate system
+    RDCoordinateSystem rcs(RD_RX);
+
+    for (int i=0; i < file->nRecords; i++)
     {
-        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
-        coord[0] = river_x[i];
-        coord[1] = river_y[i];
+        SHPObject *obj = SHPReadObject(file, i);
         
-        if (isnan(coord[0]) || isnan(coord[1]))
+#if DEBUG
+        cout << "Object #" << i << endl;
+        cout << "\tnumber of parts: " << obj->nParts << endl;
+        cout << "\tpart indexes: ";
+        cfa::utils::array::print_array(obj->panPartStart, obj->nParts);
+        cout << endl;
+        cout << "\tnumber of vertices: " << obj->nVertices << endl;
+        cout << "\tshape type:" << shape_type(obj->nSHPType) << endl;
+#endif
+        
+        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
+        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+        
+        for (int pi=0; pi < obj->nParts; pi++)
         {
-            // plot the line
+            gp_vec_t line_points;
             
-            gp_set_t::iterator li;
+            int start_vertex = obj->panPartStart[pi];
             
-            CoordinateSystem<double>::GridPoint *lp = NULL;
+            int end_vertex = (pi < (obj->nParts-1)) ? (obj->panPartStart[pi+1]-1) : (obj->nVertices-1);
             
-            cout << "drawing line:" << endl;
+#if DEBUG
+            cout << "\tpart #" << pi << "vertices [" << start_vertex << " ... " << end_vertex << "]" << endl;
+#endif
             
-            for (li=line_points.begin(); li!=line_points.end(); li++)
+            for (int vi=start_vertex; vi <= end_vertex; vi++)
             {
-                CoordinateSystem<double>::GridPoint p = *li;
+                // Assume at this point that the original
+                // projection/coordinate system is WGS84
                 
-                cout << p << endl;
+                RDGeographicalPoint geographical_coordinate = rdGeographicalPoint(obj->padfX[vi], obj->padfY[vi]);
                 
-                if (lp!=NULL)
+                // project to cartesian system
+                RDCartesianPoint cartesian = rcs.cartesianCoordinate(geographical_coordinate);
+                
+                coord[0] = cartesian.y;
+                coord[1] = cartesian.x;
+
+                try
                 {
-                    int min_x = lp->at(0) < p[0] ? lp->at(0) : p[0];
-                    int max_x = lp->at(0) > p[0] ? lp->at(0) : p[0];
+                    // look the grid point up from the file's coordinate system
+                    cs->reverse_lookup(coord, gp);
                     
-                    int min_y = lp->at(1) < p[1] ? lp->at(1) : p[1];
-                    int max_y = lp->at(1) > p[1] ? lp->at(1) : p[1];
+#if DEBUG
+                    cout << "\t\tvertice #" << vi << " "
+                    << " (lon,lat): (" << obj->padfX[vi] << "," << obj->padfY[vi] << ")"
+                    << " (x,y): (" << cartesian.x << "," << cartesian.y << ")"
+                    << " (i,j): (" << gp[1] << "," << gp[0] << ")"
+                    << endl;
+#endif
                     
-                    for (int x=min_x; x <= max_x; x++)
+                    // if it's within bounds, add it
+                    // line_points.insert(gp);
+                    line_points.push_back(gp);
+                }
+                catch (std::out_of_range &e)
+                {
+                    // not within bounds.
+                    
+                    if (!line_points.empty())
                     {
-                        for (int y=min_y; y <= max_y; y++)
-                        {
-                            river_data[y][x] = 1.0;
-                        }
+                        // dropped out of the grid in the middle of a segment, eh?
+                        // Draw what we got and clear the line
+                        draw_line_in_grid_2D(river_data,line_points,rivers_2D);
+                        
+                        line_points.clear();
+#if DEBUG
+                        rivers_2D.putVar(&river_data[0][0]);
+#endif
                     }
                 }
-
-                lp = &p;
             }
+        
+            // Draw the line ...
             
-            line_points.clear();
+            if (!line_points.empty())
+            {
+                draw_line_in_grid_2D(river_data,line_points,rivers_2D);
+#if DEBUG
+                rivers_2D.putVar(&river_data[0][0]);
+#endif
+            }
         }
-        else
-        {
-            CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+        
+        SHPDestroyObject(obj);
 
-            try
-            {
-                cs->reverse_lookup(coord, gp);
-                cout << "coordinate=" << coord << " => gridpoint=" << gp << endl;
-                line_points.insert(gp);
-            }
-            catch (std::out_of_range)
-            {
-                cout << "coordinate=" << coord << " out of the box. Skipping." << endl;
-            }
-            
-        }
     }
     
     // Write data off
     
-    rivers.putVar(&river_data[0][0]);
+    rivers_2D.putVar(&river_data[0][0]);
     
-    // Borders
-    
-//    float border_x[rd.getSize()];
-//    float border_y[rd.getSize()];
+}
+
+//void add_national_mapstuff_2D(NcFile &mapfile, NcFile &topography_file, const char* river_file)
+//{
+// 
+//    NcFile mapstuff_file;
 //    
-//    mapstuff_file.getVar("border_x").getVar(&border_x[0]);
-//    mapstuff_file.getVar("border_y").getVar(&border_y[0]);
+//    vector<NcDim> dimensions;
+//    vector<NcDim> local_dimensions;
+//    vector<NcVar> variables;
 //    
-//    static double border_data[900][900];
+//    multimap<string,NcDim> topo_dims_map = topography_file.getDims();
+//    multimap<string,NcDim>::iterator di;
+//    for (di=topo_dims_map.begin(); di!=topo_dims_map.end(); ++di)
+//    {
+//        if (di->first == "t") continue;
+//        dimensions.push_back(di->second);
+//        variables.push_back(topography_file.getVar(di->first));
+//    }
+//
+//    local_dimensions.push_back(mapfile.getDim("national_y"));
+//    local_dimensions.push_back(mapfile.getDim("national_x"));
+//
+//    // Might use this for converting between grid
+//    // and projection coordinate
+//    CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions, variables);
+//
+//    double z_fillValue = -9999.0f;
+//    
+//    // create the output file with dims/vars
+//    
+//    nc_redef(mapfile.getId());
+//    
+//    // Rivers
+//    
+//    NcDim rd = mapfile.addDim("riverdim", mapstuff_file.getDim("riverdim").getSize());
+//    NcVar rivers = mapfile.addVar("national_rivers_2D", ncFloat, local_dimensions);
+//    rivers.putAtt("_FillValue", ncFloat, z_fillValue);
+//    rivers.putAtt("units", "km");
+//    rivers.putAtt("long_name", "national_rivers_2D");
+//    rivers.putAtt("valid_min", ncFloat, 0.0);
+//    rivers.putAtt("valid_max", ncFloat, 1.0);
+//    rivers.putAtt("scale_factor", ncFloat, 1.0);
+//    rivers.putAtt("add_offset", ncFloat, 0.0);
+//
+//    // Borders
+//    
+//    NcDim bd = mapfile.addDim("borderdim", mapstuff_file.getDim("borderdim").getSize());
+//    NcVar borders = mapfile.addVar("national_borders_2D", ncFloat, local_dimensions);
+//    borders.putAtt("_FillValue", ncFloat, z_fillValue);
+//    borders.putAtt("units", "km");
+//    borders.putAtt("long_name", "national_borders_2D");
+//    borders.putAtt("valid_min", ncFloat, 0.0);
+//    borders.putAtt("valid_max", ncFloat, 1.0);
+//    borders.putAtt("scale_factor", ncFloat, 1.0);
+//    borders.putAtt("add_offset", ncFloat, 0.0);
+//
+//    nc_enddef(mapfile.getId());
+//
+//    // Rivers
+//
+//    float river_x[rd.getSize()];
+//    float river_y[rd.getSize()];
+//    
+////    mapstuff_file.getVar("river_x").getVar(&river_x[0]);
+////    mapstuff_file.getVar("river_y").getVar(&river_y[0]);
+//    
+//    static double river_data[900][900];
 //    
 //    for (size_t iy=0; iy < 900; iy++)
 //        for (size_t ix=0; ix < 900; ix++)
-//            border_data[iy][ix] = z_fillValue;
+//            river_data[iy][ix] = z_fillValue;
+//
+//    typedef set<CoordinateSystem<double>::GridPoint> gp_set_t;
 //    
-//    for (size_t i=0; i < bd.getSize(); i++)
+//    gp_set_t line_points;
+//    
+//    for (size_t i=0; i < rd.getSize(); i++)
 //    {
-//        if (border_x[i] == std::numeric_limits<float>::quiet_NaN()
-//            || border_y[i] == std::numeric_limits<float>::quiet_NaN())
-//            continue;
-//        
 //        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
-//        coord[0] = border_x[i];
-//        coord[1] = border_y[i];
+//        coord[0] = river_x[i];
+//        coord[1] = river_y[i];
 //        
-//        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
-//        cs->reverse_lookup(coord, gp);
-//        
-//        // Mark border position with 1.0
-//        int ix = gp[0];
-//        int iy = gp[1];
-//        
-//        border_data[iy][ix] = 1.0;
+//        if (isnan(coord[0]) || isnan(coord[1]))
+//        {
+//            // plot the line
+//            
+//            gp_set_t::iterator li;
+//            
+//            CoordinateSystem<double>::GridPoint *lp = NULL;
+//            
+//            cout << "drawing line:" << endl;
+//            
+//            for (li=line_points.begin(); li!=line_points.end(); li++)
+//            {
+//                CoordinateSystem<double>::GridPoint p = *li;
+//                
+//                cout << p << endl;
+//                
+//                if (lp!=NULL)
+//                {
+//                    int min_x = lp[0] < p[0] ? lp[0] : p[0];
+//                    int max_x = lp[0] > p[0] ? lp[0] : p[0];
+//                    
+//                    int min_y = lp[1] < p[1] ? lp[1] : p[1];
+//                    int max_y = lp[1] > p[1] ? lp[1] : p[1];
+//                    
+//                    for (int x=min_x; x <= max_x; x++)
+//                    {
+//                        for (int y=min_y; y <= max_y; y++)
+//                        {
+//                            river_data[y][x] = 1.0;
+//                        }
+//                    }
+//                }
+//
+//                lp = &p;
+//            }
+//            
+//            line_points.clear();
+//        }
+//        else
+//        {
+//            CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+//
+//            try
+//            {
+//                cs->reverse_lookup(coord, gp);
+//                cout << "coordinate=" << coord << " => gridpoint=" << gp << endl;
+//                line_points.insert(gp);
+//            }
+//            catch (std::out_of_range)
+//            {
+//                cout << "coordinate=" << coord << " out of the box. Skipping." << endl;
+//            }
+//            
+//        }
 //    }
 //    
 //    // Write data off
 //    
-//    borders.putVar(&border_data[0][0]);
+//    rivers.putVar(&river_data[0][0]);
+//    
+//    // Borders
+//    
+////    float border_x[rd.getSize()];
+////    float border_y[rd.getSize()];
+////    
+////    mapstuff_file.getVar("border_x").getVar(&border_x[0]);
+////    mapstuff_file.getVar("border_y").getVar(&border_y[0]);
+////    
+////    static double border_data[900][900];
+////    
+////    for (size_t iy=0; iy < 900; iy++)
+////        for (size_t ix=0; ix < 900; ix++)
+////            border_data[iy][ix] = z_fillValue;
+////    
+////    for (size_t i=0; i < bd.getSize(); i++)
+////    {
+////        if (border_x[i] == std::numeric_limits<float>::quiet_NaN()
+////            || border_y[i] == std::numeric_limits<float>::quiet_NaN())
+////            continue;
+////        
+////        CoordinateSystem<double>::Coordinate coord = cs->newCoordinate();
+////        coord[0] = border_x[i];
+////        coord[1] = border_y[i];
+////        
+////        CoordinateSystem<double>::GridPoint gp = cs->newGridPoint();
+////        cs->reverse_lookup(coord, gp);
+////        
+////        // Mark border position with 1.0
+////        int ix = gp[0];
+////        int iy = gp[1];
+////        
+////        border_data[iy][ix] = 1.0;
+////    }
+////    
+////    // Write data off
+////    
+////    borders.putVar(&border_data[0][0]);
+//
+//    
+//    delete cs;
+//}
 
-    
-    delete cs;
-}
-
-void do_it()
+void do_it(const char* topo_file, const char *river_shapefile)
 {
+    NcFile topography_file(topo_file,NcFile::read);
+    
+//    NcFile mapstuff_file("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/radolan_mapstuff.nc",NcFile::read);
+
     NcFile mapfile("oase-mapdata.nc",NcFile::replace,NcFile::classic);
     mapfile.putAtt("conventions","CF-1.6");
     mapfile.putAtt("authors","Jürgen Simon, Malte Diederich");
     mapfile.putAtt("created","Oct 5th 2013 18:25:00 CET");
     mapfile.putAtt("version","1.0");
     
-    add_local_topography(mapfile);
-    add_national_topography(mapfile);
-    add_national_mapstuff_2D(mapfile);
+    add_local_topography(mapfile,topography_file);
+    add_national_topography(mapfile,topography_file);
+    
+    add_national_river_data(mapfile,river_shapefile);
+
 }
 
 /**
@@ -699,16 +1048,21 @@ int main(int argc, char** argv)
     using namespace cfa::utils::visit;
     using namespace m3D;
     
+    const char *topo_file = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
+    const char *river_shapefile = "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
+    
+    
     // Select the correct point factory
     PointFactory<T>::set_instance( new M3DPointFactory<T>() );
     
     try
     {
-        do_it();
+        do_it(topo_file,river_shapefile);
     }
     catch (std::exception &e)
     {
         cerr << "ERROR:" << e.what() << endl;
     }
+    
     return 0;
 };
