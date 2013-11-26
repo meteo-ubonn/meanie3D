@@ -62,26 +62,46 @@ ENDIF (WITH_BOOST_THREADS)
 # Compiler Flags
 # -------------------------------------
 
-SET(USE_GCC FALSE)
 SET(USE_CPP11 FALSE)
 
-#enable auto-vectorization
+#Compiler flags
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+
+    # Debug, Release, MinSizeRel and RelWithDebInfo
+
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -ftree-loop-optimize -ftree-vectorize -msse2 -ffast-math=true -finline")
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+
+    # Debug, Release, MinSizeRel and RelWithDebInfo
+
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -ftree-loop-optimize -ftree-vectorize -msse2 -finline")
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+  # using Intel C++
+  # TODO
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  # using Visual Studio C++
+  # TODO
+endif()
+
 IF (USE_GCC)
     MESSAGE(INFO "Configuring compiler flags GCC")
     SET(CMAKE_CXX_COMPILER=$CXX)
-    IF (APPLE)
-        SET(CMAKE_XCODE_ATTRIBUTE_GCC_VERSION "com.apple.compilers.llvmgcc42")
-        ELSE (APPLE)
-      #TODO
-    ENDIF (APPLE)
-    
+
     # Normal
     SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
     
     # Release
     IF (APPLE)
        MESSAGE(INFO "Configuring compiler flags for Apple")
-       SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
     ELSE (APPLE)
        MESSAGE(INFO "Configuring compiler flags for Non-Apple system")
        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -finline")
