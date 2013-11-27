@@ -1043,9 +1043,15 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
 
 void do_it()
 {
-    const char *topo_file =             "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
-    const char *river_shapefile =       "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
-    const char *boundaries_shapefile =  "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp";
+	// home
+//	const char *topo_file =             "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
+//    const char *river_shapefile =       "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
+//    const char *boundaries_shapefile =  "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp";
+
+    // institute
+    const char *topo_file =             "/home/Projects/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
+    const char *river_shapefile =       "/home/Projects/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
+    const char *boundaries_shapefile =  "/home/Projects/Ertel/data/maps/www.naturalearthdata.com/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp";
 
     cout << "Reading topography data ... ";
     NcFile topography_file(topo_file,NcFile::read);
