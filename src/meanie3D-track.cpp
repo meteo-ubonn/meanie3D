@@ -317,7 +317,8 @@ int main(int argc, char** argv)
         {
             NcVar v = current->feature_variables[i];
             
-            try {
+            try
+            {
                 if ( v.getName() == tracking_variable_name )
                 {
                     found_tracking_var = true;

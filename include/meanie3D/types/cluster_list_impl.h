@@ -396,6 +396,7 @@ namespace m3D {
     {
         // meta-info
         
+        vector<string>              feature_variable_names;
         vector<NcVar>               feature_variables;
         vector<NcVar>               dimension_variables;
         vector<NcDim>               dimensions;
@@ -468,7 +469,7 @@ namespace m3D {
 
             file->getAtt("cluster_ids").getValues(value);
             cluster_ids = cfa::utils::sets::from_string<cfa::id_t>(value);
-
+            
             // Tracking-related
             
             try
@@ -506,16 +507,20 @@ namespace m3D {
             
             // Read the feature-variables
             
-            multimap<string,NcVar> vars = file->getVars();
+            file->getAtt("featurespace_variables").getValues(value);
+            feature_variable_names = ::cfa::utils::vectors::from_string<string>(value);
             
-            typename multimap<string,NcVar>::iterator vi;
-            
-            for ( vi = vars.begin(); vi != vars.end(); vi++ )
+            for (size_t i=0; i<feature_variable_names.size(); i++)
             {
-                if (! (boost::starts_with( vi->first, "cluster_") || vi->first == "time"))
+                NcVar var = file->getVar(feature_variable_names[i]);
+                
+                if (var.isNull())
                 {
-                    feature_variables.push_back( vi->second );
+                    cerr << "FATAL: could not find featurespace variable " << feature_variable_names[i] << endl;
+                    exit(-1);
                 }
+                
+                feature_variables.push_back(var);
             }
             
             // Coordinate system wanted?
@@ -526,7 +531,6 @@ namespace m3D {
             {
                 *cs_ptr = cs;
             }
-            
             
             // Read clusters one by one
             

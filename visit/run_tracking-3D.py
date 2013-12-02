@@ -248,6 +248,7 @@ for netcdf_file in netcdf_list:
         command = command + " > tracking_" + str(run_count)+".log"
         
         # execute
+        print command
         return_code = call( command, shell=True)
         
         print "    done. (%.2f seconds)" % (time.time()-start_time)

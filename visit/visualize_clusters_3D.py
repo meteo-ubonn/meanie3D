@@ -136,7 +136,6 @@ for netcdf_file in netcdf_files:
     print "-- Rendering cluster scene --"
     start_time = time.time()
 
-
     # add 3D topograpy
     visit3D.add_topography("local_topo_3D")
 
@@ -167,6 +166,8 @@ for netcdf_file in netcdf_files:
     visitUtils.save_window("tracking_",1)
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
+
+    exit(0)
 
     # clean up
     DeleteAllPlots();
