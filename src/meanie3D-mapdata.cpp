@@ -46,7 +46,7 @@ using namespace m3D;
 
 #define DEBUG 0
 #define DEBUG_LINES 0
-#define DEBUG_LOCAL_SHAPEFILE 1
+#define DEBUG_LOCAL_SHAPEFILE 0
 #define DEBUG_NATIONAL_SHAPEFILE 0
 
 // Feature-space data type
@@ -80,7 +80,7 @@ static const size_t LOCAL_NY=472;
 
 // Horizontal bounds (local)
 static const float local_x_min = -366.462f;
-static const float local_x_max = 111.962f;
+static const float local_x_max = -111.962f;
 static const float local_y_min = -4340.645f;
 static const float local_y_max = -4105.145f;
 
@@ -198,11 +198,9 @@ initialize_array(T (&data)[K][N][M], T initial_value)
 
 template<typename T, std::size_t K, std::size_t N, std::size_t M>
 void
-fill_topography_data_at(T (&data)[K][N][M], int ix, int iy)
+fill_topography_data_at(T (&data)[K][N][M], int ix, int iy, float z_in_meters)
 {
-    double z_m = gTopography[iy][ix];
-
-    double z_km = z_m / 1000.0f; // [m]->[km]
+    double z_km = z_in_meters / 1000.0f; // [m]->[km]
 
     int index_z = (int)ceil( z_km / 0.25f );
 
@@ -216,7 +214,7 @@ fill_topography_data_at(T (&data)[K][N][M], int ix, int iy)
     }
     for (size_t iz=0; iz < NZ; iz++)
     {
-        data[iz][iy][ix] = (iz<=index_z) ? z_m : z_fillValue;
+        data[iz][iy][ix] = (iz<=index_z) ? z_in_meters : z_fillValue;
     }
 }
 
@@ -447,8 +445,8 @@ void add_local_topography(NcFile &mapfile)
     
     // figure out the shift between national and local
     
-    int  shift_x = (int)ceil((local_x_min+523.4622));
-    int  shift_y = (int)ceil((local_y_min+4658.645f));
+    int  shift_x = (int)ceil((local_x_min - national_x_min));
+    int  shift_y = (int)ceil((local_y_min - national_y_min));
     
     for (size_t iy=0; iy < LOCAL_NY; iy++)
     {
@@ -458,36 +456,34 @@ void add_local_topography(NcFile &mapfile)
             // national composite is offset by dy=318 and dx=157
             // and has twice the resolution
             
-            double z_m = 0.0;
-            double count = 0.0;
+            float z_m = 0.0;
+            int count = 0;
             
-            int last_iy = -1;
-            int last_ix = -1;
+            // average the 9 pixels from the national composite
+            // around the point
             
-            for (int LOCAL_NY = (shift_y + (iy-1)/2) ; LOCAL_NY < (shift_y + (iy+1)/2); LOCAL_NY++)
+            int ny = shift_y + iy/2;
+            int nx = shift_x + ix/2;
+            
+            for (int national_y = (ny-1); national_y < (ny+1); national_y++)
             {
-                for (int LOCAL_NX = (shift_x + (ix-1)/2) ; LOCAL_NX < (shift_x + (ix+1)/2); LOCAL_NX++)
+                for (int national_x = (nx-1); national_x < (nx+1); national_x++)
                 {
-                    if ((LOCAL_NY >=0) && (LOCAL_NY < 900) && (LOCAL_NX >=0) && (LOCAL_NX < 900))
+                    if ((national_x >=shift_x && national_x < NATIONAL_NX) && (national_y >= shift_y && national_y < NATIONAL_NY))
                     {
-                        if (LOCAL_NY != last_iy && LOCAL_NX != last_ix)
-                        {
-                            count = count + 1.0f;
-                            z_m += gTopography[LOCAL_NY][LOCAL_NX];
-                            last_ix = LOCAL_NX;
-                            last_iy = LOCAL_NY;
-                        }
+                        z_m += gTopography[national_y][national_x];
+                        count++;
                     }
                 }
             }
             
-            z_m = z_m / count;
+            z_m = z_m / boost::numeric_cast<float>(count);
             
             // 2D data set
             topo_data_2D[iy][ix] = z_m;
             
             // 3D data set
-            fill_topography_data_at(topo_data_3D, ix, iy);
+            fill_topography_data_at(topo_data_3D, ix, iy, z_m);
         }
     }
     
@@ -636,9 +632,17 @@ template<std::size_t N, std::size_t M>
 void
 draw_line_in_grid_2D(double (&data)[N][M],gp_vec_t &line_points, NcVar &var)
 {
-#if DEBUG
+#if DEBUG_LINES
     cout << "\tdrawing line (" << line_points.size() << " vertices)" << endl;
 #endif
+    
+    if (line_points.size() < 2)
+    {
+#if DEBUG_LINES
+        cout << "\tLine consists of only one point. Skipping." << endl;
+#endif
+        return;
+    }
     
     CoordinateSystem<double>::GridPoint lp;
     bool have_last_point = false;
@@ -822,7 +826,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
     NcVar local_shapevar_2D = mapfile.addVar(local_varname_2D, ncFloat, local_dimensions_2D);
     local_shapevar_2D.putAtt("_FillValue", ncFloat, z_fillValue);
     local_shapevar_2D.putAtt("units", "km");
-    local_shapevar_2D.putAtt("long_name", varname_2D);
+    local_shapevar_2D.putAtt("long_name", local_varname_2D);
     local_shapevar_2D.putAtt("valid_min", ncFloat, 0.0);
     local_shapevar_2D.putAtt("valid_max", ncFloat, x_marks_the_spot);
     local_shapevar_2D.putAtt("scale_factor", ncFloat, 1.0);
@@ -831,7 +835,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
     NcVar local_shapevar_3D = mapfile.addVar(local_varname_3D, ncFloat, local_dimensions_3D);
     local_shapevar_3D.putAtt("_FillValue", ncFloat, z_fillValue);
     local_shapevar_3D.putAtt("units", "km");
-    local_shapevar_3D.putAtt("long_name", varname_3D);
+    local_shapevar_3D.putAtt("long_name", local_varname_3D);
     local_shapevar_3D.putAtt("valid_min", ncFloat, 0.0);
     local_shapevar_3D.putAtt("valid_max", ncFloat, x_marks_the_spot);
     local_shapevar_3D.putAtt("scale_factor", ncFloat, 1.0);
@@ -894,7 +898,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                 // projection/coordinate system is WGS84
                 
                 RDGeographicalPoint geographical_coordinate = rdGeographicalPoint(obj->padfX[vi], obj->padfY[vi]);
-                
+
                 // project to cartesian system
                 RDCartesianPoint cartesian = rcs.cartesianCoordinate(geographical_coordinate);
                 
@@ -972,24 +976,24 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
     #endif
                     }
                 }
-                
-                if (!line_points.empty())
-                {
-                    draw_line_in_grid_2D(data_2D,line_points,shapevar_2D);
-#if DEBUG
-                    shapevar_2D.putVar(&data_2D[0][0]);
-#endif
-                }
-
-                // Draw the line ...
+            }
             
-                if (!local_line_points.empty())
-                {
-                    draw_line_in_grid_2D(local_data_2D,local_line_points,local_shapevar_2D);
-    #if DEBUG
-                    local_shapevar_2D.putVar(&local_data_2D[0][0]);
-    #endif
-                }
+            if (!line_points.empty())
+            {
+                draw_line_in_grid_2D(data_2D,line_points,shapevar_2D);
+#if DEBUG
+                shapevar_2D.putVar(&data_2D[0][0]);
+#endif
+            }
+
+            // Draw the line ...
+        
+            if (!local_line_points.empty())
+            {
+                draw_line_in_grid_2D(local_data_2D,local_line_points,local_shapevar_2D);
+#if DEBUG
+                local_shapevar_2D.putVar(&local_data_2D[0][0]);
+#endif
             }
         }
         
@@ -1009,7 +1013,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
             if (data_2D[iy][ix] != z_fillValue)
             {
                 // 3D data set
-                fill_topography_data_at(data_3D, ix, iy);
+                fill_topography_data_at(data_3D, ix, iy, gTopography[iy][ix]+400.0f);
             }
         }
     }
@@ -1026,7 +1030,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
             if (local_data_2D[iy][ix] != z_fillValue)
             {
                 // 3D data set
-                fill_topography_data_at(local_data_3D, ix, iy);
+                fill_topography_data_at(local_data_3D, ix, iy, gTopography[iy][ix]+400.0f);
             }
         }
     }
@@ -1044,14 +1048,14 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
 void do_it()
 {
 	// home
-//	const char *topo_file =             "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
-//    const char *river_shapefile =       "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
-//    const char *boundaries_shapefile =  "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp";
+	const char *topo_file =             "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
+    const char *river_shapefile =       "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
+    const char *boundaries_shapefile =  "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp";
 
     // institute
-    const char *topo_file =             "/home/Projects/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
-    const char *river_shapefile =       "/home/Projects/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
-    const char *boundaries_shapefile =  "/home/Projects/Ertel/data/maps/www.naturalearthdata.com/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp";
+//    const char *topo_file =             "/home/Projects/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
+//    const char *river_shapefile =       "/home/Projects/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
+//    const char *boundaries_shapefile =  "/home/Projects/Ertel/data/maps/www.naturalearthdata.com/ne_10m_admin_0_countries/ne_10m_admin_0_countries.shp";
 
     cout << "Reading topography data ... ";
     NcFile topography_file(topo_file,NcFile::read);
