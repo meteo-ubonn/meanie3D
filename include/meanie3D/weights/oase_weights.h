@@ -85,7 +85,7 @@ namespace m3D { namespace weights {
          */
         T compute_weight(Point<T> *p)
         {
-            T sum = 0.0;
+            T product = 1.0;
             
             size_t num_vars = p->values.size() - p->coordinate.size();
             
@@ -101,9 +101,7 @@ namespace m3D { namespace weights {
                     
 //                    T rx_weight = pow( 10, value / 10 );
                     
-                    sum += rx_weight * rx_weight;
-                    
-                    
+                    product *= (1+rx_weight);
                 }
                 else if (var.getName() == "msevi_l15_ir_108")
                 {
@@ -111,7 +109,7 @@ namespace m3D { namespace weights {
                     {
                         T sev_weight = (30 - value) / (30 - m_min.at(var_index));
                         
-                        sum += sev_weight;
+                        product *= (1+sev_weight);
                     }
                 }
                 else if (var.getName() == "linet_oase_tl")
@@ -120,7 +118,7 @@ namespace m3D { namespace weights {
                     {
                         T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
                         
-                        sum += linet_weight;
+                        product *= (1+linet_weight);
                     }
                 }
                 else
@@ -141,11 +139,11 @@ namespace m3D { namespace weights {
                     // 10^(value/10)
                     // T var_weight = pow( 10, value / 10 );
                     
-                    sum+=var_weight;
+                    product += var_weight;
                 }
             }
             
-            return sum;
+            return product;
         }
         
         /** unfavorable, since it performs a reverse lookup, which is a very
