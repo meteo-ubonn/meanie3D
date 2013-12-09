@@ -89,25 +89,24 @@ namespace m3D { namespace weights {
             
             size_t num_vars = p->values.size() - p->coordinate.size();
             
-            for (size_t var_index = 0; var_index < num_vars; var_index++)
+            if (p->isOriginalPoint)
             {
-                NcVar var = m_vars[var_index];
-                
-                T value = p->values[p->coordinate.size()+var_index];
-                
-                // value scaled to [0..1]
-                
-                T a = - 1.0 / (m_max.at(var_index) - m_min.at(var_index));
-                
-                T b = 0.5 * (1.0 - a * (m_max.at(var_index) - m_min.at(var_index)));
-                
-                T var_weight = a * value + b;
-                
-//                cout << "min = " << m_min.at(var_index) << " max=" << m_max.at(var_index) << endl;
-//                cout << "a=" << a << " b=" << b << endl;
-                cout << "value = " << value << " var_weight=" << var_weight << endl;
-                
-                sum += var_weight;
+                for (size_t var_index = 0; var_index < num_vars; var_index++)
+                {
+                    NcVar var = m_vars[var_index];
+                    
+                    T value = p->values[p->coordinate.size()+var_index];
+                    
+                    // value scaled to [0..1]
+                    
+                    T a = - 1.0 / (m_max.at(var_index) - m_min.at(var_index));
+                    
+                    T b = 0.5 * (1.0 - a * (m_max.at(var_index) - m_min.at(var_index)));
+                    
+                    T var_weight = a * value + b;
+
+                    sum += var_weight;
+                }
             }
             
             return sum;
