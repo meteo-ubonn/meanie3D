@@ -771,7 +771,10 @@ int main(int argc, char** argv)
 #if WRITE_OFF_LIMITS_MASK
     fs->off_limits()->write("off_limits.vtk","off_limits");
 #endif
-    
+
+    // used in writing out debug data
+    boost::filesystem::path path(filename);
+
     WeightFunction<FS_TYPE> *weight_function = NULL;
     
     // Scale-Space smoothing
@@ -802,6 +805,10 @@ int main(int argc, char** argv)
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(),sf.get_filtered_max());
         }
         
+#if WRITE_WEIGHT_FUNCTION
+        std::string wfname = path.filename().stem().string() + "-weights.vtk";
+        ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
+#endif
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
         
@@ -834,6 +841,11 @@ int main(int argc, char** argv)
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
         
+#if WRITE_WEIGHT_FUNCTION
+        std::string wfname = path.filename().stem().string() + "-weights.vtk";
+        ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
+#endif
+
         // Apply weight function filter
         
         WeightThresholdFilter<FS_TYPE> wtf(weight_function,wwf_lower_threshold, wwf_upper_threshold, true);
@@ -869,14 +881,6 @@ int main(int argc, char** argv)
         if ( verbosity > VerbositySilent )
             cout << " done." << endl;
     }
-
-    // used in writing out debug data
-    boost::filesystem::path path(filename);
-
-#if WRITE_WEIGHT_FUNCTION
-    std::string wfname = path.filename().stem().string() + "-weights.vtk";
-    ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
-#endif
 
     if ( verbosity == VerbosityAll )
         fs->print();

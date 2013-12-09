@@ -6,7 +6,7 @@ version = '0.1'
 from visit import *
 import glob
 
-TOPO_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
+MAPSTUFF_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
 TOPO_COLORMAP = "topography"
 TOPO_COLORMAP_INVERT = 0
 
@@ -63,7 +63,7 @@ def add_clusters(basename,infix,col_tables):
         index = cluster_num % len(col_tables);
         cp.colorTableName = col_tables[index];
         SetPlotOptions(cp)
-
+        
     return
 
 # Adds clusters with names "*_infix_*.vtk" to the
@@ -109,7 +109,7 @@ def add_clusters_with_colortable(basename,infix,color_table_name,color_count):
         cp.colorTableName = color_table_name
         cp.opacity=1
         SetPlotOptions(cp)
-    
+
     return
 
 # Adds boundaries with to the current visit window.
@@ -170,13 +170,20 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity,legendFlag):
     SetPlotOptions(p)
     return
 
-# Add 3D topography
+# Add 3D local topography
+# @param "local" or "national"
 #
-def add_topography(var_name):
+def add_mapstuff(extent):
     
     # open the file and add the plot
-    OpenDatabase(TOPO_FILE)
-    AddPlot("Pseudocolor", var_name)
+    OpenDatabase(MAPSTUFF_FILE)
+
+    if extent!="local" and extent !="national":
+        print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
+        return
+
+    # Topography
+    AddPlot("Pseudocolor", extent+"_topo_3D")
     p = PseudocolorAttributes()
     p.pointSizePixels = 2
     p.colorTableName = TOPO_COLORMAP
@@ -186,60 +193,122 @@ def add_topography(var_name):
     p.opacity = 1
     p.minFlag,p.maxFlag = 1,1
     p.min,p.max = -100.0, 3200.0
-
     SetPlotOptions(p)
+    
+    # Rivers & Boundaries
+    
+    AddPlot("Pseudocolor", "as_zonal/"+extent+"_boundaries_3D")
+    p = PseudocolorAttributes()
+    p.colorTableName = "Greys"
+    p.lightingFlag = 0
+    p.legendFlag = 0;
+    p.opacity = 1
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = 0, 1
+    SetPlotOptions(p)
+    
+    AddPlot("Pseudocolor", "as_zonal/"+extent+"_rivers_3D")
+    p = PseudocolorAttributes()
+    p.colorTableName = "Blues"
+    p.lightingFlag = 0
+    p.legendFlag = 0;
+    p.invertColorTable = 1;
+    p.opacity = 1
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = 0, 1
+    SetPlotOptions(p)
+    
     return
 
 # Closes databases connected with topo
-def close_topography():
-    CloseDatabase(TOPO_FILE);
+def close_mapstuff():
+    CloseDatabase(MAPSTUFF_FILE);
     return
 
 #
 # Sets default 2D view params for RADOLAN grid
+# @param perspective 1,2
 #
-def set_view_to_radolan():
+def set_view_to_radolan(perspective,scale_factor_z):
 
     v = GetView3D();
+    
+    if perspective==1:
+        v.viewNormal = (0.204365, -0.63669, 0.743546)
+        v.focus = (-239.212, -4222.9, 7.31354)
+        v.viewUp = (-0.201314, 0.716005, 0.668438)
+        v.viewAngle = 30
+        v.parallelScale = 173.531
+        v.nearPlane = -347.062
+        v.farPlane = 347.062
+        v.imagePan = (-0.00977129, 0.0399963)
+        v.imageZoom = 1.4641
+        v.perspective = 1
+        v.eyeAngle = 2
+        v.centerOfRotationSet = 0
+        v.centerOfRotation = (0, 0, 0)
+        v.axis3DScaleFlag = 0
+        v.axis3DScales = (1, 1, 1)
+        v.shear = (0, 0, 1)
+    
+    elif perspective==2:
+        v.viewNormal = (0.996852, 0.0147052, 0.0779102)
+        v.focus = (-239.212, -4222.9, 21.9406)
+        v.viewUp = (-0.0779426, 0.00164413, 0.996956)
+        v.viewAngle = 30
+        v.parallelScale = 175.151
+        v.nearPlane = -350.302
+        v.farPlane = 350.302
+        v.imagePan = (-0.00977129, 0.0399963)
+        v.imageZoom = 1.7715
+        v.perspective = 1
+        v.eyeAngle = 2
+        v.centerOfRotationSet = 0
+        v.centerOfRotation = (0, 0, 0)
+        v.axis3DScaleFlag = 0
+        v.axis3DScales = (1, 1, 1)
+        v.shear = (0, 0, 1)
+    
+    if scale_factor_z != 1.0:
+        v.axis3DScaleFlag = 1
+        v.axis3DScales = (1, 1, scale_factor_z)
 
-#    v.viewNormal = (0.656802,-0.498223,0.566025)
-#    v.focus = (-239.212,-4222.9,7.375)
-#    v.viewUp = (-0.457525,0.333371,0.824339)
-#    v.viewAngle = 30
-#    v.parallelScale = 173.528
-#    v.nearPlane = -347.056
-#    v.farPlane = 347.056
-#    v.imagePan = (0, 0)
-#    v.imageZoom = 1.4641
-#    v.perspective = 1
-#    v.eyeAngle = 2
-#    v.centerOfRotationSet = 0
-#    v.centerOfRotation = (0, 0, 0)
-#    v.axis3DScaleFlag = 0
-#    v.axis3DScales = (1, 1, 1)
-#    v.shear = (0, 0, 1)
-
-    v.viewNormal = (0.204365, -0.63669, 0.743546)
-    v.focus = (-239.212, -4222.9, 7.31354)
-    v.viewUp = (-0.201314, 0.716005, 0.668438)
-    v.viewAngle = 30
-    v.parallelScale = 173.531
-    v.nearPlane = -347.062
-    v.farPlane = 347.062
-    v.imagePan = (-0.00977129, 0.0399963)
-    v.imageZoom = 1.4641
-    v.perspective = 1
-    v.eyeAngle = 2
-    v.centerOfRotationSet = 0
-    v.centerOfRotation = (0, 0, 0)
-    v.axis3DScaleFlag = 0
-    v.axis3DScales = (1, 1, 1)
-    v.shear = (0, 0, 1)
 
     print "3D View Settings:"
     print v
     SetView3D(v);
     return
 
+# Sets up standard values for axis etc
+#
+def set_annotations():
+
+    a = GetAnnotationAttributes()
+    a.axes3D.visible=1
+    a.axes3D.autoSetScaling=0
+    a.userInfoFlag=0
+    a.timeInfoFlag=0
+    a.legendInfoFlag=1
+    a.databaseInfoFlag=1
+
+    a.axes3D.xAxis.title.visible=0
+    a.axes3D.xAxis.title.userTitle = 1
+    a.axes3D.xAxis.title.userUnits = 1
+    a.axes3D.xAxis.title.title = "x"
+    a.axes3D.xAxis.title.units = "km"
+
+    a.axes3D.yAxis.title.visible=0
+    a.axes3D.yAxis.title.userTitle = 1
+    a.axes3D.yAxis.title.userUnits = 1
+    a.axes3D.yAxis.title.title = "y"
+    a.axes3D.yAxis.title.units = "km"
+
+    a.axes3D.zAxis.title.visible=0
+    a.axes3D.zAxis.title.userTitle = 1
+    a.axes3D.zAxis.title.userUnits = 1
+    a.axes3D.zAxis.title.title = "h"
+    a.axes3D.zAxis.title.units = "km"
+
+    SetAnnotationAttributes(a)
 
 # End of visit3D.py

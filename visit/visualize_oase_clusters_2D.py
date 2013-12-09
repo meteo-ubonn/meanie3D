@@ -12,28 +12,24 @@ import glob
 import os
 import time
 #import visit2D
-import visit3D
+import visit2D
 import visitUtils
 from subprocess import call
 
 #print [key for key in locals().keys()
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
-
 # General parameters
-VAR_NAME = "zh"
-VAR_MIN = 35;
-VAR_MAX = 82.5;
-
-# Stretching data and objects for better 3D impression
-SCALE_FACTOR_Z = 3.0
+VAR_NAME = "msevi_l15_ir_108"
+VAR_MIN = 0;
+VAR_MAX = 50;
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
 CONVERSION_PARAMS += " -v "+VAR_NAME
 CONVERSION_PARAMS += " --write-as-xml=false"
 CONVERSION_PARAMS += " --extract-skin=false"
-CONVERSION_PARAMS += " --vtk-dimensions x,y,z"
+CONVERSION_PARAMS += " --vtk-dimensions x,y"
 
 #-f herz-oase-20120805t1510utc-0500m-bonnjue-3d-v01a_clusters.nc "
 
@@ -50,27 +46,36 @@ SuppressQueryOutputOn()
 
 # Set view and annotation attributes
 
-print "Setting annotation attributes:"
-visit3D.set_annotations()
+a = GetAnnotationAttributes()
+a.axes3D.visible=1
+a.axes3D.autoSetScaling=0
+a.userInfoFlag=0
+a.timeInfoFlag=0
+a.legendInfoFlag=1
+a.databaseInfoFlag=1
+a.axes3D.xAxis.title.visible=0
+a.axes3D.yAxis.title.visible=0
+a.axes3D.zAxis.title.visible=0
+SetAnnotationAttributes(a)
+
+# Add gray/black background gradient
+visitUtils.add_background_gradient();
 
 print "Cleaning up *.vtk *.vtr *.png"
 return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
 
-# Setting 3D view parameters
-print "Setting 3D view parameters"
-visit3D.set_view_to_radolan(1,SCALE_FACTOR_Z);
+# Set view to nationwide composite
+visit2D.set_view_to_radolan();
 
-print "Creating colortables"
+print "-- Creating colortables ---"
 num_colors = visitUtils.create_cluster_colortable("cluster_colors")
 visitUtils.create_topography_colortable()
-
-# Add gray/black background gradient
-print "Setting background gradient"
-visitUtils.add_background_gradient();
+print "    done."
 
 # Glob the netcdf directory
-print "Processing files in directory " + NETCDF_DIR
 netcdf_files = glob.glob(NETCDF_DIR+"/*.nc");
+#print "Processing files in directory " + NETCDF_DIR
+#print netcdf_files
 
 for netcdf_file in netcdf_files:
 
@@ -97,26 +102,36 @@ for netcdf_file in netcdf_files:
         print "Cluster file does not exist. Skipping."
         continue
 
-    # add 3D topograpy
-    visit3D.add_mapstuff("local")
+    # add topograpy
+    visit2D.add_topography("national_topo_2D")
 
     # now plot the data
     OpenDatabase(netcdf_file);
 
-    visit3D.set_annotations()
-
-    # Re-add the source with colours
-    visit3D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",0.75,1)
-    AddOperator("Threshold")
-    t = ThresholdAttributes();
-    t.lowerBounds=(VAR_MIN)
-    SetOperatorOptions(t)
-
     # date/time
     visitUtils.add_datetime(netcdf_file)
 
+    # Re-add the source with "xray"
+    visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",1,1)
+
+    # threshold
+    AddOperator("Threshold")
+    t = ThresholdAttributes();
+    t.lowerBounds=(VAR_MIN)
+    t.upperBounds=(VAR_MAX)
+    SetOperatorOptions(t)
+
+    # skew
+    p = PseudocolorAttributes()
+    p.scaling = p.Skew
+    p.skewFactor = 0.01
+    p.colorTableName = "xray"
+    p.invertColorTable=1
+    SetPlotOptions(p)
+
     DrawPlots()
     visitUtils.save_window("source_",1)
+
     DeleteAllPlots()
     ClearWindow()
 
@@ -132,42 +147,43 @@ for netcdf_file in netcdf_files:
     print "-- Rendering cluster scene --"
     start_time = time.time()
 
-    # add 3D topograpy
-    visit3D.add_mapstuff("local")
+    # add 2D topograpy
+    visit2D.add_topography("national_topo_2D")
 
     # re-plot source data as canvas
-    visit3D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.25, 0 )
+    visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "xray", 0.1, 1 )
 
-    # threshold as before
+    # threshold
     AddOperator("Threshold")
     t = ThresholdAttributes();
     t.lowerBounds=(VAR_MIN)
+    t.upperBounds=(VAR_MAX)
     SetOperatorOptions(t)
+
+    # skew
+    p = PseudocolorAttributes()
+    p.scaling = p.Skew
+    p.skewFactor = 0.01
+    p.colorTableName = "xray"
+    p.invertColorTable=1
+    SetPlotOptions(p)
 
     # date/time
     visitUtils.add_datetime(netcdf_file)
 
     # Add the clusters
     basename = CLUSTER_DIR+"/"
-    visit3D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
+    visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
     # or the boundaries
-    #visit3D.add_boundaries(basename,"cluster_colors",num_colors)
+    #visit2D.add_boundaries(basename,"cluster_colors",num_colors)
 
     # Add modes as labels
     visitUtils.add_labels(label_file,"geometrical_center")
 
     # save as image
     DrawPlots()
-    visitUtils.save_window("p1_tracking_",1)
-
-    # change perspective
-    visit3D.set_view_to_radolan(2,SCALE_FACTOR_Z);
-
-    visitUtils.save_window("p2_tracking_",1)
-
-    # change perspective back
-    visit3D.set_view_to_radolan(1,SCALE_FACTOR_Z);
+    visitUtils.save_window("tracking_",1)
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -176,7 +192,7 @@ for netcdf_file in netcdf_files:
     ClearWindow()
     CloseDatabase(netcdf_file)
     CloseDatabase(label_file)
-    visit3D.close_mapstuff()
+    visit2D.close_topography()
     visitUtils.close_pattern(basename+"*.vtr")
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)

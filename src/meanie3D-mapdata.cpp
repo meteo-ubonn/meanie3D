@@ -84,6 +84,10 @@ static const float local_x_max = -111.962f;
 static const float local_y_min = -4340.645f;
 static const float local_y_max = -4105.145f;
 
+// shift in grid points (local within national)
+int  shift_x = (int)ceil((local_x_min - national_x_min));
+int  shift_y = (int)ceil((local_y_min - national_y_min));
+
 // Marker values for shapefile
 static double const x_marks_the_spot = 1.0;
 static const double z_fillValue = -9999.0f;
@@ -217,6 +221,27 @@ fill_topography_data_at(T (&data)[K][N][M], int ix, int iy, float z_in_meters)
         data[iz][iy][ix] = (iz<=index_z) ? z_in_meters : z_fillValue;
     }
 }
+
+template<typename T, std::size_t K, std::size_t N, std::size_t M>
+void
+mark_topography_data_at(T (&data)[K][N][M], int ix, int iy, float z_in_meters)
+{
+    double z_km = z_in_meters / 1000.0f; // [m]->[km]
+    
+    int index_z = (int)ceil( z_km / 0.25f );
+    
+    if (index_z > NZ)
+    {
+        index_z = NZ;
+    }
+    else if (index_z < 0)
+    {
+        index_z = 0;
+    }
+    
+    data[index_z][iy][ix] = 1.0;
+}
+
 
 /* ******************************************************** */
 /* Topography                                               */
@@ -444,9 +469,6 @@ void add_local_topography(NcFile &mapfile)
     static double topo_data_3D[NZ][LOCAL_NY][LOCAL_NX];
     
     // figure out the shift between national and local
-    
-    int  shift_x = (int)ceil((local_x_min - national_x_min));
-    int  shift_y = (int)ceil((local_y_min - national_y_min));
     
     for (size_t iy=0; iy < LOCAL_NY; iy++)
     {
@@ -1013,7 +1035,8 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
             if (data_2D[iy][ix] != z_fillValue)
             {
                 // 3D data set
-                fill_topography_data_at(data_3D, ix, iy, gTopography[iy][ix]+400.0f);
+                //fill_topography_data_at(data_3D, ix, iy, data_2D[iy][ix]);
+                mark_topography_data_at(data_3D, ix, iy, data_2D[iy][ix]);
             }
         }
     }
@@ -1030,7 +1053,8 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
             if (local_data_2D[iy][ix] != z_fillValue)
             {
                 // 3D data set
-                fill_topography_data_at(local_data_3D, ix, iy, gTopography[iy][ix]+400.0f);
+                //fill_topography_data_at(local_data_3D, ix, iy, local_data_2D[iy][ix]);
+                mark_topography_data_at(local_data_3D, ix, iy, local_data_2D[iy][ix]+500.0);
             }
         }
     }
@@ -1068,7 +1092,7 @@ void do_it()
     cout << "done." << endl;
 
     cout << "Creating mapfile ...";
-    NcFile mapfile("oase-mapdata.nc",NcFile::replace,NcFile::classic);
+    NcFile mapfile("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc",NcFile::replace,NcFile::classic);
     mapfile.putAtt("conventions","CF-1.6");
     mapfile.putAtt("authors","Jürgen Simon, Malte Diederich");
     mapfile.putAtt("created","Oct 5th 2013 18:25:00 CET");

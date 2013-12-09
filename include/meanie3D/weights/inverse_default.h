@@ -27,7 +27,7 @@ namespace m3D { namespace weights {
         map<size_t,T>       m_max;      // [index,max]
         cfa::utils::ScalarIndex<T,T>      m_weight;
         CoordinateSystem<T> *m_coordinate_system;
-        
+
         void
         build_saliency_field(FeatureSpace<T> *fs)
         {
@@ -89,19 +89,24 @@ namespace m3D { namespace weights {
             
             size_t num_vars = p->values.size() - p->coordinate.size();
             
-            for (size_t var_index = 0; var_index < num_vars; var_index++)
+            if (p->isOriginalPoint)
             {
-                NcVar var = m_vars[var_index];
-                
-                T value = p->values[p->coordinate.size()+var_index];
-                
-                // value scaled to [0..1]
-                
-                T range = (m_max.at(var_index) - m_min.at(var_index));
-                
-                T var_weight = 1.0 - (value - m_min.at(var_index)) / range;
-                
-                sum += var_weight * var_weight;
+                for (size_t var_index = 0; var_index < num_vars; var_index++)
+                {
+                    NcVar var = m_vars[var_index];
+                    
+                    T value = p->values[p->coordinate.size()+var_index];
+                    
+                    // value scaled to [0..1]
+                    
+                    T a = - 1.0 / (m_max.at(var_index) - m_min.at(var_index));
+                    
+                    T b = 0.5 * (1.0 - a * (m_max.at(var_index) - m_min.at(var_index)));
+                    
+                    T var_weight = a * value + b;
+
+                    sum += var_weight;
+                }
             }
             
             return sum;
