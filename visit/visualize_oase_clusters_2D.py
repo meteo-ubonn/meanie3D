@@ -187,6 +187,9 @@ for netcdf_file in netcdf_files:
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
 
+    # REMOVE ME!!
+    exit(0)
+
     # clean up
     DeleteAllPlots();
     ClearWindow()

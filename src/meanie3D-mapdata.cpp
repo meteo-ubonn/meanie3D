@@ -933,6 +933,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                 {
                     // look the grid point up from the file's coordinate system
                     cs_2D->reverse_lookup(coord, gp);
+
                     
 #if DEBUG_NATIONAL_SHAPEFILE
                     cout << "\t\tvertice #" << vi << " "
@@ -968,6 +969,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                 try
                 {
                     // look the grid point up from the file's coordinate system
+                    
                     local_cs_2D->reverse_lookup(coord, local_gp);
                     
 #if DEBUG_LOCAL_SHAPEFILE

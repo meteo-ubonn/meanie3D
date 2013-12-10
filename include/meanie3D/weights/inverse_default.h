@@ -47,7 +47,9 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        InverseDefaultWeightFunction(FeatureSpace<T> *fs)
+        InverseDefaultWeightFunction(FeatureSpace<T> *fs,
+                                     const map<int,double> &lower_thresholds,
+                                     const map<int,double> &upper_thresholds)
         : m_vars(fs->variables())
         , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
         , m_coordinate_system(fs->coordinate_system)
@@ -58,8 +60,30 @@ namespace m3D { namespace weights {
             {
                 T min_value,max_value;
                 ::cfa::utils::netcdf::unpacked_limits<T>(m_vars[index], min_value, max_value);
-                m_min[index] = min_value;
-                m_max[index] = max_value;
+                
+                std::map<int,double>::const_iterator li;
+
+                li = lower_thresholds.find(m_vars[index].getId());
+                
+                if (li == lower_thresholds.end())
+                {
+                    m_min[index] = min_value;
+                }
+                else
+                {
+                    m_min[index] = li->second;
+                }
+                
+                li = upper_thresholds.find(m_vars[index].getId());
+                
+                if (li == upper_thresholds.end())
+                {
+                    m_max[index] = max_value;
+                }
+                else
+                {
+                    m_max[index] = li->second;
+                }
             }
             
             build_saliency_field(fs);
@@ -71,7 +95,9 @@ namespace m3D { namespace weights {
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        InverseDefaultWeightFunction(FeatureSpace<T> *fs, const map<size_t,T> &min, const map<size_t,T> &max)
+        InverseDefaultWeightFunction(FeatureSpace<T> *fs,
+                                     const map<size_t,T> &min,
+                                     const map<size_t,T> &max)
         : m_vars(fs->variables())
         , m_min(min)
         , m_max(max)
@@ -119,7 +145,14 @@ namespace m3D { namespace weights {
         {
             typename CoordinateSystem<T>::GridPoint gp = this->m_coordinate_system->newGridPoint();
             
-            this->m_coordinate_system->reverse_lookup(values,gp);
+            try
+            {
+                this->m_coordinate_system->reverse_lookup(values,gp);
+            }
+            catch (std::out_of_range& e)
+            {
+                cerr << "Reverse coordinate transformation failed for coordinate=" << values << endl;
+            }
             
             return m_weight.get(gp);
         }

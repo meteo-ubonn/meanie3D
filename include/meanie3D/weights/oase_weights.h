@@ -153,7 +153,16 @@ namespace m3D { namespace weights {
         {
             typename CoordinateSystem<T>::GridPoint gp = this->m_coordinate_system->newGridPoint();
             
-            this->m_coordinate_system->reverse_lookup(values,gp);
+            try
+            {
+                this->m_coordinate_system->reverse_lookup(values,gp);
+            }
+            catch (std::out_of_range& e)
+            {
+                cerr << "Reverse coordinate transformation failed for coordinate=" << values << endl;
+                
+                return 0.0;
+            }
             
             return m_weight.get(gp);
         }

@@ -806,7 +806,7 @@ int main(int argc, char** argv)
         }
         
 #if WRITE_WEIGHT_FUNCTION
-        std::string wfname = path.filename().stem().string() + "-weights.vtk";
+        std::string wfname = path.filename().stem().string() + "-weights";
         ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
 #endif
         if ( verbosity > VerbositySilent )
@@ -834,7 +834,7 @@ int main(int argc, char** argv)
         }
         else if (weight_function_name == "inverse")
         {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs);
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs,lower_thresholds,upper_thresholds);
         }
         else
         {
@@ -842,7 +842,7 @@ int main(int argc, char** argv)
         }
         
 #if WRITE_WEIGHT_FUNCTION
-        std::string wfname = path.filename().stem().string() + "-weights.vtk";
+        std::string wfname = path.filename().stem().string() + "-weights";
         ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
 #endif
 
