@@ -244,7 +244,15 @@ namespace m3D {
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
-        m_coordinate_system->reverse_lookup(c,gp);
+        try
+        {
+            m_coordinate_system->reverse_lookup(c,gp);
+        }
+        catch (std::out_of_range& e)
+        {
+            cerr << "Reverse coordinate transformation failed for coordinate=" << coordinate << endl;
+            return 0.0;
+        }
         
         return get(gp);
     }
@@ -287,9 +295,15 @@ namespace m3D {
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
         
-        m_coordinate_system->reverse_lookup(c,gp);
-        
-        set(gp,value);
+        try
+        {
+            m_coordinate_system->reverse_lookup(c,gp);
+            set(gp,value);
+        }
+        catch (std::out_of_range& e)
+        {
+            cerr << "Reverse coordinate transformation failed for coordinate=" << coordinate << endl;
+        }
     }
 
     

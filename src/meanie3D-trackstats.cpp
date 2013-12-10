@@ -818,9 +818,18 @@ int main(int argc, char** argv)
                     {
                         CoordinateSystem<T>::GridPoint gp = coord_system->newGridPoint();
                         
-                        coord_system->reverse_lookup(p->coordinate, gp);
-                        
-                        p->gridpoint = gp;
+                        try
+                        {
+                            coord_system->reverse_lookup(p->coordinate, gp);
+                            p->gridpoint = gp;
+                        }
+                        catch (std::out_of_range& e)
+                        {
+                            cerr << "Reverse coordinate transformation failed for coordinate=" << p->coordinate << endl;
+                            
+                            // TODO: perhaps remove this point?
+                            continue;
+                        }
                     }
                     
                     Point<T>::ptr indexed = index.get(p->gridpoint);

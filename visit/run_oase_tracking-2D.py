@@ -30,9 +30,13 @@ last_completed_run_count = 0
 # RADOLAN
 
 VAR_NAME="msevi_l15_ir_108"
+VAR_MIN=-10
+VAR_MAX=28
 
-DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --upper-thresholds msevi_l15_ir_108=30 -m 5"
+#DETECT_PARAMS      = " -s "+PARAM_T
+DETECT_PARAMS      = " --ranges="+str(PARAM_T)+","+str(PARAM_T)+",200"
+DETECT_PARAMS     += " --upper-thresholds msevi_l15_ir_108="+str(VAR_MAX)
+DETECT_PARAMS     += " --min-cluster-size 20"
 
 CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
@@ -166,13 +170,13 @@ for netcdf_file in netcdf_list:
 
         AddOperator("Threshold")
         t = ThresholdAttributes();
-        t.lowerBounds=(0.0)
-        t.upperBounds=(30.0)
+        t.lowerBounds=(VAR_MIN)
+        t.upperBounds=(VAR_MAX)
         SetOperatorOptions(t)
 
         p = PseudocolorAttributes()
-        p.minFlag,p.maxFlag = 0,1
-        p.min,p.max = 0,30
+        p.minFlag,p.maxFlag = 1,1
+        p.min,p.max = VAR_MIN,VAR_MAX
         SetPlotOptions(p)
 
         DrawPlots()
@@ -198,10 +202,6 @@ for netcdf_file in netcdf_list:
         
         # Re-add the source with "xray"
         visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",0,1)
-        AddOperator("Threshold")
-        t = ThresholdAttributes();
-        t.lowerBounds=(0.1)
-        SetOperatorOptions(t)
 
         # Add the clusters
         basename = "./"
@@ -261,6 +261,13 @@ for netcdf_file in netcdf_list:
 
         # Re-add the source with "xray"
         visit2D.add_pseudocolor(vtk_file,VAR_NAME,"xray",1,1)
+        
+        AddOperator("Threshold")
+        t = ThresholdAttributes();
+        t.lowerBounds=(VAR_MIN)
+        t.upperBounds=(VAR_MAX)
+        SetOperatorOptions(t)
+
         p = PseudocolorAttributes()
         p.opacity=0.25
         SetPlotOptions(p)

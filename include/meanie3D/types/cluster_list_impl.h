@@ -619,11 +619,18 @@ namespace m3D {
                     
                     typename CoordinateSystem<T>::GridPoint gp = cs->newGridPoint();
                     
-                    cs->reverse_lookup(p->coordinate,gp);
-                    
-                    p->gridpoint = gp;
-                    
-                    cluster->add_point(p);
+                    try
+                    {
+                        cs->reverse_lookup(p->coordinate,gp);
+                        
+                        p->gridpoint = gp;
+                        
+                        cluster->add_point(p);
+                    }
+                    catch (std::out_of_range& e)
+                    {
+                        cerr << "Reverse coordinate transformation failed for coordinate=" << p->coordinate << endl;
+                    }
                 }
                 
                 list.push_back( cluster );
@@ -663,7 +670,7 @@ namespace m3D {
         {
             typename Cluster<T>::ptr c = clusters[ci];
             
-            cout << "Cluster #" << ci << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            cout << "Cluster #" << ci << " (id=" << c->id << ") at " << c->mode << " (" << c->points.size() << " points.)" << endl;
         }
 
     }

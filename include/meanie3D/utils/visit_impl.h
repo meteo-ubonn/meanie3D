@@ -653,7 +653,14 @@ namespace m3D { namespace utils {
         boost::replace_all( basename, "..", "" );
         
         int nx,ny,nz;
-        ::cfa::utils::VisitUtils<T>::get_vtk_image_dimensions(cs,nx,ny,nz);
+        
+        try {
+            ::cfa::utils::VisitUtils<T>::get_vtk_image_dimensions(cs,nx,ny,nz);
+        }
+        catch (std::exception &e)
+        {
+            cerr << e.what() << endl;
+        }
         
         for ( size_t ci = 0; ci < list->clusters.size(); ci++ )
         {

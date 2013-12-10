@@ -71,8 +71,8 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # Debug, Release, MinSizeRel and RelWithDebInfo
 
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -ffast-math=true -finline")
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -ftree-loop-optimize -ftree-vectorize -msse2 -ffast-math=true -finline")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -91,41 +91,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # using Visual Studio C++
   # TODO
 endif()
-
-IF (USE_GCC)
-    MESSAGE(INFO "Configuring compiler flags GCC")
-    SET(CMAKE_CXX_COMPILER=$CXX)
-
-    # Normal
-    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-    
-    # Release
-    IF (APPLE)
-       MESSAGE(INFO "Configuring compiler flags for Apple")
-    ELSE (APPLE)
-       MESSAGE(INFO "Configuring compiler flags for Non-Apple system")
-       SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -finline")
-    ENDIF(APPLE)
-ELSE (USE_GCC)
-
-    MESSAGE(INFO "Configuring compiler flags NON-GCC")
-    # Normal
-    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS}")
-    
-    # Release
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O4 -flto -ftree-loop-optimize -funsafe-loop-optimizations -funroll-all-loops -ftree-vectorize -msse2 -finline")
-
-ENDIF (USE_GCC)
-
-# Optimization flags
-IF (APPLE)
-   SET(CMAKE_XCODE_ATTRIBUTE_GCC_STRICT_ALIASING[variant=Release] YES)
-   SET(CMAKE_XCODE_ATTRIBUTE_GCC_UNROLL_LOOPS[variant=Release] YES)
-   SET(CMAKE_XCODE_ATTRIBUTE_GCC_FAST_MATH[variant=Release] YES)
-   SET(CMAKE_XCODE_ATTRIBUTE_LLVM_LTO[variant=Release] YES)
-ELSE (APPLE)
-   #TODO
-ENDIF(APPLE)   
 
 # C++11
 IF (USE_CPP11)

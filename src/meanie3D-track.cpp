@@ -350,10 +350,6 @@ int main(int argc, char** argv)
     
     tracking.track( previous, current, tracking_var, verbosity );
     
-    // Write results back
-    
-    current->write( current_filename );
-    
     if ( write_vtk )
     {
         m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr( current, cs, current->source_file );
@@ -365,6 +361,10 @@ int main(int argc, char** argv)
         string centers_path = path.filename().stem().string() + "_centers.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, current->clusters);
     }
+
+    // Write results back
+    
+    current->write( current_filename );
     
     // Clean up
     

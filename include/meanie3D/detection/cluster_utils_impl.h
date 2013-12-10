@@ -162,11 +162,13 @@ namespace m3D {
         
         typename cset_t::iterator ci;
         
-        for (ci=erased.begin(); ci!=erased.end(); ci++)
+        for (ci=erased.begin(); ci!=erased.end(); ++ci)
         {
             typename Cluster<T>::ptr c = *ci;
             
-            current->clusters.erase(find(current->clusters.begin(), current->clusters.end(), c));
+            typename Cluster<T>::list::iterator di = find(current->clusters.begin(), current->clusters.end(), c);
+            
+            current->clusters.erase(di);
             
             delete c;
         }

@@ -49,6 +49,28 @@ namespace m3D {
         
         size_t tracking_var_index = (size_t) index;
         
+        // Check cluster sizes
+        
+        for (size_t i=0; i < previous->clusters.size(); i++)
+        {
+            typename Cluster<T>::ptr c = previous->clusters[i];
+            
+            if (c->points.size()==0)
+            {
+                cerr << "ERROR: previous cluster " << c->id << " has no points!" << endl;
+            }
+        }
+
+        for (size_t i=0; i < current->clusters.size(); i++)
+        {
+            typename Cluster<T>::ptr c = current->clusters[i];
+            
+            if (c->points.size()==0)
+            {
+                cerr << "ERROR: current cluster " << c->id << " has no points!" << endl;
+            }
+        }
+
         
         // Valid min/max of tracking variable
         
