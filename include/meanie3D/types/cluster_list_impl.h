@@ -1312,9 +1312,13 @@ namespace m3D {
                 
                 c->add_points(strongest_cluster->points,false);
                 
-                clusters.erase(find(clusters.begin(),clusters.end(),strongest_cluster));
+                typename Cluster<T>::list::iterator cfi = find(clusters.begin(),clusters.end(),strongest_cluster);
                 
-                delete strongest_cluster;
+                if (cfi != clusters.end())
+                {
+                    clusters.erase(cfi);
+                    delete strongest_cluster;
+                }
                 
                 // start over!
                 // TODO: this could be done a little smarter, probably
