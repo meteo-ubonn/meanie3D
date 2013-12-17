@@ -126,7 +126,9 @@ namespace m3D {
                 // it off and finally deleting the original when done, replacing
                 // the original in that way.
                 
-                file = new NcFile( (file_existed?path+"-new":path), NcFile::replace );
+                file = new NcFile((file_existed?path+"-new":path), NcFile::replace, NcFile::classic);
+                
+                //file = new NcFile(
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
@@ -139,7 +141,7 @@ namespace m3D {
             NcDim dim,spatial_dim;
             
             dim = file->addDim("featurespace_dim", (int) this->feature_variables.size() );
-        
+            
             spatial_dim = file->addDim("spatial_dim", (int) this->dimensions.size() );
             
             // write featurespace_dimensions attribute
@@ -162,16 +164,43 @@ namespace m3D {
                 file->addDim(d.getName(), d.getSize());
             }
             
-            // Add 'time'
-            
-            ::cfa::utils::netcdf::add_time(file,this->timestamp);
-            
             // Create dummy variables, attributes and other meta-info
             
             file->putAtt( "num_clusters", ncInt, (int) clusters.size() );
             
             file->putAtt( "source", this->source_file );
+            
+            // Save highest ID
+            
+            unsigned long long hid = boost::numeric_cast<unsigned long long>(this->highest_id);
+            file->putAtt("highest_id", boost::lexical_cast<std::string>(hid));
+            
+            // Record IDs in attribute
+            
+            id_set_t cluster_ids;
+            for ( size_t ci = 0; ci < clusters.size(); ci++ )
+                cluster_ids.insert(clusters[ci]->id);
+            
+            file->putAtt( "cluster_ids", to_string(cluster_ids) );
+            
+            // Add tracking meta-info
+            
+            if ( this->tracking_performed )
+            {
+                file->putAtt( "tracking_performed", "yes" );
+                file->putAtt( "tracking_time_difference", ncInt, this->tracking_time_difference);
+                file->putAtt( "tracked_ids", to_string( this->tracked_ids ) );
+                file->putAtt( "new_ids", to_string( this->new_ids ) );
+                file->putAtt( "dropped_ids", to_string( this->dropped_ids ) );
+                file->putAtt( "merges", id_map_to_string(this->merges));
+                file->putAtt( "splits", id_map_to_string(this->splits));
+            }
 
+            
+            // Add 'time'
+            
+            ::cfa::utils::netcdf::add_time(file,this->timestamp,true);
+            
             // compile a list of the feature space variables used,
             // including the spatial dimensions
             
@@ -182,6 +211,8 @@ namespace m3D {
             for ( size_t i=0; i < this->feature_variables.size(); i++ )
             {
                 NcVar var = this->feature_variables[i];
+                
+                cout << "Copying " << var.getName() << endl;
 
                 // append to list
                 
@@ -205,19 +236,30 @@ namespace m3D {
                 
                 if (dim != NULL)
                 {
+                    nc_redef(file->getId());
                     dummyVar = file->addVar( var.getName(), var.getType(), *dim);
-                    
+                    nc_enddef(file->getId());
+
+                    cout << "\tadded variable " << dummyVar.getName() << " (status=" << dummyVar.isNull() << ")" << endl;
+
                     T *data = (T*)malloc(sizeof(T) * dim->getSize());
-                    
                     var.getVar(data);
                     
+                    cout << "\tread variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
+                    
+//                    ::cfa::utils::array::print_array(data, dim->getSize());
+                    
                     dummyVar.putVar(data);
+                    
+                    cout << "\twrote variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
                     
                     delete data;
                 }
                 else
                 {
+                    nc_redef(file->getId());
                     dummyVar = file->addVar( var.getName(), var.getType(), dimensions );
+                    nc_enddef(file->getId());
                 }
                 
                 // Copy attributes
@@ -226,9 +268,13 @@ namespace m3D {
                 
                 map< string, NcVarAtt >::iterator at;
                 
+                nc_redef(file->getId());
+
                 for ( at = attributes.begin(); at != attributes.end(); at++ )
                 {
                     NcVarAtt a = at->second;
+                    
+                    cout << "\tcopying attribute " << a.getName() << endl;
                     
                     size_t size = a.getAttLength();
                     
@@ -238,37 +284,25 @@ namespace m3D {
                     
                     NcVarAtt copy = dummyVar.putAtt( a.getName(), a.getType(), size, data );
                     
+                    if (copy.isNull())
+                    {
+                        cerr << "ERROR: could not write attribute " << a.getName() << endl;
+                    }
+                    
                     free(data);
                 }
+                
+                nc_enddef(file->getId());
             }
             
-            file->putAtt("featurespace_variables", to_string(variable_names));
+            // Featurespace Variables
             
-            // Add tracking meta-info
-            
-            if ( this->tracking_performed )
-            {
-                file->putAtt( "tracking_performed", "yes" );
-                file->putAtt( "tracking_time_difference", ncInt, this->tracking_time_difference);
-                file->putAtt( "tracked_ids", to_string( this->tracked_ids ) );
-                file->putAtt( "new_ids", to_string( this->new_ids ) );
-                file->putAtt( "dropped_ids", to_string( this->dropped_ids ) );
-                file->putAtt( "merges", id_map_to_string(this->merges));
-                file->putAtt( "splits", id_map_to_string(this->splits));
-            }
+            std::string fvarnames = to_string(variable_names);
 
-            // Save highest ID
-            
-            unsigned long long hid = boost::numeric_cast<unsigned long long>(this->highest_id);
-            file->putAtt("highest_id", ncUint64, hid);
-            
-            // Record IDs in attribute
+            // Enter define mode
+            nc_redef(file->getId());
 
-            id_set_t cluster_ids;
-            for ( size_t ci = 0; ci < clusters.size(); ci++ )
-                cluster_ids.insert(clusters[ci]->id);
-            
-            file->putAtt( "cluster_ids", to_string(cluster_ids) );
+            file->putAtt("featurespace_variables", fvarnames );
             
             // Add cluster dimensions and variables
 
@@ -336,7 +370,7 @@ namespace m3D {
                 
                 // id
                 
-                var.putAtt( "id", ncInt64, cid );
+                var.putAtt( "id", boost::lexical_cast<string>(cid) );
                 
                 // mode
 
@@ -353,6 +387,10 @@ namespace m3D {
                 count[1] = dim.getSize();
 
                 // iterate over points
+                
+                // exit define mode
+                nc_enddef(file->getId());
+                
                 for ( size_t pi = 0; pi < clusters[ci]->points.size(); pi++ )
                 {
                     Point<T> *p = clusters[ci]->points[pi];
@@ -368,8 +406,14 @@ namespace m3D {
                     
                     var.putVar(index, count, &data[0] );
                 }
+                
+                // Enter define mode
+                nc_redef(file->getId());
             }
             
+            // exit define mode
+            nc_enddef(file->getId());
+
             if (file_existed)
             {
                 // close the original and delete it
@@ -475,7 +519,7 @@ namespace m3D {
             try
             {
                 file->getAtt("tracking_performed").getValues(value);
-                tracking_performed = value == "yes";
+                tracking_performed = (value == "yes");
                 
                 if (tracking_performed)
                 {
@@ -494,9 +538,9 @@ namespace m3D {
                     file->getAtt("splits").getValues(value);
                     splits = id_map_from_string(value);
                     
-                    unsigned long long hid;
-                    file->getAtt("highest_id").getValues(&hid);
-                    highest_id = boost::numeric_cast<cfa::id_t>(hid);
+                    file->getAtt("highest_id").getValues(value);
+                    //unsigned long long hid = boost::lexical_cast<unsigned long long>(value);
+                    highest_id = boost::lexical_cast<cfa::id_t>(value);
                     
                     file->getAtt("tracking_time_difference").getValues(&tracking_time_difference);
                 }
