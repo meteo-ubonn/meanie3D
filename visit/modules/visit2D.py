@@ -10,6 +10,7 @@ import glob
 # plotting more comfortably from the various visualization
 # routines
 
+MAPSTUFF_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
 TOPO_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
 TOPO_COLORMAP = "topography"
 TOPO_COLORMAP_INVERT = 0
@@ -165,5 +166,61 @@ def add_topography(var_name):
 def close_topography():
     CloseDatabase(TOPO_FILE);
     return
+
+# Add 2D/3D local topography
+# @param "local" or "national"
+#
+def add_mapstuff(extent):
+    
+    # open the file and add the plot
+    OpenDatabase(MAPSTUFF_FILE)
+    
+    if extent!="local" and extent !="national":
+        print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
+        return
+    
+    # Topography
+    AddPlot("Pseudocolor", extent+"_topo_2D")
+    p = PseudocolorAttributes()
+    p.pointSizePixels = 2
+    p.colorTableName = TOPO_COLORMAP
+    p.invertColorTable = TOPO_COLORMAP_INVERT
+    p.lightingFlag = 0
+    p.legendFlag = 0;
+    p.opacity = 1
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = -100.0, 3200.0
+    SetPlotOptions(p)
+    
+    # Rivers & Boundaries
+    
+    AddPlot("Pseudocolor", "as_zonal/"+extent+"_boundaries_2D")
+    p = PseudocolorAttributes()
+    p.colorTableName = "Greys"
+    p.lightingFlag = 0
+    p.legendFlag = 0;
+    p.opacity = 1
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = 0, 1
+    SetPlotOptions(p)
+    
+    AddPlot("Pseudocolor", "as_zonal/"+extent+"_rivers_2D")
+    p = PseudocolorAttributes()
+    p.colorTableName = "Blues"
+    p.lightingFlag = 0
+    p.legendFlag = 0;
+    p.invertColorTable = 1;
+    p.opacity = 1
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = 0, 1
+    SetPlotOptions(p)
+    
+    return
+
+# Closes databases connected with topo
+def close_mapstuff():
+    CloseDatabase(MAPSTUFF_FILE);
+    return
+
 
 # End of visit2D.py

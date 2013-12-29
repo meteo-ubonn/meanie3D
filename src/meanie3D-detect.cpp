@@ -946,7 +946,6 @@ int main(int argc, char** argv)
             cerr << "ERROR reading previous cluster file: " << ne.what() << endl;
             exit(-1);
         }
-
     }
     
     // Announce final results

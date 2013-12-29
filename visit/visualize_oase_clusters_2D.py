@@ -103,7 +103,7 @@ for netcdf_file in netcdf_files:
         continue
 
     # add topograpy
-    visit2D.add_topography("national_topo_2D")
+    visit2D.add_mapstuff("national")
 
     # now plot the data
     OpenDatabase(netcdf_file);
@@ -128,6 +128,9 @@ for netcdf_file in netcdf_files:
     p.colorTableName = "xray"
     p.invertColorTable=1
     SetPlotOptions(p)
+    
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
 
     DrawPlots()
     visitUtils.save_window("source_",1)
@@ -148,7 +151,7 @@ for netcdf_file in netcdf_files:
     start_time = time.time()
 
     # add 2D topograpy
-    visit2D.add_topography("national_topo_2D")
+    visit2D.add_mapstuff("national")
 
     # re-plot source data as canvas
     visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "xray", 0.1, 1 )
@@ -175,8 +178,8 @@ for netcdf_file in netcdf_files:
     basename = CLUSTER_DIR+"/"
     visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
-    # or the boundaries
-    #visit2D.add_boundaries(basename,"cluster_colors",num_colors)
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
 
     # Add modes as labels
     visitUtils.add_labels(label_file,"geometrical_center")
@@ -187,15 +190,12 @@ for netcdf_file in netcdf_files:
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
 
-    # REMOVE ME!!
-    exit(0)
-
     # clean up
     DeleteAllPlots();
     ClearWindow()
     CloseDatabase(netcdf_file)
     CloseDatabase(label_file)
-    visit2D.close_topography()
+    visit2D.close_mapstuff()
     visitUtils.close_pattern(basename+"*.vtr")
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)

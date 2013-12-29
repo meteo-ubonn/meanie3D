@@ -179,9 +179,8 @@ namespace m3D { namespace utils {
         f << fixed << setprecision(4);
         
         // determine the spatial dimension
-        typename Cluster<T>::ptr c = list[0];
-        typename Point<T>::ptr p = c->points[0];
-        size_t spatial_dims = p->coordinate.size();
+        typename Cluster<T>::ptr c = NULL;
+        typename Point<T>::ptr p = NULL;
         
         // Write Header
         
@@ -196,6 +195,8 @@ namespace m3D { namespace utils {
             typename Cluster<T>::ptr c = list[ci];
             
             // obtain the geometrical center
+            
+            size_t spatial_dims = c->points.at(0)->coordinate.size();
             
             vector<T> mode = c->geometrical_center(spatial_dims);
             
