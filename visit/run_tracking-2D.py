@@ -15,6 +15,7 @@ try:
     import glob
     import os
     import time
+    import shutil
     
     from subprocess import call
 
@@ -25,6 +26,19 @@ except ImportError as e:
 # TODO: find a more elegant way to resume
 # if > 0 a previous run is resumed
 last_completed_run_count = 0
+
+# if not resuming, create direcories
+if last_completed_run_count == 0:
+    
+    # logs
+    if os.path.exists('log'):
+        shutil.rmtree('log')
+    os.makedirs('log')
+    
+    # results
+    if os.path.exists('netcdf'):
+        shutil.rmtree('netcdf')
+    os.makedirs('netcdf')
 
 # RADOLAN
 
@@ -77,7 +91,7 @@ run_count = 0
 for netcdf_file in netcdf_list:
     
     basename = os.path.basename(netcdf_file)
-    cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
+    cluster_file= "./netcdf" + os.path.splitext(basename)[0] + "-clusters.nc"
 
     # if there is a resume counter, keep skipping
     # until the count is right
@@ -103,7 +117,7 @@ for netcdf_file in netcdf_list:
     if run_count > 0:
         command = command + " -p " + last_cluster_file
 
-    command = command + " > clustering_" + str(run_count)+".log"
+    command = command + " > ./log/clustering_" + str(run_count)+".log"
 
     # execute
     print command
@@ -122,7 +136,7 @@ for netcdf_file in netcdf_list:
         print "-- Tracking --"
 
         command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + TRACKING_PARAMS
-        command = command + " > tracking_" + str(run_count)+".log"
+        command = command + " > ./log/tracking_" + str(run_count)+".log"
         
         # execute
         print command
@@ -132,6 +146,9 @@ for netcdf_file in netcdf_list:
 
     # keep track
     last_cluster_file=cluster_file
+
+    print "Cleaning up *.vt*"
+    return_code=call("rm -f *.vt*", shell=True)
 
     # don't forget to increment run counter
     run_count = (run_count + 1)
