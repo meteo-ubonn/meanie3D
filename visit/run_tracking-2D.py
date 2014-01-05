@@ -63,7 +63,8 @@ if last_completed_run_count == 0:
     return_code=call("rm -f *.nc *.vtk *.log *.png", shell=True)
 
 # binaries
-bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
+#bin_prefix    = "export DYLD_LIBRARY_PATH=/usr/local/lib:${DYLD_LIBRARY_PATH};"
+bin_prefix    = "export DYLD_LIBRARY_PATH=/usr/local/lib:/usr/lib; export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib;"
 
 #detection_bin = bin_prefix + "M3D_HOME/Release/" + "meanie3D-detect"
 #tracking_bin  = bin_prefix + "M3D_HOME/Release/" + "meanie3D-track"
@@ -104,7 +105,7 @@ print "    done."
 
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"
-netcdf_list=glob.glob(netcdf_pattern)
+netcdf_list=sorted(glob.glob(netcdf_pattern))
 last_cluster_file=""
 
 run_count = 0
