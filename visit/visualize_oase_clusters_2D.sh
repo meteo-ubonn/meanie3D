@@ -39,6 +39,7 @@ ESCAPED_CLUSTER_DIR=$(echo $2 | sed -e "s/\//\\\\\//g")
 ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 
 cat $MEANIE3D_HOME/visit/visualize_oase_clusters_2D.py | sed -e "s/P_NETCDF_DIR/$ESCAPED_NETCDF_DIR/g" | sed -e "s/P_CLUSTER_DIR/$ESCAPED_CLUSTER_DIR/g" | sed -e "s/P_M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > ${SCRIPTFILE}
+
 if [ "${RUN_VISIT_HEADLESS}" = "true" ]
 then
     ${VISIT_EXECUTABLE} -cli -nowin -s ${SCRIPTFILE}

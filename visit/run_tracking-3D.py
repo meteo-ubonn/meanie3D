@@ -4,36 +4,44 @@
 # TODO: clustering parameters should be passed in from the bash script
 
 MEANIE3D_HOME     = "M3D_HOME"
-DYLD_LIBRARY_PATH = "DL_PATH"
 NETCDF_DIR        = "SOURCE_DIR"
 PARAM_T           = "SCALE"
-SKIP_VISUALS      = "SKIP_VISUALIZATION"
 
 # Appending the module path is crucial
 
-sys.path.append(MEANIE3D_HOME+"/visit/modules")
+try:
+    import sys
+    sys.path.append(MEANIE3D_HOME+"/visit/modules")
+    
+    import glob
+    import os
+    import time
+    import shutil
+    
+    from subprocess import call
 
-import glob
-import os
-import sys
-import time
-import visit3D
-import visitUtils
-from subprocess import call
+except ImportError as e:
+    print 'Exception error is: %s' % e
+    sys.exit()
 
-#print [key for key in locals().keys()
-#    if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
-
-if SKIP_VISUALS=="1":
-    visualize=False
-else:
-    visualize=True
-
-print "Visualization? " + str(visualize)
+# Set up directory structure for results
 
 # TODO: find a more elegant way to resume
 # if > 0 a previous run is resumed
 last_completed_run_count = 0
+
+# if not resuming, create direcories
+if last_completed_run_count == 0:
+    
+    # logs
+    if os.path.exists('log'):
+        shutil.rmtree('log')
+    os.makedirs('log')
+
+    # results
+    if os.path.exists('netcdf'):
+        shutil.rmtree('netcdf')
+    os.makedirs('netcdf')
 
 # RADOLAN
 
@@ -49,23 +57,14 @@ CLUSTERING_PARAMS += " --weight-function default"
 CLUSTERING_PARAMS += " -v "+VAR_NAME
 CLUSTERING_PARAMS += " " + DETECT_PARAMS
 
-if (visualize == True):
-    CLUSTERING_PARAMS += " --write-clusters-as-vtk"
-    CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
-
 TRACKING_PARAMS =  " --verbosity 1 "
 TRACKING_PARAMS += " -t "+VAR_NAME
 TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
-
-if (visualize == True):
-    TRACKING_PARAMS += " --write-vtk"
-    TRACKING_PARAMS += " --vtk-dimensions x,y,z"
 
 # print parameters
 
 print "Running clustering on directory "+NETCDF_DIR
 print "MEANIE3D_HOME="+MEANIE3D_HOME
-print "DYLD_LIBRARY_PATH="+DYLD_LIBRARY_PATH
 
 toggled_maintain=False
 
@@ -75,51 +74,14 @@ if last_completed_run_count == 0:
     return_code=call("rm -f *.nc *.vtk *.log *.png", shell=True)
 
 # binaries
-bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
 
-#detection_bin = bin_prefix + "M3D_HOME/Release/" + "meanie3D-detect"
-#tracking_bin  = bin_prefix + "M3D_HOME/Release/" + "meanie3D-track"
-#trackplot_bin = bin_prefix + "M3D_HOME/Release/" + "meanie3D-trackplot"
-
-detection_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-detect"
-tracking_bin  = bin_prefix + "/usr/local/bin/" + "meanie3D-track"
-trackplot_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-trackplot"
-
-print "Detection Command:"
-print detection_bin
-print "Tracking Command:"
-print tracking_bin
-print "Tracking Evaluation Command:"
-print trackplot_bin
-
-# Cluster color tables
-col_tables = ["Purples","Blues","Oranges","Greens","Reds","Paired"]
-
-# Silent
-SuppressMessages(True)
-SuppressQueryOutputOn()
-
-# Set view and annotation attributes
-a = GetAnnotationAttributes()
-a.axes2D.visible=1
-a.axes2D.autoSetScaling=0
-a.userInfoFlag=0
-a.timeInfoFlag=0
-a.legendInfoFlag=0
-a.databaseInfoFlag=1
-SetAnnotationAttributes(a)
-
-# Modify view parameters
-#v = GetView2D()
-#v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
-#v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
-#SetView2D(v)
-
-visit3D.set_view_to_radolan();
+detection_bin = "meanie3D-detect"
+tracking_bin  = "meanie3D-track"
+trackplot_bin = "meanie3D-trackplot"
 
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"
-netcdf_list=glob.glob(netcdf_pattern)
+netcdf_list=sorted(glob.glob(netcdf_pattern))
 last_cluster_file=""
 
 run_count = 0
@@ -128,13 +90,12 @@ run_count = 0
 for netcdf_file in netcdf_list:
     
     basename = os.path.basename(netcdf_file)
-    cluster_file=os.path.splitext(basename)[0]+"-clusters.nc"
-    vtk_file=os.path.splitext(basename)[0] + ".vtr"
+    cluster_file= "./netcdf/" + os.path.splitext(basename)[0] + "-clusters.nc"
     
     # if there is a resume counter, keep skipping
     # until the count is right
     if (last_completed_run_count > 0) and (run_count <= last_completed_run_count):
-        last_cluster_file=cluster_file
+        last_cluster_file = cluster_file
         run_count = run_count + 1
         continue
     
@@ -143,8 +104,7 @@ for netcdf_file in netcdf_list:
     print "----------------------------------------------------------"
     
     print "-- Clustering --"
-    start_time = time.time()
-    
+
     #
     # Cluster
     #
@@ -156,79 +116,13 @@ for netcdf_file in netcdf_list:
     if run_count > 0:
         command = command + " -p " + last_cluster_file
 
-    command = command + " > clustering_" + str(run_count)+".log"
+    command = command + " > ./log/clustering_" + str(run_count)+".log"
 
     # execute
     print command
-    return_code = call( command, shell=True)
-    
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
-    print "-- Rendering source data --"
     start_time = time.time()
-
-    #
-    # Plot the source data in color
-    #
-
-    visit3D.add_pseudocolor( netcdf_file, VAR_NAME, "hot_desaturated", 0.5, 1 )
-
-    # Add threshold operator
-    AddOperator("Threshold")
-    t = ThresholdAttributes();
-    t.lowerBounds=(35)
-    SetOperatorOptions(t)
-    DrawPlots()
-    
-    # Calling ToggleMaintainViewMode helps
-    # keeping the window from 'jittering'
-    if toggled_maintain != True :
-        ToggleMaintainViewMode()
-        toggled_maintain=True
-
-    visitUtils.save_window("source_",1)
-
-    # clean up
-    DeleteAllPlots();
-
+    return_code = call( command, shell=True)
     print "    done. (%.2f seconds)" % (time.time()-start_time)
-
-    if (visualize == True):
-
-        print "-- Rendering untracked clusters --"
-        start_time = time.time()
-        
-        #
-        # Plot untracked clusters
-        #
-        
-        # Re-add the source with "xray"
-        visit3D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",0,0)
-        AddOperator("Threshold")
-        t = ThresholdAttributes();
-        t.lowerBounds=(35.0)
-        SetOperatorOptions(t)
-
-        # Add the clusters
-        visit3D.add_clusters(basename,"_cluster_",col_tables)
-        
-        # Add modes as labels
-        label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
-        visitUtils.add_labels(label_file,"geometrical_center")
-        
-        # Get it all processed and stowed away
-        DrawPlots()
-        visitUtils.save_window("untracked_",1)
-        
-        #
-        # clean up
-        #
-        
-        DeleteAllPlots();
-        ClearWindow()
-        CloseDatabase(netcdf_file)
-        CloseDatabase(label_file)
-        visitUtils.close_pattern(basename+"*_cluster_*.vtk")
-        print "    done. (%.2f seconds)" % (time.time()-start_time)
 
     # clean vtk/vtr files
     return_code=call("rm -f *cluster*_*.vt*", shell=True)
@@ -242,66 +136,23 @@ for netcdf_file in netcdf_list:
     if run_count > 0:
         
         print "-- Tracking --"
-        start_time = time.time()
-        
         command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + TRACKING_PARAMS
-        command = command + " > tracking_" + str(run_count)+".log"
+        command = command + " > ./log/tracking_" + str(run_count)+".log"
         
         # execute
         print command
+        start_time = time.time()
         return_code = call( command, shell=True)
-        
-        print "    done. (%.2f seconds)" % (time.time()-start_time)
-    
-    print "-- Rendering tracked clusters --"
-    start_time = time.time()
-
-    if (visualize == True):
-
-        #
-        # Plot tracked clusters
-        #
-        
-        # Re-add the source with "xray"
-        visit3D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",0,1)
-        AddOperator("Threshold")
-        t = ThresholdAttributes();
-        t.lowerBounds=(35.0)
-        SetOperatorOptions(t)
-
-        if (run_count > 0):
-            
-            # Add the clusters
-            visit3D.add_clusters(basename,"_cluster_",col_tables)
-            
-            # Add modes as labels
-            label_file=os.path.splitext(basename)[0]+"-clusters_centers.vtk"
-            visitUtils.add_labels(label_file,"geometrical_center")
-        
-        # Get it all processed and stowed away
-        DrawPlots()
-        visitUtils.save_window("tracked_",1)
-
-        #
-        # clean up
-        #
-        
-        DeleteAllPlots();
-        ClearWindow()
-        CloseDatabase(netcdf_file)
-        
-        if run_count > 0:
-            CloseDatabase(label_file)
-            visitUtils.close_pattern(basename+"*_cluster_*.vtr")
-            visitUtils.close_pattern(basename+"*_cluster_*.vtk")
-            return_code=call("rm -f *cluster_*.vtr", shell=True)
         print "    done. (%.2f seconds)" % (time.time()-start_time)
     
     # keep track
     last_cluster_file=cluster_file
-    
+
+    print "Cleaning up *.vt*"
+    return_code=call("rm -f *.vt*", shell=True)
+
     # don't forget to increment run counter
     run_count = (run_count + 1)
 
-print "Done. Closing Visit."
+print "Done."
 exit()

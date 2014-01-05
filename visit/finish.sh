@@ -17,4 +17,4 @@ mkdir log && mv *.log log
 mkdir movies
 convert -limit memory 4GB -delay 50 -quality 100 images/source_*.png movies/source.mpeg
 convert -limit memory 4GB -delay 50 -quality 100 images/tracked_*.png movies/tracked.mpeg
-meanie3D-trackplot --basename raa01-rx_10000-130620 --sourcepath netcdf --create-cumulated-size-statistics 0
+meanie3D-trackstats --basename raa01-rx_10000-130620 --sourcepath netcdf --create-cumulated-size-statistics --create-direction-statistics
