@@ -91,7 +91,7 @@ run_count = 0
 for netcdf_file in netcdf_list:
     
     basename = os.path.basename(netcdf_file)
-    cluster_file= "./netcdf" + os.path.splitext(basename)[0] + "-clusters.nc"
+    cluster_file= "./netcdf/" + os.path.splitext(basename)[0] + "-clusters.nc"
 
     # if there is a resume counter, keep skipping
     # until the count is right
