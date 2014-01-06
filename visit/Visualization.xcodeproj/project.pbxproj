@@ -62,10 +62,10 @@
 			children = (
 				F40BCADF17CDFB3800172279 /* visualize_tracks.py */,
 				F40BCAE017CDFB3800172279 /* visualize_tracks.sh */,
-				F499361F1733E37C00D23B1E /* run_tracking-3D.py */,
-				F49936201733E37C00D23B1E /* run_tracking-3D.sh */,
-				F4907910173117EF001E9D17 /* run_tracking-2D.py */,
 				F4907911173117EF001E9D17 /* run_tracking-2D.sh */,
+				F4907910173117EF001E9D17 /* run_tracking-2D.py */,
+				F49936201733E37C00D23B1E /* run_tracking-3D.sh */,
+				F499361F1733E37C00D23B1E /* run_tracking-3D.py */,
 				F4B11E41184E382E000958D8 /* run_oase_tracking-2D.sh */,
 				F4B11E40184E382E000958D8 /* run_oase_tracking-2D.py */,
 			);
