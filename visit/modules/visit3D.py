@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Filename: visit3D.py
 
-version = '0.1'
+version = 'v1.3'
 
 from visit import *
 import glob
