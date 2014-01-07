@@ -5,5 +5,6 @@
 #include <meanie3D/filters/scalespace_filter.h>
 #include <meanie3D/filters/threshold_filter.h>
 #include <meanie3D/filters/weight_filter.h>
+#include <meanie3D/filters/convection_filter.h>
 
 #endif

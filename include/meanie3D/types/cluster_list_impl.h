@@ -212,7 +212,7 @@ namespace m3D {
             {
                 NcVar var = this->feature_variables[i];
                 
-                cout << "Copying " << var.getName() << endl;
+                // cout << "Copying " << var.getName() << endl;
 
                 // append to list
                 
@@ -240,18 +240,18 @@ namespace m3D {
                     dummyVar = file->addVar( var.getName(), var.getType(), *dim);
                     nc_enddef(file->getId());
 
-                    cout << "\tadded variable " << dummyVar.getName() << " (status=" << dummyVar.isNull() << ")" << endl;
+                    //cout << "\tadded variable " << dummyVar.getName() << " (status=" << dummyVar.isNull() << ")" << endl;
 
                     T *data = (T*)malloc(sizeof(T) * dim->getSize());
                     var.getVar(data);
                     
-                    cout << "\tread variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
+                    //cout << "\tread variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
                     
 //                    ::cfa::utils::array::print_array(data, dim->getSize());
                     
                     dummyVar.putVar(data);
                     
-                    cout << "\twrote variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
+                    //cout << "\twrote variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
                     
                     delete data;
                 }
@@ -274,7 +274,7 @@ namespace m3D {
                 {
                     NcVarAtt a = at->second;
                     
-                    cout << "\tcopying attribute " << a.getName() << endl;
+                    //cout << "\tcopying attribute " << a.getName() << endl;
                     
                     size_t size = a.getAttLength();
                     

@@ -58,6 +58,7 @@ void parse_commmandline(program_options::variables_map vm,
                         std::string &weight_function_name,
                         FS_TYPE &wwf_lower_threshold,
                         FS_TYPE &wwf_upper_threshold,
+                        int &convection_filter_index,
                         string &parameters,
                         vector<FS_TYPE> &ranges,
                         std::string **previous_file,
@@ -161,6 +162,33 @@ void parse_commmandline(program_options::variables_map vm,
     
     parameters = parameters + "variables=" + vm["variables"].as<string>()+ " ";
     
+    // Convection filter index
+    
+    convection_filter_index = -1;
+
+    if (vm.count("convection-filter-variable") > 0)
+    {
+        std::string cf_var_name = vm["convection-filter-variable"].as<string>();
+        
+        for (int index=0; index < variables.size(); index++)
+        {
+            NcVar v = variables.at(index);
+            
+            if (v.getName() == cf_var_name)
+            {
+                // give the index in the complete feature-space vector
+                // not just the list of variables handed in
+                convection_filter_index = dimensions.size() + index;
+            }
+        }
+        
+        if (convection_filter_index < 0)
+        {
+            cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name << "' not a featurespace variable" << endl;
+            exit(-1);
+        }
+    }
+    
     // parse ranges if there
     
     if ( vm.count("ranges") > 0 )
@@ -183,7 +211,7 @@ void parse_commmandline(program_options::variables_map vm,
         
         parameters = parameters + "ranges=" + vm["ranges"].as<string>();
     }
-
+    
     // Lower Thresholds
     
     if ( vm.count("lower-thresholds") > 0 )
@@ -447,6 +475,7 @@ int main(int argc, char** argv)
     ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
+    ("convection-filter-variable,c",program_options::value<string>(),"Name the variable to eliminate all but the points marked as convective according to the classification scheme by Steiner,Houza & Yates (1995) in.")
     ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
     ("filter-size,l", program_options::value<double>()->default_value(0.0), "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
     ("ranges,r", program_options::value<string>(), "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
@@ -498,6 +527,7 @@ int main(int argc, char** argv)
     std::string weight_function_name = "default";
     std::string *previous_file = NULL;
     FS_TYPE cluster_coverage_threshold = 0.66;
+    int convection_filter_index = -1;
     
     double scale = NO_SCALE;
     
@@ -523,6 +553,7 @@ int main(int argc, char** argv)
                            weight_function_name,
                            wwf_lower_threshold,
                            wwf_upper_threshold,
+                           convection_filter_index,
                            parameters,
                            ranges,
                            &previous_file,
@@ -774,6 +805,16 @@ int main(int argc, char** argv)
 
     // used in writing out debug data
     boost::filesystem::path path(filename);
+    
+    // Convection Filter?
+    
+    if (convection_filter_index >= 0)
+    {
+        ConvectionFilter<FS_TYPE> convection_filter(ranges,convection_filter_index,show_progress);
+        convection_filter.apply(fs);
+    }
+    
+    // Scale-Space Smoothing
 
     WeightFunction<FS_TYPE> *weight_function = NULL;
     
