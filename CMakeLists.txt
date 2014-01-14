@@ -355,6 +355,19 @@ TARGET_LINK_LIBRARIES(meanie3D-copydims
     ${Boost_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${VTK_LIBRARIES})
+    
+# Parallax correction for satellite 
+
+ADD_EXECUTABLE(meanie3D-parallax_correction
+    src/meanie3D-parallax_correction.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-parallax_correction
+    meanie3D
+    cf-algorithms
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES})
 
 # map data
 

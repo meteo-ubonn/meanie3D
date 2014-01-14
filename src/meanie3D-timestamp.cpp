@@ -129,7 +129,7 @@ const std::string RADOLAN_FORMAT = "%y%m%d%H%M";
 const std::string RADOLAN_EXAMPLE = "1307010740";
 
 const std::string OASE_2D_PREFIX = "oase-";
-const std::string OASE_2D_FORMAT = "%Y%m%d%tH%Mz";
+const std::string OASE_2D_FORMAT = "%Y%m%dt%H%Mz";
 const std::string OASE_2D_EXAMPLE = "20110622t1500z";
 
 const std::string OASE_3D_PREFIX = "herz-oase-";
@@ -234,7 +234,7 @@ timestamp_t parse_timestamp(std::string filename, TimestampFormat format)
     
     if (strptime( str.c_str(), dateformat.c_str(), ts) == NULL)
     {
-        cerr << "Error parsing datetime string " << str << endl;
+        cerr << "Error parsing datetime string " << str << " from format " << dateformat << endl;
         exit(-1);
     }
     
