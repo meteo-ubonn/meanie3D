@@ -182,18 +182,7 @@ T** allocate_array ( size_t dim_y, size_t dim_x )
 	return array;
 }
 
-template <typename T>
-void deallocate_array ( T** &array, size_t dim_y, size_t dim_x )
-{
-	for ( int i = 0; i < dim_y; ++i )
-	{
-		T* column = array[i];
-		delete column;
-		array[i] = NULL;
-	}
-	
-	delete array;
-}
+#define deallocate_array(array,dim) for (int i=0; i<dim; i++) delete[] array[i]; delete[] array;
 
 /** Corrects the parallax on all seviri satellite variables
  * in the national 2D OASE composite
@@ -203,16 +192,16 @@ void deallocate_array ( T** &array, size_t dim_y, size_t dim_x )
 void correct_parallax ( boost::filesystem::path in_path )
 {
 	// Some constants
-	const int NOT_SET = -32.000f;		// marks unused points in the output
 	const double SAT_LON = 9.5;			// longitude of METEOSAT-9
 	const double SAT_LAT = 0.0;			// latitute of METEOSAT-9
-	const double SAT_HEIGHT = 36.000;	// height of METEOSAT-9 in metres
+	const double SAT_HEIGHT = 35785.83;	// height of METEOSAT-9 [km]
+	
+	#define dim_x 900
+	#define dim_y 900
 
-	try {
+	try 
+	{
 		NcFile file ( in_path.generic_string(), NcFile::write );
-
-		size_t dim_y = file.getDim ( "y" ).getSize();
-		size_t dim_x = file.getDim ( "x" ).getSize();
 
 		typedef std::multimap<std::string,NcVar> vmap_t;
 
@@ -220,8 +209,7 @@ void correct_parallax ( boost::filesystem::path in_path )
 
 		// Cloud-Top-Height is needed as input
 
-		int **cloud_top_height = allocate_array<int> ( dim_y,dim_x );
-
+		static int cloud_top_height[dim_y][dim_x];
 
 		vmap_t::iterator fi = variables.find ( "msevi_l2_nwcsaf_cth" );
 		if ( fi == variables.end() ) {
@@ -254,8 +242,8 @@ void correct_parallax ( boost::filesystem::path in_path )
 
 		// create a variable for input and one for output
 
-		int **corrected_iy = allocate_array<int> ( dim_y,dim_x );
-		int **corrected_ix = allocate_array<int> ( dim_y,dim_x );
+		static int corrected_iy[dim_y][dim_x];
+		static int corrected_ix[dim_y][dim_x];
 
 		// initialize output data with flag to find pixels
 		// later that have not been set
@@ -292,8 +280,8 @@ void correct_parallax ( boost::filesystem::path in_path )
 				// data at corrected position
 
 				RDGeographicalPoint coord_coorected;
-				coord_coorected.latitude = lat_corrected;
-				coord_coorected.longitude = lon_corrected;
+				coord_coorected.latitude = -lat_corrected;
+				coord_coorected.longitude = -lon_corrected;
 
 				bool is_inside = false;
 				RDGridPoint gp_corrected = rcs.gridPoint ( coord_coorected,is_inside );
@@ -308,11 +296,27 @@ void correct_parallax ( boost::filesystem::path in_path )
 			}
 		}
 
-		int **input_data = allocate_array<int> ( dim_y,dim_x );
-		int **output_data = allocate_array<int> ( dim_y,dim_x );
+		static int input_data[dim_y][dim_x];
+		static int output_data[dim_y][dim_x];
 
-		for ( vmap_t::iterator vi = variables.begin(); vi != variables.end(); vi++ ) {
+		for ( vmap_t::iterator vi = variables.begin(); vi != variables.end(); vi++ ) 
+		{
 			NcVar variable = vi->second;
+			
+			int fill_value = 0;
+			try
+			{
+				// Get the official _FillValue value if the
+				// variable has one
+				NcVarAtt fillValue = variable.getAtt("_FillValue");
+				fillValue.getValues(&fill_value);
+			}
+			catch (netCDF::exceptions::NcException e)
+			{
+				// if not, put the value just outside the valid range
+				int valid_min = std::numeric_limits<int>::min();
+				fill_value = valid_min - 1;
+			}
 
 			if ( boost::starts_with ( variable.getName(), "msevi_" ) ) {
 				// Initialize arrays
@@ -320,7 +324,7 @@ void correct_parallax ( boost::filesystem::path in_path )
 				for ( size_t iy = 0; iy < dim_y; iy++ ) {
 					for ( size_t ix = 0; ix < dim_x; ix++ ) {
 						input_data[iy][ix] = 0;
-						output_data[iy][ix] = NOT_SET;
+						output_data[iy][ix] = fill_value;
 					}
 				}
 
@@ -350,13 +354,6 @@ void correct_parallax ( boost::filesystem::path in_path )
 				variable.putVar ( &output_data[0][0] );
 			}
 		}
-
-		deallocate_array<int> ( input_data,dim_y,dim_x );
-		deallocate_array<int> ( output_data,dim_y,dim_x );
-		deallocate_array<int> ( cloud_top_height,dim_y,dim_x );
-		deallocate_array<int> ( corrected_iy,dim_y,dim_x );
-		deallocate_array<int> ( corrected_ix,dim_y,dim_x );
-
 
 	} catch ( netCDF::exceptions::NcException &e ) {
 		cerr << e.what() << endl;
