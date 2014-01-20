@@ -7,136 +7,54 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		F4000D2E17BB6F9B000F8849 /* finish.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = finish.sh; sourceTree = "<group>"; };
-		F40BCADF17CDFB3800172279 /* visualize_tracks.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_tracks.py; sourceTree = "<group>"; };
-		F40BCAE017CDFB3800172279 /* visualize_tracks.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_tracks.sh; sourceTree = "<group>"; };
-		F425382017A03E68002E4803 /* visualize_oase_weights.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_oase_weights.py; sourceTree = "<group>"; };
-		F425382117A03E68002E4803 /* visualize_oase_weights.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_weights.sh; sourceTree = "<group>"; };
-		F4383FFF17D5EB41000F408E /* visualize_cluster_weights_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_cluster_weights_2D.py; sourceTree = "<group>"; };
-		F438400017D5EB41000F408E /* visualize_cluster_weights_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_cluster_weights_2D.sh; sourceTree = "<group>"; };
-		F464BBAB17D87B6100112D0E /* run_tb4_clustering.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = run_tb4_clustering.py; sourceTree = "<group>"; };
-		F464BBAC17D87B6100112D0E /* run_tb4_clustering.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = run_tb4_clustering.sh; sourceTree = "<group>"; };
-		F472B59217D4E3E30012429C /* visualize_cluster_weights_3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_cluster_weights_3D.py; sourceTree = "<group>"; };
-		F472B59317D4E3E30012429C /* visualize_cluster_weights_3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_cluster_weights_3D.sh; sourceTree = "<group>"; };
-		F478904B1761F39E00E2E0DF /* visualize_clusters_3D.py */ = {isa = PBXFileReference; explicitFileType = text.script.python; path = visualize_clusters_3D.py; sourceTree = SOURCE_ROOT; };
-		F478904C1761F39E00E2E0DF /* cluster_visualization.template */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cluster_visualization.template; sourceTree = SOURCE_ROOT; };
-		F478904E1761F45000E2E0DF /* visualize_clusters_3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_clusters_3D.sh; sourceTree = "<group>"; };
-		F4907910173117EF001E9D17 /* run_tracking-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_tracking-2D.py"; sourceTree = "<group>"; };
-		F4907911173117EF001E9D17 /* run_tracking-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_tracking-2D.sh"; sourceTree = "<group>"; };
-		F490791C173123B0001E9D17 /* run_clustering_complete-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_clustering_complete-2D.py"; sourceTree = "<group>"; };
-		F490791D173123B0001E9D17 /* run_clustering_complete-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_clustering_complete-2D.sh"; sourceTree = "<group>"; };
-		F4907920173123B0001E9D17 /* visit_script.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit_script.py; sourceTree = "<group>"; };
-		F4907921173123B0001E9D17 /* visualize_clusters.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_clusters.sh; sourceTree = "<group>"; };
-		F4907923173123B0001E9D17 /* visualize_tracked_clusters.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_tracked_clusters.sh; sourceTree = "<group>"; };
-		F499361F1733E37C00D23B1E /* run_tracking-3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_tracking-3D.py"; sourceTree = "<group>"; };
-		F49936201733E37C00D23B1E /* run_tracking-3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_tracking-3D.sh"; sourceTree = "<group>"; };
 		F49936211733E57700D23B1E /* visit3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit3D.py; sourceTree = "<group>"; };
 		F49936221733E65500D23B1E /* visitUtils.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visitUtils.py; sourceTree = "<group>"; };
-		F4A67D8E1798058C00C2BF5F /* create_radolan_loop.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_radolan_loop.py; sourceTree = "<group>"; };
-		F4A67D8F1798058C00C2BF5F /* create_radolan_loop.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_radolan_loop.sh; sourceTree = "<group>"; };
-		F4B11E3E184E37A0000958D8 /* visualize_oase_clusters_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_oase_clusters_2D.py; sourceTree = "<group>"; };
-		F4B11E3F184E37A0000958D8 /* visualize_oase_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_clusters_2D.sh; sourceTree = "<group>"; };
-		F4B11E40184E382E000958D8 /* run_oase_tracking-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_oase_tracking-2D.py"; sourceTree = "<group>"; };
-		F4B11E41184E382E000958D8 /* run_oase_tracking-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_oase_tracking-2D.sh"; sourceTree = "<group>"; };
 		F4C9F34B187AE2C8005E011A /* meanie3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = meanie3D.py; sourceTree = "<group>"; };
-		F4F0951918055D00004CC54E /* visualize_clusters_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_clusters_2D.py; sourceTree = "<group>"; };
-		F4F0951A18055D00004CC54E /* visualize_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_clusters_2D.sh; sourceTree = "<group>"; };
 		F4FA4E7E17312E420070400B /* visit2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit2D.py; sourceTree = "<group>"; };
+		F4FA807F188D29BC00C426C5 /* run_clustering_complete-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_clustering_complete-2D.py"; sourceTree = "<group>"; };
+		F4FA8080188D29BC00C426C5 /* run_clustering_complete-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_clustering_complete-2D.sh"; sourceTree = "<group>"; };
+		F4FA8082188D29BC00C426C5 /* create_oase_loop_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_oase_loop_2D.py; sourceTree = "<group>"; };
+		F4FA8083188D29BC00C426C5 /* create_oase_loop_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_oase_loop_2D.sh; sourceTree = "<group>"; };
+		F4FA8084188D29BC00C426C5 /* create_radolan_loop.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_radolan_loop.py; sourceTree = "<group>"; };
+		F4FA8085188D29BC00C426C5 /* create_radolan_loop.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_radolan_loop.sh; sourceTree = "<group>"; };
+		F4FA8087188D29BC00C426C5 /* run_tb4_clustering.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = run_tb4_clustering.py; sourceTree = "<group>"; };
+		F4FA8088188D29BC00C426C5 /* run_tb4_clustering.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = run_tb4_clustering.sh; sourceTree = "<group>"; };
+		F4FA808A188D29BC00C426C5 /* run_oase_tracking-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_oase_tracking-2D.py"; sourceTree = "<group>"; };
+		F4FA808B188D29BC00C426C5 /* run_oase_tracking-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_oase_tracking-2D.sh"; sourceTree = "<group>"; };
+		F4FA808C188D29BC00C426C5 /* run_tracking-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_tracking-2D.py"; sourceTree = "<group>"; };
+		F4FA808D188D29BC00C426C5 /* run_tracking-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_tracking-2D.sh"; sourceTree = "<group>"; };
+		F4FA808E188D29BC00C426C5 /* run_tracking-3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_tracking-3D.py"; sourceTree = "<group>"; };
+		F4FA808F188D29BC00C426C5 /* run_tracking-3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_tracking-3D.sh"; sourceTree = "<group>"; };
+		F4FA8091188D29BC00C426C5 /* visualize_cluster_weights_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_cluster_weights_2D.py; sourceTree = "<group>"; };
+		F4FA8092188D29BC00C426C5 /* visualize_cluster_weights_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_cluster_weights_2D.sh; sourceTree = "<group>"; };
+		F4FA8093188D29BC00C426C5 /* visualize_cluster_weights_3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_cluster_weights_3D.py; sourceTree = "<group>"; };
+		F4FA8094188D29BC00C426C5 /* visualize_cluster_weights_3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_cluster_weights_3D.sh; sourceTree = "<group>"; };
+		F4FA8095188D29BC00C426C5 /* visualize_clusters.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_clusters.sh; sourceTree = "<group>"; };
+		F4FA8096188D29BC00C426C5 /* visualize_clusters_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_clusters_2D.py; sourceTree = "<group>"; };
+		F4FA8097188D29BC00C426C5 /* visualize_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_clusters_2D.sh; sourceTree = "<group>"; };
+		F4FA8098188D29BC00C426C5 /* visualize_clusters_3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_clusters_3D.py; sourceTree = "<group>"; };
+		F4FA8099188D29BC00C426C5 /* visualize_clusters_3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_clusters_3D.sh; sourceTree = "<group>"; };
+		F4FA809A188D29BC00C426C5 /* visualize_oase_clusters_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_oase_clusters_2D.py; sourceTree = "<group>"; };
+		F4FA809B188D29BC00C426C5 /* visualize_oase_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_clusters_2D.sh; sourceTree = "<group>"; };
+		F4FA809C188D29BC00C426C5 /* visualize_oase_weights.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_oase_weights.py; sourceTree = "<group>"; };
+		F4FA809D188D29BC00C426C5 /* visualize_oase_weights.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_weights.sh; sourceTree = "<group>"; };
+		F4FA809E188D29BC00C426C5 /* visualize_tracked_clusters.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_tracked_clusters.sh; sourceTree = "<group>"; };
+		F4FA809F188D29BC00C426C5 /* visualize_tracked_clusters.template */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_tracked_clusters.template; sourceTree = "<group>"; };
+		F4FA80A0188D29BC00C426C5 /* visualize_tracks.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_tracks.py; sourceTree = "<group>"; };
+		F4FA80A1188D29BC00C426C5 /* visualize_tracks.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_tracks.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		F438400117D5EB46000F408E /* weights */ = {
-			isa = PBXGroup;
-			children = (
-				F472B59317D4E3E30012429C /* visualize_cluster_weights_3D.sh */,
-				F472B59217D4E3E30012429C /* visualize_cluster_weights_3D.py */,
-				F438400017D5EB41000F408E /* visualize_cluster_weights_2D.sh */,
-				F4383FFF17D5EB41000F408E /* visualize_cluster_weights_2D.py */,
-				F425382017A03E68002E4803 /* visualize_oase_weights.py */,
-				F425382117A03E68002E4803 /* visualize_oase_weights.sh */,
-			);
-			name = weights;
-			sourceTree = "<group>";
-		};
-		F438400217D5EB4E000F408E /* tracking */ = {
-			isa = PBXGroup;
-			children = (
-				F40BCADF17CDFB3800172279 /* visualize_tracks.py */,
-				F40BCAE017CDFB3800172279 /* visualize_tracks.sh */,
-				F4907911173117EF001E9D17 /* run_tracking-2D.sh */,
-				F4907910173117EF001E9D17 /* run_tracking-2D.py */,
-				F49936201733E37C00D23B1E /* run_tracking-3D.sh */,
-				F499361F1733E37C00D23B1E /* run_tracking-3D.py */,
-				F4B11E41184E382E000958D8 /* run_oase_tracking-2D.sh */,
-				F4B11E40184E382E000958D8 /* run_oase_tracking-2D.py */,
-			);
-			name = tracking;
-			sourceTree = "<group>";
-		};
-		F438400317D5EB62000F408E /* radolan */ = {
-			isa = PBXGroup;
-			children = (
-				F4A67D8E1798058C00C2BF5F /* create_radolan_loop.py */,
-				F4A67D8F1798058C00C2BF5F /* create_radolan_loop.sh */,
-			);
-			name = radolan;
-			sourceTree = "<group>";
-		};
-		F438400417D5EB70000F408E /* clusters */ = {
-			isa = PBXGroup;
-			children = (
-				F478904E1761F45000E2E0DF /* visualize_clusters_3D.sh */,
-				F478904B1761F39E00E2E0DF /* visualize_clusters_3D.py */,
-				F4F0951918055D00004CC54E /* visualize_clusters_2D.py */,
-				F4F0951A18055D00004CC54E /* visualize_clusters_2D.sh */,
-				F4B11E3F184E37A0000958D8 /* visualize_oase_clusters_2D.sh */,
-				F4B11E3E184E37A0000958D8 /* visualize_oase_clusters_2D.py */,
-			);
-			name = clusters;
-			sourceTree = "<group>";
-		};
-		F464BBAA17D87B3500112D0E /* tb4 */ = {
-			isa = PBXGroup;
-			children = (
-				F464BBAC17D87B6100112D0E /* run_tb4_clustering.sh */,
-				F464BBAB17D87B6100112D0E /* run_tb4_clustering.py */,
-			);
-			name = tb4;
-			sourceTree = "<group>";
-		};
 		F4907905173117BF001E9D17 = {
 			isa = PBXGroup;
 			children = (
 				F4FA4E7D17312E420070400B /* modules */,
-				F4907924173123CF001E9D17 /* src */,
-				F490791B173123B0001E9D17 /* refac */,
+				F4FA807E188D29BC00C426C5 /* clustering */,
+				F4FA8081188D29BC00C426C5 /* loops */,
+				F4FA8086188D29BC00C426C5 /* tb4 */,
+				F4FA8089188D29BC00C426C5 /* tracking */,
+				F4FA8090188D29BC00C426C5 /* visualize_results */,
 			);
-			sourceTree = "<group>";
-		};
-		F490791B173123B0001E9D17 /* refac */ = {
-			isa = PBXGroup;
-			children = (
-				F490791C173123B0001E9D17 /* run_clustering_complete-2D.py */,
-				F490791D173123B0001E9D17 /* run_clustering_complete-2D.sh */,
-				F4907920173123B0001E9D17 /* visit_script.py */,
-				F4907921173123B0001E9D17 /* visualize_clusters.sh */,
-				F4907923173123B0001E9D17 /* visualize_tracked_clusters.sh */,
-				F478904C1761F39E00E2E0DF /* cluster_visualization.template */,
-			);
-			path = refac;
-			sourceTree = "<group>";
-		};
-		F4907924173123CF001E9D17 /* src */ = {
-			isa = PBXGroup;
-			children = (
-				F464BBAA17D87B3500112D0E /* tb4 */,
-				F438400417D5EB70000F408E /* clusters */,
-				F438400317D5EB62000F408E /* radolan */,
-				F438400217D5EB4E000F408E /* tracking */,
-				F438400117D5EB46000F408E /* weights */,
-				F4000D2E17BB6F9B000F8849 /* finish.sh */,
-			);
-			name = src;
 			sourceTree = "<group>";
 		};
 		F4FA4E7D17312E420070400B /* modules */ = {
@@ -148,6 +66,72 @@
 				F4C9F34B187AE2C8005E011A /* meanie3D.py */,
 			);
 			path = modules;
+			sourceTree = "<group>";
+		};
+		F4FA807E188D29BC00C426C5 /* clustering */ = {
+			isa = PBXGroup;
+			children = (
+				F4FA807F188D29BC00C426C5 /* run_clustering_complete-2D.py */,
+				F4FA8080188D29BC00C426C5 /* run_clustering_complete-2D.sh */,
+			);
+			path = clustering;
+			sourceTree = "<group>";
+		};
+		F4FA8081188D29BC00C426C5 /* loops */ = {
+			isa = PBXGroup;
+			children = (
+				F4FA8082188D29BC00C426C5 /* create_oase_loop_2D.py */,
+				F4FA8083188D29BC00C426C5 /* create_oase_loop_2D.sh */,
+				F4FA8084188D29BC00C426C5 /* create_radolan_loop.py */,
+				F4FA8085188D29BC00C426C5 /* create_radolan_loop.sh */,
+			);
+			path = loops;
+			sourceTree = "<group>";
+		};
+		F4FA8086188D29BC00C426C5 /* tb4 */ = {
+			isa = PBXGroup;
+			children = (
+				F4FA8087188D29BC00C426C5 /* run_tb4_clustering.py */,
+				F4FA8088188D29BC00C426C5 /* run_tb4_clustering.sh */,
+			);
+			path = tb4;
+			sourceTree = "<group>";
+		};
+		F4FA8089188D29BC00C426C5 /* tracking */ = {
+			isa = PBXGroup;
+			children = (
+				F4FA808A188D29BC00C426C5 /* run_oase_tracking-2D.py */,
+				F4FA808B188D29BC00C426C5 /* run_oase_tracking-2D.sh */,
+				F4FA808C188D29BC00C426C5 /* run_tracking-2D.py */,
+				F4FA808D188D29BC00C426C5 /* run_tracking-2D.sh */,
+				F4FA808E188D29BC00C426C5 /* run_tracking-3D.py */,
+				F4FA808F188D29BC00C426C5 /* run_tracking-3D.sh */,
+			);
+			path = tracking;
+			sourceTree = "<group>";
+		};
+		F4FA8090188D29BC00C426C5 /* visualize_results */ = {
+			isa = PBXGroup;
+			children = (
+				F4FA8091188D29BC00C426C5 /* visualize_cluster_weights_2D.py */,
+				F4FA8092188D29BC00C426C5 /* visualize_cluster_weights_2D.sh */,
+				F4FA8093188D29BC00C426C5 /* visualize_cluster_weights_3D.py */,
+				F4FA8094188D29BC00C426C5 /* visualize_cluster_weights_3D.sh */,
+				F4FA8095188D29BC00C426C5 /* visualize_clusters.sh */,
+				F4FA8096188D29BC00C426C5 /* visualize_clusters_2D.py */,
+				F4FA8097188D29BC00C426C5 /* visualize_clusters_2D.sh */,
+				F4FA8098188D29BC00C426C5 /* visualize_clusters_3D.py */,
+				F4FA8099188D29BC00C426C5 /* visualize_clusters_3D.sh */,
+				F4FA809A188D29BC00C426C5 /* visualize_oase_clusters_2D.py */,
+				F4FA809B188D29BC00C426C5 /* visualize_oase_clusters_2D.sh */,
+				F4FA809C188D29BC00C426C5 /* visualize_oase_weights.py */,
+				F4FA809D188D29BC00C426C5 /* visualize_oase_weights.sh */,
+				F4FA809E188D29BC00C426C5 /* visualize_tracked_clusters.sh */,
+				F4FA809F188D29BC00C426C5 /* visualize_tracked_clusters.template */,
+				F4FA80A0188D29BC00C426C5 /* visualize_tracks.py */,
+				F4FA80A1188D29BC00C426C5 /* visualize_tracks.sh */,
+			);
+			path = visualize_results;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

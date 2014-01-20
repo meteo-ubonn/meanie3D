@@ -133,22 +133,16 @@ def create_topography_colortable():
 # @param text message
 def add_text_annotation(x,y,message):
 
-    print "Annotations:"
-    print GetAnnotationObjectNames()
-
     text="";
     try:
         text = GetAnnotationObject("Text2D1")
-        print "Obtained existing annotation object"
 
     except visit.VisItException:
         text = CreateAnnotationObject("Text2D")
-        print "Creating new annotation object"
 
     text.text = message;
     text.position = (x,y)
     text.height = 0.02
-    print text
     return
 
 ## Add background gradient from dark (middle)
@@ -179,16 +173,29 @@ def add_datetime(filename):
         text = day+"."+month+"."+year+" "+hour+":"+minute+" UTC"
         add_text_annotation(0.725,0.95,text);
         return
+    
+    # OASE 2D
+    #oase-20110622t2055z-1km-germany-2d-v01a.nc
+    baseIndex=string.find(filename,"oase-")
+    if baseIndex >= 0:
+        year = filename[baseIndex+5:baseIndex+9]
+        month = filename[baseIndex+9:baseIndex+11]
+        day = filename[baseIndex+11:baseIndex+13]
+        hour = filename[baseIndex+14:baseIndex+16]
+        minute = filename[baseIndex+16:baseIndex+18]
+        text = day+"."+month+"."+year+" "+hour+":"+minute+" UTC"
+        add_text_annotation(0.725,0.95,text);
+        return
 
     # RADOLAN
     #raa01-rx_10000-1307010555-dwd---bin.nc
     baseIndex=string.find(filename,"raa01-rx_10000")
     if baseIndex >= 0:
         year = filename[baseIndex+15:baseIndex+17]
-        month = filename[baseIndex+17:baseIndex+19]
-        day = filename[baseIndex+19:baseIndex+21]
-        hour = filename[baseIndex+21:baseIndex+23]
-        minute = filename[baseIndex+23:baseIndex+25]
+        month = filename[baseIndex+18:baseIndex+19]
+        day = filename[baseIndex+20:baseIndex+21]
+        hour = filename[baseIndex+22:baseIndex+23]
+        minute = filename[baseIndex+24:baseIndex+25]
         text = day+"."+month+".'"+year+" "+hour+":"+minute+" UTC"
         add_text_annotation(0.725,0.95,text);
         return

@@ -127,8 +127,8 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity,legendFlag):
     p.legendFlag=legendFlag
     p.lightingFlag=1
     p.opacity=opacity
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = 35,92.5
+    # p.minFlag,p.maxFlag = 1,1
+    # p.min,p.max = 35,92.5
     SetPlotOptions(p)
     return
 
@@ -222,5 +222,31 @@ def close_mapstuff():
     CloseDatabase(MAPSTUFF_FILE);
     return
 
+
+# Sets up standard values for axis etc
+#
+def set_annotations():
+    
+    a = GetAnnotationAttributes()
+    a.axes2D.visible=1
+    a.axes2D.autoSetScaling=0
+    a.userInfoFlag=0
+    a.timeInfoFlag=0
+    a.legendInfoFlag=1
+    a.databaseInfoFlag=1
+    
+    a.axes2D.xAxis.title.visible=0
+    a.axes2D.xAxis.title.userTitle = 1
+    a.axes2D.xAxis.title.userUnits = 1
+    a.axes2D.xAxis.title.title = "x"
+    a.axes2D.xAxis.title.units = "km"
+    
+    a.axes2D.yAxis.title.visible=0
+    a.axes2D.yAxis.title.userTitle = 1
+    a.axes2D.yAxis.title.userUnits = 1
+    a.axes2D.yAxis.title.title = "y"
+    a.axes2D.yAxis.title.units = "km"
+    
+    SetAnnotationAttributes(a)
 
 # End of visit2D.py
