@@ -14,6 +14,7 @@
 #include <sstream>
 
 #include <meanie3D/meanie3D.h>
+#include <cf-algorithms/cf-algorithms.h>
 #include <radolan/radolan.h>
 
 #include <map>
@@ -28,6 +29,7 @@
 #include <stdlib.h>
 #include <netcdf>
 #include <time.h>
+#include <algorithm>
 
 using namespace std;
 using namespace boost;
@@ -36,8 +38,16 @@ using namespace m3D;
 
 namespace fs = boost::filesystem;
 
+typedef enum {
+    ShiftedPropertiesSatellite=0,
+    ShiftedPropertiesOthers=1,
+} ShiftedProperties;
+
+
 #pragma mark -
 #pragma mark Definitions
+
+#define WRITE_PARALLAX_VECTORS 1
 
 /** Feature-space data type
  */
@@ -47,7 +57,8 @@ typedef double T;
 #pragma mark Command line parsing
 
 void parse_commmandline ( program_options::variables_map vm,
-                          string &filename )
+                          string &filename,
+                          ShiftedProperties &shifted )
 {
 	if ( vm.count ( "file" ) == 0 ) {
 		cerr << "Missing 'file' argument" << endl;
@@ -56,6 +67,23 @@ void parse_commmandline ( program_options::variables_map vm,
 	}
 
 	filename = vm["file"].as<string>();
+    
+    std::string shifted_name = vm["shifted"].as<string>();
+    
+    if (!(shifted_name == "satellite" || shifted_name == "other"))
+    {
+        cerr << "Illegal value for argument 'shifted'. Only 'satellite' or 'others' are accepted." << endl;
+        exit( 1 );
+    }
+    
+    if (shifted_name == "satellite")
+    {
+        shifted = ShiftedPropertiesSatellite;
+    }
+    else
+    {
+        shifted = ShiftedPropertiesOthers;
+    }
 }
 
 #pragma mark -
@@ -189,7 +217,7 @@ T** allocate_array ( size_t dim_y, size_t dim_x )
  * @param in_path path to the netcdf file to be corrected. The data
  * in the file is overwritten.
  */
-void correct_parallax ( boost::filesystem::path in_path )
+void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties shifted )
 {
 	// Some constants
 	const double SAT_LON = 9.5;			// longitude of METEOSAT-9
@@ -256,17 +284,26 @@ void correct_parallax ( boost::filesystem::path in_path )
 		}
 
 		// Coordinate system for lat/lon transformation
+        
 		RDCoordinateSystem rcs ( RD_RX );
-
+        
+        typedef std::vector< std::vector<T> > vec_list_t;
+        
+#if WRITE_PARALLAX_VECTORS
+        vec_list_t origins;
+        vec_list_t correction_vectors;
+#endif
 		// correct the parallax
 
-		for ( size_t iy = 0; iy < dim_y; iy++ ) {
-			for ( size_t ix = 0; ix < dim_x; ix++ ) {
+		for ( size_t iy = 0; iy < dim_y; iy++ )
+        {
+			for ( size_t ix = 0; ix < dim_x; ix++ )
+            {
 				RDGridPoint gp = rdGridPoint ( ix,iy );
 
 				// get lat/lon for this pixel
 				RDGeographicalPoint coord = rcs.geographicalCoordinate ( gp );
-
+                
 				// Get Marianne Koenig's correction values
 
 				T cth = boost::numeric_cast<float> ( cloud_top_height[iy][ix] ) / 1000.0f;
@@ -275,26 +312,70 @@ void correct_parallax ( boost::filesystem::path in_path )
 				T lon_corrected = 0;
 
 				parallax<double> ( SAT_HEIGHT, SAT_LAT, SAT_LON, cth, coord.latitude, coord.longitude, lat_corrected, lon_corrected );
+                
+				RDGeographicalPoint coord_corrected;
 
 				// Figure out the grid point again and set
 				// data at corrected position
-
-				RDGeographicalPoint coord_coorected;
-				coord_coorected.latitude = -lat_corrected;
-				coord_coorected.longitude = -lon_corrected;
+                
+                if (shifted==ShiftedPropertiesOthers)
+                {
+                    // The correction shifts the other data to the
+                    // corrected position. The parallax of the satellite
+                    // is not corrected, but the other data is shifted
+                    // to be congruent
+                    
+                    coord_corrected.latitude = lat_corrected;
+                    coord_corrected.longitude = lon_corrected;
+                }
+                else
+                {
+                    // The correction shifts the satellite data to the
+                    // corrected position. The parallax of the satellite
+                    // is now corrected, but the other data stays in place
+                    
+                    // Experimental
+                    
+                    T dLat = (lat_corrected - coord.latitude);
+                    T dLon = (lon_corrected - coord.longitude);
+                    
+                    coord_corrected.latitude = coord.latitude - dLat;
+                    coord_corrected.longitude = coord.longitude - dLon;
+                }
 
 				bool is_inside = false;
-				RDGridPoint gp_corrected = rcs.gridPoint ( coord_coorected,is_inside );
-
+				RDGridPoint gp_corrected = rcs.gridPoint ( coord_corrected,is_inside );
+                
+                // Figure out the parallax vector
+                RDCartesianPoint cartesian = rcs.cartesianCoordinate(gp);
+                RDCartesianPoint cartesian_corr = rcs.cartesianCoordinate(gp_corrected);
+                
 				// TODO: what if two pixels are moved to the same place?
 				// The way things are now is 'last write wins'
 
-				if ( is_inside ) {
-					corrected_ix[iy][ix] = gp_corrected.ix;
-					corrected_iy[iy][ix] = gp_corrected.iy;
+				if ( is_inside )
+                {
+#if WRITE_PARALLAX_VECTORS
+                    vector<T> origin(2);
+                    origin[0] = cartesian.x;
+                    origin[1] = cartesian.y;
+                    origins.push_back(origin);
+                    
+                    vector<T> correction(2);
+                    correction[0] = cartesian_corr.x - cartesian.x;
+                    correction[1] = cartesian_corr.y - cartesian.y;
+                    correction_vectors.push_back(correction);
+#endif
+                    corrected_ix[iy][ix] = gp_corrected.ix;
+                    corrected_iy[iy][ix] = gp_corrected.iy;
 				}
 			}
 		}
+        
+#if WRITE_PARALLAX_VECTORS
+        string vector_path = in_path.filename().stem().string() + "-parallax.vtk";
+        ::cfa::utils::VisitUtils<T>::write_vectors_vtk(vector_path, origins, correction_vectors, "parallax");
+#endif
 
 		static int input_data[dim_y][dim_x];
 		static int output_data[dim_y][dim_x];
@@ -317,12 +398,19 @@ void correct_parallax ( boost::filesystem::path in_path )
 				int valid_min = std::numeric_limits<int>::min();
 				fill_value = valid_min - 1;
 			}
-
-			if ( boost::starts_with ( variable.getName(), "msevi_" ) ) {
+            
+            if ((shifted == ShiftedPropertiesSatellite && boost::starts_with(variable.getName(),"msevi_"))
+                || (shifted == ShiftedPropertiesOthers && !boost::starts_with(variable.getName(),"msevi_")))
+            
+            {
 				// Initialize arrays
+                
+                cout << "Correcting " << variable.getName() << " ... ";
 
-				for ( size_t iy = 0; iy < dim_y; iy++ ) {
-					for ( size_t ix = 0; ix < dim_x; ix++ ) {
+				for ( size_t iy = 0; iy < dim_y; iy++ )
+                {
+					for ( size_t ix = 0; ix < dim_x; ix++ )
+                    {
 						input_data[iy][ix] = 0;
 						output_data[iy][ix] = fill_value;
 					}
@@ -334,8 +422,10 @@ void correct_parallax ( boost::filesystem::path in_path )
 
 				// apply the correction derived from cloud top height
 
-				for ( size_t iy = 0; iy < dim_y; iy++ ) {
-					for ( size_t ix = 0; ix < dim_x; ix++ ) {
+				for ( size_t iy = 0; iy < dim_y; iy++ )
+                {
+					for ( size_t ix = 0; ix < dim_x; ix++ )
+                    {
 						// get corrected indicees
 
 						size_t iy_corr = corrected_iy[iy][ix];
@@ -348,10 +438,12 @@ void correct_parallax ( boost::filesystem::path in_path )
 				}
 
 				// TODO: post-processing of points that got no values
-
+                
 				// Write data back
 
 				variable.putVar ( &output_data[0][0] );
+                
+                cout << "done." << endl;
 			}
 		}
 
@@ -376,7 +468,8 @@ int main ( int argc, char** argv )
 	program_options::options_description desc ( "Applies parallax correction to mseviri satellite data in OASE composite files." );
 	desc.add_options()
 	( "help", "Produces this help." )
-	( "file,f", program_options::value<string>(), "A single file or a directory to be processed. Only files ending in .nc will be processed." );
+	( "file,f", program_options::value<string>(), "A single file or a directory to be processed. Only files ending in .nc will be processed." )
+	( "shifted,s", program_options::value<string>()->default_value("satellite"), "Which values are to be shifted? [satellite|other] (default:other)" );
 
 	program_options::variables_map vm;
 
@@ -397,9 +490,10 @@ int main ( int argc, char** argv )
 	// Evaluate user input
 
 	string source_path;
+    ShiftedProperties shifted = ShiftedPropertiesSatellite;
 
 	try {
-		parse_commmandline ( vm, source_path );
+		parse_commmandline ( vm, source_path,shifted );
 	} catch ( const std::exception &e ) {
 		cerr << e.what() << endl;
 		exit ( -1 );
@@ -437,32 +531,35 @@ int main ( int argc, char** argv )
 
 	fset_t::iterator it;
 
-	boost::progress_display *progress = NULL;
+//	boost::progress_display *progress = NULL;
 
-	if ( files.size() > 1 ) {
-		progress = new progress_display ( files.size() );
-	}
+//	if ( files.size() > 1 ) {
+//		progress = new progress_display ( files.size() );
+//	}
 
-	for ( it = files.begin(); it != files.end(); ++it ) {
-		if ( progress != NULL ) {
-			progress->operator++();
-		}
+	for ( it = files.begin(); it != files.end(); ++it )
+    {
+//		if ( progress != NULL ) {
+//			progress->operator++();
+//		}
 
 		boost::filesystem::path path = *it;
 
 		// Correct
 
 		try {
-			correct_parallax ( path );
+            cout << "Correcting " << path << "...";
+			correct_parallax ( path,shifted );
+            cout << "done." << endl;
 		} catch ( std::exception &e ) {
 			cerr << "Exception processing " << path.filename().generic_string() << endl;
 			cerr << "Cause: " << e.what() << endl;
 		}
 	}
 
-	if ( progress != NULL ) {
-		delete progress;
-	}
+//	if ( progress != NULL ) {
+//		delete progress;
+//	}
 
 	return 0;
 };

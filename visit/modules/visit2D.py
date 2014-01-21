@@ -183,13 +183,18 @@ def add_mapstuff(extent):
     AddPlot("Pseudocolor", extent+"_topo_2D")
     p = PseudocolorAttributes()
     p.pointSizePixels = 2
-    p.colorTableName = TOPO_COLORMAP
-    p.invertColorTable = TOPO_COLORMAP_INVERT
+    #p.colorTableName = TOPO_COLORMAP
+    #p.invertColorTable = TOPO_COLORMAP_INVERT
+    p.invertColorTable=1
+    p.colorTableName = "xray"
+    p.scaling = p.Skew
+    p.skewFactor=0.0001
+    
     p.lightingFlag = 0
     p.legendFlag = 0;
     p.opacity = 1
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = -100.0, 3200.0
+    #p.minFlag,p.maxFlag = 1,1
+    #p.min,p.max = -100.0, 3200.0
     SetPlotOptions(p)
     
     # Rivers & Boundaries
