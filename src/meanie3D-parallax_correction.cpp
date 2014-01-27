@@ -89,6 +89,10 @@ void parse_commmandline ( program_options::variables_map vm,
 #pragma mark -
 #pragma mark Worker Methods
 
+inline
+template <typename T>
+T SQR(T x) {return x*x;}
+
 /** This is a c++ translation of the method sent to me by Marianne Koenig (in F90):
  *
  * <cite>
@@ -148,23 +152,22 @@ void parallax ( T satheight, T satlat, T satlon, T height, T lat, T lon, T& latc
 //     cartesian coordinates for the satellite
 //     satlat_geod is the geodetic satellite latitude
 
-	satlat_geod = atan ( tan ( asatlat ) * ( radius_ratio*radius_ratio ) );
+	satlat_geod = atan ( tan ( asatlat ) * SQR(radius_ratio) );
 	xsat = dheight * cos ( satlat_geod ) * sin ( asatlon );
 	ysat = dheight * cos ( satlat_geod );
 	zsat = dheight * cos ( satlat_geod ) * cos ( asatlon );
 
 //     cartesian coordinates of the surface point
 
-	alat_geod = atan ( tan ( alat ) *radius_ratio*radius_ratio );
-	radius_surf = radius_eq/sqrt ( cos ( alat_geod ) *cos ( alat_geod ) + radius_ratio*radius_ratio * sin ( alat_geod ) *sin ( alat_geod ) );
+	alat_geod = atan ( tan ( alat ) * SQR(radius_ratio) );
+	radius_surf = radius_eq / sqrt(SQR(cos(alat_geod))+SQR(radius_ratio)*SQR(sin(alat_geod)));
 	xsurf = radius_surf * cos ( alat_geod ) * sin ( alon );
 	ysurf = radius_surf * sin ( alat_geod );
 	zsurf = radius_surf * cos ( alat_geod ) * cos ( alon );
 
 //     compute new radius ratio depending on height
 
-	radius_ratio_local = ( ( radius_eq+height ) / ( radius_pole+height ) );
-	radius_ratio_local *= radius_ratio_local;
+	radius_ratio_local = SQR((radius_eq+height )/( radius_pole+height ));
 
 //     Satellite minus surface location
 
@@ -174,16 +177,16 @@ void parallax ( T satheight, T satlat, T satlon, T height, T lat, T lon, T& latc
 
 //     compute local zenith angle
 
-	xfact = sqrt ( xdiff*xdiff + ydiff*ydiff + zdiff*zdiff );
+	xfact = sqrt (SQR(xdiff) + SQR(ydiff) + SQR(zdiff));
 	zen = ( xdiff*xsurf+ydiff*ysurf+zdiff*zsurf ) / ( mean_radius*xfact );
 	zen = acos ( zen );
 	zen = zen*180.0/dpi;
 
 //     equation to solve for the line of sight at height Z
 
-	e1 = xdiff*xdiff + radius_ratio_local*ydiff*ydiff + zdiff*zdiff;
+	e1 = SQR(xdiff) + radius_ratio_local*SQR(ydiff) + SQR(zdiff);
 	e2 = 2.0 * ( xsurf*xdiff + radius_ratio_local*ysurf*ydiff + zsurf*zdiff );
-	e3 = xsurf*xsurf + zsurf*zsurf + radius_ratio_local*ysurf*ysurf - ( radius_eq+height ) * ( radius_eq+height );
+	e3 = SQR(xsurf) + SQR(zsurf) + radius_ratio_local*SQR(ysurf) - SQR(radius_eq+height);
 
 	corr = ( sqrt ( e2*e2 - 4.0*e1*e3 ) - e2 ) /2.0/e1;
 
@@ -195,8 +198,8 @@ void parallax ( T satheight, T satlat, T satlon, T height, T lat, T lon, T& latc
 
 //     convert back to latitude and longitude
 
-	latcorr = atan ( ycorr/sqrt ( xcorr*xcorr + zcorr*zcorr ) );
-	latcorr = atan ( tan ( latcorr ) /radius_ratio*radius_ratio ) * 180.0/dpi;
+	latcorr = atan ( ycorr/sqrt ( SQR(xcorr) + SQR(zcorr)));
+	latcorr = atan ( tan ( latcorr ) /SQR(radius_ratio) ) * 180.0/dpi;
 
 	loncorr = atan2 ( xcorr,zcorr ) * 180.0/dpi;
 }
@@ -237,7 +240,10 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
 
 		// Cloud-Top-Height is needed as input
 
-		static int cloud_top_height[dim_y][dim_x];
+		static float cloud_top_height[dim_y][dim_x];
+        
+        float cth_min=std::numeric_limits<float>::max();
+        float cth_max=std::numeric_limits<float>::min();
 
 		vmap_t::iterator fi = variables.find ( "msevi_l2_nwcsaf_cth" );
 		if ( fi == variables.end() ) {
@@ -246,27 +252,17 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
 		}
 
 		fi->second.getVar ( &cloud_top_height[0][0] );
-
-		/*
-		cout << endl;
-		for ( size_t iy = 0; iy < dim_y; iy++ )
-		{
-			if (iy % 10 == 0)
-			{
-				for ( size_t ix = 0; ix < dim_x; ix++ )
-				{
-					if (ix % 10 == 0)
-					{
-						char c = (cloud_top_height[iy][ix] > 0) ? '*' : ' ';
-						cout << c;
-					}
-				}
-
-				cout << endl;
-			}
-		}
-		cout << endl;
-		*/
+        
+        float cth_scale_factor=1.0;
+        float cth_offset=0.0;
+        float cth_valid_min,cth_valid_max;
+        float cth_fill_value=std::numeric_limits<float>::min();
+        
+        fi->second.getAtt("scale_factor").getValues(&cth_scale_factor);
+        fi->second.getAtt("add_offset").getValues(&cth_offset);
+        fi->second.getAtt("_FillValue").getValues(&cth_fill_value);
+        fi->second.getAtt("valid_min").getValues(&cth_valid_min);
+        fi->second.getAtt("valid_max").getValues(&cth_valid_max);
 
 		// create a variable for input and one for output
 
@@ -276,14 +272,35 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
 		// initialize output data with flag to find pixels
 		// later that have not been set
 
-		for ( size_t iy = 0; iy < dim_y; iy++ ) {
-			for ( size_t ix = 0; ix < dim_x; ix++ ) {
+		for ( size_t iy = 0; iy < dim_y; iy++ )
+        {
+			for ( size_t ix = 0; ix < dim_x; ix++ )
+            {
 				corrected_ix[iy][ix] = 0;
 				corrected_iy[iy][ix] = 0;
+                
+                if (cloud_top_height[iy][ix] < cth_valid_min
+                    || cloud_top_height[iy][ix] > cth_valid_max
+                    || cloud_top_height[iy][ix] == cth_fill_value)
+                {
+                    cloud_top_height[iy][ix] = 0.0;
+                }
+                else
+                {
+                    cloud_top_height[iy][ix] = cth_scale_factor * cloud_top_height[iy][ix] + cth_offset;
+                }
+                
+                if (cloud_top_height[iy][ix] > cth_max)
+                    cth_max = cloud_top_height[iy][ix];
+
+                if (cloud_top_height[iy][ix] < cth_min)
+                    cth_min = cloud_top_height[iy][ix];
 			}
 		}
+        
+        cout << endl << "cth_min=" << cth_min << " cth_max=" << cth_max << endl;
 
-		// Coordinate system for lat/lon transformation
+        // Coordinate system for lat/lon transformation
         
 		RDCoordinateSystem rcs ( RD_RX );
         
@@ -310,29 +327,40 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
 
 				T lat_corrected = 0;
 				T lon_corrected = 0;
-
+                
 				parallax<double> ( SAT_HEIGHT, SAT_LAT, SAT_LON, cth, coord.latitude, coord.longitude, lat_corrected, lon_corrected );
+
+//                if (cth > 0)
+//                {
+//                    T lat_corr_0, lon_corr_0;
+//                    parallax<double> ( SAT_HEIGHT, SAT_LAT, SAT_LON, 0, coord.latitude, coord.longitude, lat_corr_0, lon_corr_0 );
+//                    cout << "(lat="<<coord.latitude << "N,lon="<<coord.longitude<<"E,cth="<<cth<<"km)"
+//                        << " (lat_corr="<<lat_corrected<<",lon_corr="<<lon_corrected<<")"
+//                        << " @cth=0.0:"
+//                        << " (lat_corr="<<lat_corr_0<<",lon_corr="<<lon_corr_0<<")"
+//                        << endl;
+//                }
                 
 				RDGeographicalPoint coord_corrected;
 
 				// Figure out the grid point again and set
 				// data at corrected position
                 
-                if (shifted==ShiftedPropertiesOthers)
+                if (shifted==ShiftedPropertiesSatellite)
                 {
-                    // The correction shifts the other data to the
+                    // The correction shifts the satellite data to the
                     // corrected position. The parallax of the satellite
-                    // is not corrected, but the other data is shifted
-                    // to be congruent
+                    // is now corrected, but the other data stays in place
                     
                     coord_corrected.latitude = lat_corrected;
                     coord_corrected.longitude = lon_corrected;
                 }
                 else
                 {
-                    // The correction shifts the satellite data to the
+                    // The correction shifts the other data to the
                     // corrected position. The parallax of the satellite
-                    // is now corrected, but the other data stays in place
+                    // is not corrected, but the other data is shifted
+                    // to be congruent
                     
                     // Experimental
                     
@@ -469,7 +497,7 @@ int main ( int argc, char** argv )
 	desc.add_options()
 	( "help", "Produces this help." )
 	( "file,f", program_options::value<string>(), "A single file or a directory to be processed. Only files ending in .nc will be processed." )
-	( "shifted,s", program_options::value<string>()->default_value("satellite"), "Which values are to be shifted? [satellite|other] (default:other)" );
+	( "shifted,s", program_options::value<string>()->default_value("satellite"), "Which values are to be shifted? [satellite|other] (default:satellite)" );
 
 	program_options::variables_map vm;
 

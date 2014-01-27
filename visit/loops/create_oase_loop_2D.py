@@ -86,8 +86,9 @@ return_code=call("mkdir "+VAR_NAME, shell=True)
 return_code=call("mkdir "+VAR_NAME+"/images", shell=True)
 
 convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+VAR_NAME+"_0*.png "+VAR_NAME+".gif"
+convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+VAR_NAME+"_0*.png "+VAR_NAME+".m4v"
 return_code=call(convert_cmd, shell=True)
 
 return_code=call("mv *.png "+VAR_NAME+"/images", shell=True)
 return_code=call("mv *.gif "+VAR_NAME, shell=True)
-
+return_code=call("mv *.m4v "+VAR_NAME, shell=True)
