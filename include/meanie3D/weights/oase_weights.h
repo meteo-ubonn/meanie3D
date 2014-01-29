@@ -85,7 +85,7 @@ namespace m3D { namespace weights {
          */
         T compute_weight(Point<T> *p)
         {
-            T product = 1.0;
+            T sum = 0.0;
             
             size_t num_vars = p->values.size() - p->coordinate.size();
             
@@ -99,27 +99,19 @@ namespace m3D { namespace weights {
                 {
                     T rx_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
                     
-//                    T rx_weight = pow( 10, value / 10 );
-                    
-                    product *= (1+rx_weight);
+                    sum += rx_weight;
                 }
-                else if (var.getName() == "msevi_l15_ir_108")
+                else if (var.getName() == "msevi_l2_cmsaf_cot")
                 {
-                    if (value < 30)
-                    {
-                        T sev_weight = (30 - value) / (30 - m_min.at(var_index));
-                        
-                        product *= (1+sev_weight);
-                    }
+                    T cot_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                    sum += cot_weight;
+                    
                 }
                 else if (var.getName() == "linet_oase_tl")
                 {
-                    if (value > 0)
-                    {
-                        T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
-                        
-                        product *= (1+linet_weight);
-                    }
+                    T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                    
+                    sum += linet_weight;
                 }
                 else
                 {
@@ -139,11 +131,11 @@ namespace m3D { namespace weights {
                     // 10^(value/10)
                     // T var_weight = pow( 10, value / 10 );
                     
-                    product += var_weight;
+                    sum += var_weight;
                 }
             }
             
-            return product;
+            return sum;
         }
         
         /** unfavorable, since it performs a reverse lookup, which is a very

@@ -21,7 +21,7 @@
 #define DEBUG_MEANSHIFT_GRAPH 0
 #define DEBUG_CLUSTER_MERGING 0
 #define DEBUG_CLUSTER_MERGING_DECISION 0
-#define DEBUG_TRACKING 1
+#define DEBUG_TRACKING 0
 #define DEBUG_HISTOGRAM_CORRELATION 0
 
 // Write out a files which contain the meanshift

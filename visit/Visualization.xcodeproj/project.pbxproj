@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
+		F44C92C5189832C900B05E23 /* create_all_oase_loops_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_all_oase_loops_2D.sh; sourceTree = "<group>"; };
 		F47666D3188E778E002CA240 /* create_composite_loop_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_composite_loop_2D.py; sourceTree = "<group>"; };
 		F47666D4188E778E002CA240 /* create_composite_loop_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_composite_loop_2D.sh; sourceTree = "<group>"; };
 		F49936211733E57700D23B1E /* visit3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit3D.py; sourceTree = "<group>"; };
@@ -82,6 +83,7 @@
 		F4FA8081188D29BC00C426C5 /* loops */ = {
 			isa = PBXGroup;
 			children = (
+				F44C92C5189832C900B05E23 /* create_all_oase_loops_2D.sh */,
 				F4FA8082188D29BC00C426C5 /* create_oase_loop_2D.py */,
 				F4FA8083188D29BC00C426C5 /* create_oase_loop_2D.sh */,
 				F4FA8084188D29BC00C426C5 /* create_radolan_loop.py */,

@@ -233,6 +233,18 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
 	try 
 	{
 		NcFile file ( in_path.generic_string(), NcFile::write );
+        
+        try
+        {
+            std::string type;
+            file.getAtt("parallax_corrected").getValues(type);
+            cout << "Parallax is already corrected (parallax_corrected="<<type<<")" << endl;
+            cout << "Skipping file" << endl;
+            return;
+        }
+        catch (const netCDF::exceptions::NcBadId &e)
+        {
+        }
 
 		typedef std::multimap<std::string,NcVar> vmap_t;
 
@@ -298,7 +310,7 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
 			}
 		}
         
-        cout << endl << "cth_min=" << cth_min << " cth_max=" << cth_max << endl;
+        // cout << endl << "cth_min=" << cth_min << " cth_max=" << cth_max << endl;
 
         // Coordinate system for lat/lon transformation
         
@@ -474,6 +486,10 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
                 cout << "done." << endl;
 			}
 		}
+        
+        nc_redef(file.getId());
+        file.putAtt( "parallax_corrected", (shifted==ShiftedPropertiesSatellite?"satellite":"others"));
+        nc_enddef(file.getId());
 
 	} catch ( netCDF::exceptions::NcException &e ) {
 		cerr << e.what() << endl;

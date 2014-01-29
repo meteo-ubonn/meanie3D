@@ -32,11 +32,11 @@ print "M3D_HOME="+M3D_HOME
 print "Setting annotation attributes:"
 visit2D.set_annotations()
 
-print "Cleaning up *.vtk *.vtr"
-return_code=call("rm -f *.vtk *.vtr", shell=True)
+#print "Cleaning up *.vtk *.vtr"
+#return_code=call("rm -f *.vtk *.vtr", shell=True)
 
-print "Cleaning up "+VAR_NAME+"*.png"
-return_code=call("rm -f "+VAR_NAME+"*.png", shell=True)
+#print "Cleaning up "+VAR_NAME+"*.png"
+#return_code=call("rm -f "+VAR_NAME+"*.png", shell=True)
 
 # Setting 3D view parameters
 print "Setting 2D view parameters"
@@ -85,10 +85,15 @@ print "Creating movie ..."
 return_code=call("mkdir "+VAR_NAME, shell=True)
 return_code=call("mkdir "+VAR_NAME+"/images", shell=True)
 
-convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+VAR_NAME+"_0*.png "+VAR_NAME+".gif"
-convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+VAR_NAME+"_0*.png "+VAR_NAME+".m4v"
+convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+VAR_NAME+"_*.png "+VAR_NAME+".gif"
 return_code=call(convert_cmd, shell=True)
 
-return_code=call("mv *.png "+VAR_NAME+"/images", shell=True)
-return_code=call("mv *.gif "+VAR_NAME, shell=True)
-return_code=call("mv *.m4v "+VAR_NAME, shell=True)
+convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+VAR_NAME+"_*.png "+VAR_NAME+".m4v"
+return_code=call(convert_cmd, shell=True)
+
+return_code=call("mv "+VAR_NAME+"*.png "+VAR_NAME+"/images", shell=True)
+return_code=call("mv "+VAR_NAME+"*.gif "+VAR_NAME, shell=True)
+return_code=call("mv "+VAR_NAME+"*.m4v "+VAR_NAME, shell=True)
+
+print "Done."
+exit(0)
