@@ -479,6 +479,105 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
 
 				// TODO: post-processing of points that got no values
                 
+				for ( size_t iy = 0; iy < dim_y; iy++ )
+                {
+					for ( size_t ix = 0; ix < dim_x; ix++ )
+                    {
+                        if ( output_data[iy][ix] == fill_value )
+                        {
+                            if (variable.getName() == "msevi_l2_nwcsaf_ct" || variable.getName() == "msevi_l2_nwcsaf_cma" )
+                            {
+                                // use the most prevalent value in 25 neighborhood
+                                map<int,int> value_count;
+                                
+                                int num_values = 0;
+                                int interpolation_width = 2;
+                                int min_neighbours = 8;
+                                
+                                for (int iiy = iy - interpolation_width; iiy < iy + interpolation_width; iiy++)
+                                {
+                                    for (int iix = ix - interpolation_width; iix < ix + interpolation_width; iix++)
+                                    {
+                                        if (iix == ix && iiy == iy) continue;
+                                        
+                                        if (iiy >= 0 && iiy < dim_y && iix >= 0 && iix < dim_x)
+                                        {
+                                            if (output_data[iiy][iix] != fill_value)
+                                            {
+                                                int val = boost::numeric_cast<int>(output_data[iiy][iix]);
+                                                
+                                                map<int,int>::iterator mi = value_count.find(val);
+                                                
+                                                if (mi==value_count.end())
+                                                {
+                                                    value_count[val] = 1;
+                                                }
+                                                else
+                                                {
+                                                    mi->second = mi->second+1;
+                                                }
+                                                
+                                                num_values++;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // only replace if you have at least 4 valid neighbours
+                                
+                                if (num_values >= min_neighbours)
+                                {
+                                    int most_used = value_count.begin()->first;
+                                    
+                                    for (map<int,int>::iterator mi = value_count.begin(); mi != value_count.end(); ++mi)
+                                    {
+                                        if (mi->second > value_count[most_used])
+                                        {
+                                            most_used = mi->first;
+                                        }
+                                    }
+                                    
+                                    output_data[iy][ix] = most_used;
+                                }
+                            }
+                            else
+                            {
+                                // replace with geometric average of 25 neighborhood
+                                
+                                T sum = 0.0;
+                                int num_values = 0;
+                                
+                                int interpolation_width = 2;
+                                int min_neighbours = 15;
+                                
+                                for (int iiy = iy - interpolation_width; iiy < iy + interpolation_width; iiy++)
+                                {
+                                    for (int iix = ix - interpolation_width; iix < ix + interpolation_width; iix++)
+                                    {
+                                        if (iix == ix && iiy == iy) continue;
+                                        
+                                        if (iiy >= 0 && iiy < dim_y && iix >= 0 && iix < dim_x)
+                                        {
+                                            if (output_data[iiy][iix] != fill_value)
+                                            {
+                                                sum += output_data[iiy][iix];
+                                                num_values++;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // only replace if you have at least 4 valid neighbours
+                                
+                                if (num_values >= min_neighbours)
+                                {
+                                    output_data[iy][ix] = (sum / num_values);
+                                }
+                            }
+                        }
+                    }
+                }
+                
 				// Write data back
 
 				variable.putVar ( &output_data[0][0] );
