@@ -548,7 +548,7 @@ void correct_parallax ( boost::filesystem::path in_path, const ShiftedProperties
                                 int num_values = 0;
                                 
                                 int interpolation_width = 2;
-                                int min_neighbours = 15;
+                                int min_neighbours = 8;
                                 
                                 for (int iiy = iy - interpolation_width; iiy < iy + interpolation_width; iiy++)
                                 {
