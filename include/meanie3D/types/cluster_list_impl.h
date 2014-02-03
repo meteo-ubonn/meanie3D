@@ -940,8 +940,8 @@ namespace m3D {
             
             // skip zeroshift to save time
             
-            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
-            {
+//            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
+//            {
                 // only consider points with negative or inconclusive weight
                 // function tendency (aka uphill)
                 T tendency = weight_function_tendency(current_point, weight_function, index);
@@ -1006,7 +1006,7 @@ namespace m3D {
                             delete c;
                         }
                     }
-                }
+//                }
             }
         }
         
@@ -1111,7 +1111,8 @@ namespace m3D {
             c->id = id++;
         }
         boost::filesystem::path path(fs->filename());
-        ::m3D::utils::VisitUtils<T>::write_clusters_vtk(this,"_zeroshift_",false);
+        std::string basename = path.generic_string() + "-zeroshift_";
+        ::m3D::utils::VisitUtils<T>::write_clusters_vtu(this, fs->coordinate_system, basename);
 #endif
         
         // Sanity checking

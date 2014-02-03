@@ -173,6 +173,8 @@ namespace m3D {
 
         // Run parallelized version
         
+        // tbb::task_scheduler_init init(1);
+        
         parallel_for(tbb::blocked_range<size_t>(0,this->point_index->size()),
                      
                      ClusterTask<T>(this->feature_space,

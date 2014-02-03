@@ -45,7 +45,7 @@
 
 // Write out the result of the initial clustering
 // step into separate files.
-#define WRITE_ZEROSHIFT_CLUSTERS 0
+#define WRITE_ZEROSHIFT_CLUSTERS 1
 
 // Write out files containing the mean-shift
 // vectors for individual clusters alone
@@ -53,7 +53,7 @@
 
 // Enable the replacement of zero-shift vectors
 // with an average of neighboring points
-#define REPLACE_ZEROSHIFT_VECTORS 1
+#define REPLACE_ZEROSHIFT_VECTORS 0
 
 // Figure out the strongest neighbor to the
 // zero-shift cluster and add it to the cluster

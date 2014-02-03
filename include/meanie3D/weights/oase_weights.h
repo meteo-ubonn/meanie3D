@@ -98,7 +98,6 @@ namespace m3D { namespace weights {
                 if (var.getName() == "cband_radolan_rx")
                 {
                     T rx_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
-                    
                     sum += rx_weight;
                 }
                 else if (var.getName() == "msevi_l2_cmsaf_cot")
@@ -107,31 +106,35 @@ namespace m3D { namespace weights {
                     sum += cot_weight;
                     
                 }
+                else if (var.getName() == "msevi_l2_nwcsaf_ct")
+                {
+                    T ct_weight = (value >= 7 || value <= 14) ? 1.0 : 0.0;
+                    sum += ct_weight;
+                }
                 else if (var.getName() == "linet_oase_tl")
                 {
                     T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
-                    
                     sum += linet_weight;
                 }
                 else
                 {
-                    // value scaled to [0..1]
-                    T var_weight = (value - m_min.at(var_index)) / ( m_max.at(var_index) - m_min.at(var_index) );
-                    
-                    // value^2
-                    //T var_weight = ( sample->at(index)->values[weight_var_index] ) * ( sample->at(index)->values[weight_var_index] );
-                    
-                    // value^3
-                    //T value = sample->at(index)->values[weight_var_index];
-                    //T var_weight = pow( value, 3 );
-                    
-                    // value^t
-                    //T var_weight = pow( sample->at(index)->values[weight_var_index], this->feature_space->scale() );
-                    
-                    // 10^(value/10)
-                    // T var_weight = pow( 10, value / 10 );
-                    
-                    sum += var_weight;
+//                    // value scaled to [0..1]
+//                    T var_weight = (value - m_min.at(var_index)) / ( m_max.at(var_index) - m_min.at(var_index) );
+//                    
+//                    // value^2
+//                    //T var_weight = ( sample->at(index)->values[weight_var_index] ) * ( sample->at(index)->values[weight_var_index] );
+//                    
+//                    // value^3
+//                    //T value = sample->at(index)->values[weight_var_index];
+//                    //T var_weight = pow( value, 3 );
+//                    
+//                    // value^t
+//                    //T var_weight = pow( sample->at(index)->values[weight_var_index], this->feature_space->scale() );
+//                    
+//                    // 10^(value/10)
+//                    // T var_weight = pow( 10, value / 10 );
+//                    
+//                    sum += var_weight;
                 }
             }
             

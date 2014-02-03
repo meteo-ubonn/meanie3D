@@ -20,9 +20,9 @@ from subprocess import call
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
 # General parameters
-VAR_NAME = "msevi_l15_ir_108"
-VAR_MIN = 0;
-VAR_MAX = 50;
+VAR_NAME = "msevi_l2_nwcsaf_ct"
+VAR_MIN = 7;
+VAR_MAX = 14;
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
@@ -189,6 +189,8 @@ for netcdf_file in netcdf_files:
     visitUtils.save_window("tracking_",1)
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
+    
+    exit(0);
 
     # clean up
     DeleteAllPlots();

@@ -15,7 +15,7 @@ SetView2D(v)
 
 OpenDatabase(source_file)
 
-VAR_NAME="RX"
+VAR_NAME="msevi_l2_nwcsaf_ct"
 
 AddPlot("Pseudocolor", VAR_NAME)
 p = PseudocolorAttributes()

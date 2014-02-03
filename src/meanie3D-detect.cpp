@@ -748,7 +748,6 @@ int main(int argc, char** argv)
     // Coordinate system
     
     CoordinateSystem<FS_TYPE> *coord_system = new CoordinateSystem<FS_TYPE>( dimensions, dimension_variables );
-    Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(1.0);
     
     // Get timestamp
     
@@ -944,6 +943,10 @@ int main(int argc, char** argv)
     //
     
     ClusterOperation<FS_TYPE> cop( fs, index );
+    
+    Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(25.0);
+    // Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(1.0);
+    // Kernel<FS_TYPE> *kernel = new EpanechnikovKernel<FS_TYPE>(1.0);
     
     ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, show_progress );
     

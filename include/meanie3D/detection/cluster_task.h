@@ -152,7 +152,9 @@ namespace m3D {
                 
                 x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
                 
-                x->gridded_shift = gridded_vector(x->shift);
+                vector<T> spatial_shift = m_fs->spatial_component(x->shift);
+                
+                x->gridded_shift = m_fs->coordinate_system->rounded_gridpoint(spatial_shift);
             }
             
             m_op->report_done();

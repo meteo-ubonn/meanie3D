@@ -44,6 +44,8 @@ visitUtils.create_topography_colortable()
 print "Processing files in directory " + SOURCE_DIR
 netcdf_files = glob.glob(SOURCE_DIR+"/*.nc");
 
+image_count = 0
+
 VARIABLES=("cband_radolan_rx","linet_oase_tl","msevi_l15_ir_108","msevi_l15_vis006","msevi_l2_cmsaf_cot","msevi_l2_cmsaf_cph","msevi_l2_cmsaf_cwp","msevi_l2_cmsaf_reff","msevi_l2_nwcsaf_cma","msevi_l2_nwcsaf_crr","msevi_l2_nwcsaf_ct","msevi_l2_nwcsaf_cth")
 
 for VAR_NAME in VARIABLES:
@@ -74,6 +76,18 @@ for VAR_NAME in VARIABLES:
         visitUtils.save_window(VAR_NAME+"_",1)
         DeleteAllPlots()
         ClearWindow()
+        
+        # Visit has a bug that causes it to stop
+        # producing images after a certain amount
+        # of runs. This will periodically restart
+        # the rendering engine, thereby preventing
+        # that from happening
+        
+        image_count = image_count + 1
+    
+        if image_count > 100:
+            CloseComputeEngine()
+            image_count = 0
 
     print "Creating movie ..."
     return_code=call("mkdir "+VAR_NAME, shell=True)
