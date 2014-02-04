@@ -54,6 +54,7 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<NcVar> &variables,
                         map<int,double> &lower_thresholds,
                         map<int,double> &upper_thresholds,
+                        map<int,double> &replacement_values,
                         double &scale,
                         std::string &weight_function_name,
                         FS_TYPE &wwf_lower_threshold,
@@ -314,6 +315,58 @@ void parse_commmandline(program_options::variables_map vm,
             upper_thresholds[variable.getId()] = doubleValue;
         }
     }
+    
+    // Fill values
+    
+    if ( vm.count("replacement-values") > 0 )
+    {
+        boost::char_separator<char> equals("=");
+        
+        tokenizer tokens( vm["replacement-values"].as<string>(), sep );
+        
+        for ( tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter )
+        {
+            std::string pair = *tok_iter;
+            
+            tokenizer subtokens( pair, equals );
+            
+            tokenizer::iterator subtoken_iter = subtokens.begin();
+            
+            std::string variableName = *subtoken_iter;
+            
+            NcVar variable;
+            
+            for (size_t i=0; i<variables.size(); i++)
+            {
+                if (variables[i].getName()==variableName)
+                {
+                    variable = variables[i];
+                }
+            }
+            
+            if (variable.isNull())
+            {
+                cerr << "No variable named " << variableName << " found. Check --replacement-values parameter" << endl;
+                
+                exit( 1 );
+            }
+            
+            subtoken_iter++;
+            
+            if (subtoken_iter == subtokens.end())
+            {
+                cerr << "Missing replacement value for variable " << variableName << endl;
+                exit( 1 );
+            }
+            
+            const char* value = (*subtoken_iter).c_str();
+            
+            double doubleValue = strtod( value, (char **)NULL );
+            
+            replacement_values[variable.getId()] = doubleValue;
+        }
+    }
+
 
     // Scale parameter
     
@@ -472,6 +525,7 @@ int main(int argc, char** argv)
     ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
     ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
+    ("replacement-values", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
     ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
@@ -522,6 +576,7 @@ int main(int argc, char** argv)
     unsigned int min_cluster_size = 1;
     map<int,double> lower_thresholds;   // ncvar.id / value
     map<int,double> upper_thresholds;   // ncvar.id / value
+    map<int,double> replacement_values;        // ncvar.id / value
     FS_TYPE wwf_lower_threshold;
     FS_TYPE wwf_upper_threshold;
     std::string weight_function_name = "default";
@@ -549,6 +604,7 @@ int main(int argc, char** argv)
                            variables,
                            lower_thresholds,
                            upper_thresholds,
+                           replacement_values,
                            scale,
                            weight_function_name,
                            wwf_lower_threshold,
@@ -765,6 +821,7 @@ int main(int argc, char** argv)
                                                           variables,
                                                           lower_thresholds,
                                                           upper_thresholds,
+                                                          replacement_values,
                                                           show_progress );
     
     // if ranges are not explicitly given, figure the out

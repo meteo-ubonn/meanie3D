@@ -58,6 +58,8 @@ a.axes3D.yAxis.title.visible=0
 a.axes3D.zAxis.title.visible=0
 SetAnnotationAttributes(a)
 
+print ColorTableNames()
+
 # Add gray/black background gradient
 visitUtils.add_background_gradient();
 
@@ -111,24 +113,35 @@ for netcdf_file in netcdf_files:
     # date/time
     visitUtils.add_datetime(netcdf_file)
 
-    # Re-add the source with "xray"
-    visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",1,1)
+    # Cloud Type
+    visit2D.add_pseudocolor(netcdf_file,"msevi_l2_nwcsaf_ct","Set1",1,1)
 
     # threshold
     AddOperator("Threshold")
     t = ThresholdAttributes();
-    t.lowerBounds=(VAR_MIN)
-    t.upperBounds=(VAR_MAX)
+    t.lowerBounds=(7)
+    t.upperBounds=(14)
     SetOperatorOptions(t)
 
-    # skew
+    # Adjust
     p = PseudocolorAttributes()
-    p.scaling = p.Skew
-    p.skewFactor = 0.01
-    p.colorTableName = "xray"
+    p.colorTableName="Set1"
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = 7,14
     p.invertColorTable=1
+
     SetPlotOptions(p)
-    
+
+    # C-band radar
+    visit2D.add_pseudocolor(netcdf_file,"cband_radolan_rx","hot_desaturated",1,1)
+
+    # threshold
+    AddOperator("Threshold")
+    t = ThresholdAttributes();
+    t.lowerBounds=(32)
+    t.upperBounds=(150)
+    SetOperatorOptions(t)
+
     # date/time
     visitUtils.add_datetime(netcdf_file)
 
@@ -153,24 +166,6 @@ for netcdf_file in netcdf_files:
     # add 2D topograpy
     visit2D.add_mapstuff("national")
 
-    # re-plot source data as canvas
-    visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "xray", 0.1, 1 )
-
-    # threshold
-    AddOperator("Threshold")
-    t = ThresholdAttributes();
-    t.lowerBounds=(VAR_MIN)
-    t.upperBounds=(VAR_MAX)
-    SetOperatorOptions(t)
-
-    # skew
-    p = PseudocolorAttributes()
-    p.scaling = p.Skew
-    p.skewFactor = 0.01
-    p.colorTableName = "xray"
-    p.invertColorTable=1
-    SetPlotOptions(p)
-
     # date/time
     visitUtils.add_datetime(netcdf_file)
 
@@ -189,8 +184,6 @@ for netcdf_file in netcdf_files:
     visitUtils.save_window("tracking_",1)
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
-    
-    exit(0);
 
     # clean up
     DeleteAllPlots();

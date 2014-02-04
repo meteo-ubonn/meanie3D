@@ -241,9 +241,9 @@ void convert_composite(const string &filename, const string& variable_name, cons
         
         CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>( dimensions,dim_vars );
         
-        const map<int,double> lower_thresholds,upper_thresholds;
+        const map<int,double> lower_thresholds,upper_thresholds,fill_values;
         
-        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename, cs, variables,lower_thresholds,upper_thresholds);
+        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename, cs, variables,lower_thresholds,upper_thresholds, fill_values);
         
         ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename, fs, variables);
         
