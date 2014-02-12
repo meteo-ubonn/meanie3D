@@ -89,9 +89,7 @@ void parse_commmandline ( program_options::variables_map vm,
 #pragma mark -
 #pragma mark Worker Methods
 
-inline
-template <typename T>
-T SQR(T x) {return x*x;}
+template <typename T> T SQR(T x) {return x*x;}
 
 /** This is a c++ translation of the method sent to me by Marianne Koenig (in F90):
  *
