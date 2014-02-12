@@ -52,6 +52,7 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<NcDim> &dimensions,
                         vector<NcVar> &dimension_variables,
                         vector<NcVar> &variables,
+                        int &time, 
                         map<int,double> &lower_thresholds,
                         map<int,double> &upper_thresholds,
                         map<int,double> &replacement_values,
@@ -163,6 +164,10 @@ void parse_commmandline(program_options::variables_map vm,
     
     parameters = parameters + "variables=" + vm["variables"].as<string>()+ " ";
     
+    // time 
+    
+    time = vm["time"].as<int>();
+    
     // Convection filter index
     
     convection_filter_index = -1;
@@ -189,6 +194,7 @@ void parse_commmandline(program_options::variables_map vm,
             exit(-1);
         }
     }
+    
     
     // parse ranges if there
     
@@ -523,6 +529,7 @@ int main(int argc, char** argv)
     ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
+    ("time,t", program_options::value<int>()->default_value(0), "Index of the point in time you wish to use in files with a time dimension")
     ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
     ("replacement-values", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
@@ -572,6 +579,7 @@ int main(int argc, char** argv)
     vector<size_t> vtk_dimension_indexes;
     vector<NcVar> dimension_variables;
     vector<NcVar> variables;
+    int time = 0;
     vector<double> ranges;
     unsigned int min_cluster_size = 1;
     map<int,double> lower_thresholds;   // ncvar.id / value
@@ -602,6 +610,7 @@ int main(int argc, char** argv)
                            dimensions,
                            dimension_variables,
                            variables,
+                           time,
                            lower_thresholds,
                            upper_thresholds,
                            replacement_values,
@@ -819,6 +828,7 @@ int main(int argc, char** argv)
     FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename,
                                                           coord_system,
                                                           variables,
+                                                          time,
                                                           lower_thresholds,
                                                           upper_thresholds,
                                                           replacement_values,
@@ -1040,11 +1050,6 @@ int main(int argc, char** argv)
         catch (const std::exception &e)
         {
             cerr << "ERROR reading previous cluster file: " << e.what() << endl;
-            exit(-1);
-        }
-        catch (const netCDF::exceptions::NcException &ne)
-        {
-            cerr << "ERROR reading previous cluster file: " << ne.what() << endl;
             exit(-1);
         }
     }
