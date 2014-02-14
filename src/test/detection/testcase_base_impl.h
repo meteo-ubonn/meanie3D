@@ -171,7 +171,7 @@ void FSTestBase<T>::generate_featurespace()
     
     map<int,double> lower,upper,fill_values;
     
-    this->m_featureSpace = new FeatureSpace<T>( this->m_filename, this->coordinate_system(), this->m_variables,lower,upper,fill_values );
+    this->m_featureSpace = new FeatureSpace<T>( this->m_filename, this->coordinate_system(), this->m_variables, 0, lower, upper, fill_values );
     
     this->m_featureSpaceIndex = PointIndex<T>::create( this->m_featureSpace );
     

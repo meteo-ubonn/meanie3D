@@ -417,8 +417,22 @@ TARGET_LINK_LIBRARIES(meanie3D-cfm2vtk
     ${VTK_LIBRARIES}
 )
 
-# Unit Tests
+# valid_min/valid_max checker
 
+ADD_EXECUTABLE(meanie3D-minmax
+    src/meanie3D-minmax.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-minmax
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
+
+# Unit Tests
 # detection
 
 ADD_EXECUTABLE(meanie3d-detection-test

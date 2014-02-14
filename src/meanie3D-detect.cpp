@@ -52,7 +52,7 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<NcDim> &dimensions,
                         vector<NcVar> &dimension_variables,
                         vector<NcVar> &variables,
-                        int &time, 
+                        int &time_index,
                         map<int,double> &lower_thresholds,
                         map<int,double> &upper_thresholds,
                         map<int,double> &replacement_values,
@@ -166,7 +166,7 @@ void parse_commmandline(program_options::variables_map vm,
     
     // time 
     
-    time = vm["time"].as<int>();
+    time_index = vm["time-index"].as<int>();
     
     // Convection filter index
     
@@ -529,7 +529,7 @@ int main(int argc, char** argv)
     ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
-    ("time,t", program_options::value<int>()->default_value(0), "Index of the point in time you wish to use in files with a time dimension")
+    ("time-index,t", program_options::value<int>()->default_value(-1), "Index of the point in time you wish to use in files with a time dimension. -1 means no time dimension in the variables.")
     ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
     ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
     ("replacement-values", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
@@ -579,12 +579,12 @@ int main(int argc, char** argv)
     vector<size_t> vtk_dimension_indexes;
     vector<NcVar> dimension_variables;
     vector<NcVar> variables;
-    int time = 0;
+    int time_index = 0;
     vector<double> ranges;
     unsigned int min_cluster_size = 1;
-    map<int,double> lower_thresholds;   // ncvar.id / value
-    map<int,double> upper_thresholds;   // ncvar.id / value
-    map<int,double> replacement_values;        // ncvar.id / value
+    map<int,double> lower_thresholds;           // ncvar.id / value
+    map<int,double> upper_thresholds;           // ncvar.id / value
+    map<int,double> replacement_values;         // ncvar.id / value
     FS_TYPE wwf_lower_threshold;
     FS_TYPE wwf_upper_threshold;
     std::string weight_function_name = "default";
@@ -601,6 +601,8 @@ int main(int argc, char** argv)
     bool write_cluster_centers = false;
     Verbosity verbosity = VerbosityNormal;
     
+    timestamp_t timestamp;
+    
     try
     {
         parse_commmandline( vm,
@@ -610,7 +612,7 @@ int main(int argc, char** argv)
                            dimensions,
                            dimension_variables,
                            variables,
-                           time,
+                           time_index,
                            lower_thresholds,
                            upper_thresholds,
                            replacement_values,
@@ -639,6 +641,22 @@ int main(int argc, char** argv)
         // Select the correct point factory
         PointFactory<FS_TYPE>::set_instance( new M3DPointFactory<FS_TYPE>() );
         
+        // Get timestamp
+        
+        // Tracking comparison (solve that generically sometime)
+        if (boost::starts_with(filename, "rico.out.xy."))
+        {
+            // time for this is days since simulation start
+            double time_in_days = get_time<double>(filename, time_index);
+            
+            // a day has 24 * 60 * 60 seconds
+            timestamp = (long) round( time_in_days * 24.0 * 60.0 * 60.0);
+        }
+        else
+        {
+            // Seconds since epoch
+            timestamp = get_time<long>(filename, time_index);
+        }
     }
     catch (const std::exception &e)
     {
@@ -658,6 +676,15 @@ int main(int argc, char** argv)
         cout << "Command line options:" << endl;
         
         cout << "\tinput file = " << filename << endl;
+        
+        if (time_index >= 0)
+        {
+            cout << "\tusing point in time at index " << time_index << " (timestamp=" << timestamp << ")" << endl;
+        }
+        else
+        {
+            cout << "\ttime is not a variable dimension. Using timestamp " << timestamp << endl;
+        }
         
         cout << "\tdimensions = " << vm["dimensions"].as<string>() << endl;
         
@@ -814,10 +841,6 @@ int main(int argc, char** argv)
     
     CoordinateSystem<FS_TYPE> *coord_system = new CoordinateSystem<FS_TYPE>( dimensions, dimension_variables );
     
-    // Get timestamp
-    
-    timestamp_t timestamp = get_time(filename);
-    
     // Feature Space
     
     start_timer();
@@ -828,7 +851,7 @@ int main(int argc, char** argv)
     FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename,
                                                           coord_system,
                                                           variables,
-                                                          time,
+                                                          time_index,
                                                           lower_thresholds,
                                                           upper_thresholds,
                                                           replacement_values,
