@@ -68,10 +68,11 @@ namespace m3D {
     
     template <typename T> 
     ClusterList<T> 
-    ClusterOperation<T>::cluster( const SearchParameters *params,
-                                  const Kernel<T> *kernel,
-                                  const WeightFunction<T> *weight_function,
-                                  const bool show_progress_bar )
+    ClusterOperation<T>::cluster(const SearchParameters *params,
+                                 const Kernel<T> *kernel,
+                                 const WeightFunction<T> *weight_function,
+                                 const bool coalesceWithStrongestNeighbour,
+                                 const bool show_progress_bar)
     {
         using namespace cfa::utils::timer;
         using namespace cfa::utils::visit;
@@ -220,7 +221,7 @@ namespace m3D {
         
         // Analyse the graph and create clusters
         
-        cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,show_progress_bar);
+        cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,coalesceWithStrongestNeighbour,show_progress_bar);
         
         
 #if WRITE_BOUNDARIES

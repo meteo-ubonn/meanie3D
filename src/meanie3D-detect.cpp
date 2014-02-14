@@ -65,6 +65,7 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<FS_TYPE> &ranges,
                         std::string **previous_file,
                         FS_TYPE &cluster_coverage_threshold,
+                        bool &coalesceWithStrongestNeighbour,
                         bool &write_vtk,
                         bool &write_weight_response,
                         bool &write_cluster_centers,
@@ -392,6 +393,10 @@ void parse_commmandline(program_options::variables_map vm,
     
     wwf_upper_threshold = vm["wwf-upper-threshold"].as<FS_TYPE>();
     
+    // Coalescence?
+    
+    coalesceWithStrongestNeighbour = vm.count("coalesce-with-strongest-neighbour") > 0;
+    
     // VTK output?
     
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
@@ -536,6 +541,7 @@ int main(int argc, char** argv)
     ("weight-function-name,w", program_options::value<string>()->default_value("default"),"default,inverse or oase")
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
+    ("coalesce-with-strongest-neighbour","Clusters are post-processed, coalescing each cluster with their strongest neighbour")
     ("convection-filter-variable,c",program_options::value<string>(),"Name the variable to eliminate all but the points marked as convective according to the classification scheme by Steiner,Houza & Yates (1995) in.")
     ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
     ("filter-size,l", program_options::value<double>()->default_value(0.0), "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
@@ -591,7 +597,7 @@ int main(int argc, char** argv)
     std::string *previous_file = NULL;
     FS_TYPE cluster_coverage_threshold = 0.66;
     int convection_filter_index = -1;
-    
+    bool coalesceWithStrongestNeighbour = false;
     double scale = NO_SCALE;
     
     vector<NcVar> vtk_variables;
@@ -602,6 +608,8 @@ int main(int argc, char** argv)
     Verbosity verbosity = VerbosityNormal;
     
     timestamp_t timestamp;
+    
+    FS_TYPE kernel_width = 0.0;
     
     try
     {
@@ -625,6 +633,7 @@ int main(int argc, char** argv)
                            ranges,
                            &previous_file,
                            cluster_coverage_threshold,
+                           coalesceWithStrongestNeighbour,
                            write_vtk,
                            write_weight_response,
                            write_cluster_centers,
@@ -644,7 +653,7 @@ int main(int argc, char** argv)
         // Get timestamp
         
         // Tracking comparison (solve that generically sometime)
-        if (boost::starts_with(filename, "rico.out.xy."))
+        if (boost::contains(filename, "rico.out.xy."))
         {
             // time for this is days since simulation start
             double time_in_days = get_time<double>(filename, time_index);
@@ -693,6 +702,17 @@ int main(int argc, char** argv)
         if (!ranges.empty())
         {
             cout << "\tranges = " << ranges << endl;
+            
+            // calculate kernel width as average of ranges
+            
+            kernel_width = boost::numeric_cast<FS_TYPE>(0.0);
+            
+            for (size_t i=0; i < dimensions.size(); i++)
+            {
+                kernel_width += ranges[i];
+            }
+            
+            kernel_width = kernel_width / boost::numeric_cast<FS_TYPE>(dimensions.size());
         }
         else
         {
@@ -709,11 +729,16 @@ int main(int argc, char** argv)
             cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
         }
 
-        if ( scale != NO_SCALE )
+        if ( scale != NO_SCALE)
         {
             double width = sqrt( ceil( -2.0*scale*log(0.01) ) ) / 2;
             
-            cout << "\tpre-smoothing data with scale parameter " << scale << " ( kernel width = " << width << " )" << endl;
+            if (ranges.empty())
+            {
+                kernel_width = width;
+            }
+            
+            cout << "\tpre-smoothing data with scale parameter " << scale << " (kernel width = " << width << ")" << endl;
         }
         else
         {
@@ -1034,11 +1059,13 @@ int main(int argc, char** argv)
     
     ClusterOperation<FS_TYPE> cop( fs, index );
     
-    Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(25.0);
-    // Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(1.0);
+    // estimate kernel size
+    
+    Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(kernel_width);
+    
     // Kernel<FS_TYPE> *kernel = new EpanechnikovKernel<FS_TYPE>(1.0);
     
-    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, show_progress );
+    ClusterList<FS_TYPE> clusters = cop.cluster( search_params, kernel, weight_function, coalesceWithStrongestNeighbour, show_progress );
     
     // Sanity check
     

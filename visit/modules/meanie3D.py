@@ -81,6 +81,7 @@ def run_tracking(source_directory,
     # Get a list of the files we need to process
     netcdf_pattern = source_directory + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
+
     last_cluster_file=""
 
     run_count = 0
@@ -96,6 +97,7 @@ def run_tracking(source_directory,
             cluster_file= "./netcdf/" + os.path.splitext(basename)[0] + "-clusters.nc"
         else:
             cluster_file= "./netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index) + ".nc"
+            last_cluster_file = "./netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index-1) + ".nc"
         
         
         # if there is a resume counter, keep skipping
@@ -144,13 +146,12 @@ def run_tracking(source_directory,
         
         # if we have a previous scan, run the tracking command
         
-        if run_count > 0:
+        if (run_count > 0) or (time_index > 0):
             
             if time_index < 0:
                 logfile = "./log/tracking_" + str(run_count)+".log"
             else:
                 logfile = "./log/tracking_" + str(time_index)+".log"
-
 
             print "-- Tracking --"
             command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + tracking_params

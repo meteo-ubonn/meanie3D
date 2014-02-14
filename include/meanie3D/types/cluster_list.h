@@ -84,6 +84,7 @@ namespace m3D {
         aggregate_zeroshifts(FeatureSpace<T> *fs,
                              const WeightFunction<T> *weight_function,
                              ArrayIndex<T> &index,
+                             bool coalesceWithStrongestNeighbour,
                              bool show_progress);
         
     public:
@@ -225,6 +226,7 @@ namespace m3D {
          */
         void aggregate_cluster_graph(FeatureSpace<T> *fs,
                                      const WeightFunction<T> *weight_function,
+                                     bool coalesceWithStrongestNeighbour,
                                      bool show_progress=true);
         
         /** Find the boundary points of two clusters.

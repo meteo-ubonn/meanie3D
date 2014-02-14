@@ -849,6 +849,7 @@ namespace m3D {
     ClusterList<T>::aggregate_zeroshifts(FeatureSpace<T> *fs,
                                          const WeightFunction<T> *weight_function,
                                          ArrayIndex<T> &index,
+                                         bool coalesceWithStrongestNeighbour,
                                          bool show_progress)
     {
         boost::progress_display *progress = NULL;
@@ -1092,6 +1093,7 @@ namespace m3D {
     void
     ClusterList<T>::aggregate_cluster_graph(FeatureSpace<T> *fs,
                                             const WeightFunction<T> *weight_function,
+                                            bool coalesceWithStrongestNeighbour,
                                             bool show_progress)
     {
         // PointIndex<T>::write_index_searches = true;
@@ -1100,7 +1102,7 @@ namespace m3D {
         
         ArrayIndex<T> index(fs->coordinate_system,fs->points,false);
         
-        this->aggregate_zeroshifts(fs,weight_function,index,show_progress);
+        this->aggregate_zeroshifts(fs,weight_function,index,coalesceWithStrongestNeighbour,show_progress);
         
 #if WRITE_ZEROSHIFT_CLUSTERS
         typename Cluster<T>::list::iterator ci;
@@ -1163,7 +1165,8 @@ namespace m3D {
                 // we're pointing to somebody?
                 current_point->isBoundary = true;
                 
-                // whoever we're pointing to, he's not a boundary point.
+                // whoever we're pointing to, he's
+                // not a boundary point.
                 predecessor->isBoundary = false;
                 
                 #if DEBUG_GRAPH_AGGREGATION
@@ -1210,9 +1213,7 @@ namespace m3D {
                     cout << "added predecessor to cluster " << current_point->cluster << " (" << current_point->cluster->points.size() << " points)" << endl;
                     #endif
                 }
-                else if (current_point->cluster != NULL
-                         && predecessor->cluster != NULL
-                         && (current_point->cluster != predecessor->cluster))
+                else if (current_point->cluster != predecessor->cluster)
                 {
                     // both points have different clusters
                     // => merge current cluster's points to predecessor's cluster
@@ -1238,9 +1239,7 @@ namespace m3D {
                     
                     delete c1;
                 }
-                else if (current_point->cluster != NULL
-                         && predecessor->cluster != NULL
-                         && (current_point->cluster == predecessor->cluster))
+                else
                 {
                     // both points are already part of the same cluster
                     // => do nothing
@@ -1252,87 +1251,87 @@ namespace m3D {
             }
         }
         
-#if COALESCE_WITH_STRONGEST_NEIGHBOUR
-        
-        for (size_t i=0; i < clusters.size(); i++)
+        if (coalesceWithStrongestNeighbour)
         {
-            typename Cluster<T>::ptr c = clusters.at(i);
-            
-            T strongest_response = numeric_limits<T>::min();
-            
-            T strongest_own_response = numeric_limits<T>::min();
-            
-            typename Cluster<T>::ptr strongest_cluster = NULL;
-            
-            typename Point<T>::list::iterator pi;
-            
-            for (pi = c->points.begin(); pi != c->points.end(); pi++)
+            for (size_t i=0; i < clusters.size(); i++)
             {
-                typename Point<T>::ptr p = *pi;
+                typename Cluster<T>::ptr c = clusters.at(i);
                 
-                // track own response
+                T strongest_response = numeric_limits<T>::min();
                 
-                T own_response = weight_function->operator()(p);
+                T strongest_own_response = numeric_limits<T>::min();
                 
-                if (own_response > strongest_own_response)
+                typename Cluster<T>::ptr strongest_cluster = NULL;
+                
+                typename Point<T>::list::iterator pi;
+                
+                for (pi = c->points.begin(); pi != c->points.end(); pi++)
                 {
-                    strongest_own_response = own_response;
-                }
-                
-                // Find the neighbour with the strongest response
-                
-                typename Point<T>::list neighbours = find_neighbours(p->gridpoint,index);
-                
-                for (size_t ni = 0; ni < neighbours.size(); ni++)
-                {
-                    M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
+                    typename Point<T>::ptr p = *pi;
                     
-                    // only interested in different clusters here
+                    // track own response
                     
-                    if (n->cluster == c)
+                    T own_response = weight_function->operator()(p);
+                    
+                    if (own_response > strongest_own_response)
                     {
-                        continue;
+                        strongest_own_response = own_response;
                     }
                     
-                    // figure out the response
+                    // Find the neighbour with the strongest response
                     
-                    T response = weight_function->operator()(n);
+                    typename Point<T>::list neighbours = find_neighbours(p->gridpoint,index);
                     
-                    if (response > strongest_response)
+                    for (size_t ni = 0; ni < neighbours.size(); ni++)
                     {
-                        strongest_response = response;
-                        strongest_cluster = n->cluster;
+                        M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
+                        
+                        // only interested in different clusters here
+                        
+                        if (n->cluster == c)
+                        {
+                            continue;
+                        }
+                        
+                        // figure out the response
+                        
+                        T response = weight_function->operator()(n);
+                        
+                        if (response > strongest_response)
+                        {
+                            strongest_response = response;
+                            strongest_cluster = n->cluster;
+                        }
                     }
                 }
-            }
-            
-            if (strongest_response >= strongest_own_response && strongest_cluster != NULL)
-            {
-                // found a higher ranking cluster in the direct
-                // vicinity. Merge!
                 
-                c->add_points(strongest_cluster->points,false);
-                
-                typename Cluster<T>::list::iterator cfi = find(clusters.begin(),clusters.end(),strongest_cluster);
-                
-                if (cfi != clusters.end())
+                if (strongest_response >= strongest_own_response && strongest_cluster != NULL)
                 {
-                    clusters.erase(cfi);
-                    delete strongest_cluster;
+                    // found a higher ranking cluster in the direct
+                    // vicinity. Merge!
+                    
+                    c->add_points(strongest_cluster->points,false);
+                    
+                    typename Cluster<T>::list::iterator cfi = find(clusters.begin(),clusters.end(),strongest_cluster);
+                    
+                    if (cfi != clusters.end())
+                    {
+                        clusters.erase(cfi);
+                        delete strongest_cluster;
+                    }
+                    
+                    // start over!
+                    // TODO: this could be done a little smarter, probably
+                    // by remembering the clusters to be deleted and skip
+                    // them in the above procedure, then remove them later
+                    // in bulk?
+                    
+                    i=0;
                 }
-                
-                // start over!
-                // TODO: this could be done a little smarter, probably
-                // by remembering the clusters to be deleted and skip
-                // them in the above procedure, then remove them later
-                // in bulk?
-                
-                i=0;
-            }
 
+            }
         }
-        
-#endif
+
         // Finally remove all points from all clusters, that were
         // not part of the original data set, as well as make their
         // modes the arithmetic mean of the remaining points
