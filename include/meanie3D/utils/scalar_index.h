@@ -68,7 +68,12 @@ namespace m3D {
          * @param pointer to array index
          */
         ScalarIndex(ScalarIndex<T> *other);
-        
+
+        /** Copy constructor on pointer
+         * @param pointer to array index
+         */
+        ScalarIndex(const ScalarIndex<T,CSType> &o);
+
         /** Destructor
          */
         virtual ~ScalarIndex();
