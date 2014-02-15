@@ -489,6 +489,7 @@ INSTALL(TARGETS meanie3D-trackstats RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-parallax_correction RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-minmax RUNTIME DESTINATION "/usr/local/bin")
 
 # Documentation
 

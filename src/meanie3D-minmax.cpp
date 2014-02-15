@@ -109,12 +109,8 @@ void get_limits(NcVar variable, T& min, T& max)
         
         variable.getVar(&values[0]);
         
-        boost::progress_display progress(N);
-        
         for (int i = 0; i < N; i++)
         {
-            progress.operator++();
-            
             T value = values[i];
             
             if (have_fill_value && value == fill_value) continue;
@@ -139,14 +135,7 @@ void get_limits(NcVar variable, T& min, T& max)
         int N = variable.getDim(0).getSize();
         int M = variable.getDim(1).getSize();
         
-        T **values = (T**) malloc(sizeof(T*) * N);
-        
-        for (int i = 0; i < N; i++)
-        {
-            values[i] = (T*) malloc( sizeof(T) * M );
-        }
-        
-        boost::progress_display progress(N*M);
+        T *values = (T*) malloc(sizeof(T) * N * M);
         
         variable.getVar(values);
         
@@ -154,9 +143,7 @@ void get_limits(NcVar variable, T& min, T& max)
         {
             for (int j = 0; j < M; j++)
             {
-                progress.operator++();
-                
-                T value = values[i][j];
+                T value = values[ i*M + j ];
                 
                 if (have_fill_value && value == fill_value) continue;
                 
@@ -172,61 +159,49 @@ void get_limits(NcVar variable, T& min, T& max)
             }
         }
 
-        for (int i = 0; i < N; i++)
-        {
-            delete values[i];
-        }
-        
         delete values;
     }
     
     else if (variable.getDimCount()==3)
     {
-        // 2D
+        // 3D
         
         int N = variable.getDim(0).getSize();
         int M = variable.getDim(1).getSize();
         int K = variable.getDim(2).getSize();
         
-        boost::progress_display progress(N*M*K);
+        T *values = (T*) malloc(sizeof(T) * N * M * K);
         
-        for (int i = 0; i < N; i++)
+        vector<size_t> count(3,1);
+        count[0] = 1;
+        count[1] = M;
+        count[2] = K;
+
+        vector<size_t> start(3,0);
+        start[0]=0;
+        start[1]=0;
+        start[2]=0;
+        
+        variable.getVar(start, count, values);
+
+        for (size_t j = 0; j < N*M*K; j++)
         {
-            T *values = (T*) malloc(sizeof(T*) * M*K);
+            T value = values[j];
             
-            vector<size_t> count(3,1);
-            count[0] = 1;
-            count[1] = M;
-            count[2] = K;
-
-            vector<size_t> start(3,0);
-            start[0]=i;
-            start[1]=0;
-            start[2]=0;
+            if (have_fill_value && value == fill_value) continue;
             
-            variable.getVar(start, count, values);
-
-            for (size_t j = 0; j < M*K; j++)
+            if (value < min)
             {
-                progress.operator++();
-                
-                T value = values[j];
-                
-                if (have_fill_value && value == fill_value) continue;
-                
-                if (value < min)
-                {
-                    min = value;
-                }
-                
-                if (value > max)
-                {
-                    max = value;
-                }
+                min = value;
             }
             
-            delete values;
+            if (value > max)
+            {
+                max = value;
+            }
         }
+        
+        delete values;
     }
     else
     {
@@ -245,8 +220,12 @@ void add_limits(NcFile &file, NcVar variable, bool have_min, bool have_max, bool
 
     if (!have_min || force)
     {
-        cout << "\tadding valid_min = " << min << endl;
+        cout << "\t\tadding valid_min = " << min << endl;
         
+        if (typeid(min) == typeid(Byte))
+        {
+            NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (Byte)min);
+        }
         if (typeid(min) == typeid(short))
         {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (short)min);
@@ -291,8 +270,12 @@ void add_limits(NcFile &file, NcVar variable, bool have_min, bool have_max, bool
 
     if (!have_max || force)
     {
-        cout << "\tadding valid_max = " << max << endl;
-        if (typeid(max) == typeid(short))
+        cout << "\t\tadding valid_max = " << max << endl;
+        if (typeid(max) == typeid(Byte))
+        {
+            NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (Byte)max);
+        }
+        else if (typeid(max) == typeid(short))
         {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (short)max);
         }
@@ -341,7 +324,7 @@ void define_min_max(NcFile &file, NcVar &variable, bool force)
 {
     // check valid_min
     
-    cout << "Checking variable " << variable.getName() << endl;
+    cout << "\tChecking variable " << variable.getName() << " (" << variable.getType().getName() << ")" << endl;
     
     bool have_valid_min = false;
     
@@ -365,7 +348,7 @@ void define_min_max(NcFile &file, NcVar &variable, bool force)
 
     if ( !(have_valid_min || have_valid_max) || force)
     {
-        cout << "\tExtracting limits ..." << endl;
+        cout << "\t\textracting limits ..." << endl;
         
         /*!
          The name of this type. For atomic types, the CDL type names are returned. These are as follows:
@@ -387,7 +370,7 @@ void define_min_max(NcFile &file, NcVar &variable, bool force)
         {
             add_limits<short>(file, variable, have_valid_min, have_valid_max, force);
         }
-        if (strcmp(variable.getType().getName().c_str(),"ubyte")==0)
+        else if (strcmp(variable.getType().getName().c_str(),"ubyte")==0)
         {
             add_limits<unsigned short>(file, variable, have_valid_min, have_valid_max, force);
         }
@@ -430,7 +413,7 @@ void define_min_max(NcFile &file, NcVar &variable, bool force)
     }
     else
     {
-        cout << "\tvalid_min and valid_max exist" << endl;
+        cout << "\t\tvalid_min and valid_max exist" << endl;
     }
 }
 
@@ -565,6 +548,8 @@ int main(int argc, char** argv)
     for (it = files.begin(); it != files.end(); ++it)
     {
         fs::path path = *it;
+        
+        cout << path.generic_string() << endl;
         
         std::string fn = path.generic_string();
 
