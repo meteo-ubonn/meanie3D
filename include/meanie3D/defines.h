@@ -57,13 +57,6 @@
 
 // Figure out the strongest neighbor to the
 // zero-shift cluster and add it to the cluster
-#define ADD_STRONGEST_NEIGHBOUR 1
-
-// Figure out the strongest neighbor cluster to the
-// a cluster and merge, should the one of the adjacent
-// points be stronger in response than the strongest
-// point in the cluster itself (a type of coalescence)
-#define COALESCE_WITH_STRONGEST_NEIGHBOUR 0
-    
+#define ADD_STRONGEST_NEIGHBOUR 0
 
 #endif

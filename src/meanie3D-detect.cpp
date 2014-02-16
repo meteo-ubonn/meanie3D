@@ -679,6 +679,9 @@ int main(int argc, char** argv) {
         if (min_cluster_size > 1) {
             cout << "\tminimum cluster size = " << min_cluster_size << endl;
         }
+        
+        cout << "\tcoalesce results with strongest neighbor: " << (coalesceWithStrongestNeighbour ? "yes":"no") << endl;
+
         cout << "\toutput written to file: " << output_filename << endl;
 
         if (!vtk_variables.empty()) {

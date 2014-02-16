@@ -8,6 +8,8 @@
 
 /* Begin PBXFileReference section */
 		F44C92C5189832C900B05E23 /* create_all_oase_loops_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_all_oase_loops_2D.sh; sourceTree = "<group>"; };
+		F4670B0B18AFEE9000875B79 /* visualize_rico_clusters_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_rico_clusters_2D.py; sourceTree = "<group>"; };
+		F4670B0C18AFEE9000875B79 /* visualize_rico_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_rico_clusters_2D.sh; sourceTree = "<group>"; };
 		F47666D3188E778E002CA240 /* create_composite_loop_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_composite_loop_2D.py; sourceTree = "<group>"; };
 		F47666D4188E778E002CA240 /* create_composite_loop_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_composite_loop_2D.sh; sourceTree = "<group>"; };
 		F4918FB8189999A700D9E1A6 /* create_all_oase_loops_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_all_oase_loops_2D.py; sourceTree = "<group>"; };
@@ -142,6 +144,8 @@
 				F4FA809F188D29BC00C426C5 /* visualize_tracked_clusters.template */,
 				F4FA80A0188D29BC00C426C5 /* visualize_tracks.py */,
 				F4FA80A1188D29BC00C426C5 /* visualize_tracks.sh */,
+				F4670B0B18AFEE9000875B79 /* visualize_rico_clusters_2D.py */,
+				F4670B0C18AFEE9000875B79 /* visualize_rico_clusters_2D.sh */,
 			);
 			path = visualize_results;
 			sourceTree = "<group>";

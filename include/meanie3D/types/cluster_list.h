@@ -72,6 +72,7 @@ namespace m3D {
         T
         weight_function_tendency(typename Point<T>::ptr p,
                                  const WeightFunction<T> *weight_function,
+                                 const typename Point<T>::list &neighbours,
                                  ArrayIndex<T> &index);
         
         /** Sanity check / consistency check

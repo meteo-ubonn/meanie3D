@@ -80,7 +80,8 @@ namespace m3D {
         
         // TODO: handle units dynamically (see #230)
         
-        T unit_multiplier = 1000.0; // km -> m
+//        T unit_multiplier = 1000.0; // km -> m
+        T unit_multiplier = 1.0; // [m]
         
         // Find out the highest id from the previous list
         
