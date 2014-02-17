@@ -126,7 +126,7 @@ def run_tracking(source_directory,
         command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + clustering_params
         
         # use previous result to enhance current
-        if run_count > 0:
+        if (run_count > 0) or (time_index > 0):
             command = command + " -p " + last_cluster_file
         
         command = command + " > " + logfile

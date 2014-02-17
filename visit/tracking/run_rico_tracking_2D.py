@@ -27,7 +27,7 @@ last_completed_run_count = 0
 VAR_NAME="lwp"
 
 #DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS      = " -r 1000,1000,10"
+DETECT_PARAMS      = " -r "+PARAM_T+","+PARAM_T+",10"
 
 CLUSTERING_PARAMS =  "-d yt,xt --vtk-dimensions xt,yt"
 CLUSTERING_PARAMS += " --verbosity 2"

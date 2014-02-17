@@ -2,14 +2,14 @@
 
 if [ "X$1" = "X" ]
 then
-    echo "run_tracking.sh <path to directory containing composite files>"
+    echo "run_tracking.sh <path to directory containing composite files> <range[m]>"
     echo "Creates a python script for cluster creation and tracking and runs it in Visit"
     exit 0
 fi
 
 if [ "X$2" = "X" ]
 then
-    echo "run_tracking.sh <path to directory containing composite files> <scale>"
+    echo "run_tracking.sh <path to directory containing composite files> <range[m]>"
     echo "Creates a python script for cluster creation and tracking and runs it in Visit"
     exit 0
 exit 0
