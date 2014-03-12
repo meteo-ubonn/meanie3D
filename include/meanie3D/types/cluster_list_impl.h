@@ -127,8 +127,6 @@ namespace m3D {
                 // the original in that way.
                 
                 file = new NcFile((file_existed?path+"-new":path), NcFile::replace, NcFile::classic);
-                
-                //file = new NcFile(
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
@@ -417,14 +415,50 @@ namespace m3D {
             if (file_existed)
             {
                 // close the original and delete it
+                
                 if (this->ncFile != NULL)
                 {
                     delete this->ncFile;
                     this->ncFile = NULL;
                 }
                 
-                boost::filesystem::remove(path);
-                boost::filesystem::rename(path+"-new", path);
+                if (boost::filesystem::remove(path))
+                {
+                    boost::system::error_code ec;
+                    boost::filesystem::rename(path+"-new", path, ec);
+                    if (ec.value() != boost::system::errc::success)
+                    {
+                        cerr << "ERROR: could not rename " << (path+"-new") << " to " << path<< endl;
+                        cerr << "REASON: " << ec.message() << endl;
+                    }
+                }
+                else
+                {
+                    // for some reason, the old file could not be removed. In
+                    // this case, just move it aside and try again
+                    cerr << "ERROR: could not delete " << path << endl;
+                    
+                    std::string moved_path = path + "-moved";
+                    cerr << "renaming " << path << " to " << moved_path << endl;
+                    boost::system::error_code ec;
+                    boost::filesystem::rename(path,moved_path,ec);
+                    
+                    if (ec.value() == boost::system::errc::success)
+                    {
+                        boost::filesystem::rename(path+"-new", path, ec);
+                        if (ec.value() != boost::system::errc::success)
+                        {
+                            cerr << "ERROR: could not rename " << (path+"-new") << " to " << path<< endl;
+                            cerr << "REASON: " << ec.message() << endl;
+                        }
+                        
+                    }
+                    else
+                    {
+                        cerr << "ERROR: could not move " << path << " to " << moved_path << endl;
+                        cerr << "REASON: " << ec.message() << endl;
+                    }
+                }
             }
             
         }

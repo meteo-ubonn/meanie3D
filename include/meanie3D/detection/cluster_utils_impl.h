@@ -47,8 +47,6 @@ namespace m3D {
         
         size_t n,m;
         
-        // check out the values for midDisplacement, histSizeDifference and kendall's tau
-        
         boost::progress_display *progress = NULL;
         
         if (verbosity >= VerbosityNormal)
@@ -106,7 +104,7 @@ namespace m3D {
             {
                 T overlap = coverNewByOld[n][m];
                 
-                if ( overlap > 0.33 )
+                if ( overlap >= 0.33 )
                 {
                     candidates.push_back(n);
                 }
