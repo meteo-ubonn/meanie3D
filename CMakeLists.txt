@@ -98,7 +98,10 @@ IF (USE_CPP11)
    SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
    SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
 ELSE()
-   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions")
+   IF (APPLE)
+      SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions")
+   ELSE (APPLE)
+   ENDIF (APPLE)
 ENDIF (USE_CPP11)
 
 # ------------------------------------- 

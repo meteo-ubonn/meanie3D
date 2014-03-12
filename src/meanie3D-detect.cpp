@@ -985,7 +985,8 @@ int main(int argc, char** argv) {
 
     // Collate with previous clusters, if those are provided
 
-    if (previous_file != NULL) {
+    if (previous_file != NULL) 
+    {
         try {
             ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(*previous_file);
 
