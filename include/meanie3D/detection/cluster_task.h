@@ -125,11 +125,16 @@ namespace m3D {
                 
                 typename Point<T>::ptr x = m_fs->points[ index ];
                 
-                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
+                bool normalize = !(GRID_ROUNDING_METHOD_NONE == 1);
+                
+                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function, normalize );
                 
                 vector<T> spatial_shift = m_fs->spatial_component(x->shift);
                 
-                x->gridded_shift = m_fs->coordinate_system->rounded_gridpoint(spatial_shift);
+                if (normalize)
+                {
+                    x->gridded_shift = m_fs->coordinate_system->rounded_gridpoint(spatial_shift);
+                }
             }
             
             m_op->report_done();

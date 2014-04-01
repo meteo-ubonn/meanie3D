@@ -27,7 +27,7 @@
 // Write out a files which contain the meanshift
 // vectors. One file contains the threedimensional
 // version, one file the spatial components only
-#define WRITE_MEANSHIFT_VECTORS 0
+#define WRITE_MEANSHIFT_VECTORS 1
 
 // Write out a VTK file that contains 1 and 0 for
 // all points. 1 means, that the point was marked
@@ -37,15 +37,15 @@
 
 // Write out the center of the cluster in a single
 // file per cluster
-#define WRITE_CLUSTER_CENTERS 0
+#define WRITE_CLUSTER_CENTERS 1
 
 // Write out the modes of the clusters in a single
 // file per cluster
-#define WRITE_CLUSTER_MODES 0
+#define WRITE_CLUSTER_MODES 1
 
 // Write out the result of the initial clustering
 // step into separate files.
-#define WRITE_ZEROSHIFT_CLUSTERS 0
+#define WRITE_ZEROSHIFT_CLUSTERS 1
 
 // Write out files containing the mean-shift
 // vectors for individual clusters alone

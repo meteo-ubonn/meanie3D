@@ -345,8 +345,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     weight_function_name = vm["weight-function-name"].as<string>();
 
-    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase")) {
-        cerr << "Illegal weight function name " << weight_function_name << ". Only 'default','inverse' or 'oase' are known." << endl;
+    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase" || weight_function_name == "pow10")) {
+        cerr << "Illegal weight function name " << weight_function_name << ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
         exit(1);
     }
 
@@ -481,7 +481,7 @@ int main(int argc, char** argv) {
             ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
             ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
             ("replacement-values", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
-            ("weight-function-name,w", program_options::value<string>()->default_value("default"), "default,inverse or oase")
+            ("weight-function-name,w", program_options::value<string>()->default_value("default"), "default,inverse,pow10 or oase")
             ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
             ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
             ("coalesce-with-strongest-neighbour", "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
@@ -809,7 +809,8 @@ int main(int argc, char** argv) {
 
         FS_TYPE filter_width = sqrt(ceil(-2.0 * t * log(0.01))) / 2.0;
 
-        for (size_t i = 0; i < dimensions.size(); i++) {
+        for (size_t i = 0; i < dimensions.size(); i++)
+        {
             ranges.push_back(filter_width);
         }
 
@@ -859,11 +860,20 @@ int main(int argc, char** argv) {
         if (verbosity > VerbositySilent)
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
 
-        if (weight_function_name == "oase") {
+        if (weight_function_name == "oase")
+        {
             weight_function = new OASEWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
-        } else if (weight_function_name == "inverse") {
+        }
+        else if (weight_function_name == "inverse")
+        {
             weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
-        } else {
+        }
+        else if (weight_function_name == "pow10")
+        {
+            weight_function = new EXP10WeightFunction<FS_TYPE>(fs);
+        }
+        else
+        {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
         }
 
@@ -884,15 +894,26 @@ int main(int argc, char** argv) {
         if (verbosity > VerbositySilent)
             cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
 
-    } else {
+    }
+    else
+    {
         if (verbosity > VerbositySilent)
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
 
-        if (weight_function_name == "oase") {
+        if (weight_function_name == "oase")
+        {
             weight_function = new OASEWeightFunction<FS_TYPE>(fs);
-        } else if (weight_function_name == "inverse") {
+        }
+        else if (weight_function_name == "inverse")
+        {
             weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, lower_thresholds, upper_thresholds);
-        } else {
+        }
+        else if (weight_function_name == "pow10")
+        {
+            weight_function = new EXP10WeightFunction<FS_TYPE>(fs);
+        }
+        else
+        {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
 

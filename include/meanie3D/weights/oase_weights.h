@@ -226,6 +226,11 @@ namespace m3D { namespace weights {
             return m_weight.get(p->gridpoint);
         }
         
+        T operator()(const vector<size_t> &gridpoint) const
+        {
+            return m_weight.get(gridpoint);
+        }
+        
     };
 
     
