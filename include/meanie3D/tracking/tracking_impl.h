@@ -18,11 +18,13 @@ namespace m3D {
     
     using namespace utils;
     using namespace netCDF;
-
+    using namespace units::values;
+    
     template <typename T>
     void
     Tracking<T>::track(typename ClusterList<T>::ptr previous,
                        typename ClusterList<T>::ptr current,
+                       CoordinateSystem<T> *cs,
                        const NcVar &track_variable,
                        Verbosity verbosity)
     {
@@ -81,11 +83,6 @@ namespace m3D {
         
         get_valid_range(track_variable, valid_min, valid_max );
         
-        // TODO: handle units dynamically (see #230)
-        
-//        T unit_multiplier = 1000.0; // km -> m
-        T unit_multiplier = 1.0; // [m]
-        
         // Find out the highest id from the previous list
         
         size_t highest_id = previous->highest_id;
@@ -108,8 +105,8 @@ namespace m3D {
         
         // check time difference and determine displacement restraints
         
-        timestamp_t p_time = previous->timestamp;
-        timestamp_t c_time = current->timestamp;
+        s p_time = s(previous->timestamp);
+        s c_time = s(current->timestamp);
         
         // Check c > p
         
@@ -119,7 +116,7 @@ namespace m3D {
             return;
         }
         
-        this->m_deltaT = boost::numeric_cast<double>(c_time) - boost::numeric_cast<double>(p_time);
+        this->m_deltaT = c_time - p_time;
         
         if (this->m_deltaT > m_max_deltaT)
         {
@@ -127,13 +124,13 @@ namespace m3D {
             return;
         }
         
-        current->tracking_time_difference = boost::numeric_cast<int>(m_deltaT);
+        current->tracking_time_difference = m_deltaT.get();
 
-        T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
+        m maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         
         if ( verbosity >= VerbosityDetails )
             printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm\n",
-                   this->m_maxVelocity, this->m_deltaT, maxDisplacement );
+                   this->m_maxVelocity.get(), this->m_deltaT.get(), maxDisplacement.get() );
 
         // TODO: mean velocity constraint
         
@@ -153,9 +150,9 @@ namespace m3D {
         // TODO: this point needs to be replaced with velocity
         // vectors from SMV/RMV estimates
         
-        T overlap_constraint_velocity = m_maxVelocity;
+        meters_per_second overlap_constraint_velocity = m_maxVelocity;
         
-        T overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
+        ::units::values::m overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
         
         // Prepare the newcomers for re-identification
         
@@ -173,7 +170,7 @@ namespace m3D {
 #pragma mark Compute correlation matrixes and constraints
         
         typename Matrix<T>::matrix_t rank_correlation = Matrix<T>::create_matrix(new_count,old_count);
-        typename Matrix<T>::matrix_t midDisplacement = Matrix<T>::create_matrix(new_count,old_count);
+        typename Matrix<m>::matrix_t midDisplacement = Matrix<m>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t histDiff = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t sum_prob = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t coverOldByNew = Matrix<T>::create_matrix(new_count,old_count);
@@ -181,8 +178,8 @@ namespace m3D {
         
         typename Matrix<T>::flag_matrix_t constraints_satisified = Matrix<T>::create_flag_matrix(new_count, old_count);
         
-        T maxHistD = numeric_limits<T>::min();
-        T maxMidD = numeric_limits<T>::min();
+        int maxHistD = numeric_limits<int>::min();
+        ::units::values::m maxMidD = ::units::values::m(numeric_limits<T>::min());
         
         int n,m;
         
@@ -248,7 +245,7 @@ namespace m3D {
 
                 if (m_useOverlapConstraint)
                 {
-                    T radius = unit_multiplier * oldCluster->radius();
+                    ::units::values::m radius = oldCluster->radius(cs);
                     
                     bool requires_overlap = (radius >= overlap_constraint_radius);
                     
@@ -269,7 +266,7 @@ namespace m3D {
                 
                 vector<T> dx = newCenter - oldCenter;
                 
-                midDisplacement[n][m] = vector_norm(dx);
+                midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
                 
                 //
                 // Maximum velocity constraint
@@ -278,7 +275,7 @@ namespace m3D {
                 // TODO: calculate the max displacement in the same dimension
                 // as the dimension variables
                 
-                T displacement = unit_multiplier * midDisplacement[n][m];
+                ::units::values::m displacement = midDisplacement[n][m];
                 
                 if ( displacement > maxDisplacement ) continue;
 
@@ -299,7 +296,7 @@ namespace m3D {
                     maxHistD = histDiff[n][m];
                 }
                 
-                if (midDisplacement[n][m]>maxMidD)
+                if (midDisplacement[n][m] > maxMidD)
                 {
                     maxMidD = midDisplacement[n][m];
                 }
@@ -343,7 +340,7 @@ namespace m3D {
                 
                 if ( constraints_satisified[n][m] )
                 {
-                    float prob_r = m_dist_weight * erfc( midDisplacement[n][m] / maxMidD );
+                    float prob_r = m_dist_weight * erfc( midDisplacement[n][m].get() / maxMidD.get() );
                     
                     float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
                     
@@ -356,7 +353,7 @@ namespace m3D {
                         printf("\t<ID#%4lu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                                oldCluster->id,
                                oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
-                               midDisplacement[n][m],
+                               midDisplacement[n][m].get(),
                                prob_r,
                                histDiff[n][m],
                                prob_h,
@@ -378,7 +375,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Matchmaking
         
-        float velocitySum = 0;
+        ::units::values::meters_per_second velocitySum = ::units::values::meters_per_second(0);
         
         int velocityClusterCount = 0;
         
@@ -441,7 +438,7 @@ namespace m3D {
                     // TODO: calculate velocity in the same units as the dimension
                     // variables
                     
-                    float velocity = unit_multiplier * midDisplacement[maxN][maxM] / this->m_deltaT;
+                    ::units::values::meters_per_second velocity = midDisplacement[maxN][maxM] / this->m_deltaT;
                 
                     velocitySum += velocity;
                         
@@ -449,7 +446,7 @@ namespace m3D {
                     
                     if ( verbosity >= VerbosityDetails )
                     {
-                        printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
+                        printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity.get() );
                     }
                         
                     new_cluster->id = old_cluster->id;

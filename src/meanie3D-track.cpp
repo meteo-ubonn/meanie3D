@@ -31,6 +31,7 @@ using namespace std;
 using namespace boost;
 using namespace netCDF;
 using namespace m3D;
+using namespace units::values;
 
 /** Feature-space data type */
 typedef double FS_TYPE;
@@ -45,7 +46,7 @@ void parse_commmandline(program_options::variables_map vm,
                         FS_TYPE &range_weight,
                         FS_TYPE &size_weight,
                         FS_TYPE &correlation_weight,
-                        FS_TYPE &max_speed,
+                        meters_per_second &max_speed,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity)
 {
@@ -169,7 +170,9 @@ void parse_commmandline(program_options::variables_map vm,
     
     // max-speed
     
-    max_speed = vm["max-speed"].as<FS_TYPE>();
+    FS_TYPE speed = vm["max-speed"].as<FS_TYPE>();
+    
+    max_speed = meters_per_second(speed);
     
     // --write-vtk
     
@@ -237,7 +240,8 @@ int main(int argc, char** argv)
     bool write_vtk = false;
     vector<size_t> vtk_dimension_indexes;
     
-    FS_TYPE range_weight, size_weight, correlation_weight, max_speed;
+    FS_TYPE range_weight, size_weight, correlation_weight;
+    meters_per_second max_speed;
 
     
     try
@@ -348,7 +352,7 @@ int main(int argc, char** argv)
     
     tracking.setMaxTrackingSpeed(max_speed);
     
-    tracking.track( previous, current, tracking_var, verbosity );
+    tracking.track( previous, current, cs, tracking_var, verbosity );
     
     if ( write_vtk )
     {

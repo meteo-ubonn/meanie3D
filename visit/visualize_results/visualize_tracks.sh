@@ -32,21 +32,22 @@ then
 else
     ESCAPED_BASENAME=""
 fi
+
+SCRIPTFILE="/tmp/track_visualization-$RANDOM.py"
 ESCAPED_SOURCE_DIR=$(echo $1 | sed -e "s/\//\\\\\//g")
 ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 
 # Create script
 
-SCRIPT=$(echo "/tmp/visit_${RANDOM}.py")
-echo ${SCRIPT}
-cat ${MEANIE3D_HOME}/visit/visualize_tracks.py | sed -e "s/P_SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/P_BASENAME/$ESCAPED_BASENAME/g" | sed -e "s/P_M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > ${SCRIPT}
+cat ${MEANIE3D_HOME}/visit/visualize_results/visualize_tracks.py | sed -e "s/P_SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/P_BASENAME/$ESCAPED_BASENAME/g" | sed -e "s/P_M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > ${SCRIPTFILE}
 
 # Run script
 
 echo "Starting Visit with script ${SCRIPT}"
 
-# Headless
-#${VISIT_EXECUTABLE} -cli -nowin -s ${SCRIPT}
-
-# GUI
-${VISIT_EXECUTABLE} -s ${SCRIPT}
+if [ "${RUN_VISIT_HEADLESS}" = "true" ]
+then
+    ${VISIT_EXECUTABLE} -cli -nowin -s ${SCRIPTFILE}
+else
+    ${VISIT_EXECUTABLE} -s ${SCRIPTFILE}
+fi

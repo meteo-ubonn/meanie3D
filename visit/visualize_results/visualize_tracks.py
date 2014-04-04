@@ -10,14 +10,46 @@ BASENAME          = "P_BASENAME"
 
 sys.path.append(MEANIE3D_HOME+"/visit/modules")
 
+# Import modules
+import sys
+sys.path.append(MEANIE3D_HOME+"/visit/modules")
 import glob
+import os
+import time
 import visit2D
 import visitUtils
+from subprocess import call
 
-# Modify view parameters
+# Silent
+SuppressMessages(True)
+SuppressQueryOutputOn()
+
+# Set view and annotation attributes
+
+a = GetAnnotationAttributes()
+a.axes2D.visible=1
+a.axes2D.autoSetScaling=0
+a.axes2D.xAxis.title.visible=0
+a.axes2D.yAxis.title.visible=0
+a.legendInfoFlag=1
+a.databaseInfoFlag=0
+a.userInfoFlag=0
+a.timeInfoFlag=0
+SetAnnotationAttributes(a)
+
+# Add gray/black background gradient
+visitUtils.add_background_gradient();
+
+print "Cleaning up *.vtk *.vtr *.png"
+return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
+
+# Set view to nationwide composite
 visit2D.set_view_to_radolan();
 
-# TODO: plot the underlying map data
+print "-- Creating colortables ---"
+num_colors = visitUtils.create_cluster_colortable("cluster_colors")
+visitUtils.create_topography_colortable()
+print "    done."
 
 # Plot the Tracks
 
@@ -26,10 +58,11 @@ if BASENAME == "":
 else:
     track_pattern = SOURCE_DIR + "/" + BASENAME + "-track_*.vtk"
 
-list = glob.glob(track_pattern)
+# add topograpy
+visit2D.add_topography("national_topo_2D")
 
+list = sorted(glob.glob(track_pattern))
 count = 0;
-
 for fname in list:
 
     # add plot                                                                                                                                                                      

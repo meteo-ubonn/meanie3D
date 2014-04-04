@@ -21,8 +21,10 @@ from subprocess import call
 
 # General parameters
 VAR_NAME = "RX"
-VAR_MIN = 35;
-VAR_MAX = 92.5;
+VAR_MIN = 0;
+#VAR_MIN = 30;
+VAR_MAX = 65;
+#VAR_MAX = 92.5;
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
@@ -47,15 +49,14 @@ SuppressQueryOutputOn()
 # Set view and annotation attributes
 
 a = GetAnnotationAttributes()
-a.axes3D.visible=1
-a.axes3D.autoSetScaling=0
+a.axes2D.visible=1
+a.axes2D.autoSetScaling=0
+a.axes2D.xAxis.title.visible=0
+a.axes2D.yAxis.title.visible=0
+a.legendInfoFlag=1
+a.databaseInfoFlag=0
 a.userInfoFlag=0
 a.timeInfoFlag=0
-a.legendInfoFlag=1
-a.databaseInfoFlag=1
-a.axes3D.xAxis.title.visible=0
-a.axes3D.yAxis.title.visible=0
-a.axes3D.zAxis.title.visible=0
 SetAnnotationAttributes(a)
 
 # Add gray/black background gradient
@@ -73,9 +74,10 @@ visitUtils.create_topography_colortable()
 print "    done."
 
 # Glob the netcdf directory
-netcdf_files = glob.glob(NETCDF_DIR+"/*.nc");
-#print "Processing files in directory " + NETCDF_DIR
-#print netcdf_files
+netcdf_files = sorted(glob.glob(NETCDF_DIR+"/*.nc"));
+
+print "Processing files in directory " + NETCDF_DIR
+print netcdf_files
 
 for netcdf_file in netcdf_files:
 
@@ -120,6 +122,8 @@ for netcdf_file in netcdf_files:
 
     DrawPlots()
     visitUtils.save_window("source_",1)
+
+    exit(1)
 
     DeleteAllPlots()
     ClearWindow()

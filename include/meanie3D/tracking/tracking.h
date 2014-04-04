@@ -6,13 +6,14 @@
 #include <cf-algorithms/id.h>
 
 #include <meanie3D/types/cluster_list.h>
-#include <meanie3D/utils/verbosity.h>
+#include <meanie3D/utils.h>
 
 namespace m3D {
     
     using namespace utils;
     using namespace netCDF;
     using cfa::id_t;
+    using namespace units::values;
     
     template <typename T>
     class Tracking
@@ -27,15 +28,15 @@ namespace m3D {
         
         T   m_corr_weight;  // correlation weight histogram rank correlation
         
-        T   m_deltaT;       // What is the time between the given slices (in seconds)
+        s    m_deltaT;       // What is the time between the given slices (in seconds)
         
-        T   m_max_deltaT;   // What is the maximum time between slices for valid tracking (in seconds)
+        s    m_max_deltaT;   // What is the maximum time between slices for valid tracking (in seconds)
 
         bool    m_useMeanVelocityConstraint;        // make use of max velocity constraint?
         
         T       m_meanVelocitySecurityPercentage;   // Percentual amount of deviation from mean velocity allowed
         
-        T       m_maxVelocity;                      // physical maximum speed of objects in m/s
+        meters_per_second   m_maxVelocity;                      // physical maximum speed of objects in m/s
         
         float   m_max_size_deviation;       // how many percent may the objects vary in size (number of points) between scans?
 
@@ -61,7 +62,7 @@ namespace m3D {
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking(T wr=1.0, T wd=1.0, T wt=1.0, T max_delta_t = 15*60 )
+        Tracking(T wr=1.0, T wd=1.0, T wt=1.0, s max_delta_t = minute(15))
         : m_dist_weight(wr)
         , m_size_weight(wd)
         , m_corr_weight(wt)
@@ -69,7 +70,7 @@ namespace m3D {
         , m_max_deltaT(max_delta_t)             // 15 minutes
         , m_useMeanVelocityConstraint(false)    // limit deviation from mean velocity (false)
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
-        , m_maxVelocity(100.0)                  // limit max velocity to 30 m/s (~108 km/h)
+        , m_maxVelocity(meters_per_second(100.0))                  // limit max velocity to 30 m/s (~108 km/h)
         , m_max_size_deviation(2.5)             // how many percent may the objects vary in size (number of points) between scans (250%)
         , m_useOverlapConstraint(true)
         , m_ms_threshold(0.33)                  // percentage coverage old/new for merge/split (33%)
@@ -83,13 +84,14 @@ namespace m3D {
          */
         void track(typename ClusterList<T>::ptr previous,
                    typename ClusterList<T>::ptr current,
+                   CoordinateSystem<T> *cs,
                    const NcVar &track_variable,
                    Verbosity verbosity = VerbosityNormal);
         
         // Accessors
         
-        T maxTrackingSpeed() { return m_maxVelocity; }
-        void setMaxTrackingSpeed(T speed) { m_maxVelocity = speed;}
+        meters_per_second maxTrackingSpeed() { return m_maxVelocity; }
+        void setMaxTrackingSpeed(meters_per_second speed) { m_maxVelocity = speed;}
         
         float mergeSplitThreshold() {return m_ms_threshold;}
         void setMergeSplitThreshold(float value) {m_ms_threshold=value;}

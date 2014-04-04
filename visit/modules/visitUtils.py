@@ -188,14 +188,15 @@ def add_datetime(filename):
         return
 
     # RADOLAN
-    #raa01-rx_10000-1307010555-dwd---bin.nc
+    #raa01-rx_10000-YYMMDDhhmm-dwd---bin.nc
+    
     baseIndex=string.find(filename,"raa01-rx_10000")
     if baseIndex >= 0:
         year = filename[baseIndex+15:baseIndex+17]
-        month = filename[baseIndex+18:baseIndex+19]
-        day = filename[baseIndex+20:baseIndex+21]
-        hour = filename[baseIndex+22:baseIndex+23]
-        minute = filename[baseIndex+24:baseIndex+25]
+        month = filename[baseIndex+17:baseIndex+19]
+        day = filename[baseIndex+19:baseIndex+21]
+        hour = filename[baseIndex+21:baseIndex+23]
+        minute = filename[baseIndex+23:baseIndex+25]
         text = day+"."+month+".'"+year+" "+hour+":"+minute+" UTC"
         add_text_annotation(0.725,0.95,text);
         return
