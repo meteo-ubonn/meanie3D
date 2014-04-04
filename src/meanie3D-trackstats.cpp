@@ -39,7 +39,7 @@ using namespace Radolan;
 #pragma mark type definitions
 
 /** Feature-space data type */
-typedef double T;
+typedef double FS_TYPE;
 
 typedef vector<float> fvec_t;
 typedef vector<size_t> bin_t;
@@ -181,11 +181,11 @@ void print_histogram(const vector<T> &classes, const bin_t &values, ofstream &fi
 }
 
 template <typename T>
-double average(const vector<T> &v)
+double average(const vector<FS_TYPE> &v)
 {
     // calculate the mean value
     double sum = 0.0;
-    for (size_t i=0; i<v.size(); v++)
+    for (size_t i=0; i<v.size(); i++)
     {
         sum += boost::numeric_cast<double>(v[i]);
     }
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
     }
     
     // Select the correct point factory
-    PointFactory<T>::set_instance( new M3DPointFactory<T>() );
+    PointFactory<FS_TYPE>::set_instance( new M3DPointFactory<FS_TYPE>() );
     
     // Evaluate user input
     
@@ -370,7 +370,7 @@ int main(int argc, char** argv)
     
     // This map contains a mapping from the id type to lists of clusters.
 
-    Tracking<T>::trackmap_t track_map;
+    Tracking<FS_TYPE>::trackmap_t track_map;
     
     // Collect all files at sourcepath that start with basename and
     // end with -clusters.nc
@@ -406,7 +406,7 @@ int main(int argc, char** argv)
                 
                 coords_filename = f.generic_string();
                 
-                ClusterList<T>::ptr cluster_list = ClusterList<T>::read( f.generic_string() );
+                ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read( f.generic_string() );
                 
                 if (spatial_dimensions==0)
                 {
@@ -420,23 +420,23 @@ int main(int argc, char** argv)
                 
                 // Iterate over the clusters in the list we just read
                 
-                Cluster<T>::list::iterator ci;
+                Cluster<FS_TYPE>::list::iterator ci;
                 
                 for (ci=cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
                 {
-                    Cluster<T>::ptr cluster = (*ci);
+                    Cluster<FS_TYPE>::ptr cluster = (*ci);
                     
                     cfa::id_t id = cluster->id;
                     
-                    Tracking<T>::trackmap_t::const_iterator ti = track_map.find(id);
+                    Tracking<FS_TYPE>::trackmap_t::const_iterator ti = track_map.find(id);
                     
-                    Tracking<T>::track_t * tm = NULL;
+                    Tracking<FS_TYPE>::track_t * tm = NULL;
                     
                     if (ti==track_map.end())
                     {
                         // new entry
                         
-                        tm = new Tracking<T>::track_t();
+                        tm = new Tracking<FS_TYPE>::track_t();
                         
                         track_map[id] = tm;
                     }
@@ -469,7 +469,7 @@ int main(int argc, char** argv)
         
         // Construct coordinate system
         
-        CoordinateSystem<T> *coord_system = NULL;
+        CoordinateSystem<FS_TYPE> *coord_system = NULL;
         
         // This file should not be closed until the code has
         // run through, or netCDF will upchuck exceptions when
@@ -491,7 +491,7 @@ int main(int argc, char** argv)
         
         cout << "Attribute 'featurespace_dimensions' = " << dim_names << endl;
         
-        ::m3D::utils::VisitUtils<T>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
+        ::m3D::utils::VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
         
         multimap<string,NcVar> vars = coords_file->getVars();
         multimap<string,NcVar>::iterator vi;
@@ -521,21 +521,21 @@ int main(int argc, char** argv)
             dimension_vars.push_back(var);
         }
         
-        coord_system = new CoordinateSystem<T>(dimensions,dimension_vars);
+        coord_system = new CoordinateSystem<FS_TYPE>(dimensions,dimension_vars);
         
         // Now we have a cluster map. Let's print it for debug purposes
         
         cout << "Keying up tracks: " << endl;
         
-        for (Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
-            Tracking<T>::track_t *track = tmi->second;
+            Tracking<FS_TYPE>::track_t *track = tmi->second;
             
             cout << "Track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
             
             size_t i = 0;
             
-            for ( Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+            for ( Tracking<FS_TYPE>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
             {
                 cout << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
             }
@@ -545,7 +545,7 @@ int main(int argc, char** argv)
         
         if (write_center_tracks_as_vtk)
         {
-            ::m3D::utils::VisitUtils<T>::write_center_tracks_vtk(track_map, basename, spatial_dimensions, exclude_degenerates);
+            ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, spatial_dimensions, exclude_degenerates);
         }
         
         // Write cumulated tracks as netcdf and vtk files
@@ -566,11 +566,11 @@ int main(int argc, char** argv)
         
         // Iterate over the collated tracks
         
-        for (Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
             size_t points_processed = 0;
             
-            Tracking<T>::track_t *track = tmi->second;
+            Tracking<FS_TYPE>::track_t *track = tmi->second;
             
             size_t track_length = track->size();
             
@@ -618,17 +618,17 @@ int main(int argc, char** argv)
 
             // For each track, create an array index. Start with empty index.
             
-            ArrayIndex<T> index(coord_system,false);
+            ArrayIndex<FS_TYPE> index(coord_system,false);
             
             // Iterate over the clusters in the track and sum up
             
-            Tracking<T>::track_t::iterator ti;
+            Tracking<FS_TYPE>::track_t::iterator ti;
             
-            Cluster<T>::ptr previous_cluster = NULL;
+            Cluster<FS_TYPE>::ptr previous_cluster = NULL;
             
             for (ti = track->begin(); ti != track->end(); ++ti)
             {
-                Cluster<T>::ptr cluster = &(*ti);
+                Cluster<FS_TYPE>::ptr cluster = &(*ti);
                 
                 if (create_cluster_statistics)
                 {
@@ -668,19 +668,19 @@ int main(int argc, char** argv)
                     {
                         // calculate speed in m/s. All vectors 2D at this time
                         
-                        vector<T> p1 = previous_cluster->geometrical_center(2);
-                        vector<T> p2 = cluster->geometrical_center(2);
+                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
+                        vector<FS_TYPE> p2 = cluster->geometrical_center(2);
                         
                         // RADOLAN is in km. -> Tranform to meters
-                        T dS = vector_norm(p2 - p1) * 1000;
+                        FS_TYPE dS = vector_norm(p2 - p1) * 1000;
                         
                         // TODO: this information must come from somewhere!!
                         // => Cluster files need dT info! See ticket #227
                         
-                        T dT = 300.0;
+                        FS_TYPE dT = 300.0;
                         
                         // Average speed
-                        T speed = dS / dT;
+                        FS_TYPE speed = dS / dT;
                         
                         bool exceeded_max_class = false;
                         
@@ -725,17 +725,17 @@ int main(int argc, char** argv)
                     {
                         // calculate speed in m/s. All vectors 2D at this time
                         
-                        vector<T> p1 = previous_cluster->geometrical_center(2);
-                        vector<T> p2 = cluster->geometrical_center(2);
+                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
+                        vector<FS_TYPE> p2 = cluster->geometrical_center(2);
                         
-                        vector<T> dP = p1 - p2;
+                        vector<FS_TYPE> dP = p1 - p2;
                         
                         RDCartesianPoint p;
 
                         // Assuming --vtk-dimensions=x,y
                         
-                        p.x = p1.at(::m3D::utils::VisitUtils<T>::VTK_DIMENSION_INDEXES.at(0));
-                        p.y = p1.at(::m3D::utils::VisitUtils<T>::VTK_DIMENSION_INDEXES.at(1));
+                        p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
+                        p.y = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(1));
                         
                         // Obtain geographical coordinate
                         RDGeographicalPoint c = rcs->geographicalCoordinate(p);
@@ -750,7 +750,7 @@ int main(int argc, char** argv)
                         // obtain difference vector and normalize it.
                         // this will point north
                         
-                        vector<T> n(2);
+                        vector<FS_TYPE> n(2);
                         n[0] = pn.x - p.x;
                         n[1] = pn.y - p.y;
                         
@@ -759,7 +759,7 @@ int main(int argc, char** argv)
                         // obtain the angle beta between the radolan grid
                         // and north at the distance vector's origin
                         
-                        vector<T> ey(2);
+                        vector<FS_TYPE> ey(2);
                         ey[0] = 0;
                         ey[1] = 1;
                         
@@ -808,15 +808,15 @@ int main(int argc, char** argv)
                 
                 // Iterate over the points of the cluster
                 
-                Point<T>::list::iterator pi;
+                Point<FS_TYPE>::list::iterator pi;
                 
                 for (pi = cluster->points.begin(); pi != cluster->points.end(); ++pi)
                 {
-                    Point<T>::ptr p = *pi;
+                    Point<FS_TYPE>::ptr p = *pi;
                     
                     if (p->gridpoint.empty())
                     {
-                        CoordinateSystem<T>::GridPoint gp = coord_system->newGridPoint();
+                        CoordinateSystem<FS_TYPE>::GridPoint gp = coord_system->newGridPoint();
                         
                         try
                         {
@@ -832,7 +832,7 @@ int main(int argc, char** argv)
                         }
                     }
                     
-                    Point<T>::ptr indexed = index.get(p->gridpoint);
+                    Point<FS_TYPE>::ptr indexed = index.get(p->gridpoint);
                     
                     if (indexed==NULL)
                     {
@@ -854,7 +854,7 @@ int main(int argc, char** argv)
             
             // Extract the point list
             
-            Point<T>::list cumulatedList;
+            Point<FS_TYPE>::list cumulatedList;
             
             index.replace_points(cumulatedList);
             
@@ -888,7 +888,7 @@ int main(int argc, char** argv)
             {
                 string vtk_path = basename + "_cumulated_track_"+boost::lexical_cast<string>(tmi->first)+".vtk";
                 
-                ::cfa::meanshift::visit::VisitUtils<T>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>() );
+                ::cfa::meanshift::visit::VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>() );
             }
             
             // Don't need it anymore

@@ -18,7 +18,6 @@ namespace m3D {
     
     using namespace utils;
     using namespace netCDF;
-    using namespace units::values;
     
     template <typename T>
     void
@@ -105,8 +104,8 @@ namespace m3D {
         
         // check time difference and determine displacement restraints
         
-        s p_time = s(previous->timestamp);
-        s c_time = s(current->timestamp);
+        ::units::values::s p_time = ::units::values::s(previous->timestamp);
+        ::units::values::s c_time = ::units::values::s(current->timestamp);
         
         // Check c > p
         
@@ -126,7 +125,7 @@ namespace m3D {
         
         current->tracking_time_difference = m_deltaT.get();
 
-        m maxDisplacement = this->m_maxVelocity * this->m_deltaT;
+        ::units::values::m maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         
         if ( verbosity >= VerbosityDetails )
             printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm\n",
@@ -150,7 +149,7 @@ namespace m3D {
         // TODO: this point needs to be replaced with velocity
         // vectors from SMV/RMV estimates
         
-        meters_per_second overlap_constraint_velocity = m_maxVelocity;
+        ::units::values::meters_per_second overlap_constraint_velocity = m_maxVelocity;
         
         ::units::values::m overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
         
@@ -170,7 +169,7 @@ namespace m3D {
 #pragma mark Compute correlation matrixes and constraints
         
         typename Matrix<T>::matrix_t rank_correlation = Matrix<T>::create_matrix(new_count,old_count);
-        typename Matrix<m>::matrix_t midDisplacement = Matrix<m>::create_matrix(new_count,old_count);
+        typename Matrix< ::units::values::m >::matrix_t midDisplacement = Matrix< ::units::values::m >::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t histDiff = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t sum_prob = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t coverOldByNew = Matrix<T>::create_matrix(new_count,old_count);
