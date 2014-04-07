@@ -668,7 +668,8 @@ int main(int argc, char** argv) {
         cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
         cout << "\t\tupper weight-function threshold: " << wwf_upper_threshold << endl;
 
-        if (vm.count("previous-file") > 0) {
+        if (previous_file != NULL)
+        {
             cout << "\tprevious file:" << *previous_file << endl;
 
             if (vm.count("previous-cluster-coverage-threshold") > 0) {
@@ -1005,9 +1006,12 @@ int main(int argc, char** argv) {
     }
 
     // Collate with previous clusters, if those are provided
-
-    if (previous_file != NULL) 
+    
+    if (previous_file != NULL)
     {
+        cout << endl << "Collating with previous results. Have " << clusters.clusters.size() << " clusters:" << endl;
+        clusters.print();
+
         try {
             ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(*previous_file);
 
@@ -1018,6 +1022,10 @@ int main(int argc, char** argv) {
             cerr << "ERROR reading previous cluster file: " << e.what() << endl;
             exit(-1);
         }
+        
+        cout << endl << "Done. Have " << clusters.clusters.size() << " clusters:" << endl;
+        clusters.print();
+
     }
 
     // Announce final results

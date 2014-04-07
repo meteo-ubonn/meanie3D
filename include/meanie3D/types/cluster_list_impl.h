@@ -1372,15 +1372,17 @@ namespace m3D {
         }
         
         set< Point<T> * > erased;
-
-        for (size_t i=0; i < clusters.size(); i++)
+        
+        size_t running_id = 0;
+        
+        for (typename Cluster<T>::list::iterator clit = clusters.begin(); clit != clusters.end();)
         {
             if (show_progress)
             {
                 progress->operator++();
             }
 
-            typename Cluster<T>::ptr c = clusters.at(i);
+            typename Cluster<T>::ptr c = *clit;
             
             vector<T> mode = vector<T>( fs->feature_variables().size(), 0.0);
             
@@ -1410,17 +1412,29 @@ namespace m3D {
                 }
             }
             
+            for ( pi = c->points.begin(); pi != c->points.end(); pi++)
+            {
+                Point<T> *p = *pi;
+                
+                if (!p->isOriginalPoint)
+                {
+                    cerr << "ADDED POINT SURVIVED" << endl;
+                }
+            }
+            
             if (c->points.empty())
             {
                 // removed them all? Kill cluster
-                clusters.erase(find(clusters.begin(),clusters.end(),c));
+                clusters.erase(clit);
                 delete c;
             }
             else
             {
                 mode /= ((T) c->points.size());
                 c->mode = mode;
-                c->id = i;
+                c->id = running_id;
+                running_id++;
+                clit++;
             }
         }
         

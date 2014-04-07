@@ -223,7 +223,6 @@ namespace m3D {
         
         cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,coalesceWithStrongestNeighbour,show_progress_bar);
         
-        
 #if WRITE_BOUNDARIES
         cluster_list.write_boundaries( weight_function, this->feature_space, this->point_index, resolution );
 #endif
