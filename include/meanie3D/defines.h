@@ -21,7 +21,7 @@
 #define DEBUG_MEANSHIFT_GRAPH 0
 #define DEBUG_CLUSTER_MERGING 0
 #define DEBUG_CLUSTER_MERGING_DECISION 0
-#define DEBUG_TRACKING 1
+#define DEBUG_TRACKING 0
 #define DEBUG_HISTOGRAM_CORRELATION 0
 
 // Write out a files which contain the meanshift
@@ -53,17 +53,10 @@
 
 // Enable the replacement of zero-shift vectors
 // with an average of neighboring points
-#define REPLACE_ZEROSHIFT_VECTORS 1
+#define REPLACE_ZEROSHIFT_VECTORS 0
 
 // Figure out the strongest neighbor to the
 // zero-shift cluster and add it to the cluster
-#define ADD_STRONGEST_NEIGHBOUR 1
-
-// Figure out the strongest neighbor cluster to the
-// a cluster and merge, should the one of the adjacent
-// points be stronger in response than the strongest
-// point in the cluster itself (a type of coalescence)
-#define COALESCE_WITH_STRONGEST_NEIGHBOUR 1
-    
+#define ADD_STRONGEST_NEIGHBOUR 0
 
 #endif

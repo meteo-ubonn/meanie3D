@@ -18,16 +18,20 @@ namespace m3D {
     
     using namespace utils;
     using namespace netCDF;
-
+    
     template <typename T>
     void
     Tracking<T>::track(typename ClusterList<T>::ptr previous,
                        typename ClusterList<T>::ptr current,
+                       CoordinateSystem<T> *cs,
                        const NcVar &track_variable,
                        Verbosity verbosity)
     {
         if ( verbosity >= VerbosityNormal )
-            cout << endl << "-- Tracking --" << endl;
+        {
+            cout << endl << "Tracking ..." << endl;
+            start_timer();
+        }
 
 
 #pragma mark -
@@ -78,10 +82,6 @@ namespace m3D {
         
         get_valid_range(track_variable, valid_min, valid_max );
         
-        // TODO: handle units dynamically (see #230)
-        
-        T unit_multiplier = 1000.0; // km -> m
-        
         // Find out the highest id from the previous list
         
         size_t highest_id = previous->highest_id;
@@ -99,13 +99,13 @@ namespace m3D {
             }
         }
         
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             cout << "Highest used ID is " << highest_id << endl;
         
         // check time difference and determine displacement restraints
         
-        timestamp_t p_time = previous->timestamp;
-        timestamp_t c_time = current->timestamp;
+        ::units::values::s p_time = ::units::values::s(previous->timestamp);
+        ::units::values::s c_time = ::units::values::s(current->timestamp);
         
         // Check c > p
         
@@ -115,7 +115,7 @@ namespace m3D {
             return;
         }
         
-        this->m_deltaT = boost::numeric_cast<double>(c_time) - boost::numeric_cast<double>(p_time);
+        this->m_deltaT = c_time - p_time;
         
         if (this->m_deltaT > m_max_deltaT)
         {
@@ -123,13 +123,13 @@ namespace m3D {
             return;
         }
         
-        current->tracking_time_difference = boost::numeric_cast<int>(m_deltaT);
+        current->tracking_time_difference = m_deltaT.get();
 
-        T maxDisplacement = this->m_maxVelocity * this->m_deltaT;
+        ::units::values::m maxDisplacement = this->m_maxVelocity * this->m_deltaT;
         
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm\n",
-                   this->m_maxVelocity, this->m_deltaT, maxDisplacement );
+                   this->m_maxVelocity.get(), this->m_deltaT.get(), maxDisplacement.get() );
 
         // TODO: mean velocity constraint
         
@@ -149,9 +149,9 @@ namespace m3D {
         // TODO: this point needs to be replaced with velocity
         // vectors from SMV/RMV estimates
         
-        T overlap_constraint_velocity = m_maxVelocity;
+        ::units::values::meters_per_second overlap_constraint_velocity = m_maxVelocity;
         
-        T overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
+        ::units::values::m overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
         
         // Prepare the newcomers for re-identification
         
@@ -162,14 +162,14 @@ namespace m3D {
         size_t old_count = previous->clusters.size();
         size_t new_count = current->clusters.size();
         
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             cout << "Matching " << new_count << " new clusters against " << old_count << " old clusters" << endl;
         
 #pragma mark -
 #pragma mark Compute correlation matrixes and constraints
         
         typename Matrix<T>::matrix_t rank_correlation = Matrix<T>::create_matrix(new_count,old_count);
-        typename Matrix<T>::matrix_t midDisplacement = Matrix<T>::create_matrix(new_count,old_count);
+        typename Matrix< ::units::values::m >::matrix_t midDisplacement = Matrix< ::units::values::m >::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t histDiff = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t sum_prob = Matrix<T>::create_matrix(new_count,old_count);
         typename Matrix<T>::matrix_t coverOldByNew = Matrix<T>::create_matrix(new_count,old_count);
@@ -177,8 +177,8 @@ namespace m3D {
         
         typename Matrix<T>::flag_matrix_t constraints_satisified = Matrix<T>::create_flag_matrix(new_count, old_count);
         
-        T maxHistD = numeric_limits<T>::min();
-        T maxMidD = numeric_limits<T>::min();
+        int maxHistD = numeric_limits<int>::min();
+        ::units::values::m maxMidD = ::units::values::m(numeric_limits<T>::min());
         
         int n,m;
         
@@ -244,7 +244,7 @@ namespace m3D {
 
                 if (m_useOverlapConstraint)
                 {
-                    T radius = unit_multiplier * oldCluster->radius();
+                    ::units::values::m radius = oldCluster->radius(cs);
                     
                     bool requires_overlap = (radius >= overlap_constraint_radius);
                     
@@ -265,7 +265,7 @@ namespace m3D {
                 
                 vector<T> dx = newCenter - oldCenter;
                 
-                midDisplacement[n][m] = vector_norm(dx);
+                midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
                 
                 //
                 // Maximum velocity constraint
@@ -274,7 +274,7 @@ namespace m3D {
                 // TODO: calculate the max displacement in the same dimension
                 // as the dimension variables
                 
-                T displacement = unit_multiplier * midDisplacement[n][m];
+                ::units::values::m displacement = midDisplacement[n][m];
                 
                 if ( displacement > maxDisplacement ) continue;
 
@@ -295,7 +295,7 @@ namespace m3D {
                     maxHistD = histDiff[n][m];
                 }
                 
-                if (midDisplacement[n][m]>maxMidD)
+                if (midDisplacement[n][m] > maxMidD)
                 {
                     maxMidD = midDisplacement[n][m];
                 }
@@ -323,7 +323,7 @@ namespace m3D {
         {
             typename Cluster<T>::ptr newCluster = current->clusters[n];
             
-            if ( verbosity >= VerbosityNormal )
+            if ( verbosity >= VerbosityDetails )
             {
                 cout << endl << "Correlating new Cluster #" << n
                 << " (histogram size " << newCluster->histogram(tracking_var_index,valid_min,valid_max)->sum() << ")"
@@ -339,7 +339,7 @@ namespace m3D {
                 
                 if ( constraints_satisified[n][m] )
                 {
-                    float prob_r = m_dist_weight * erfc( midDisplacement[n][m] / maxMidD );
+                    float prob_r = m_dist_weight * erfc( midDisplacement[n][m].get() / maxMidD.get() );
                     
                     float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
                     
@@ -347,12 +347,12 @@ namespace m3D {
                     
                     sum_prob[n][m] = prob_t + prob_r + prob_h;
                     
-                    if ( verbosity >= VerbosityNormal )
+                    if ( verbosity >= VerbosityDetails )
                     {
                         printf("\t<ID#%4lu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                                oldCluster->id,
                                oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
-                               midDisplacement[n][m],
+                               midDisplacement[n][m].get(),
                                prob_r,
                                histDiff[n][m],
                                prob_h,
@@ -374,7 +374,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Matchmaking
         
-        float velocitySum = 0;
+        ::units::values::meters_per_second velocitySum = ::units::values::meters_per_second(0);
         
         int velocityClusterCount = 0;
         
@@ -386,7 +386,7 @@ namespace m3D {
         
         set< typename Cluster<T>::ptr > used_clusters;
         
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             printf("\n-- Matching Results --\n");
         
         while ( iterations <= maxIterations )
@@ -437,15 +437,15 @@ namespace m3D {
                     // TODO: calculate velocity in the same units as the dimension
                     // variables
                     
-                    float velocity = unit_multiplier * midDisplacement[maxN][maxM] / this->m_deltaT;
+                    ::units::values::meters_per_second velocity = midDisplacement[maxN][maxM] / this->m_deltaT;
                 
                     velocitySum += velocity;
                         
                     velocityClusterCount++;
                     
-                    if ( verbosity >= VerbosityNormal )
+                    if ( verbosity >= VerbosityDetails )
                     {
-                        printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity );
+                        printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity.get() );
                     }
                         
                     new_cluster->id = old_cluster->id;
@@ -471,7 +471,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Tag unmatched clusters
 
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             printf("\n-- New ID assignments --\n");
         
         for ( n=0; n < new_count; n++ )
@@ -484,7 +484,7 @@ namespace m3D {
                 
                 current->new_ids.insert( c->id );
                 
-                if ( verbosity >= VerbosityNormal )
+                if ( verbosity >= VerbosityDetails )
                 {
                     cout << "#" << n
                          << " at " << c->mode
@@ -502,7 +502,7 @@ namespace m3D {
         
         typename Cluster<T>::list::iterator ci;
         
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             cout << "\n-- Goners --" << endl;
         
         for ( ci = previous->clusters.begin(); ci != previous->clusters.end(); ci++ )
@@ -513,7 +513,7 @@ namespace m3D {
             
             if ( f != used_clusters.end() ) continue;
             
-            if ( verbosity >= VerbosityNormal )
+            if ( verbosity >= VerbosityDetails )
                 cout << "#" << c->id << " at " << c->mode << " |H|=" << c->histogram(tracking_var_index,valid_min,valid_max)->sum() << endl;
             
             current->dropped_ids.insert(c->id);
@@ -529,7 +529,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Merging
         
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             cout << endl << "-- Merges --" << endl;
         
         // for each new Cluster check coverage of old Clusters
@@ -581,7 +581,7 @@ namespace m3D {
                 for ( int i=0; i < candidates.size(); i++ )
                     merged_from.insert(previous->clusters[candidates[i]]->id);
                 
-                if ( verbosity >= VerbosityNormal )
+                if ( verbosity >= VerbosityDetails )
                     cout << "clusters " << merged_from << " seem to have merged into cluster " << new_cluster->id << endl;
                 
                 // store the given ID
@@ -604,7 +604,7 @@ namespace m3D {
                         
                         current->tracked_ids.insert(new_cluster->id);
                         
-                        if ( verbosity >= VerbosityNormal )
+                        if ( verbosity >= VerbosityDetails )
                             printf("\ttrack ID#%lu continues\n", new_cluster->id );
                     }
                     else
@@ -623,13 +623,13 @@ namespace m3D {
                             current->tracked_ids.erase(the_id);
                         }
 
-                        if ( verbosity >= VerbosityNormal )
+                        if ( verbosity >= VerbosityDetails )
                             printf("\ttrack ID#%lu ends. new track ID#%lu begins\n", the_id, new_cluster->id );
                     }
                 }
                 else
                 {
-                    if ( verbosity >= VerbosityNormal )
+                    if ( verbosity >= VerbosityDetails )
                         printf("\ttrack ID#%lu continues\n", new_cluster->id );
                 }
                 
@@ -640,13 +640,13 @@ namespace m3D {
         }
         
         if ( ! had_merges )
-            if ( verbosity >= VerbosityNormal )
+            if ( verbosity >= VerbosityDetails )
                 cout << "none." << endl;
         
 #pragma mark -
 #pragma mark Splitting
         
-        if ( verbosity >= VerbosityNormal )
+        if ( verbosity >= VerbosityDetails )
             cout << endl << "-- Splits --" << endl;
         
         // for each new Cluster check coverage of old Clusters
@@ -692,7 +692,7 @@ namespace m3D {
                 for ( int i=0; i < candidates.size(); i++ )
                     split_into.insert(current->clusters[candidates[i]]->id);
                 
-                if ( verbosity >= VerbosityNormal )
+                if ( verbosity >= VerbosityDetails )
                     cout << "cluster " << old_cluster->id << " seems to have split into clusters " << split_into << endl;
                 
                 for ( int i=0; i < candidates.size(); i++ )
@@ -717,7 +717,7 @@ namespace m3D {
                     
                         current->tracked_ids.insert(c->id);
                         
-                        if ( verbosity >= VerbosityNormal )
+                        if ( verbosity >= VerbosityDetails )
                             printf("\ttrack ID#%lu continues\n", c->id );
                     }
                     else
@@ -730,7 +730,7 @@ namespace m3D {
                             
                             c->id = next_id(highest_id);
                             
-                            if ( verbosity >= VerbosityNormal )
+                            if ( verbosity >= VerbosityDetails )
                                 printf("\tnew track ID#%lu begins\n", c->id );
                             
                             current->new_ids.insert( c->id );
@@ -743,11 +743,16 @@ namespace m3D {
         }
         
         if ( ! had_splits)
-            if ( verbosity >= VerbosityNormal )
+            if ( verbosity >= VerbosityDetails )
                 cout << "none." << endl;
 
 #pragma mark -
 #pragma mark Store tracking data
+        
+        if ( verbosity >= VerbosityNormal )
+        {
+            cout << "done. (Correlating " << (new_count * old_count) << " objects took " << stop_timer() << " seconds)" << endl;
+        }
         
         current->tracking_performed = true;
         

@@ -33,7 +33,7 @@ using namespace netCDF;
 using namespace m3D;
 
 /** Feature-space data type */
-typedef double T;
+typedef double FS_TYPE;
 
 static const double NO_SCALE = numeric_limits<double>::min();
 
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     }
     
     // Select the correct point factory
-    PointFactory<T>::set_instance( new M3DPointFactory<T>() );
+    PointFactory<FS_TYPE>::set_instance( new M3DPointFactory<FS_TYPE>() );
     
     // Evaluate user input
     
@@ -282,7 +282,7 @@ int main(int argc, char** argv)
                         
                         // read data
                         
-                        T *var_data = (T*) malloc( sizeof(T) * size );
+                        FS_TYPE *var_data = (FS_TYPE*) malloc( sizeof(FS_TYPE) * size );
                         
                         original_var.getVar(var_data);
                         

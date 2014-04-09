@@ -127,8 +127,6 @@ namespace m3D {
                 // the original in that way.
                 
                 file = new NcFile((file_existed?path+"-new":path), NcFile::replace, NcFile::classic);
-                
-                //file = new NcFile(
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
@@ -212,7 +210,7 @@ namespace m3D {
             {
                 NcVar var = this->feature_variables[i];
                 
-                cout << "Copying " << var.getName() << endl;
+                // cout << "Copying " << var.getName() << endl;
 
                 // append to list
                 
@@ -240,18 +238,18 @@ namespace m3D {
                     dummyVar = file->addVar( var.getName(), var.getType(), *dim);
                     nc_enddef(file->getId());
 
-                    cout << "\tadded variable " << dummyVar.getName() << " (status=" << dummyVar.isNull() << ")" << endl;
+                    //cout << "\tadded variable " << dummyVar.getName() << " (status=" << dummyVar.isNull() << ")" << endl;
 
                     T *data = (T*)malloc(sizeof(T) * dim->getSize());
                     var.getVar(data);
                     
-                    cout << "\tread variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
+                    //cout << "\tread variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
                     
 //                    ::cfa::utils::array::print_array(data, dim->getSize());
                     
                     dummyVar.putVar(data);
                     
-                    cout << "\twrote variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
+                    //cout << "\twrote variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
                     
                     delete data;
                 }
@@ -274,7 +272,7 @@ namespace m3D {
                 {
                     NcVarAtt a = at->second;
                     
-                    cout << "\tcopying attribute " << a.getName() << endl;
+                    //cout << "\tcopying attribute " << a.getName() << endl;
                     
                     size_t size = a.getAttLength();
                     
@@ -417,14 +415,50 @@ namespace m3D {
             if (file_existed)
             {
                 // close the original and delete it
+                
                 if (this->ncFile != NULL)
                 {
                     delete this->ncFile;
                     this->ncFile = NULL;
                 }
                 
-                boost::filesystem::remove(path);
-                boost::filesystem::rename(path+"-new", path);
+                if (boost::filesystem::remove(path))
+                {
+                    boost::system::error_code ec;
+                    boost::filesystem::rename(path+"-new", path, ec);
+                    if (ec.value() != boost::system::errc::success)
+                    {
+                        cerr << "ERROR: could not rename " << (path+"-new") << " to " << path<< endl;
+                        cerr << "REASON: " << ec.message() << endl;
+                    }
+                }
+                else
+                {
+                    // for some reason, the old file could not be removed. In
+                    // this case, just move it aside and try again
+                    cerr << "ERROR: could not delete " << path << endl;
+                    
+                    std::string moved_path = path + "-moved";
+                    cerr << "renaming " << path << " to " << moved_path << endl;
+                    boost::system::error_code ec;
+                    boost::filesystem::rename(path,moved_path,ec);
+                    
+                    if (ec.value() == boost::system::errc::success)
+                    {
+                        boost::filesystem::rename(path+"-new", path, ec);
+                        if (ec.value() != boost::system::errc::success)
+                        {
+                            cerr << "ERROR: could not rename " << (path+"-new") << " to " << path<< endl;
+                            cerr << "REASON: " << ec.message() << endl;
+                        }
+                        
+                    }
+                    else
+                    {
+                        cerr << "ERROR: could not move " << path << " to " << moved_path << endl;
+                        cerr << "REASON: " << ec.message() << endl;
+                    }
+                }
             }
             
         }
@@ -820,11 +854,10 @@ namespace m3D {
     T
     ClusterList<T>::weight_function_tendency(typename Point<T>::ptr p,
                                              const WeightFunction<T> *weight_function,
+                                             const typename Point<T>::list &neighbours,
                                              ArrayIndex<T> &index)
     {
         T result = 0;
-        
-        typename Point<T>::list neighbours = find_neighbours(p->gridpoint,index,1);
         
         if ( !neighbours.empty() )
         {
@@ -849,24 +882,12 @@ namespace m3D {
     ClusterList<T>::aggregate_zeroshifts(FeatureSpace<T> *fs,
                                          const WeightFunction<T> *weight_function,
                                          ArrayIndex<T> &index,
+                                         bool coalesceWithStrongestNeighbour,
                                          bool show_progress)
     {
         boost::progress_display *progress = NULL;
         
-        if (show_progress)
-        {
-            cout << endl << "Clustering zero-shift areas ...";
-            progress = new boost::progress_display( fs->points.size() );
-            start_timer();
-        }
-        
-#if REPLACE_ZEROSHIFT_VECTORS
-        
-        //
-        // #209
-        //
-        
-        // find the original zero-shift points
+        // find the zero-shift points
         
         typedef set< typename Point<T>::ptr > pset_t;
         
@@ -876,25 +897,12 @@ namespace m3D {
         {
             M3DPoint<T> *current_point = (M3DPoint<T> *) fs->points[i];
             
-            if (current_point->cluster != NULL)
-            {
-                continue;
-            }
+#if REPLACE_ZEROSHIFT_VECTORS
             
-            // skip zeroshift to save time
-            
-            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
-            {
-                zeroshifts.insert(current_point);
-            }
-        }
-
-        // replace the zero-shift vectors with the average of their neighbours
-
-        for (typename pset_t::iterator pi=zeroshifts.begin(); pi!=zeroshifts.end(); pi++)
-        {
-            
-            M3DPoint<T> *current_point = (M3DPoint<T> *) *pi;
+            //
+            // #209
+            //
+            // replace the zero-shift vectors with the average of their neighbours
             
             typename Point<T>::list neighbours = find_neighbours(current_point->gridpoint,index);
             
@@ -910,7 +918,7 @@ namespace m3D {
                     
                     m += n->shift;
                 }
-
+                
                 // average, rounded to grid
                 
                 m /= ((T)neighbours.size());
@@ -921,90 +929,92 @@ namespace m3D {
                 
                 current_point->gridded_shift = fs->coordinate_system->rounded_gridpoint(spatial_shift);
             }
-        }
 #endif
+            // If the vector is (still) zero, add to the list of zeroshift points
+            
+            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
+            {
+                zeroshifts.insert(current_point);
+            }
+        }
 
-        for ( size_t i = 0; i < fs->points.size(); i++ )
+        if (show_progress)
+        {
+            cout << endl << "Clustering zero-shift areas ...";
+            progress = new boost::progress_display(zeroshifts.size());
+            start_timer();
+        }
+
+        for (typename pset_t::iterator pi=zeroshifts.begin(); pi!=zeroshifts.end(); pi++)
         {
             if (show_progress)
             {
                 progress->operator++();
             }
+
+            M3DPoint<T> *current_point = (M3DPoint<T> *) *pi;
+
+            typename Point<T>::list neighbours = find_neighbours(current_point->gridpoint,index);
+
+//            // only consider points with negative or inconclusive weight
+//            // function tendency (aka uphill)
+//            
+//            T tendency = weight_function_tendency(current_point, weight_function, neighbours, index);
+//            
+//            if (tendency > 0)
+//            {
+//                continue;
+//            }
             
-            M3DPoint<T> *current_point = (M3DPoint<T> *) fs->points[i];
-            
-            if (current_point->cluster != NULL)
+            for (size_t ni = 0; ni < neighbours.size(); ni++)
             {
-                continue;
-            }
-            
-            // skip zeroshift to save time
-            
-            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
-            {
-                // only consider points with negative or inconclusive weight
-                // function tendency (aka uphill)
-                T tendency = weight_function_tendency(current_point, weight_function, index);
+                M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
                 
-                if (tendency > 0)
+                if (n==current_point) continue;
+                
+                // only consider neighbours that are zero-shift themselves
+                
+                if (vector_norm(fs->spatial_component(n->shift)) == 0)
                 {
-                    continue;
-                }
-                
-                typename Point<T>::list zeroshift_neighbours;
-                
-                typename Point<T>::list neighbours = find_neighbours(current_point->gridpoint,index);
-                
-                bool found_cluster = false;
-                
-                for (size_t ni = 0; ni < neighbours.size() && !found_cluster; ni++)
-                {
-                    M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
-                    
-                    if (n==current_point) continue;
-                    
-                    if (vector_norm(fs->spatial_component(n->shift)) == 0)
+                    if ( current_point->cluster == NULL && n->cluster == NULL )
                     {
-                        if ( current_point->cluster == NULL && n->cluster == NULL )
-                        {
-                            // Neither current point nor neighbour have cluster
-                            // => create new cluster
-                            
-                            size_t spatial_dims = fs->coordinate_system->size();
-                            
-                            typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,spatial_dims);
-                            
-                            c->add_point(current_point);
-                            
-                            c->add_point(n);
-                            
-                            clusters.push_back(c);
-                        }
-                        else if ( current_point->cluster == NULL && n->cluster != NULL )
-                        {
-                            // neighbour has cluster
-                            // => add current point to neighbour's cluster
-                            n->cluster->add_point(current_point);
-                        }
-                        else if (current_point->cluster !=NULL && n->cluster == NULL)
-                        {
-                            // current point has cluster
-                            // => add neighbour to current point's cluster
-                            current_point->cluster->add_point(n);
-                        }
-                        else if ((current_point->cluster !=NULL && n->cluster != NULL)
-                                 && (current_point->cluster != n->cluster ))
-                        {
-                            // current point's cluster and neighbour's cluster
-                            // => merge current point's cluster into neighbour's cluster
-                            typename Cluster<T>::ptr c = current_point->cluster;
-                            
-                            n->cluster->add_points(c->points,false);
-                            
-                            clusters.erase(find(clusters.begin(),clusters.end(),c));
-                            
-                            delete c;
-                        }
+                        // Neither current point nor neighbour have cluster
+                        // => create new cluster
+                        
+                        size_t spatial_dims = fs->coordinate_system->size();
+                        
+                        typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,spatial_dims);
+                        
+                        c->add_point(current_point);
+                        
+                        c->add_point(n);
+                        
+                        clusters.push_back(c);
+                    }
+                    else if ( current_point->cluster == NULL && n->cluster != NULL )
+                    {
+                        // neighbour has cluster
+                        // => add current point to neighbour's cluster
+                        n->cluster->add_point(current_point);
+                    }
+                    else if (current_point->cluster !=NULL && n->cluster == NULL)
+                    {
+                        // current point has cluster
+                        // => add neighbour to current point's cluster
+                        current_point->cluster->add_point(n);
+                    }
+                    else if ((current_point->cluster !=NULL && n->cluster != NULL)
+                             && (current_point->cluster != n->cluster ))
+                    {
+                        // current point's cluster and neighbour's cluster
+                        // => merge current point's cluster into neighbour's cluster
+                        typename Cluster<T>::ptr c = current_point->cluster;
+                        
+                        n->cluster->add_points(c->points,false);
+                        
+                        clusters.erase(find(clusters.begin(),clusters.end(),c));
+                        
+                        delete c;
                     }
                 }
             }
@@ -1092,6 +1102,7 @@ namespace m3D {
     void
     ClusterList<T>::aggregate_cluster_graph(FeatureSpace<T> *fs,
                                             const WeightFunction<T> *weight_function,
+                                            bool coalesceWithStrongestNeighbour,
                                             bool show_progress)
     {
         // PointIndex<T>::write_index_searches = true;
@@ -1100,7 +1111,7 @@ namespace m3D {
         
         ArrayIndex<T> index(fs->coordinate_system,fs->points,false);
         
-        this->aggregate_zeroshifts(fs,weight_function,index,show_progress);
+        this->aggregate_zeroshifts(fs,weight_function,index,coalesceWithStrongestNeighbour,show_progress);
         
 #if WRITE_ZEROSHIFT_CLUSTERS
         typename Cluster<T>::list::iterator ci;
@@ -1111,7 +1122,8 @@ namespace m3D {
             c->id = id++;
         }
         boost::filesystem::path path(fs->filename());
-        ::m3D::utils::VisitUtils<T>::write_clusters_vtk(this,"_zeroshift_",false);
+        std::string basename = path.generic_string() + "-zeroshift_";
+        ::m3D::utils::VisitUtils<T>::write_clusters_vtu(this, fs->coordinate_system, basename);
 #endif
         
         // Sanity checking
@@ -1162,7 +1174,8 @@ namespace m3D {
                 // we're pointing to somebody?
                 current_point->isBoundary = true;
                 
-                // whoever we're pointing to, he's not a boundary point.
+                // whoever we're pointing to, he's
+                // not a boundary point.
                 predecessor->isBoundary = false;
                 
                 #if DEBUG_GRAPH_AGGREGATION
@@ -1209,9 +1222,7 @@ namespace m3D {
                     cout << "added predecessor to cluster " << current_point->cluster << " (" << current_point->cluster->points.size() << " points)" << endl;
                     #endif
                 }
-                else if (current_point->cluster != NULL
-                         && predecessor->cluster != NULL
-                         && (current_point->cluster != predecessor->cluster))
+                else if (current_point->cluster != predecessor->cluster)
                 {
                     // both points have different clusters
                     // => merge current cluster's points to predecessor's cluster
@@ -1237,9 +1248,7 @@ namespace m3D {
                     
                     delete c1;
                 }
-                else if (current_point->cluster != NULL
-                         && predecessor->cluster != NULL
-                         && (current_point->cluster == predecessor->cluster))
+                else
                 {
                     // both points are already part of the same cluster
                     // => do nothing
@@ -1251,96 +1260,129 @@ namespace m3D {
             }
         }
         
-#if COALESCE_WITH_STRONGEST_NEIGHBOUR
-        
-        for (size_t i=0; i < clusters.size(); i++)
+        if ( show_progress )
         {
-            typename Cluster<T>::ptr c = clusters.at(i);
-            
-            T strongest_response = numeric_limits<T>::min();
-            
-            T strongest_own_response = numeric_limits<T>::min();
-            
-            typename Cluster<T>::ptr strongest_cluster = NULL;
-            
-            typename Point<T>::list::iterator pi;
-            
-            for (pi = c->points.begin(); pi != c->points.end(); pi++)
-            {
-                typename Point<T>::ptr p = *pi;
-                
-                // track own response
-                
-                T own_response = weight_function->operator()(p);
-                
-                if (own_response > strongest_own_response)
-                {
-                    strongest_own_response = own_response;
-                }
-                
-                // Find the neighbour with the strongest response
-                
-                typename Point<T>::list neighbours = find_neighbours(p->gridpoint,index);
-                
-                for (size_t ni = 0; ni < neighbours.size(); ni++)
-                {
-                    M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
-                    
-                    // only interested in different clusters here
-                    
-                    if (n->cluster == c)
-                    {
-                        continue;
-                    }
-                    
-                    // figure out the response
-                    
-                    T response = weight_function->operator()(n);
-                    
-                    if (response > strongest_response)
-                    {
-                        strongest_response = response;
-                        strongest_cluster = n->cluster;
-                    }
-                }
-            }
-            
-            if (strongest_response >= strongest_own_response && strongest_cluster != NULL)
-            {
-                // found a higher ranking cluster in the direct
-                // vicinity. Merge!
-                
-                c->add_points(strongest_cluster->points,false);
-                
-                typename Cluster<T>::list::iterator cfi = find(clusters.begin(),clusters.end(),strongest_cluster);
-                
-                if (cfi != clusters.end())
-                {
-                    clusters.erase(cfi);
-                    delete strongest_cluster;
-                }
-                
-                // start over!
-                // TODO: this could be done a little smarter, probably
-                // by remembering the clusters to be deleted and skip
-                // them in the above procedure, then remove them later
-                // in bulk?
-                
-                i=0;
-            }
-
+            cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
+            delete progress;
         }
         
-#endif
+        if (coalesceWithStrongestNeighbour)
+        {
+            if ( show_progress )
+            {
+                cout << endl << "Running coalescence post-procesing ";
+                start_timer();
+            }
+            
+            for (size_t i=0; i < clusters.size(); i++)
+            {
+                typename Cluster<T>::ptr c = clusters.at(i);
+                
+                T strongest_response = numeric_limits<T>::min();
+                
+                T strongest_own_response = numeric_limits<T>::min();
+                
+                typename Cluster<T>::ptr strongest_cluster = NULL;
+                
+                typename Point<T>::list::iterator pi;
+                
+                for (pi = c->points.begin(); pi != c->points.end(); pi++)
+                {
+                    typename Point<T>::ptr p = *pi;
+                    
+                    // track own response
+                    
+                    T own_response = weight_function->operator()(p);
+                    
+                    if (own_response > strongest_own_response)
+                    {
+                        strongest_own_response = own_response;
+                    }
+                    
+                    // Find the neighbour with the strongest response
+                    
+                    typename Point<T>::list neighbours = find_neighbours(p->gridpoint,index);
+                    
+                    for (size_t ni = 0; ni < neighbours.size(); ni++)
+                    {
+                        M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
+                        
+                        // only interested in different clusters here
+                        
+                        if (n->cluster == c)
+                        {
+                            continue;
+                        }
+                        
+                        // figure out the response
+                        
+                        T response = weight_function->operator()(n);
+                        
+                        if (response > strongest_response)
+                        {
+                            strongest_response = response;
+                            strongest_cluster = n->cluster;
+                        }
+                    }
+                }
+                
+                if (strongest_response >= strongest_own_response && strongest_cluster != NULL)
+                {
+                    // found a higher ranking cluster in the direct
+                    // vicinity. Merge!
+                    
+                    c->add_points(strongest_cluster->points,false);
+                    
+                    typename Cluster<T>::list::iterator cfi = find(clusters.begin(),clusters.end(),strongest_cluster);
+                    
+                    if (cfi != clusters.end())
+                    {
+                        clusters.erase(cfi);
+                        delete strongest_cluster;
+                    }
+                    
+                    // start over!
+                    // TODO: this could be done a little smarter, probably
+                    // by remembering the clusters to be deleted and skip
+                    // them in the above procedure, then remove them later
+                    // in bulk?
+                    
+                    cout << ".";
+                    
+                    i=0;
+                }
+
+            }
+        
+            if ( show_progress )
+            {
+                cout << "done. (Coalesced " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
+            }
+        }
+        
         // Finally remove all points from all clusters, that were
         // not part of the original data set, as well as make their
         // modes the arithmetic mean of the remaining points
         
-        set< Point<T> * > erased;
-
-        for (size_t i=0; i < clusters.size(); i++)
+        if ( show_progress )
         {
-            typename Cluster<T>::ptr c = clusters.at(i);
+            cout << endl << "Erasing non-original points ...";
+            start_timer();
+            progress = new boost::progress_display( clusters.size() );
+        }
+        
+        set< Point<T> * > erased;
+        
+        size_t running_id = 0;
+        
+        for (typename Cluster<T>::list::iterator clit = clusters.begin(); clit != clusters.end();)
+        {
+            if (show_progress)
+            {
+                progress->operator++();
+            }
+
+            typename Cluster<T>::ptr c = *clit;
             
             vector<T> mode = vector<T>( fs->feature_variables().size(), 0.0);
             
@@ -1370,17 +1412,29 @@ namespace m3D {
                 }
             }
             
+            for ( pi = c->points.begin(); pi != c->points.end(); pi++)
+            {
+                Point<T> *p = *pi;
+                
+                if (!p->isOriginalPoint)
+                {
+                    cerr << "ADDED POINT SURVIVED" << endl;
+                }
+            }
+            
             if (c->points.empty())
             {
                 // removed them all? Kill cluster
-                clusters.erase(find(clusters.begin(),clusters.end(),c));
+                clusters.erase(clit);
                 delete c;
             }
             else
             {
                 mode /= ((T) c->points.size());
                 c->mode = mode;
-                c->id = i;
+                c->id = running_id;
+                running_id++;
+                clit++;
             }
         }
         
@@ -1401,12 +1455,9 @@ namespace m3D {
         // Sanity checking
         this->check_clusters(index);
         
-        cout << "Original points in feature-space: " << fs->count_original_points() << endl;
-
-        
         if ( show_progress )
         {
-            cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
+            cout << "done. (Result: " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
             delete progress;
         }
         

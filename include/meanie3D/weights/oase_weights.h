@@ -85,7 +85,12 @@ namespace m3D { namespace weights {
          */
         T compute_weight(Point<T> *p)
         {
-            T product = 1.0;
+            T sum = 0.0;
+            
+            const float msevi_l2_nwcsaf_ct_multiplier = 1.0;
+            const float cband_radolan_rx_multiplier = 10.0;
+            const float linet_oase_tl_multiplier = 10.0;
+            
             
             size_t num_vars = p->values.size() - p->coordinate.size();
             
@@ -97,53 +102,102 @@ namespace m3D { namespace weights {
                 
                 if (var.getName() == "cband_radolan_rx")
                 {
+                    // varies from 0 .. 1. Multiplier 10x
+                    
                     T rx_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
-                    
-//                    T rx_weight = pow( 10, value / 10 );
-                    
-                    product *= (1+rx_weight);
+
+                    sum += cband_radolan_rx_multiplier * rx_weight;
                 }
-                else if (var.getName() == "msevi_l15_ir_108")
+//                else if (var.getName() == "msevi_l2_cmsaf_cot")
+//                {
+//                    T cot_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+//                    sum += cot_weight;
+//                    
+//                }
+                else if (var.getName() == "msevi_l2_nwcsaf_ct")
                 {
-                    if (value < 30)
+//                    
+//                    http://www.nwcsaf.org/HTMLContributions/CT/Prod_CT.htm
+//                    0   non-processed 	containing no data or corrupted data
+//                    1	cloud free land 	no contamination by snow/ice covered surface, no contamination by clouds ; but contamination by thin dust/volcanic clouds not checked
+//                    2	cloud free sea 	no contamination by snow/ice covered surface, no contamination by clouds ; but contamination by thin dust/volcanic clouds not checked
+//                    3	 land contaminated by snow
+//                    4	sea contaminated by snow/ice
+//                    5	very low and cumuliform clouds
+//                    6	very low and stratiform clouds
+//                    7	low and cumuliform clouds
+//                    8	low and stratiform clouds
+//                    9	medium and cumuliform clouds
+//                    10	medium and stratiform clouds
+//                    11	high opaque and cumuliform clouds
+//                    12	high opaque and stratiform clouds
+//                    13	very high opaque and cumuliform clouds
+//                    14	very high opaque and stratiform clouds
+//                    15	high semitransparent thin clouds 	
+//                    16	high semitransparent meanly thick clouds 	
+//                    17	high semitransparent thick clouds 	
+//                    18	high semitransparent above low or medium clouds 	
+//                    19	fractional clouds (sub-pixel water clouds) 	
+//                    20	undefined (undefined by CMa)
+//
+                    // weight: low = 1 point, medium = 1.5 points, high = 2 points, very high = 2.5 points.
+                    //          stratiform = x1 cumulus = x2
+                    // weight from 0 .. 5, multiplier 1x
+                    
+                    float height_factor = 0.0;
+                    
+                    if (value >= 7 && value <= 8)
+                        height_factor = 1.0;
+                    else if (value >= 9 && value <= 10)
+                        height_factor = 1.5;
+                    else if (value >= 11 && value <= 12)
+                        height_factor = 2.0;
+                    else if (value >= 13 && value <= 14)
+                        height_factor = 2.5;
+                    
+                    // default = stratiform
+                    float type_multiplier = 1.0;
+                    
+                    // double for cumuliform
+                    if (value==7 || value==11 || value==13)
                     {
-                        T sev_weight = (30 - value) / (30 - m_min.at(var_index));
-                        
-                        product *= (1+sev_weight);
+                        type_multiplier = 2.0;
                     }
+                    
+                    T ct_weight = height_factor * type_multiplier;
+                    
+                    sum += msevi_l2_nwcsaf_ct_multiplier * ct_weight;
                 }
                 else if (var.getName() == "linet_oase_tl")
                 {
-                    if (value > 0)
-                    {
-                        T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
-                        
-                        product *= (1+linet_weight);
-                    }
+                    // varies from 0 .. 1. Multiplier 100x
+                    
+                    T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                    sum += linet_oase_tl_multiplier * linet_weight;
                 }
                 else
                 {
-                    // value scaled to [0..1]
-                    T var_weight = (value - m_min.at(var_index)) / ( m_max.at(var_index) - m_min.at(var_index) );
-                    
-                    // value^2
-                    //T var_weight = ( sample->at(index)->values[weight_var_index] ) * ( sample->at(index)->values[weight_var_index] );
-                    
-                    // value^3
-                    //T value = sample->at(index)->values[weight_var_index];
-                    //T var_weight = pow( value, 3 );
-                    
-                    // value^t
-                    //T var_weight = pow( sample->at(index)->values[weight_var_index], this->feature_space->scale() );
-                    
-                    // 10^(value/10)
-                    // T var_weight = pow( 10, value / 10 );
-                    
-                    product += var_weight;
+//                    // value scaled to [0..1]
+//                    T var_weight = (value - m_min.at(var_index)) / ( m_max.at(var_index) - m_min.at(var_index) );
+//                    
+//                    // value^2
+//                    //T var_weight = ( sample->at(index)->values[weight_var_index] ) * ( sample->at(index)->values[weight_var_index] );
+//                    
+//                    // value^3
+//                    //T value = sample->at(index)->values[weight_var_index];
+//                    //T var_weight = pow( value, 3 );
+//                    
+//                    // value^t
+//                    //T var_weight = pow( sample->at(index)->values[weight_var_index], this->feature_space->scale() );
+//                    
+//                    // 10^(value/10)
+//                    // T var_weight = pow( 10, value / 10 );
+//                    
+//                    sum += var_weight;
                 }
             }
             
-            return product;
+            return sum;
         }
         
         /** unfavorable, since it performs a reverse lookup, which is a very
@@ -170,6 +224,11 @@ namespace m3D { namespace weights {
         T operator()(const typename Point<T>::ptr p) const
         {
             return m_weight.get(p->gridpoint);
+        }
+        
+        T operator()(const vector<size_t> &gridpoint) const
+        {
+            return m_weight.get(gridpoint);
         }
         
     };

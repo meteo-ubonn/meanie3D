@@ -18,7 +18,7 @@ namespace m3D {
     
     template <typename T>
     Cluster<T>::Cluster()
-    : m_radius(numeric_limits<T>::min())
+    : m_radius(-1)
     , m_index(NULL)
     , m_dimension(0)
     , m_spatial_dimension(0)
@@ -30,7 +30,7 @@ namespace m3D {
     
     template <typename T>
     Cluster<T>::Cluster(const vector<T> &mode, size_t spatial_dimension)
-    : m_radius(numeric_limits<T>::min())
+    : m_radius(-1)
     , m_index(NULL)
     , m_dimension(mode.size())
     , m_spatial_dimension(spatial_dimension)
@@ -45,7 +45,7 @@ namespace m3D {
     
     template <typename T>
     Cluster<T>::Cluster( const Cluster<T> &o )
-    : m_radius(numeric_limits<T>::min())
+    : m_radius(-1)
     , m_index(NULL)
     , m_dimension(o.m_dimension)
     , m_spatial_dimension( o.m_spatial_dimension )
@@ -375,29 +375,28 @@ namespace m3D {
     }
     
     template <typename T>
-    T
-    Cluster<T>::radius()
+    ::units::values::m
+    Cluster<T>::radius(CoordinateSystem<T> *cs)
     {
-        if ( m_radius == numeric_limits<T>::min() )
+        if ( m_radius == ::units::values::m(-1) )
         {
-            vector<T> m( &mode[0], &mode[m_spatial_dimension] );
+            vector<T> mode_spatial( &mode[0], &mode[m_spatial_dimension] );
+            
+            vector<T> mode_in_meters = cs->to_meters(mode_spatial);
             
             typename Point<T>::list::iterator pi;
             
-            T sum = 0.0;
+            ::units::values::m sum;
 
             for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
             {
                 typename Point<T>::ptr p = *pi;
                 
-                T dist = vector_norm( p->coordinate - m );
+                vector<T> coord_in_meters = cs->to_meters(p->coordinate);
+                
+                ::units::values::m dist = ::units::values::m(vector_norm( coord_in_meters - mode_in_meters ));
                 
                 sum += dist;
-                
-//                if (dist > m_radius)
-//                {
-//                    m_radius = dist;
-//                }
             }
             
             m_radius = sum / ((T)this->points.size());

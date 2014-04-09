@@ -127,8 +127,8 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity,legendFlag):
     p.legendFlag=legendFlag
     p.lightingFlag=1
     p.opacity=opacity
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = 35,92.5
+    # p.minFlag,p.maxFlag = 1,1
+    # p.min,p.max = 35,92.5
     SetPlotOptions(p)
     return
 
@@ -137,7 +137,8 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity,legendFlag):
 #
 def set_view_to_radolan():
     v = GetView2D()
-    v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
+    # v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
+    v.windowCoords = (-523.962, 376.038, -4659.15, -3759.15)
     v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
     SetView2D(v)
     return
@@ -183,13 +184,18 @@ def add_mapstuff(extent):
     AddPlot("Pseudocolor", extent+"_topo_2D")
     p = PseudocolorAttributes()
     p.pointSizePixels = 2
-    p.colorTableName = TOPO_COLORMAP
-    p.invertColorTable = TOPO_COLORMAP_INVERT
+    #p.colorTableName = TOPO_COLORMAP
+    #p.invertColorTable = TOPO_COLORMAP_INVERT
+    p.invertColorTable=1
+    p.colorTableName = "xray"
+    p.scaling = p.Skew
+    p.skewFactor=0.0001
+    
     p.lightingFlag = 0
     p.legendFlag = 0;
     p.opacity = 1
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = -100.0, 3200.0
+    #p.minFlag,p.maxFlag = 1,1
+    #p.min,p.max = -100.0, 3200.0
     SetPlotOptions(p)
     
     # Rivers & Boundaries
@@ -222,5 +228,31 @@ def close_mapstuff():
     CloseDatabase(MAPSTUFF_FILE);
     return
 
+
+# Sets up standard values for axis etc
+#
+def set_annotations():
+    
+    a = GetAnnotationAttributes()
+    a.axes2D.visible=1
+    a.axes2D.autoSetScaling=0
+    a.userInfoFlag=0
+    a.timeInfoFlag=0
+    a.legendInfoFlag=1
+    a.databaseInfoFlag=1
+    
+    a.axes2D.xAxis.title.visible=0
+    a.axes2D.xAxis.title.userTitle = 1
+    a.axes2D.xAxis.title.userUnits = 1
+    a.axes2D.xAxis.title.title = "x"
+    a.axes2D.xAxis.title.units = "km"
+    
+    a.axes2D.yAxis.title.visible=0
+    a.axes2D.yAxis.title.userTitle = 1
+    a.axes2D.yAxis.title.userUnits = 1
+    a.axes2D.yAxis.title.title = "y"
+    a.axes2D.yAxis.title.units = "km"
+    
+    SetAnnotationAttributes(a)
 
 # End of visit2D.py

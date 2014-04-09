@@ -31,6 +31,17 @@ namespace m3D {
     }
     
     template <typename T>
+    ScalarIndex(const ScalarIndex<T,CSType> &o);
+    : m_coordinate_system(o->m_coordinate_system)
+    , m_data(NULL)
+    {
+        typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();
+        
+        this->copy_recursive(o,0,gp);
+    }
+
+    
+    template <typename T>
     ScalarIndex<T>::~ScalarIndex()
     {
         typename CoordinateSystem<T>::GridPoint gp = m_coordinate_system->newGridPoint();

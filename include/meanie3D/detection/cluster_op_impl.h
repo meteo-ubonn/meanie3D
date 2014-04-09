@@ -68,10 +68,11 @@ namespace m3D {
     
     template <typename T> 
     ClusterList<T> 
-    ClusterOperation<T>::cluster( const SearchParameters *params,
-                                  const Kernel<T> *kernel,
-                                  const WeightFunction<T> *weight_function,
-                                  const bool show_progress_bar )
+    ClusterOperation<T>::cluster(const SearchParameters *params,
+                                 const Kernel<T> *kernel,
+                                 const WeightFunction<T> *weight_function,
+                                 const bool coalesceWithStrongestNeighbour,
+                                 const bool show_progress_bar)
     {
         using namespace cfa::utils::timer;
         using namespace cfa::utils::visit;
@@ -173,6 +174,8 @@ namespace m3D {
 
         // Run parallelized version
         
+        // tbb::task_scheduler_init init(1);
+        
         parallel_for(tbb::blocked_range<size_t>(0,this->point_index->size()),
                      
                      ClusterTask<T>(this->feature_space,
@@ -218,8 +221,7 @@ namespace m3D {
         
         // Analyse the graph and create clusters
         
-        cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,show_progress_bar);
-        
+        cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,coalesceWithStrongestNeighbour,show_progress_bar);
         
 #if WRITE_BOUNDARIES
         cluster_list.write_boundaries( weight_function, this->feature_space, this->point_index, resolution );

@@ -27,7 +27,7 @@ last_completed_run_count = 0
 VAR_NAME="RX"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds RX=35 -m 5"
+DETECT_PARAMS     += " --lower-thresholds RX=35 -m 10"
 
 CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
@@ -53,4 +53,4 @@ print "MEANIE3D_HOME="+MEANIE3D_HOME
 # if > 0 a previous run is resumed
 last_completed_run_count = 0
 
-meanie3D.run_tracking(NETCDF_DIR,".",CLUSTERING_PARAMS,TRACKING_PARAMS,last_completed_run_count)
+meanie3D.run_tracking(NETCDF_DIR,".",CLUSTERING_PARAMS,TRACKING_PARAMS,last_completed_run_count,-1)

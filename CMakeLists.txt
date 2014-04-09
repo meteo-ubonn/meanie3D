@@ -97,8 +97,11 @@ IF (USE_CPP11)
    SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g -Wall")
    SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
    SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
-ELSE()
-   SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+ELSE(USE_CPP11)
+   IF (APPLE)
+      SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions")
+   ELSE (APPLE)
+   ENDIF (APPLE)
 ENDIF (USE_CPP11)
 
 # ------------------------------------- 
@@ -233,6 +236,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/filters/threshold_filter_impl.h
     include/meanie3D/filters/weight_filter.h
     include/meanie3D/filters/weight_filter_impl.h
+    include/meanie3D/filters/convection_filter.h
+    include/meanie3D/filters/convection_filter_impl.h
     include/meanie3D/detection.h
     include/meanie3D/detection/cluster_op.h
     include/meanie3D/detection/cluster_op_impl.h
@@ -252,6 +257,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/matrix_impl.h
     include/meanie3D/weights/weights.h
     include/meanie3D/weights/oase_weights.h
+    include/meanie3D/weights/exp10_weight.h
     include/meanie3D/weights/default_weights.h
     include/meanie3D/weights/inverse_default.h
     include/meanie3D/implementations.h
@@ -353,6 +359,19 @@ TARGET_LINK_LIBRARIES(meanie3D-copydims
     ${Boost_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${VTK_LIBRARIES})
+    
+# Parallax correction for satellite 
+
+ADD_EXECUTABLE(meanie3D-parallax_correction
+    src/meanie3D-parallax_correction.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-parallax_correction
+    meanie3D
+    cf-algorithms
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES})
 
 # map data
 
@@ -402,8 +421,22 @@ TARGET_LINK_LIBRARIES(meanie3D-cfm2vtk
     ${VTK_LIBRARIES}
 )
 
-# Unit Tests
+# valid_min/valid_max checker
 
+ADD_EXECUTABLE(meanie3D-minmax
+    src/meanie3D-minmax.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-minmax
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
+
+# Unit Tests
 # detection
 
 ADD_EXECUTABLE(meanie3d-detection-test
@@ -459,6 +492,9 @@ INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-trackstats RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-parallax_correction RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-minmax RUNTIME DESTINATION "/usr/local/bin")
+
 # Documentation
 
 SET(FULL_VERSION_FOR_DOXYGEN 0.1.0)

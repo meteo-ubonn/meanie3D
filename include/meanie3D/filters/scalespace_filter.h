@@ -44,7 +44,7 @@ namespace m3D {
         applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
                                      ::cfa::meanshift::ArrayIndex<T> *originalIndex,
                                      ::cfa::meanshift::ArrayIndex<T> *filteredPoints,
-                                     vector<size_t> dimensionIndexes,
+                                     vector<size_t> &dimensionIndexes,
                                      size_t dimensionIndex,
                                      typename CoordinateSystem<T>::GridPoint& gridpoint);
         

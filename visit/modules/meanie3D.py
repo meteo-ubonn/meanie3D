@@ -48,7 +48,12 @@ def create_per_scale_directories(base_path):
 # @param flags for tracking program
 # @param count of last completed file (for resuming)
 #
-def run_tracking(source_directory,output_directory,clustering_params,tracking_params,last_completed_run_count):
+def run_tracking(source_directory,
+                 output_directory,
+                 clustering_params,
+                 tracking_params,
+                 last_completed_run_count,
+                 time_index):
 
     # TODO: find a more elegant way to resume
     # if > 0 a previous run is resumed
@@ -56,17 +61,27 @@ def run_tracking(source_directory,output_directory,clustering_params,tracking_pa
 
     if last_completed_run_count == 0:
         
-        # if not resuming, create direcories
-        print "Creating output directory structure"
-        create_per_scale_directories(output_directory)
+        # delete previous results (if not in a time series)
+        if time_index < 0:
+            
+            # if not resuming, create direcories
+            print "Creating output directory structure"
+            create_per_scale_directories(output_directory)
 
-        # delete previous results
-        print "Cleaning up *.vtk *.nc *.png *.log"
-        return_code=call("rm -f *.nc *.vtk *.log *.png", shell=True)
+            print "Cleaning up *.vtk *.nc *.png *.log"
+            return_code=call("rm -f *.nc *.vtk *.log *.png", shell=True)
+        
+        elif time_index == 0:
+            
+            # at first time step, create directories
+            print "Creating output directory structure"
+            create_per_scale_directories(output_directory)
+
 
     # Get a list of the files we need to process
     netcdf_pattern = source_directory + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
+
     last_cluster_file=""
 
     run_count = 0
@@ -75,7 +90,15 @@ def run_tracking(source_directory,output_directory,clustering_params,tracking_pa
     for netcdf_file in netcdf_list:
         
         basename = os.path.basename(netcdf_file)
-        cluster_file= "./netcdf/" + os.path.splitext(basename)[0] + "-clusters.nc"
+        
+        cluster_file= ""
+        
+        if time_index < 0:
+            cluster_file= "./netcdf/" + os.path.splitext(basename)[0] + "-clusters.nc"
+        else:
+            cluster_file= "./netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index) + ".nc"
+            last_cluster_file = "./netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index-1) + ".nc"
+        
         
         # if there is a resume counter, keep skipping
         # until the count is right
@@ -93,15 +116,20 @@ def run_tracking(source_directory,output_directory,clustering_params,tracking_pa
         #
         # Cluster
         #
+
+        if time_index < 0:
+            logfile = "./log/clustering_" + str(run_count)+".log"
+        else:
+            logfile = "./log/clustering_" + str(time_index)+".log"
         
         # build the clustering command
         command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + clustering_params
         
         # use previous result to enhance current
-        if run_count > 0:
+        if (run_count > 0) or (time_index > 0):
             command = command + " -p " + last_cluster_file
         
-        command = command + " > ./log/clustering_" + str(run_count)+".log"
+        command = command + " > " + logfile
         
         # execute
         print command
@@ -118,11 +146,16 @@ def run_tracking(source_directory,output_directory,clustering_params,tracking_pa
         
         # if we have a previous scan, run the tracking command
         
-        if run_count > 0:
+        if (run_count > 0) or (time_index > 0):
             
+            if time_index < 0:
+                logfile = "./log/tracking_" + str(run_count)+".log"
+            else:
+                logfile = "./log/tracking_" + str(time_index)+".log"
+
             print "-- Tracking --"
             command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + tracking_params
-            command = command + " > ./log/tracking_" + str(run_count)+".log"
+            command = command + " > " + logfile
             
             # execute
             print command

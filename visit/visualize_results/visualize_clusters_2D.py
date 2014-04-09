@@ -11,7 +11,6 @@ sys.path.append(M3D_HOME+"/visit/modules")
 import glob
 import os
 import time
-#import visit2D
 import visit2D
 import visitUtils
 from subprocess import call
@@ -19,10 +18,13 @@ from subprocess import call
 #print [key for key in locals().keys()
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
+
 # General parameters
-VAR_NAME = "msevi_l15_ir_108"
+VAR_NAME = "RX"
 VAR_MIN = 0;
-VAR_MAX = 50;
+#VAR_MIN = 30;
+VAR_MAX = 65;
+#VAR_MAX = 92.5;
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
@@ -47,15 +49,14 @@ SuppressQueryOutputOn()
 # Set view and annotation attributes
 
 a = GetAnnotationAttributes()
-a.axes3D.visible=1
-a.axes3D.autoSetScaling=0
+a.axes2D.visible=1
+a.axes2D.autoSetScaling=0
+a.axes2D.xAxis.title.visible=0
+a.axes2D.yAxis.title.visible=0
+a.legendInfoFlag=1
+a.databaseInfoFlag=0
 a.userInfoFlag=0
 a.timeInfoFlag=0
-a.legendInfoFlag=1
-a.databaseInfoFlag=1
-a.axes3D.xAxis.title.visible=0
-a.axes3D.yAxis.title.visible=0
-a.axes3D.zAxis.title.visible=0
 SetAnnotationAttributes(a)
 
 # Add gray/black background gradient
@@ -73,9 +74,10 @@ visitUtils.create_topography_colortable()
 print "    done."
 
 # Glob the netcdf directory
-netcdf_files = glob.glob(NETCDF_DIR+"/*.nc");
-#print "Processing files in directory " + NETCDF_DIR
-#print netcdf_files
+netcdf_files = sorted(glob.glob(NETCDF_DIR+"/*.nc"));
+
+print "Processing files in directory " + NETCDF_DIR
+print netcdf_files
 
 for netcdf_file in netcdf_files:
 
@@ -103,7 +105,7 @@ for netcdf_file in netcdf_files:
         continue
 
     # add topograpy
-    visit2D.add_mapstuff("national")
+    visit2D.add_topography("national_topo_2D")
 
     # now plot the data
     OpenDatabase(netcdf_file);
@@ -112,28 +114,16 @@ for netcdf_file in netcdf_files:
     visitUtils.add_datetime(netcdf_file)
 
     # Re-add the source with "xray"
-    visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",1,1)
-
-    # threshold
+    visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",0.75,1)
     AddOperator("Threshold")
     t = ThresholdAttributes();
     t.lowerBounds=(VAR_MIN)
-    t.upperBounds=(VAR_MAX)
     SetOperatorOptions(t)
-
-    # skew
-    p = PseudocolorAttributes()
-    p.scaling = p.Skew
-    p.skewFactor = 0.01
-    p.colorTableName = "xray"
-    p.invertColorTable=1
-    SetPlotOptions(p)
-    
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
 
     DrawPlots()
     visitUtils.save_window("source_",1)
+
+    exit(1)
 
     DeleteAllPlots()
     ClearWindow()
@@ -151,25 +141,16 @@ for netcdf_file in netcdf_files:
     start_time = time.time()
 
     # add 2D topograpy
-    visit2D.add_mapstuff("national")
+    visit2D.add_topography("national_topo_2D")
 
     # re-plot source data as canvas
-    visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "xray", 0.1, 1 )
+    visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.1, 0 )
 
-    # threshold
+    # threshold as before
     AddOperator("Threshold")
     t = ThresholdAttributes();
     t.lowerBounds=(VAR_MIN)
-    t.upperBounds=(VAR_MAX)
     SetOperatorOptions(t)
-
-    # skew
-    p = PseudocolorAttributes()
-    p.scaling = p.Skew
-    p.skewFactor = 0.01
-    p.colorTableName = "xray"
-    p.invertColorTable=1
-    SetPlotOptions(p)
 
     # date/time
     visitUtils.add_datetime(netcdf_file)
@@ -178,8 +159,8 @@ for netcdf_file in netcdf_files:
     basename = CLUSTER_DIR+"/"
     visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
+    # or the boundaries
+    #visit2D.add_boundaries(basename,"cluster_colors",num_colors)
 
     # Add modes as labels
     visitUtils.add_labels(label_file,"geometrical_center")
@@ -195,7 +176,7 @@ for netcdf_file in netcdf_files:
     ClearWindow()
     CloseDatabase(netcdf_file)
     CloseDatabase(label_file)
-    visit2D.close_mapstuff()
+    visit2D.close_topography()
     visitUtils.close_pattern(basename+"*.vtr")
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)

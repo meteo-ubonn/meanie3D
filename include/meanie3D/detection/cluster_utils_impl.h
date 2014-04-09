@@ -4,6 +4,7 @@
 #include <cf-algorithms/cf-algorithms.h>
 
 #include <meanie3D/utils.h>
+#include <boost/progress.hpp>
 
 namespace m3D {
 
@@ -19,7 +20,10 @@ namespace m3D {
                                                    const Verbosity verbosity)
     {
         if ( verbosity >= VerbosityNormal )
-            cout << endl << "-- Filtering with previous results --" << endl;
+        {
+            cout << endl << "Filtering with previous results ..." << endl;
+            start_timer();
+        }
         
         // sanity check
         
@@ -43,11 +47,21 @@ namespace m3D {
         
         size_t n,m;
         
-        // check out the values for midDisplacement, histSizeDifference and kendall's tau
+        boost::progress_display *progress = NULL;
+        
+        if (verbosity >= VerbosityNormal)
+        {
+            progress = new boost::progress_display(2*old_count);
+        }
         
         for ( m=0; m < old_count; m++ )
         {
             typename Cluster<T>::ptr oldCluster = previous->clusters[m];
+            
+            if (verbosity >= VerbosityNormal)
+            {
+                progress->operator++();
+            }
 
             for ( n=0; n < new_count; n++ )
             {
@@ -57,7 +71,7 @@ namespace m3D {
                 
                 T overlap = newCluster->percent_covered_by( oldCluster );
                 
-                if (overlap > 0)
+                if (overlap > 0 && verbosity >= VerbosityDetails)
                 {
                     printf("old #%4lu with new #%4lu overlap = %3.2f\n", oldCluster->id, newCluster->id, overlap);
                 }
@@ -74,6 +88,11 @@ namespace m3D {
         
         for ( m=0; m < previous->clusters.size(); m++ )
         {
+            if (verbosity >= VerbosityNormal)
+            {
+                progress->operator++();
+            }
+
             typename Cluster<T>::ptr old_cluster = previous->clusters[m];
             
             vector<size_t> candidates;
@@ -85,7 +104,7 @@ namespace m3D {
             {
                 T overlap = coverNewByOld[n][m];
                 
-                if ( overlap > 0.33 )
+                if ( overlap >= 0.33 )
                 {
                     candidates.push_back(n);
                 }
@@ -93,7 +112,7 @@ namespace m3D {
             
             if (candidates.size() > 1 )
             {
-                if ( verbosity >= VerbosityNormal )
+                if ( verbosity >= VerbosityDetails )
                 {
                     printf("Old cluster ID#%4lu seems to have split into new clusters IDs ", old_cluster->id);
                     for ( int i=0; i < candidates.size(); i++ )
@@ -179,6 +198,14 @@ namespace m3D {
             
             current->clusters.push_back(c);
         }
+        
+        if ( verbosity >= VerbosityNormal )
+        {
+            cout << " done. (Found " << current->clusters.size() << " clusters in " << stop_timer() << " seconds)" << endl;
+            
+            delete progress;
+        }
+
     }
 }
 

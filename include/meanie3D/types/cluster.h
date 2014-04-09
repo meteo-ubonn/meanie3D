@@ -19,6 +19,7 @@ namespace m3D {
 	using cfa::meanshift::Point;
     using cfa::meanshift::PointIndex;
     using cfa::meanshift::WeightFunction;
+    using cfa::utils::CoordinateSystem;
 
     /** Cluster of points in feature space. A cluster is a point in feature space,
      * where multiple trajectories of original feature space points end. This end
@@ -38,7 +39,7 @@ namespace m3D {
         
         map< size_t, vector<T> >    m_weighed_centers;
         
-        T                           m_radius;
+        ::units::values::m          m_radius;
         
         PointIndex<T>               *m_index;
         
@@ -245,8 +246,13 @@ namespace m3D {
         
         /** Returns the maximum distance between the cluster mode and
          * the point farthest away from it.
+         * @return radius in meters. This only returns meters if the
+         * spatial dimensions of the point are readily convertible into
+         * meters. Otherwise it simply returns the vector length of the
+         * average distance vector.
+         * @param coordinate system, required for figuring out the correct units.
          */
-        T radius();
+        ::units::values::m radius(CoordinateSystem<T> *cs);
 
 #pragma mark -
 #pragma mark DRF merging

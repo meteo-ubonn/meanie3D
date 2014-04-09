@@ -1,5 +1,5 @@
-#ifndef _M3D_DefaultWeightFunction_H_
-#define _M3D_DefaultWeightFunction_H_
+#ifndef _M3D_EXP10WeightFunction_H_
+#define _M3D_EXP10WeightFunction_H_
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
@@ -18,15 +18,13 @@ namespace m3D { namespace weights {
     using cfa::utils::CoordinateSystem;
     
     template <class T>
-    class DefaultWeightFunction : public cfa::utils::WeightFunction<T>
+    class EXP10WeightFunction : public cfa::utils::WeightFunction<T>
     {
-    protected:
+    private:
         
-        vector<NcVar>       m_vars;     // variables for weighting
-        map<size_t,T>       m_min;      // [index,min]
-        map<size_t,T>       m_max;      // [index,max]
-        cfa::utils::ScalarIndex<T,T>      m_weight;
-        CoordinateSystem<T> *m_coordinate_system;
+        vector<NcVar>                       m_vars;     // variables for weighting
+        cfa::utils::ScalarIndex<T,T>        m_weight;
+        CoordinateSystem<T>                 *m_coordinate_system;
         
         void
         build_saliency_field(FeatureSpace<T> *fs)
@@ -35,7 +33,7 @@ namespace m3D { namespace weights {
             {
                 Point<T> *p = fs->points[i];
                 
-                T saliency = compute_weight(p);
+                T saliency = this->compute_weight(p);
                 
                 m_weight.set(p->gridpoint, saliency);
             }
@@ -47,34 +45,8 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        DefaultWeightFunction(FeatureSpace<T> *fs)
+        EXP10WeightFunction(FeatureSpace<T> *fs)
         : m_vars(fs->variables())
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
-        , m_coordinate_system(fs->coordinate_system)
-        {
-            // Get original limits
-            
-            for ( size_t index = 0; index < m_vars.size(); index++ )
-            {
-                T min_value,max_value;
-                ::cfa::utils::netcdf::unpacked_limits<T>(m_vars[index], min_value, max_value);
-                m_min[index] = min_value;
-                m_max[index] = max_value;
-            }
-            
-            build_saliency_field(fs);
-        }
-        
-        /** Construct the weight function, using the given values
-         * for valid_min/valid_max
-         * @param featurespace
-         * @param map of lower bounds
-         * @param map of upper bounds
-         */
-        DefaultWeightFunction(FeatureSpace<T> *fs, const map<size_t,T> &min, const map<size_t,T> &max)
-        : m_vars(fs->variables())
-        , m_min(min)
-        , m_max(max)
         , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
@@ -83,7 +55,7 @@ namespace m3D { namespace weights {
         
         /** Actual weight computation happens here
          */
-        virtual T compute_weight(Point<T> *p)
+        T compute_weight(Point<T> *p)
         {
             T sum = 0.0;
             
@@ -95,18 +67,7 @@ namespace m3D { namespace weights {
                 
                 T value = p->values[p->coordinate.size()+var_index];
                 
-                // value scaled to [0..1]
-                
-                T range = (m_max.at(var_index) - m_min.at(var_index));
-                
-                T var_weight = (value - m_min.at(var_index)) / range;
-                
-                if (var_weight > 1)
-                {
-                    cerr << "ERROR: weight function at " << p->coordinate << " returns " << var_weight << endl;
-                }
-
-                sum += var_weight; //pow(var_weight, 1.0);
+                sum += pow(boost::numeric_cast<double>(value),10.0);
             }
             
             return sum;
@@ -126,6 +87,8 @@ namespace m3D { namespace weights {
             catch (std::out_of_range& e)
             {
                 cerr << "Reverse coordinate transformation failed for coordinate=" << values << endl;
+                
+                return 0.0;
             }
             
             return m_weight.get(gp);
@@ -135,12 +98,11 @@ namespace m3D { namespace weights {
         {
             return m_weight.get(p->gridpoint);
         }
-
+        
         T operator()(const vector<size_t> &gridpoint) const
         {
             return m_weight.get(gridpoint);
         }
-        
         
     };
 }}

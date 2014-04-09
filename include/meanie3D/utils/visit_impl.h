@@ -669,7 +669,11 @@ namespace m3D { namespace utils {
             
             string filename = basename + "_cluster_" + boost::lexical_cast<string>( cluster_id );
             
-            size_t point_dim = list->clusters[ci]->points[0]->coordinate.size();
+            typename Point<T>::ptr point = list->clusters[ci]->points[0];
+            
+            vector<T> coordinate = point->coordinate;
+            
+            size_t point_dim = coordinate.size();
             
             // Only process 2D/3D for now
             assert(point_dim == 2 || point_dim == 3);

@@ -11,6 +11,7 @@ sys.path.append(M3D_HOME+"/visit/modules")
 import glob
 import os
 import time
+#import visit2D
 import visit2D
 import visitUtils
 from subprocess import call
@@ -18,11 +19,10 @@ from subprocess import call
 #print [key for key in locals().keys()
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
-
 # General parameters
-VAR_NAME = "RX"
-VAR_MIN = 35;
-VAR_MAX = 92.5;
+VAR_NAME = "msevi_l2_nwcsaf_ct"
+VAR_MIN = 7;
+VAR_MAX = 14;
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
@@ -57,6 +57,8 @@ a.axes3D.xAxis.title.visible=0
 a.axes3D.yAxis.title.visible=0
 a.axes3D.zAxis.title.visible=0
 SetAnnotationAttributes(a)
+
+print ColorTableNames()
 
 # Add gray/black background gradient
 visitUtils.add_background_gradient();
@@ -103,7 +105,7 @@ for netcdf_file in netcdf_files:
         continue
 
     # add topograpy
-    visit2D.add_topography("national_topo_2D")
+    visit2D.add_mapstuff("national")
 
     # now plot the data
     OpenDatabase(netcdf_file);
@@ -111,12 +113,37 @@ for netcdf_file in netcdf_files:
     # date/time
     visitUtils.add_datetime(netcdf_file)
 
-    # Re-add the source with "xray"
-    visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",0.75,1)
+    # Cloud Type
+    visit2D.add_pseudocolor(netcdf_file,"msevi_l2_nwcsaf_ct","Set1",1,1)
+
+    # threshold
     AddOperator("Threshold")
     t = ThresholdAttributes();
-    t.lowerBounds=(VAR_MIN)
+    t.lowerBounds=(7)
+    t.upperBounds=(14)
     SetOperatorOptions(t)
+
+    # Adjust
+    p = PseudocolorAttributes()
+    p.colorTableName="Set1"
+    p.minFlag,p.maxFlag = 1,1
+    p.min,p.max = 7,14
+    p.invertColorTable=1
+
+    SetPlotOptions(p)
+
+    # C-band radar
+    visit2D.add_pseudocolor(netcdf_file,"cband_radolan_rx","hot_desaturated",1,1)
+
+    # threshold
+    AddOperator("Threshold")
+    t = ThresholdAttributes();
+    t.lowerBounds=(32)
+    t.upperBounds=(150)
+    SetOperatorOptions(t)
+
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
 
     DrawPlots()
     visitUtils.save_window("source_",1)
@@ -137,16 +164,7 @@ for netcdf_file in netcdf_files:
     start_time = time.time()
 
     # add 2D topograpy
-    visit2D.add_topography("national_topo_2D")
-
-    # re-plot source data as canvas
-    visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.1, 0 )
-
-    # threshold as before
-    AddOperator("Threshold")
-    t = ThresholdAttributes();
-    t.lowerBounds=(VAR_MIN)
-    SetOperatorOptions(t)
+    visit2D.add_mapstuff("national")
 
     # date/time
     visitUtils.add_datetime(netcdf_file)
@@ -155,8 +173,8 @@ for netcdf_file in netcdf_files:
     basename = CLUSTER_DIR+"/"
     visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
-    # or the boundaries
-    #visit2D.add_boundaries(basename,"cluster_colors",num_colors)
+    # date/time
+    visitUtils.add_datetime(netcdf_file)
 
     # Add modes as labels
     visitUtils.add_labels(label_file,"geometrical_center")
@@ -172,7 +190,7 @@ for netcdf_file in netcdf_files:
     ClearWindow()
     CloseDatabase(netcdf_file)
     CloseDatabase(label_file)
-    visit2D.close_topography()
+    visit2D.close_mapstuff()
     visitUtils.close_pattern(basename+"*.vtr")
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)
