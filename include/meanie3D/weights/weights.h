@@ -5,5 +5,6 @@
 #include <meanie3D/weights/inverse_default.h>
 #include <meanie3D/weights/oase_weights.h>
 #include <meanie3D/weights/exp10_weight.h>
+#include <meanie3D/weights/brightband_evidence.h>
 
 #endif
