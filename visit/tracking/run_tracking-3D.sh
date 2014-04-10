@@ -29,6 +29,6 @@ SCRIPTFILE="/tmp/tracking-$RANDOM.py"
 ESCAPED_SOURCE_DIR=$(echo $1 | sed -e "s/\//\\\\\//g")
 ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 
-cat $MEANIE3D_HOME/visit/run_tracking-3D.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" | sed -e "s/SCALE/$2/g" > $SCRIPTFILE
+cat $MEANIE3D_HOME/visit/tracking/run_tracking-3D.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" | sed -e "s/SCALE/$2/g" > $SCRIPTFILE
 
 python ${SCRIPTFILE}

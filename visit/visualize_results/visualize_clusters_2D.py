@@ -77,7 +77,7 @@ print "    done."
 netcdf_files = sorted(glob.glob(NETCDF_DIR+"/*.nc"));
 
 print "Processing files in directory " + NETCDF_DIR
-print netcdf_files
+#print netcdf_files
 
 for netcdf_file in netcdf_files:
 
@@ -122,8 +122,6 @@ for netcdf_file in netcdf_files:
 
     DrawPlots()
     visitUtils.save_window("source_",1)
-
-    exit(1)
 
     DeleteAllPlots()
     ClearWindow()
@@ -181,4 +179,17 @@ for netcdf_file in netcdf_files:
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)
 
+# create loops
+print "Creating animated gifs ..."
+convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 source_*.png source.gif"
+convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 tracking_*.png tracking.gif"
+return_code=call(convert_cmd, shell=True)
+print "Creating mpegs ..."
+convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 source_*.png source.m4v"
+convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 tracking_*.png tracking.m4v"
+return_code=call(convert_cmd, shell=True)
 
+# clean up
+print "Cleaning up ..."
+return_code=call("mkdir images", shell=True)
+return_code=call("mv *.png images", shell=True)
