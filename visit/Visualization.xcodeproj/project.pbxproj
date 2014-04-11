@@ -8,6 +8,15 @@
 
 /* Begin PBXFileReference section */
 		F40F4EB318F43D240073CE99 /* finish_radolan_clustering.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = finish_radolan_clustering.py; sourceTree = "<group>"; };
+		F44C8E6F18F6A379008CDB4E /* show_all.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = show_all.html; sourceTree = "<group>"; };
+		F44C8E7118F6A379008CDB4E /* colorbox.css */ = {isa = PBXFileReference; lastKnownFileType = text.css; path = colorbox.css; sourceTree = "<group>"; };
+		F44C8E7318F6A379008CDB4E /* border.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = border.png; sourceTree = "<group>"; };
+		F44C8E7418F6A379008CDB4E /* controls.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = controls.png; sourceTree = "<group>"; };
+		F44C8E7518F6A379008CDB4E /* loading.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = loading.gif; sourceTree = "<group>"; };
+		F44C8E7618F6A379008CDB4E /* loading_background.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = loading_background.png; sourceTree = "<group>"; };
+		F44C8E7718F6A379008CDB4E /* overlay.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = overlay.png; sourceTree = "<group>"; };
+		F44C8E7818F6A379008CDB4E /* jquery-1.11.0.min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "jquery-1.11.0.min.js"; sourceTree = "<group>"; };
+		F44C8E7918F6A379008CDB4E /* jquery.colorbox-min.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = "jquery.colorbox-min.js"; sourceTree = "<group>"; };
 		F44C92C5189832C900B05E23 /* create_all_oase_loops_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_all_oase_loops_2D.sh; sourceTree = "<group>"; };
 		F4670B0B18AFEE9000875B79 /* visualize_rico_clusters_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_rico_clusters_2D.py; sourceTree = "<group>"; };
 		F4670B0C18AFEE9000875B79 /* visualize_rico_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_rico_clusters_2D.sh; sourceTree = "<group>"; };
@@ -54,6 +63,38 @@
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		F44C8E6E18F6A379008CDB4E /* html */ = {
+			isa = PBXGroup;
+			children = (
+				F44C8E6F18F6A379008CDB4E /* show_all.html */,
+				F44C8E7018F6A379008CDB4E /* web */,
+			);
+			path = html;
+			sourceTree = "<group>";
+		};
+		F44C8E7018F6A379008CDB4E /* web */ = {
+			isa = PBXGroup;
+			children = (
+				F44C8E7118F6A379008CDB4E /* colorbox.css */,
+				F44C8E7218F6A379008CDB4E /* images */,
+				F44C8E7818F6A379008CDB4E /* jquery-1.11.0.min.js */,
+				F44C8E7918F6A379008CDB4E /* jquery.colorbox-min.js */,
+			);
+			path = web;
+			sourceTree = "<group>";
+		};
+		F44C8E7218F6A379008CDB4E /* images */ = {
+			isa = PBXGroup;
+			children = (
+				F44C8E7318F6A379008CDB4E /* border.png */,
+				F44C8E7418F6A379008CDB4E /* controls.png */,
+				F44C8E7518F6A379008CDB4E /* loading.gif */,
+				F44C8E7618F6A379008CDB4E /* loading_background.png */,
+				F44C8E7718F6A379008CDB4E /* overlay.png */,
+			);
+			path = images;
+			sourceTree = "<group>";
+		};
 		F4907905173117BF001E9D17 = {
 			isa = PBXGroup;
 			children = (
@@ -64,6 +105,7 @@
 				F4FA8086188D29BC00C426C5 /* tb4 */,
 				F4FA8089188D29BC00C426C5 /* tracking */,
 				F4FA8090188D29BC00C426C5 /* visualize_results */,
+				F44C8E6E18F6A379008CDB4E /* html */,
 			);
 			sourceTree = "<group>";
 		};

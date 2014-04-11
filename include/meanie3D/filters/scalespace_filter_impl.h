@@ -26,10 +26,14 @@ namespace m3D {
     template <typename T>
     ScaleSpaceFilter<T>::ScaleSpaceFilter(T scale,
                                           const vector<T> &resolution,
+                                          vector<NcVar> &excluded_vars,
                                           T decay,
                                           bool show_progress)
     : FeatureSpaceFilter<T>(show_progress)
-    , m_scale(scale), m_decay(decay), m_progress_bar(NULL)
+    , m_scale(scale)
+    , m_decay(decay)
+    , m_progress_bar(NULL)
+    , m_excluded_vars(excluded_vars)
     {
         if ( scale < 0 )
         {
@@ -111,44 +115,44 @@ namespace m3D {
             }
             else
             {
-                // we reached the fixed dimension!
-                
-                if ( this->show_progress() )
-                {
-                    m_progress_bar->operator++();
-                }
-                
-                // exclude points that were off limits
-                // in any of the original data sets 
-                
-                if (fs->off_limits()->get(gridpoint))
-                {
-                    continue;
-                }
-                
-                // threshold at weight function response of 1.0
-                
-                ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
-                
-                // Find the boundaries. Take care not to step
-                // outside the bounds of the array
-                
-                int width = g.values().size() - 1;
-                
-                int gpIndex = (int)gridpoint[realDimIndex];
-                
-                int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
-                
-                int maxIndex = ((gpIndex + width) < (dim.getSize()-1)) ? (gpIndex + width) : (dim.getSize()-1);
-                
-                // Convolute in 1D around the given point with
-                // the mask size determined by the kernel
-                // Run the convolution for each feature variable
-                
-                typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
-                
                 for (size_t varIndex=0; varIndex < fs->variables().size(); varIndex++)
                 {
+                    // we reached the fixed dimension!
+                    
+                    if ( this->show_progress() )
+                    {
+                        m_progress_bar->operator++();
+                    }
+                    
+                    // exclude points that were off limits
+                    // in any of the original data sets 
+                    
+                    if (fs->off_limits()->get(gridpoint))
+                    {
+                        continue;
+                    }
+                    
+                    // threshold at weight function response of 1.0
+                    
+                    ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
+                    
+                    // Find the boundaries. Take care not to step
+                    // outside the bounds of the array
+                    
+                    int width = g.values().size() - 1;
+                    
+                    int gpIndex = (int)gridpoint[realDimIndex];
+                    
+                    int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
+                    
+                    int maxIndex = ((gpIndex + width) < (dim.getSize()-1)) ? (gpIndex + width) : (dim.getSize()-1);
+                    
+                    // Convolute in 1D around the given point with
+                    // the mask size determined by the kernel
+                    // Run the convolution for each feature variable
+                    
+                    typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
+                
                     T sum = 0.0;
                     
                     size_t sumCount = 0;

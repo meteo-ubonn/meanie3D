@@ -70,13 +70,10 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
     # Debug, Release, MinSizeRel and RelWithDebInfo
 
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline")
-
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O4 -ftree-vectorize -msse2 -finline")
-
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline")
-
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline -fopenmp")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O4 -ftree-vectorize -msse2 -finline -fopenmp")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline -fopenmp")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline -fopenmp")
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   # using Intel C++
@@ -99,10 +96,12 @@ IF (USE_CPP11)
    SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
 ELSE()
    IF (APPLE)
-      SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions")
+      SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions ")
    ELSE (APPLE)
    ENDIF (APPLE)
 ENDIF (USE_CPP11)
+
+
 
 # ------------------------------------- 
 # Find dependencies
@@ -142,6 +141,14 @@ IF (WITH_TBB)
         MESSAGE(FATAL_ERROR "TBB not found (http://threadingbuildingblocks.org)")
     ENDIF (NOT TBB_FOUND)
 ENDIF(WITH_TBB)
+
+#FIND_PACKAGE(OpenMP REQUIRED)
+#IF (OPENMP_FOUND)
+#    MESSAGE("OPENMP FOUND")
+#    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+#ENDIF (OPENMP_FOUND)
 
 # VTK
 FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)

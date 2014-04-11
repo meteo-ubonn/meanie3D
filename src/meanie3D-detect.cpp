@@ -57,6 +57,7 @@ void parse_commmandline(program_options::variables_map vm,
         map<int, double> &upper_thresholds,
         map<int, double> &replacement_values,
         double &scale,
+        vector<NcVar> &exclude_from_scale_space_filtering,
         std::string &weight_function_name,
         FS_TYPE &wwf_lower_threshold,
         FS_TYPE &wwf_upper_threshold,
@@ -118,12 +119,21 @@ void parse_commmandline(program_options::variables_map vm,
 
     tokenizer dim_tokens(vm["dimensions"].as<string>(), sep);
 
-    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
+    {
         const char* name = (*tok_iter).c_str();
 
         dimensions.push_back(file->getDim(name));
+        
+        NcVar dimVar = file->getVar(name);
+        
+        if (dimVar.isNull())
+        {
+            cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
+            exit(-1);
+        }
 
-        dimension_variables.push_back(file->getVar(name));
+        dimension_variables.push_back(dimVar);
     }
 
     parameters = parameters + "dimensions=" + vm["dimensions"].as<string>() + " ";
@@ -139,7 +149,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     tokenizer var_tokens(vm["variables"].as<string>(), sep);
 
-    for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter) {
+    for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter)
+    {
         NcVar var = file->getVar(*tok_iter);
 
         if (var.isNull()) {
@@ -524,6 +535,7 @@ int main(int argc, char** argv) {
     vector<size_t> vtk_dimension_indexes;
     vector<NcVar> dimension_variables;
     vector<NcVar> variables;
+    vector<NcVar> exclude_from_scale_space_filtering;
     int time_index = 0;
     vector<double> ranges;
     unsigned int min_cluster_size = 1;
@@ -563,6 +575,7 @@ int main(int argc, char** argv) {
                 upper_thresholds,
                 replacement_values,
                 scale,
+                exclude_from_scale_space_filtering,
                 weight_function_name,
                 wwf_lower_threshold,
                 wwf_upper_threshold,
@@ -854,7 +867,7 @@ int main(int argc, char** argv) {
 
         FS_TYPE decay = 0.01;
 
-        ScaleSpaceFilter<FS_TYPE> sf(scale, fs->coordinate_system->resolution(), decay, show_progress);
+        ScaleSpaceFilter<FS_TYPE> sf(scale, fs->coordinate_system->resolution(), exclude_from_scale_space_filtering, decay, show_progress);
 
         sf.apply(fs);
 

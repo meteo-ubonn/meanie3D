@@ -40,6 +40,8 @@ namespace m3D {
 
         size_t                          m_created_points;
         
+        vector<netCDF::NcVar>           m_excluded_vars;
+        
         void
         applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
                                      ::cfa::meanshift::ArrayIndex<T> *originalIndex,
@@ -71,6 +73,7 @@ namespace m3D {
          */
         ScaleSpaceFilter(T scale,
                          const vector<T> &resolution,
+                         vector<netCDF::NcVar> &exclude_from_scale_space_filtering,
                          T decay = 0.01,
                          bool show_progress = false);
         
