@@ -7,12 +7,14 @@
 #include <cmath>
 #include <map>
 #include <string>
+#include <omp.h>
 
 #include <boost/progress.hpp>
 
 #include <cf-algorithms/cf-algorithms.h>
-
 #include <meanie3D/utils.h>
+
+#include "scalespace_filter.h"
 
 namespace m3D {
 
@@ -115,15 +117,16 @@ namespace m3D {
             }
             else
             {
-                for (size_t varIndex=0; varIndex < fs->variables().size(); varIndex++)
+                // we reached the fixed dimension!
+
+                if ( this->show_progress() )
                 {
-                    // we reached the fixed dimension!
-                    
-                    if ( this->show_progress() )
-                    {
-                        m_progress_bar->operator++();
-                    }
-                    
+                    m_progress_bar->operator++();
+                }
+
+// #pragma omp parallel for
+                for (int varIndex=0; varIndex < fs->variables().size(); varIndex++)
+                {
                     // exclude points that were off limits
                     // in any of the original data sets 
                     
@@ -396,11 +399,29 @@ namespace m3D {
     void
     ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
     {
+        this->m_unfiltered_min = fs->min();
+        this->m_unfiltered_max = fs->max();
         this->applyWithArrayIndex(fs);
     }
     
 #pragma mark -
-#pragma mark After the processing
+#pragma mark Range handling
+    
+    template <typename T>
+    map<size_t,T> 
+    ScaleSpaceFilter<T>::getRangeFactors()
+    {
+        map<size_t,T> factors;
+        typename map<size_t,T>::iterator mi;
+        
+        for (mi = m_min.begin(); mi != m_min.end(); mi++)
+        {
+            size_t i = mi->first;
+            factors[i] = (m_max[i]-m_min[i])/(m_unfiltered_max[i]-m_unfiltered_min[i]);
+        }
+        
+        return factors;
+    }
     
     template <typename T>
     const map<size_t,T> &

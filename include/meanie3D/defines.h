@@ -45,7 +45,7 @@
 
 // Write out the result of the initial clustering
 // step into separate files.
-#define WRITE_ZEROSHIFT_CLUSTERS 0
+#define WRITE_ZEROSHIFT_CLUSTERS 1
 
 // Write out files containing the mean-shift
 // vectors for individual clusters alone

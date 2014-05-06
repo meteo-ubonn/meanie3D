@@ -30,8 +30,10 @@ namespace m3D {
         
         vector<ScaleSpaceKernel<T> >    m_kernels;          /// Scale-Space kernel
 
-        map<size_t,T>                   m_min;              /// minimum tracker
+        map<size_t,T>                   m_unfiltered_min;   /// unfiltered minimum
+        map<size_t,T>                   m_unfiltered_max;   /// unfiltered maximum
         
+        map<size_t,T>                   m_min;              /// minimum tracker
         map<size_t,T>                   m_max;              /// maximum tracker
         
         boost::progress_display         *m_progress_bar;    /// Progress meter
@@ -98,14 +100,26 @@ namespace m3D {
          * of the filtered scan from these variables. 
          * @return filtered minimum
          */
-        const map<size_t,T> &get_filtered_min();
+        const map<size_t,T> &
+        get_filtered_min();
 
         /** After the filtering, one can retrieve the value ranges
          * of the filtered scan from these variables.
          * @return filtered maximum
          */
-        const map<size_t,T> &get_filtered_max();
+        const map<size_t,T> &
+        get_filtered_max();
 
+        /** Retrieve the scaling ratios for the individual variables
+         * after the filter has run. Each ratio is calculated as
+         * 
+         *      ratio = filtered range / unfiltered range 
+         * 
+         * This describes how the range is changed under transformation.
+         */
+        map<size_t,T> 
+        getRangeFactors();
+        
     };
     
 }

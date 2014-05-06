@@ -537,7 +537,7 @@ int main(int argc, char** argv) {
     vector<NcVar> variables;
     vector<NcVar> exclude_from_scale_space_filtering;
     int time_index = 0;
-    vector<double> ranges;
+    vector<FS_TYPE> ranges;
     unsigned int min_cluster_size = 1;
     map<int, double> lower_thresholds; // ncvar.id / value
     map<int, double> upper_thresholds; // ncvar.id / value
@@ -876,7 +876,7 @@ int main(int argc, char** argv) {
 
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs, ranges, sf.get_filtered_min(), sf.get_filtered_max());
         }
         else if (weight_function_name == "inverse")
         {
@@ -916,7 +916,7 @@ int main(int argc, char** argv) {
 
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs);
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs,ranges);
         }
         else if (weight_function_name == "inverse")
         {
