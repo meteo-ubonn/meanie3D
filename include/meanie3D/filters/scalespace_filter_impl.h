@@ -7,7 +7,10 @@
 #include <cmath>
 #include <map>
 #include <string>
-#include <omp.h>
+
+#if OPENMP
+    #include <omp.h>
+#endif
 
 #include <boost/progress.hpp>
 

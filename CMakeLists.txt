@@ -58,7 +58,7 @@ IF (WITH_BOOST_THREADS)
     ADD_DEFINITIONS(-DWITH_BOOST_THREADS=1)
 ENDIF (WITH_BOOST_THREADS)
 
-# ------------------------------------- 
+# -------------------------------------
 # Compiler Flags
 # -------------------------------------
 
@@ -75,23 +75,23 @@ ENDIF()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # Debug, Release, MinSizeRel and RelWithDebInfo
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline -fopenmp")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O4 -ftree-vectorize -msse2 -finline -fopenmp")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline -fopenmp")
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline -fopenmp")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O4 -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-  # using Intel C++
-  # TODO
+    # using Intel C++
+    MESSAGE(ERROR "Compiler not currently supported")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-  # using Visual Studio C++
-  # TODO
+    # using Visual Studio C++
+    MESSAGE(ERROR "Compiler not currently supported")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # Debug, Release, MinSizeRel and RelWithDebInfo
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline -fopenmp")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -O4 -ftree-vectorize -msse2 -finline -fopenmp")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto -Ofast -ftree-vectorize -msse2 -finline -fopenmp")
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1 -ftree-vectorize -msse2 -finline -fopenmp")
-endif()
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline -g -ggdb")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -O4 -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto -Ofast -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1 -ftree-vectorize -msse2 -finline -g -ggdb")
+ENDIF()
 
 # C++11
 IF (USE_CPP11)
@@ -111,7 +111,23 @@ ELSE()
    ENDIF (APPLE)
 ENDIF (USE_CPP11)
 
+# OpenMP 
 
+IF (WITH_OPENMP)
+    ADD_DEFINITIONS(-DOPENMP=1)
+    IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fopenmp")
+    ENDIF()
+ENDIF (WITH_OPENMP)
 
 # ------------------------------------- 
 # Find dependencies

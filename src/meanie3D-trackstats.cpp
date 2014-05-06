@@ -64,7 +64,9 @@ void parse_commmandline(program_options::variables_map vm,
                         bool &create_cumulated_size_stats,
                         bin_t &size_histogram_bins,
                         bool &write_center_tracks_as_vtk,
-                        bool &write_cumulated_tracks_as_vtk)
+                        bool &write_cumulated_tracks_as_vtk,
+                        bool &write_gnuplot_files,
+                        bool &write_track_dictionary)
 {
     if ( vm.count("basename") == 0 )
     {
@@ -77,7 +79,13 @@ void parse_commmandline(program_options::variables_map vm,
     sourcepath = vm["sourcepath"].as<string>();
     
     write_center_tracks_as_vtk = vm.count("write-center-tracks-as-vtk") > 0;
+    
+    write_gnuplot_files = vm.count("write-gnuplot-files") > 0;
+    
     write_cumulated_tracks_as_vtk = vm.count("write-cumulated-tracks-as-vtk") > 0;
+    
+    write_track_dictionary = vm.count("write-track-dictionary") > 0;
+    
     include_degenerates = vm["exclude-degenerates"].as<bool>();
     
     // Default is the dimensions
@@ -179,6 +187,46 @@ void print_histogram(const vector<T> &classes, const bin_t &values, ofstream &fi
         cout << " > " << classes[classes.size()-1] << "," << values.back() << endl;
     }
 }
+                                   
+template <typename T>
+void write_histogram(const std::string &filename,
+                     const std::string &x,
+                     const std::string &y,
+                     const vector<T> &classes,
+                     const bin_t &values)
+{
+    ofstream file(filename);
+    
+    file << "#" << x << "\t" << y << endl;
+    
+    for (size_t i=0; i < classes.size(); i++)
+    {
+        file << classes[i] << "\t" << values[i] << endl;
+    }
+    
+    file.close();
+}
+
+template <typename T>
+void write_values(const std::string &filename,
+                  const std::string &x,
+                  const std::string &y,
+                  const map<T,size_t> &values)
+{
+    ofstream file(filename);
+    
+    file << "track length\tnumber of tracks" << endl;
+    
+    typename map<T,size_t>::const_iterator si;
+    
+    for (si=values.begin(); si!=values.end(); si++)
+    {
+        file << si->first << "\t" << si->second << endl;
+    }
+    
+    file.close();
+}
+
 
 template <typename T>
 double average(const vector<FS_TYPE> &v)
@@ -239,27 +287,27 @@ int main(int argc, char** argv)
     using namespace cfa::utils::visit;
     using namespace m3D;
     
-    size_t length_hist_default_values[] = {2,4,6,8,10,15,20,25,30,35,40,75,100,125,150,175,200};
-    bin_t length_hist_default(length_hist_default_values,length_hist_default_values+17);
+    size_t length_hist_default_values[] = {5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110};
+    bin_t length_hist_default(length_hist_default_values,length_hist_default_values+22);
     
     size_t size_hist_default_values[] = {100,200,300,400,500,1000,2000,3000,4000,5000,7500,10000,15000,20000,25000,50000,100000};
     bin_t size_hist_default(size_hist_default_values,size_hist_default_values+17);
     
-    size_t cluster_hist_default_values[] = {10,25,50,75,100,250,500,750,1000,1250,1500,1750,2000,2500,5000,7500,10000,15000,20000,50000,100000};
-    bin_t cluster_hist_default(cluster_hist_default_values,cluster_hist_default_values+21);
+    size_t cluster_hist_default_values[] = {10,50,100,500,1000,5000,10000,50000,100000,500000,10000000};
+    bin_t cluster_hist_default(cluster_hist_default_values,cluster_hist_default_values+11);
 
-    float speed_hist_default_values[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 12.5, 15.0, 17.5, 20.0, 22.5, 25.0, 27.5, 30.0, 35.0, 40.0, 45.0, 50.0};
-    fvec_t speed_hist_default(speed_hist_default_values,speed_hist_default_values+22);
+    float speed_hist_default_values[] = {2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60};
+    fvec_t speed_hist_default(speed_hist_default_values,speed_hist_default_values+30);
 
-    float direction_hist_default_values[] = {30,60,90,120,150,180,210,240,270,300,330,360};
-    fvec_t direction_hist_default(direction_hist_default_values,direction_hist_default_values+12);
+    float direction_hist_default_values[] = {15,30,45,60,75,90,105,120,135,150,175,200,215,230,245,260,275,300,315,330,345,360};
+    fvec_t direction_hist_default(direction_hist_default_values,direction_hist_default_values+22);
     
     // Declare the supported options.
     
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
-    ("basename,b", program_options::value<string>(), "Previous cluster file (netCDF)")
+    ("basename,b", program_options::value<string>(), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files.")
     ("sourcepath,p", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
     ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
     
@@ -279,9 +327,13 @@ int main(int argc, char** argv)
     ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
     
     ("write-center-tracks-as-vtk", "Write tracks out as .vtk files")
+    
+    ("write-track-dictionary","Write out a dictionary listing tracks with number of clusters etc.")
+    
     ("write-cumulated-tracks-as-vtk", "Write cumulated tracks out as .vtk files. Only has effect if --create-cumulated-size-statistics is used")
     
     ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
+    ("write-gnuplot-files,g","write individual files for the statistics fit for use with gnuplot")
     ;
     
     program_options::variables_map vm;
@@ -331,6 +383,9 @@ int main(int argc, char** argv)
     bool write_cumulated_tracks_as_vtk = false;
     svec_t vtk_dim_names;
     
+    bool write_gnuplot_files = false;
+    
+    bool write_track_dictionary = false;
     
     try
     {
@@ -350,7 +405,9 @@ int main(int argc, char** argv)
                            create_cumulated_size_statistics,
                            size_histogram_classes,
                            write_center_tracks_as_vtk,
-                           write_cumulated_tracks_as_vtk);
+                           write_cumulated_tracks_as_vtk,
+                           write_gnuplot_files,
+                           write_track_dictionary);
         
     }
     catch (const std::exception &e)
@@ -548,6 +605,30 @@ int main(int argc, char** argv)
             ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, spatial_dimensions, exclude_degenerates);
         }
         
+        // dictionary?
+        
+        if (write_track_dictionary)
+        {
+            ofstream dict("track-dictionary.txt");
+            
+            for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+            {
+                Tracking<FS_TYPE>::track_t *track = tmi->second;
+                
+                dict << "Track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
+                
+                size_t i = 0;
+                
+                for ( Tracking<FS_TYPE>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+                {
+                    dict << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
+                }
+            }
+            
+            dict.close();
+        }
+        
+        
         // Write cumulated tracks as netcdf and vtk files
         
         cout << "Cumulating track data: " << endl;
@@ -734,8 +815,16 @@ int main(int argc, char** argv)
 
                         // Assuming --vtk-dimensions=x,y
                         
-                        p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
-                        p.y = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(1));
+                        if (!::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.empty())
+                        {
+                            p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
+                            p.y = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(1));
+                        }
+                        else
+                        {
+                            p.x = 0;
+                            p.y = 1;
+                        }
                         
                         // Obtain geographical coordinate
                         RDGeographicalPoint c = rcs->geographicalCoordinate(p);
@@ -961,7 +1050,8 @@ int main(int argc, char** argv)
             for (si=track_lengths.begin(); si!=track_lengths.end(); si++)
             {
                 file << si->first << "," << si->second << endl;
-                cout << si->first << "," << si->second << endl;        }
+                cout << si->first << "," << si->second << endl;
+            }
             
             file << endl;
             
@@ -977,6 +1067,12 @@ int main(int argc, char** argv)
             cout << "max length,number" << endl;
 
             print_histogram(length_histogram_classes,length_histogram,file);
+            
+            if (write_gnuplot_files)
+            {
+                write_histogram("lengths-hist.txt", "number of tracks", "track length", length_histogram_classes, length_histogram);
+                write_values<size_t>("lengths.txt", "number of tracks", "track length", track_lengths);
+            }
         }
         
         //
@@ -1026,6 +1122,13 @@ int main(int argc, char** argv)
             cout << "speed class,number" << endl;
             
             print_histogram<float>(speed_histogram_classes,speed_histogram,file);
+            
+            if (write_gnuplot_files)
+            {
+                write_histogram("speeds-hist.txt", "number of clusters", "speed [m/s]", speed_histogram_classes, speed_histogram);
+                write_values<float>("speeds.txt", "number of clusters", "speed in [m/s]", speeds);
+            }
+
         }
         
         //
@@ -1071,6 +1174,13 @@ int main(int argc, char** argv)
             cout << "direction class,number" << endl;
             
             print_histogram<float>(direction_histogram_classes,direction_histogram,file);
+            
+            if (write_gnuplot_files)
+            {
+                write_histogram("directions-hist.txt", "number of clusters", "direction in [deg]", direction_histogram_classes, direction_histogram);
+                write_values<float>("directions.txt", "number of clusters", "direction in [deg]", directions);
+            }
+
         }
 
         
@@ -1123,6 +1233,13 @@ int main(int argc, char** argv)
             cout << "max size,number" << endl;
             
             print_histogram(cluster_histogram_classes,cluster_histogram,file);
+            
+            if (write_gnuplot_files)
+            {
+                write_histogram("sizes-hist.txt", "number of clusters", "size [#gridpoints]", cluster_histogram_classes, cluster_histogram);
+                write_values("sizes.txt", "number of clusters", "size [#gridpoints]", cluster_sizes);
+            }
+
         }
 
         //
@@ -1174,6 +1291,12 @@ int main(int argc, char** argv)
             cout << "max size,number" << endl;
             
             print_histogram(size_histogram_classes,size_histogram,file);
+            
+            if (write_gnuplot_files)
+            {
+                write_histogram("cumulative-sizes-hist.txt", "number of tracks", "size [#gridpoints]", size_histogram_classes, size_histogram);
+                write_values<size_t>("cumulative-sizes.txt", "number of tracks", "size [#gridpoints]", track_sizes);
+            }
 
         }
         
