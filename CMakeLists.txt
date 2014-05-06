@@ -69,7 +69,6 @@ SET(USE_CPP11 FALSE)
 MESSAGE("CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
 MESSAGE("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
 MESSAGE("Compiler ID = ${CMAKE_CXX_COMPILER_ID}")
-
 IF(CMAKE_COMPILER_IS_GNUCXX)
     MESSAGE("Compiler is G++")
 ENDIF()
@@ -88,11 +87,11 @@ ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   # TODO
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     # Debug, Release, MinSizeRel and RelWithDebInfo
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline -fopenmp  -ggdb -g")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline -fopenmp")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -O4 -ftree-vectorize -msse2 -finline -fopenmp")
     SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto -Ofast -ftree-vectorize -msse2 -finline -fopenmp")
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1 -ftree-vectorize -msse2 -finline -fopenmp")
-ENDIF()
+endif()
 
 # C++11
 IF (USE_CPP11)
