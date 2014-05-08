@@ -12,14 +12,13 @@ then
     exit 0
 fi
 
-export scales="10 25 50 100 250"
+export scales="10"
+#export scales="10 25 50 100 250"
 echo "Running complete sets on scales ${scales}"
 
-TRACKSTATS_PARAMS =  " --vtk-dimensions x,y"
-TRACKSTATS_PARAMS += " --write-gnuplot-files"
-TRACKSTATS_PARAMS += " --create-length-statistics --create-speed-statistics --create-direction-statistics --create-cluster-statistics"
-TRACKSTATS_PARAMS += " -b raa"
-
+#
+# Iterate over scales
+#
 for scale in $scales; do
 
     export dest="scale${scale}"
@@ -33,9 +32,13 @@ for scale in $scales; do
     fi
 
     cd ${dest}
-    ${MEANIE3D_HOME}/visit/tracking/run_tracking-2D.sh "${1}" "${scale}"
-    meanie3D-trackstats ${TRACKSTATS_PARAMS} -p netcdf
+    ${MEANIE3D_HOME}/visit/tracking/run_tracking-2D.sh "$1" "$scale"
     rm -f nohup.out
     cd ..
 
 done
+
+#
+# Collate stats
+#
+${MEANIE3D_HOME}/visit/statistics/trackstats.sh
