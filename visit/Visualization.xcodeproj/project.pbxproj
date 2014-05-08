@@ -30,6 +30,7 @@
 		F4C9F34B187AE2C8005E011A /* meanie3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = meanie3D.py; sourceTree = "<group>"; };
 		F4E3F979191942B000CF524D /* plot-stats.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "plot-stats.sh"; sourceTree = "<group>"; };
 		F4E3F97A191942B000CF524D /* trackstats.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = trackstats.sh; sourceTree = "<group>"; };
+		F4ECD594191C0E880001F0F3 /* multiscale_run_RX-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "multiscale_run_RX-2D.sh"; sourceTree = "<group>"; };
 		F4FA4E7E17312E420070400B /* visit2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit2D.py; sourceTree = "<group>"; };
 		F4FA807F188D29BC00C426C5 /* run_clustering_complete-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_clustering_complete-2D.py"; sourceTree = "<group>"; };
 		F4FA8080188D29BC00C426C5 /* run_clustering_complete-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_clustering_complete-2D.sh"; sourceTree = "<group>"; };
@@ -176,6 +177,7 @@
 				F4FA808F188D29BC00C426C5 /* run_tracking-3D.sh */,
 				F4B4B20118AE2590001384F2 /* run_rico_tracking_2D.py */,
 				F4B4B20218AE2590001384F2 /* run_rico_tracking_2D.sh */,
+				F4ECD594191C0E880001F0F3 /* multiscale_run_RX-2D.sh */,
 			);
 			path = tracking;
 			sourceTree = "<group>";

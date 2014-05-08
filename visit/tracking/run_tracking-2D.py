@@ -27,7 +27,7 @@ last_completed_run_count = 0
 VAR_NAME="RX"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds RX=35 -m 10"
+DETECT_PARAMS     += " --lower-thresholds RX=46 -m 15"
 
 CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
