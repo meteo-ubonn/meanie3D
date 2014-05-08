@@ -14,10 +14,6 @@
 #include <boost/exception/info.hpp>
 #include <boost/smart_ptr.hpp>
 
-#include <meanie3D/meanie3D.h>
-#include <cf-algorithms/id.h>
-#include <radolan/radolan.h>
-
 #include <map>
 #include <vector>
 #include <string>
@@ -28,6 +24,10 @@
 #include <limits>
 #include <stdlib.h>
 #include <netcdf>
+
+#include <meanie3D/meanie3D.h>
+#include <cf-algorithms/id.h>
+#include <radolan/radolan.h>
 
 using namespace std;
 using namespace boost;
@@ -195,7 +195,7 @@ void write_histogram(const std::string &filename,
                      const vector<T> &classes,
                      const bin_t &values)
 {
-    ofstream file(filename);
+    ofstream file(filename.c_str());
     
     file << "#" << x << "\t" << y << endl;
     
@@ -213,7 +213,7 @@ void write_values(const std::string &filename,
                   const std::string &y,
                   const map<T,size_t> &values)
 {
-    ofstream file(filename);
+    ofstream file(filename.c_str());
     
     file << "track length\tnumber of tracks" << endl;
     
