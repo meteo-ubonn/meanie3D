@@ -31,15 +31,16 @@ DETECT_PARAMS     += " --lower-thresholds RX=46 -m 15"
 
 CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
-CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
 CLUSTERING_PARAMS += " --weight-function default"
-CLUSTERING_PARAMS += " --write-clusters-as-vtk"
-CLUSTERING_PARAMS += " --write-cluster-centers"
+#CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
+#CLUSTERING_PARAMS += " --write-clusters-as-vtk"
+#CLUSTERING_PARAMS += " --write-cluster-centers"
 
 CLUSTERING_PARAMS += " -v "+VAR_NAME
 CLUSTERING_PARAMS += " " + DETECT_PARAMS
 
-TRACKING_PARAMS = "--verbosity 1 --write-vtk"
+TRACKING_PARAMS = "--verbosity 1 "
+#TRACKING_PARAMS += " --write-vtk"
 TRACKING_PARAMS += " --vtk-dimensions x,y"
 TRACKING_PARAMS += " -t "+VAR_NAME
 TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
