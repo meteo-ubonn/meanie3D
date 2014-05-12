@@ -8,6 +8,8 @@ import glob
 import os
 import os.path
 import string
+from os.path import basename
+from subprocess import call
 
 # This module bundles python routines for handling Visit3D
 # plotting more comfortably from the various visualization
@@ -31,7 +33,6 @@ def save_window(basename,progressive):
     SetSaveWindowAttributes(s)
     SaveWindow()
     return
-
 
 # Closes the databases associated with the cluster files
 # parameters follow the same rules as add_clusters_2D
@@ -161,28 +162,32 @@ def add_background_gradient():
 # the currenty image
 def add_datetime(filename):
     
+    # Only use the leaf node
+    fn = basename(filename);
+    
     # OASE 3D
     # herz-oase-20110605t2355utc-0500m-bonnjue-3d-v01a.nc
-    baseIndex=string.find(filename,"herz-oase")
+    baseIndex=string.find(fn,"herz-oase")
     if baseIndex >= 0:
-        year = filename[baseIndex+10:baseIndex+14]
-        month = filename[baseIndex+14:baseIndex+16]
-        day = filename[baseIndex+16:baseIndex+18]
-        hour = filename[baseIndex+19:baseIndex+21]
-        minute = filename[baseIndex+21:baseIndex+23]
+        year = fn[baseIndex+10:baseIndex+14]
+        month = fn[baseIndex+14:baseIndex+16]
+        day = fn[baseIndex+16:baseIndex+18]
+        hour = fn[baseIndex+19:baseIndex+21]
+        minute = fn[baseIndex+21:baseIndex+23]
         text = day+"."+month+"."+year+" "+hour+":"+minute+" UTC"
         add_text_annotation(0.725,0.95,text);
         return
     
     # OASE 2D
     #oase-20110622t2055z-1km-germany-2d-v01a.nc
-    baseIndex=string.find(filename,"oase-")
+    baseIndex=string.find(fn,"oase-")
+
     if baseIndex >= 0:
-        year = filename[baseIndex+5:baseIndex+9]
-        month = filename[baseIndex+9:baseIndex+11]
-        day = filename[baseIndex+11:baseIndex+13]
-        hour = filename[baseIndex+14:baseIndex+16]
-        minute = filename[baseIndex+16:baseIndex+18]
+        year = fn[baseIndex+5:baseIndex+9]
+        month = fn[baseIndex+9:baseIndex+11]
+        day = fn[baseIndex+11:baseIndex+13]
+        hour = fn[baseIndex+14:baseIndex+16]
+        minute = fn[baseIndex+16:baseIndex+18]
         text = day+"."+month+"."+year+" "+hour+":"+minute+" UTC"
         add_text_annotation(0.725,0.95,text);
         return
@@ -190,15 +195,20 @@ def add_datetime(filename):
     # RADOLAN
     #raa01-rx_10000-YYMMDDhhmm-dwd---bin.nc
     
-    baseIndex=string.find(filename,"raa01-rx_10000")
+    baseIndex=string.find(fn,"raa01-rx_10000")
     if baseIndex >= 0:
-        year = filename[baseIndex+15:baseIndex+17]
-        month = filename[baseIndex+17:baseIndex+19]
-        day = filename[baseIndex+19:baseIndex+21]
-        hour = filename[baseIndex+21:baseIndex+23]
-        minute = filename[baseIndex+23:baseIndex+25]
+        year = fn[baseIndex+15:baseIndex+17]
+        month = fn[baseIndex+17:baseIndex+19]
+        day = fn[baseIndex+19:baseIndex+21]
+        hour = fn[baseIndex+21:baseIndex+23]
+        minute = fn[baseIndex+23:baseIndex+25]
         text = day+"."+month+".'"+year+" "+hour+":"+minute+" UTC"
         add_text_annotation(0.725,0.95,text);
         return
+
+def create_movie(basename,moviename):
+    convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+basename+"*.png "+moviename
+    return_code=call(convert_cmd, shell=True)
+    return
 
 # End of visitUtils.py
