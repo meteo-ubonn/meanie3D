@@ -201,8 +201,6 @@ ADD_SUBDIRECTORY(numericalrecipes)
 # Paths and Build Configuration
 # -------------------------------------
 
-MESSAGE(INFO "cf-algorithms_SOURCE_DIR=${cf-algorithms_SOURCE_DIR}")
-
 IF(WITH_TBB)
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/include
@@ -284,8 +282,6 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/utils/visit_impl.h
-    include/meanie3D/utils/scalar_index.h
-    include/meanie3D/utils/scalar_index_impl.h
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
     include/meanie3D/weights/weights.h
@@ -295,6 +291,64 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/weights/inverse_default.h
     include/meanie3D/weights/brightband_evidence.h
     include/meanie3D/implementations.h
+)
+
+SOURCE_GROUP("meanie3d/types" FILES
+    include/meanie3D/types/cluster.h
+    include/meanie3D/types/cluster_impl.h
+    include/meanie3D/types/cluster_list.h
+    include/meanie3D/types/cluster_list_impl.h
+    include/meanie3D/types/point.h
+    include/meanie3D/types/point_factory.h
+    include/meanie3D/types/histogram.h
+    include/meanie3D/types/histogram_impl.h
+    include/meanie3D/types/timestamp.h
+)
+
+SOURCE_GROUP("meanie3d/filters" FILES
+    include/meanie3D/filters/filter.h
+    include/meanie3D/filters/scalespace_kernel.h
+    include/meanie3D/filters/scalespace_kernel_impl.h
+    include/meanie3D/filters/scalespace_filter.h
+    include/meanie3D/filters/scalespace_filter_impl.h
+    include/meanie3D/filters/threshold_filter.h
+    include/meanie3D/filters/threshold_filter_impl.h
+    include/meanie3D/filters/weight_filter.h
+    include/meanie3D/filters/weight_filter_impl.h
+    include/meanie3D/filters/convection_filter.h
+    include/meanie3D/filters/convection_filter_impl.h
+)
+
+SOURCE_GROUP("meanie3d/detection" FILES
+    include/meanie3D/detection/cluster_op.h
+    include/meanie3D/detection/cluster_op_impl.h
+    include/meanie3D/detection/cluster_task.h
+    include/meanie3D/detection/cluster_utils.h
+    include/meanie3D/detection/cluster_utils_impl.h
+)
+
+SOURCE_GROUP("meanie3d/tracking" FILES
+    include/meanie3D/tracking/tracking.h
+    include/meanie3D/tracking/tracking_impl.h
+)
+
+SOURCE_GROUP("meanie3d/utils" FILES
+    include/meanie3D/utils/verbosity.h
+    include/meanie3D/utils/visit.h
+    include/meanie3D/utils/visit_impl.h
+    include/meanie3D/utils/scalar_index.h
+    include/meanie3D/utils/scalar_index_impl.h
+    include/meanie3D/utils/matrix.h
+    include/meanie3D/utils/matrix_impl.h
+)
+
+SOURCE_GROUP("meanie3d/weights" FILES
+    include/meanie3D/weights/weights.h
+    include/meanie3D/weights/oase_weights.h
+    include/meanie3D/weights/exp10_weight.h
+    include/meanie3D/weights/default_weights.h
+    include/meanie3D/weights/inverse_default.h
+    include/meanie3D/weights/brightband_evidence.h
 )
 
 TARGET_LINK_LIBRARIES(meanie3D

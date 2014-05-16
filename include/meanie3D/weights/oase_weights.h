@@ -25,7 +25,7 @@ namespace m3D { namespace weights {
         vector<NcVar>       m_vars;             // variables for weighting
         map<size_t,T>       m_min;              // [index,min]
         map<size_t,T>       m_max;              // [index,max]
-        cfa::utils::ScalarIndex<T,T>      m_weight;
+        MultiArray<T>       *m_weight;
         CoordinateSystem<T> *m_coordinate_system;
         
         // Weight function with range weight
@@ -56,7 +56,7 @@ namespace m3D { namespace weights {
                 
                 T saliency = this->compute_weight(p);
                 
-                m_weight.set(p->gridpoint, saliency);
+                m_weight->set(p->gridpoint, saliency);
             }
             
             delete m_index;
@@ -75,7 +75,7 @@ namespace m3D { namespace weights {
         OASEWeightFunction(FeatureSpace<T> *fs, 
                                 const vector<T> &bandwidth)
         : m_vars(fs->variables())
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         , m_bandwidth(bandwidth)
         {
@@ -105,12 +105,21 @@ namespace m3D { namespace weights {
         : m_vars(fs->variables())
         , m_min(min)
         , m_max(max)
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         , m_bandwidth(bandwidth)
         {
             build_saliency_field(fs);
         }
+        
+        ~OASEWeightFunction()
+        {
+            if (this->m_weight != NULL) {
+                delete m_weight;
+                m_weight=NULL;
+            }
+        }
+
         
         /** Calculate the unweighed weight at point p
         */
@@ -290,17 +299,17 @@ namespace m3D { namespace weights {
                 return 0.0;
             }
             
-            return m_weight.get(gp);
+            return m_weight->get(gp);
         }
         
         T operator()(const typename Point<T>::ptr p) const
         {
-            return m_weight.get(p->gridpoint);
+            return m_weight->get(p->gridpoint);
         }
         
-        T operator()(const vector<size_t> &gridpoint) const
+        T operator()(const vector<int> &gridpoint) const
         {
-            return m_weight.get(gridpoint);
+            return m_weight->get(gridpoint);
         }
         
     };

@@ -56,7 +56,7 @@ namespace m3D {
          * @param coordinate
          * @param values
          */
-        M3DPoint( vector<size_t> gridpoint, vector<T> &coord, vector<T>& value )
+        M3DPoint( vector<int> gridpoint, vector<T> &coord, vector<T>& value )
         : Point<T>(gridpoint,coord,value)
         , cluster(NULL)
         , isBoundary(false)

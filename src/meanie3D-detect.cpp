@@ -58,6 +58,7 @@ void parse_commmandline(program_options::variables_map vm,
         map<int, double> &replacement_values,
         double &scale,
         vector<NcVar> &exclude_from_scale_space_filtering,
+        std::string &kernel_name,
         std::string &weight_function_name,
         FS_TYPE &wwf_lower_threshold,
         FS_TYPE &wwf_upper_threshold,
@@ -352,6 +353,16 @@ void parse_commmandline(program_options::variables_map vm,
 
     scale = vm["scale"].as<double>();
 
+    // Kernel
+    
+    kernel_name = vm["kernel-name"].as<string>();
+    
+    if (!(kernel_name == "uniform" || kernel_name == "epanechnikov" || kernel_name == "gauss" || kernel_name == "none"))
+    {
+        cerr << "Illegal kernel name " << kernel_name << ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
+        exit(1);
+    }
+    
     // Weight Function
 
     weight_function_name = vm["weight-function-name"].as<string>();
@@ -492,6 +503,7 @@ int main(int argc, char** argv) {
             ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
             ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
             ("replacement-values", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
+            ("kernel-name,k",program_options::value<string>()->default_value("uniform"), "uniform,gauss,epnachnikov or none")
             ("weight-function-name,w", program_options::value<string>()->default_value("default"), "default,inverse,pow10 or oase")
             ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
             ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
@@ -545,6 +557,7 @@ int main(int argc, char** argv) {
     FS_TYPE wwf_lower_threshold;
     FS_TYPE wwf_upper_threshold;
     std::string weight_function_name = "default";
+    std::string kernel_name = "uniform";
     std::string *previous_file = NULL;
     FS_TYPE cluster_coverage_threshold = 0.66;
     int convection_filter_index = -1;
@@ -576,6 +589,7 @@ int main(int argc, char** argv) {
                 replacement_values,
                 scale,
                 exclude_from_scale_space_filtering,
+                kernel_name,
                 weight_function_name,
                 wwf_lower_threshold,
                 wwf_upper_threshold,
@@ -676,6 +690,8 @@ int main(int argc, char** argv) {
         } else {
             cout << "\tno scale-space smoothing" << endl;
         }
+
+        cout << "\tkernel:" << kernel_name << endl;
 
         cout << "\tweight-function:" << weight_function_name << endl;
         cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
@@ -857,7 +873,7 @@ int main(int argc, char** argv) {
     }
 
     // Scale-Space Smoothing
-
+    
     WeightFunction<FS_TYPE> *weight_function = NULL;
 
     // Scale-Space smoothing
@@ -995,9 +1011,20 @@ int main(int argc, char** argv) {
 
     // estimate kernel size
 
-    Kernel<FS_TYPE> *kernel = new UniformKernel<FS_TYPE>(kernel_width);
-
-    // Kernel<FS_TYPE> *kernel = new EpanechnikovKernel<FS_TYPE>(1.0);
+    Kernel<FS_TYPE> *kernel = NULL;
+    
+    if (kernel_name == "uniform")
+    {
+        kernel = new UniformKernel<FS_TYPE>(kernel_width);
+    }
+    else if (kernel_name == "gauss")
+    {
+        kernel = new GaussianNormalKernel<FS_TYPE>(kernel_width);
+    }
+    else if (kernel_name == "epanechnikov")
+    {
+        kernel = new EpanechnikovKernel<FS_TYPE>(kernel_width);
+    }
 
     ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, show_progress);
 

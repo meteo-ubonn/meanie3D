@@ -7,12 +7,14 @@
 #include <netcdf>
 #include <vector>
 #include <map>
+
 #include <cf-algorithms/cf-algorithms.h>
 
 namespace m3D { namespace weights {
     
     using namespace netCDF;
     using namespace ::m3D;
+    using namespace cfa::array;
     using std::vector;
     using std::map;
     using cfa::utils::CoordinateSystem;
@@ -28,7 +30,8 @@ namespace m3D { namespace weights {
         vector<NcVar>       m_vars;     // variables for weighting
         map<size_t,T>       m_min;      // [index,min]
         map<size_t,T>       m_max;      // [index,max]
-        cfa::utils::ScalarIndex<T,T>      m_weight;
+        
+        MultiArray<T>       *m_weight;
         CoordinateSystem<T> *m_coordinate_system;
         
         void
@@ -40,7 +43,7 @@ namespace m3D { namespace weights {
                 
                 T saliency = this->compute_weight(p);
                 
-                m_weight.set(p->gridpoint, saliency);
+                m_weight->set(p->gridpoint, saliency);
             }
         };
         
@@ -52,7 +55,7 @@ namespace m3D { namespace weights {
          */
         BrightBandWeight(FeatureSpace<T> *fs)
         : m_vars(fs->variables())
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
             // Get original limits
@@ -78,10 +81,18 @@ namespace m3D { namespace weights {
         : m_vars(fs->variables())
         , m_min(min)
         , m_max(max)
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
             build_saliency_field(fs);
+        }
+        
+        ~BrightBandWeight()
+        {
+            if (this->m_weight != NULL) {
+                delete m_weight;
+                m_weight=NULL;
+            }
         }
         
         /** Actual weight computation happens here
@@ -130,12 +141,12 @@ namespace m3D { namespace weights {
                 return 0.0;
             }
             
-            return m_weight.get(gp);
+            return m_weight->get(gp);
         }
         
         T operator()(const typename Point<T>::ptr p) const
         {
-            return m_weight.get(p->gridpoint);
+            return m_weight->get(p->gridpoint);
         }
         
     };
