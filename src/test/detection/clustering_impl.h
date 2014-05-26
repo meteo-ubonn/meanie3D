@@ -67,7 +67,9 @@ void FSClusteringTest2D<T>::write_cloud( const NcVar &var, vector<T> mean, vecto
         
         // cout << "x=" << x << " mean=" << mean << " g(x-m)=" << value << endl;
         
-        var.putVar( gridpoint, value );
+        vector<size_t> gp(gridpoint.begin(), gridpoint.end());
+        
+        var.putVar( gp, value );
         
         numPoints++;
         

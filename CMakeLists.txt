@@ -252,6 +252,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/types/cluster_impl.h
     include/meanie3D/types/cluster_list.h
     include/meanie3D/types/cluster_list_impl.h
+    include/meanie3D/types/conrad_cluster.h
     include/meanie3D/types/point.h
     include/meanie3D/types/point_factory.h
     include/meanie3D/types/histogram.h
@@ -298,6 +299,7 @@ SOURCE_GROUP("meanie3d/types" FILES
     include/meanie3D/types/cluster_impl.h
     include/meanie3D/types/cluster_list.h
     include/meanie3D/types/cluster_list_impl.h
+    include/meanie3D/types/conrad_cluster.h
     include/meanie3D/types/point.h
     include/meanie3D/types/point_factory.h
     include/meanie3D/types/histogram.h
@@ -423,6 +425,23 @@ ADD_EXECUTABLE(meanie3D-trackstats
 )
 
 TARGET_LINK_LIBRARIES(meanie3D-trackstats
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
+
+# trackstats CONRAD
+
+ADD_EXECUTABLE(meanie3D-trackstats-conrad
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-trackstats-conrad.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-trackstats-conrad
     meanie3D
     cf-algorithms
     numericalrecipes
@@ -578,6 +597,7 @@ INSTALL(TARGETS meanie3D LIBRARY DESTINATION "/usr/local/lib")
 INSTALL(TARGETS meanie3D-detect RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-trackstats RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-trackstats-conrad RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-parallax_correction RUNTIME DESTINATION "/usr/local/bin")

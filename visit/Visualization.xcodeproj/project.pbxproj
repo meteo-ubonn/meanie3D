@@ -22,6 +22,9 @@
 		F4670B0C18AFEE9000875B79 /* visualize_rico_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_rico_clusters_2D.sh; sourceTree = "<group>"; };
 		F47666D3188E778E002CA240 /* create_composite_loop_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_composite_loop_2D.py; sourceTree = "<group>"; };
 		F47666D4188E778E002CA240 /* create_composite_loop_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_composite_loop_2D.sh; sourceTree = "<group>"; };
+		F490385619338F0C000C2283 /* trackstats-conrad.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "trackstats-conrad.sh"; sourceTree = "<group>"; };
+		F490385719339BB7000C2283 /* plot-conrad-stats.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "plot-conrad-stats.sh"; sourceTree = "<group>"; };
+		F490385819339DB7000C2283 /* plot-stats-comparison.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "plot-stats-comparison.sh"; sourceTree = "<group>"; };
 		F4918FB8189999A700D9E1A6 /* create_all_oase_loops_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_all_oase_loops_2D.py; sourceTree = "<group>"; };
 		F49936211733E57700D23B1E /* visit3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit3D.py; sourceTree = "<group>"; };
 		F49936221733E65500D23B1E /* visitUtils.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visitUtils.py; sourceTree = "<group>"; };
@@ -122,8 +125,11 @@
 		F4E3F978191942B000CF524D /* statistics */ = {
 			isa = PBXGroup;
 			children = (
-				F4E3F979191942B000CF524D /* plot-stats.sh */,
 				F4E3F97A191942B000CF524D /* trackstats.sh */,
+				F4E3F979191942B000CF524D /* plot-stats.sh */,
+				F490385619338F0C000C2283 /* trackstats-conrad.sh */,
+				F490385719339BB7000C2283 /* plot-conrad-stats.sh */,
+				F490385819339DB7000C2283 /* plot-stats-comparison.sh */,
 			);
 			path = statistics;
 			sourceTree = "<group>";

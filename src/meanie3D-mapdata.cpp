@@ -717,18 +717,18 @@ draw_line_in_grid_2D(double (&data)[N][M],gp_vec_t &line_points, NcVar &var)
             while (x != p[1] && y != p[0])
             {
                 // propose walking x
-                vector<size_t> x_next(2);
+                vector<int> x_next(2);
                 x_next[1] = x + dx;
                 x_next[0] = y;
                 
                 // propose walking y
-                vector<size_t> y_next(2);
+                vector<int> y_next(2);
                 y_next[1] = x;
                 y_next[0] = y + dy;
                 
                 // which one gets closer to end?
-                double dist_x = vector_norm(p-x_next);
-                double dist_y = vector_norm(p-y_next);
+                double dist_x = vector_norm(p - x_next);
+                double dist_y = vector_norm(p - y_next);
                 
                 if (dist_x < dist_y)
                 {
