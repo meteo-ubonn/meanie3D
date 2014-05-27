@@ -12,6 +12,9 @@ namespace m3D {
         
     public:
         
+        typedef std::vector< ConradCluster<T> > track_t;
+        typedef std::map<cfa::id_t, track_t* >  trackmap_t;
+        
         int year, month, day, hour, minute;
         cfa::id_t id;
         int cellStatus;
@@ -30,7 +33,7 @@ namespace m3D {
         /** @return seconds since epoch constructed from the
          * cluster's fields
          */
-        long secondsSinceEpoch()
+        long secondsSinceEpoch() const
         {
             // find out if Daylight Saving Time is on
             // by obtaining local time
@@ -68,7 +71,7 @@ namespace m3D {
         /** Calculates the values for center in RADOLAN cartesian
          * coordinates. (x,y)
          */
-        vector<T> center()
+        vector<T> center() const
         {
             RDCoordinateSystem rcs(RD_RX);
             RDGeographicalPoint geo = rdGeographicalPoint(centerX, centerY);
@@ -84,7 +87,7 @@ namespace m3D {
         /** @return lower left corner of the bounding box in 
          * cartesian coordinates
          */
-        vector<T> box_min()
+        vector<T> box_min() const
         {
             RDCoordinateSystem rcs(RD_RX);
             RDGeographicalPoint geo = rdGeographicalPoint(xMin,yMin);
@@ -100,7 +103,7 @@ namespace m3D {
         /** @return upper right corner of the bounding box in
          * cartesian coordinates
          */
-        vector<T> box_max()
+        vector<T> box_max() const
         {
             RDCoordinateSystem rcs(RD_RX);
             RDGeographicalPoint geo = rdGeographicalPoint(xMax,yMax);

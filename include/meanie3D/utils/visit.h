@@ -142,13 +142,22 @@ namespace m3D { namespace utils {
                            bool only_boundary=false,
                            bool write_ascii=false);
         
-        /** Write out the track centers */
+        /** Write out the track centers 
+         */
         static
         void
         write_center_tracks_vtk(typename Tracking<T>::trackmap_t &trackmap,
                                 const std::string &basename,
                                 size_t spatial_dimensions,
                                 bool exclude_degenerates = true);
+        
+        /** Write out track centers from CONRAD clusters
+         */
+        static
+        void
+        write_center_tracks_vtk(typename ConradCluster<T>::trackmap_t &track_map,
+                                const std::string &basename,
+                                bool exclude_degenerates);
         
         /** Writes the clusters out with the value of the weight response
          * for the whole cluster as value. 

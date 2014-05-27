@@ -303,7 +303,7 @@ int main(int argc, char** argv)
 //    ("create-cumulated-size-statistics","Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
 //    ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
     
-//    ("write-center-tracks-as-vtk", "Write tracks out as .vtk files")
+    ("write-center-tracks-as-vtk", "Write tracks out as .vtk files")
     
     ("write-track-dictionary","Write out a dictionary listing tracks with number of clusters etc.")
     
@@ -411,6 +411,8 @@ int main(int argc, char** argv)
     
     fs::path source_path(sourcepath);
     
+    basename = fs::basename(sourcepath);
+    
     cout << "Collecting track data from NetCDF files: " << endl;
     
     if (fs::exists(sourcepath))
@@ -484,11 +486,11 @@ int main(int argc, char** argv)
         }
         
 //        // Write center tracks
-//        
-//        if (write_center_tracks_as_vtk)
-//        {
-//            ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, spatial_dimensions, exclude_degenerates);
-//        }
+
+        if (write_center_tracks_as_vtk)
+        {
+            ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, exclude_degenerates);
+        }
         
         // dictionary?
         
@@ -596,7 +598,7 @@ int main(int argc, char** argv)
                 
                 if (create_cluster_statistics)
                 {
-                    size_t cluster_size = cluster->numPixels;
+                    size_t cluster_size = cluster->numCorePixels;
                     
                     // add to histogram
                     
@@ -607,7 +609,7 @@ int main(int argc, char** argv)
                     if (exceeded_max_class)
                     {
                         cout << "Cluster #" << cluster->id
-                             << " (size " << cluster->numPixels << ")"
+                             << " (size " << cluster->numCorePixels << ")"
                              << " exceeded max cluster size"
                              << cluster_histogram_classes.back() << endl;
                     }
@@ -782,7 +784,7 @@ int main(int argc, char** argv)
         
         // Write out statistical data in file file(s)
         
-        string file_fn = fs::basename(sourcepath) + "conrad_trackstats.txt";
+        string file_fn = basename + "conrad_trackstats.txt";
         
         ofstream file(file_fn.c_str());
         

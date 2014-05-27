@@ -28,6 +28,11 @@
 		F4918FB8189999A700D9E1A6 /* create_all_oase_loops_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_all_oase_loops_2D.py; sourceTree = "<group>"; };
 		F49936211733E57700D23B1E /* visit3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visit3D.py; sourceTree = "<group>"; };
 		F49936221733E65500D23B1E /* visitUtils.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visitUtils.py; sourceTree = "<group>"; };
+		F4A0888C1934A9F300F967A8 /* trackstats-compare.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "trackstats-compare.sh"; sourceTree = "<group>"; };
+		F4A0888D1934D97400F967A8 /* visualize_conrad_tracks.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_conrad_tracks.py; sourceTree = "<group>"; };
+		F4A0888E1934D97400F967A8 /* visualize_conrad_tracks.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_conrad_tracks.sh; sourceTree = "<group>"; };
+		F4A0888F1934D97400F967A8 /* visualize_radolan_tracks.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_radolan_tracks.py; sourceTree = "<group>"; };
+		F4A088901934D97400F967A8 /* visualize_radolan_tracks.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_radolan_tracks.sh; sourceTree = "<group>"; };
 		F4B4B20118AE2590001384F2 /* run_rico_tracking_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = run_rico_tracking_2D.py; sourceTree = "<group>"; };
 		F4B4B20218AE2590001384F2 /* run_rico_tracking_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = run_rico_tracking_2D.sh; sourceTree = "<group>"; };
 		F4B8C8401920D15000B00CDA /* run_oase_tracking-3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_oase_tracking-3D.py"; sourceTree = "<group>"; };
@@ -70,8 +75,6 @@
 		F4FA809D188D29BC00C426C5 /* visualize_oase_weights.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_oase_weights.sh; sourceTree = "<group>"; };
 		F4FA809E188D29BC00C426C5 /* visualize_tracked_clusters.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_tracked_clusters.sh; sourceTree = "<group>"; };
 		F4FA809F188D29BC00C426C5 /* visualize_tracked_clusters.template */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_tracked_clusters.template; sourceTree = "<group>"; };
-		F4FA80A0188D29BC00C426C5 /* visualize_tracks.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_tracks.py; sourceTree = "<group>"; };
-		F4FA80A1188D29BC00C426C5 /* visualize_tracks.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_tracks.sh; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -128,6 +131,7 @@
 				F4E3F97A191942B000CF524D /* trackstats.sh */,
 				F4E3F979191942B000CF524D /* plot-stats.sh */,
 				F490385619338F0C000C2283 /* trackstats-conrad.sh */,
+				F4A0888C1934A9F300F967A8 /* trackstats-compare.sh */,
 				F490385719339BB7000C2283 /* plot-conrad-stats.sh */,
 				F490385819339DB7000C2283 /* plot-stats-comparison.sh */,
 			);
@@ -216,12 +220,14 @@
 				F4FA809D188D29BC00C426C5 /* visualize_oase_weights.sh */,
 				F4FA809E188D29BC00C426C5 /* visualize_tracked_clusters.sh */,
 				F4FA809F188D29BC00C426C5 /* visualize_tracked_clusters.template */,
-				F4FA80A0188D29BC00C426C5 /* visualize_tracks.py */,
-				F4FA80A1188D29BC00C426C5 /* visualize_tracks.sh */,
 				F4670B0B18AFEE9000875B79 /* visualize_rico_clusters_2D.py */,
 				F4670B0C18AFEE9000875B79 /* visualize_rico_clusters_2D.sh */,
 				F4B8C8421920D2CC00B00CDA /* visualize_oase_clusters-3D.py */,
 				F4B8C8431920D2CC00B00CDA /* visualize_oase_clusters-3D.sh */,
+				F4A0888D1934D97400F967A8 /* visualize_conrad_tracks.py */,
+				F4A0888E1934D97400F967A8 /* visualize_conrad_tracks.sh */,
+				F4A0888F1934D97400F967A8 /* visualize_radolan_tracks.py */,
+				F4A088901934D97400F967A8 /* visualize_radolan_tracks.sh */,
 			);
 			path = visualize_results;
 			sourceTree = "<group>";

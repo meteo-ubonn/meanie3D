@@ -15,8 +15,10 @@ for dir in $dirs; do
         meanie3D-trackstats --write-track-dictionary --write-gnuplot-files \
             --create-length-statistics --create-speed-statistics \
             --create-direction-statistics --create-cluster-statistics \
+            --write-center-tracks-as-vtk --vtk-dimensions=x y \
             -b raa -p netcdf
         ${MEANIE3D_HOME}/visit/statistics/plot-stats.sh
+        ${MEANIE3D_HOME}/visit/visualize_results/visualize_radolan_tracks.sh .
         cd ..
     fi
 done
