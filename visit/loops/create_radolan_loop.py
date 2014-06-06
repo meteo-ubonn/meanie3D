@@ -71,10 +71,18 @@ for netcdf_file in netcdf_list:
     visit2D.add_pseudocolor( netcdf_file, VAR_NAME, "hot_desaturated",1 )
 
     if VAR_NAME == "RX":
+        
+        AddOperator("Threshold")
+        t = ThresholdAttributes();
+        t.lowerBounds=(0)
+        t.upperBounds=(65)
+        SetOperatorOptions(t)
+
         cp=PseudocolorAttributes();
         cp.minFlag,cp.maxFlag = 1,1
-        cp.min,cp.max = -32.5,55.0
+        cp.min,cp.max = 0,65.0
         SetPlotOptions(cp)
+
         
     DrawPlots()
         
