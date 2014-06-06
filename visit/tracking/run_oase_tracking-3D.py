@@ -22,10 +22,11 @@ except ImportError as e:
 
 # RADOLAN
 
-VAR_NAME="zh"
+VAR_NAME="xband_oase_zh"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds "+VAR_NAME+"=35"
+DETECT_PARAMS     += " --lower-thresholds "+VAR_NAME+"=20"
+DETECT_PARAMS     += " --upper-thresholds "+VAR_NAME+"=75"
 DETECT_PARAMS     += " -m 10"
 
 CLUSTERING_PARAMS =  "-d z,y,x --vtk-dimensions x,y,z"

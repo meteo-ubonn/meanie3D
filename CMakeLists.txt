@@ -58,7 +58,7 @@ IF (WITH_BOOST_THREADS)
     ADD_DEFINITIONS(-DWITH_BOOST_THREADS=1)
 ENDIF (WITH_BOOST_THREADS)
 
-# ------------------------------------- 
+# -------------------------------------
 # Compiler Flags
 # -------------------------------------
 
@@ -66,25 +66,32 @@ SET(USE_CPP11 FALSE)
 
 #Compiler flags
 
+MESSAGE("CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
+MESSAGE("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
+MESSAGE("Compiler ID = ${CMAKE_CXX_COMPILER_ID}")
+IF(CMAKE_COMPILER_IS_GNUCXX)
+    MESSAGE("Compiler is G++")
+ENDIF()
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-
     # Debug, Release, MinSizeRel and RelWithDebInfo
-
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline")
-
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O4 -ftree-vectorize -msse2 -finline")
-
     SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline")
-
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline")
-
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-  # using Intel C++
-  # TODO
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-  # using Visual Studio C++
-  # TODO
-endif()
+ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    # using Intel C++
+    MESSAGE(ERROR "Compiler not currently supported")
+ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+    # using Visual Studio C++
+    MESSAGE(ERROR "Compiler not currently supported")
+ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    # Debug, Release, MinSizeRel and RelWithDebInfo
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline -g -ggdb")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -O4 -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto -Ofast -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1 -ftree-vectorize -msse2 -finline -g -ggdb")
+ENDIF()
 
 # C++11
 IF (USE_CPP11)
@@ -99,10 +106,28 @@ IF (USE_CPP11)
    SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
 ELSE(USE_CPP11)
    IF (APPLE)
-      SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions")
+      SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions ")
    ELSE (APPLE)
    ENDIF (APPLE)
 ENDIF (USE_CPP11)
+
+# OpenMP 
+
+IF (WITH_OPENMP)
+    ADD_DEFINITIONS(-DOPENMP=1)
+    IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fopenmp")
+    ENDIF()
+ENDIF (WITH_OPENMP)
 
 # ------------------------------------- 
 # Find dependencies
@@ -143,6 +168,14 @@ IF (WITH_TBB)
     ENDIF (NOT TBB_FOUND)
 ENDIF(WITH_TBB)
 
+#FIND_PACKAGE(OpenMP REQUIRED)
+#IF (OPENMP_FOUND)
+#    MESSAGE("OPENMP FOUND")
+#    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+#ENDIF (OPENMP_FOUND)
+
 # VTK
 FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
 IF (NOT VTK_FOUND)
@@ -167,8 +200,6 @@ ADD_SUBDIRECTORY(numericalrecipes)
 # ------------------------------------- 
 # Paths and Build Configuration
 # -------------------------------------
-
-MESSAGE(INFO "cf-algorithms_SOURCE_DIR=${cf-algorithms_SOURCE_DIR}")
 
 IF(WITH_TBB)
 	INCLUDE_DIRECTORIES(
@@ -221,6 +252,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/types/cluster_impl.h
     include/meanie3D/types/cluster_list.h
     include/meanie3D/types/cluster_list_impl.h
+    include/meanie3D/types/conrad_cluster.h
     include/meanie3D/types/point.h
     include/meanie3D/types/point_factory.h
     include/meanie3D/types/histogram.h
@@ -251,8 +283,6 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/utils/visit_impl.h
-    include/meanie3D/utils/scalar_index.h
-    include/meanie3D/utils/scalar_index_impl.h
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
     include/meanie3D/weights/weights.h
@@ -260,7 +290,67 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/weights/exp10_weight.h
     include/meanie3D/weights/default_weights.h
     include/meanie3D/weights/inverse_default.h
+    include/meanie3D/weights/brightband_evidence.h
     include/meanie3D/implementations.h
+)
+
+SOURCE_GROUP("meanie3d/types" FILES
+    include/meanie3D/types/cluster.h
+    include/meanie3D/types/cluster_impl.h
+    include/meanie3D/types/cluster_list.h
+    include/meanie3D/types/cluster_list_impl.h
+    include/meanie3D/types/conrad_cluster.h
+    include/meanie3D/types/point.h
+    include/meanie3D/types/point_factory.h
+    include/meanie3D/types/histogram.h
+    include/meanie3D/types/histogram_impl.h
+    include/meanie3D/types/timestamp.h
+)
+
+SOURCE_GROUP("meanie3d/filters" FILES
+    include/meanie3D/filters/filter.h
+    include/meanie3D/filters/scalespace_kernel.h
+    include/meanie3D/filters/scalespace_kernel_impl.h
+    include/meanie3D/filters/scalespace_filter.h
+    include/meanie3D/filters/scalespace_filter_impl.h
+    include/meanie3D/filters/threshold_filter.h
+    include/meanie3D/filters/threshold_filter_impl.h
+    include/meanie3D/filters/weight_filter.h
+    include/meanie3D/filters/weight_filter_impl.h
+    include/meanie3D/filters/convection_filter.h
+    include/meanie3D/filters/convection_filter_impl.h
+)
+
+SOURCE_GROUP("meanie3d/detection" FILES
+    include/meanie3D/detection/cluster_op.h
+    include/meanie3D/detection/cluster_op_impl.h
+    include/meanie3D/detection/cluster_task.h
+    include/meanie3D/detection/cluster_utils.h
+    include/meanie3D/detection/cluster_utils_impl.h
+)
+
+SOURCE_GROUP("meanie3d/tracking" FILES
+    include/meanie3D/tracking/tracking.h
+    include/meanie3D/tracking/tracking_impl.h
+)
+
+SOURCE_GROUP("meanie3d/utils" FILES
+    include/meanie3D/utils/verbosity.h
+    include/meanie3D/utils/visit.h
+    include/meanie3D/utils/visit_impl.h
+    include/meanie3D/utils/scalar_index.h
+    include/meanie3D/utils/scalar_index_impl.h
+    include/meanie3D/utils/matrix.h
+    include/meanie3D/utils/matrix_impl.h
+)
+
+SOURCE_GROUP("meanie3d/weights" FILES
+    include/meanie3D/weights/weights.h
+    include/meanie3D/weights/oase_weights.h
+    include/meanie3D/weights/exp10_weight.h
+    include/meanie3D/weights/default_weights.h
+    include/meanie3D/weights/inverse_default.h
+    include/meanie3D/weights/brightband_evidence.h
 )
 
 TARGET_LINK_LIBRARIES(meanie3D
@@ -335,6 +425,23 @@ ADD_EXECUTABLE(meanie3D-trackstats
 )
 
 TARGET_LINK_LIBRARIES(meanie3D-trackstats
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES})
+
+# trackstats CONRAD
+
+ADD_EXECUTABLE(meanie3D-trackstats-conrad
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-trackstats-conrad.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-trackstats-conrad
     meanie3D
     cf-algorithms
     numericalrecipes
@@ -490,6 +597,7 @@ INSTALL(TARGETS meanie3D LIBRARY DESTINATION "/usr/local/lib")
 INSTALL(TARGETS meanie3D-detect RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-trackstats RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-trackstats-conrad RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-parallax_correction RUNTIME DESTINATION "/usr/local/bin")

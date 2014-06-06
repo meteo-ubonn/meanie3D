@@ -8,11 +8,16 @@
 #include <map>
 #include <string>
 
+#if OPENMP
+    #include <omp.h>
+#endif
+
 #include <boost/progress.hpp>
 
 #include <cf-algorithms/cf-algorithms.h>
-
 #include <meanie3D/utils.h>
+
+#include "scalespace_filter.h"
 
 namespace m3D {
 
@@ -26,10 +31,14 @@ namespace m3D {
     template <typename T>
     ScaleSpaceFilter<T>::ScaleSpaceFilter(T scale,
                                           const vector<T> &resolution,
+                                          vector<NcVar> &excluded_vars,
                                           T decay,
                                           bool show_progress)
     : FeatureSpaceFilter<T>(show_progress)
-    , m_scale(scale), m_decay(decay), m_progress_bar(NULL)
+    , m_scale(scale)
+    , m_decay(decay)
+    , m_progress_bar(NULL)
+    , m_excluded_vars(excluded_vars)
     {
         if ( scale < 0 )
         {
@@ -112,43 +121,44 @@ namespace m3D {
             else
             {
                 // we reached the fixed dimension!
-                
+
                 if ( this->show_progress() )
                 {
                     m_progress_bar->operator++();
                 }
-                
-                // exclude points that were off limits
-                // in any of the original data sets 
-                
-                if (fs->off_limits()->get(gridpoint))
+
+// #pragma omp parallel for
+                for (int varIndex=0; varIndex < fs->variables().size(); varIndex++)
                 {
-                    continue;
-                }
+                    // exclude points that were off limits
+                    // in any of the original data sets 
+                    
+                    if (fs->off_limits()->get(gridpoint))
+                    {
+                        continue;
+                    }
+                    
+                    // threshold at weight function response of 1.0
+                    
+                    ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
+                    
+                    // Find the boundaries. Take care not to step
+                    // outside the bounds of the array
+                    
+                    int width = g.values().size() - 1;
+                    
+                    int gpIndex = (int)gridpoint[realDimIndex];
+                    
+                    int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
+                    
+                    int maxIndex = ((gpIndex + width) < (dim.getSize()-1)) ? (gpIndex + width) : (dim.getSize()-1);
+                    
+                    // Convolute in 1D around the given point with
+                    // the mask size determined by the kernel
+                    // Run the convolution for each feature variable
+                    
+                    typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
                 
-                // threshold at weight function response of 1.0
-                
-                ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
-                
-                // Find the boundaries. Take care not to step
-                // outside the bounds of the array
-                
-                int width = g.values().size() - 1;
-                
-                int gpIndex = (int)gridpoint[realDimIndex];
-                
-                int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
-                
-                int maxIndex = ((gpIndex + width) < (dim.getSize()-1)) ? (gpIndex + width) : (dim.getSize()-1);
-                
-                // Convolute in 1D around the given point with
-                // the mask size determined by the kernel
-                // Run the convolution for each feature variable
-                
-                typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
-                
-                for (size_t varIndex=0; varIndex < fs->variables().size(); varIndex++)
-                {
                     T sum = 0.0;
                     
                     size_t sumCount = 0;
@@ -392,11 +402,29 @@ namespace m3D {
     void
     ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
     {
+        this->m_unfiltered_min = fs->min();
+        this->m_unfiltered_max = fs->max();
         this->applyWithArrayIndex(fs);
     }
     
 #pragma mark -
-#pragma mark After the processing
+#pragma mark Range handling
+    
+    template <typename T>
+    map<size_t,T> 
+    ScaleSpaceFilter<T>::getRangeFactors()
+    {
+        map<size_t,T> factors;
+        typename map<size_t,T>::iterator mi;
+        
+        for (mi = m_min.begin(); mi != m_min.end(); mi++)
+        {
+            size_t i = mi->first;
+            factors[i] = (m_max[i]-m_min[i])/(m_unfiltered_max[i]-m_unfiltered_min[i]);
+        }
+        
+        return factors;
+    }
     
     template <typename T>
     const map<size_t,T> &

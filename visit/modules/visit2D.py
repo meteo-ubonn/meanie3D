@@ -168,10 +168,24 @@ def close_topography():
     CloseDatabase(TOPO_FILE);
     return
 
-# Add 2D/3D local topography
+# Add 2D/3D local topography, rivers and borders
 # @param "local" or "national"
 #
 def add_mapstuff(extent):
+    
+    # Topography
+    add_map_topography(extent);
+    
+    # Rivers & Boundaries
+    add_map_borders(extent);
+    add_map_rivers(extent);
+    
+    return
+
+# Add 2D/3D local topography
+# @param "local" or "national"
+#
+def add_map_topography(extent):
     
     # open the file and add the plot
     OpenDatabase(MAPSTUFF_FILE)
@@ -197,6 +211,21 @@ def add_mapstuff(extent):
     #p.minFlag,p.maxFlag = 1,1
     #p.min,p.max = -100.0, 3200.0
     SetPlotOptions(p)
+
+    return
+
+
+# Add 2D/3D borders
+# @param "local" or "national"
+#
+def add_map_borders(extent):
+    
+    # open the file and add the plot
+    OpenDatabase(MAPSTUFF_FILE)
+    
+    if extent!="local" and extent !="national":
+        print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
+        return
     
     # Rivers & Boundaries
     
@@ -209,6 +238,22 @@ def add_mapstuff(extent):
     p.minFlag,p.maxFlag = 1,1
     p.min,p.max = 0, 1
     SetPlotOptions(p)
+    
+    return
+
+# Add 2D/3D borders
+# @param "local" or "national"
+#
+def add_map_rivers(extent):
+    
+    # open the file and add the plot
+    OpenDatabase(MAPSTUFF_FILE)
+    
+    if extent!="local" and extent !="national":
+        print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
+        return
+    
+    # Rivers & Boundaries
     
     AddPlot("Pseudocolor", "as_zonal/"+extent+"_rivers_2D")
     p = PseudocolorAttributes()

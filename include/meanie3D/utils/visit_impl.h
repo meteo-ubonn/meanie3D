@@ -825,6 +825,75 @@ namespace m3D { namespace utils {
     
     template <class T>
     void
+    VisitUtils<T>::write_center_tracks_vtk(typename ConradCluster<T>::trackmap_t &track_map,
+                                           const std::string &basename,
+                                           bool exclude_degenerates)
+    {
+        typename ConradCluster<T>::trackmap_t::const_iterator tmi;
+        
+        for (tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        {
+            typename ConradCluster<T>::track_t *track = tmi->second;
+            
+            if (exclude_degenerates && track->size()==1)
+            {
+                continue;
+            }
+            
+            string filename = basename + "-track_" + boost::lexical_cast<string>( tmi->first ) + ".vtk";
+            
+            ofstream f( filename.c_str() );
+            f << fixed << setprecision(4);
+            
+            // Write Header
+            f << "# vtk DataFile Version 3.0" << endl;
+            f << "Meanie3D Track" << endl;
+            f << "ASCII" << endl;
+            f << "DATASET UNSTRUCTURED_GRID" << endl;
+            f << "POINTS " << track->size() << " FLOAT" << endl;
+            
+            // Write point coordinates out as unstructured grid
+            
+            typename ConradCluster<T>::track_t::const_iterator ti;
+            
+            for ( ti=track->begin(); ti!=track->end(); ti++ )
+            {
+                vector<T> center = ti->center();
+                
+                for ( size_t vi = 0; vi < center.size(); vi++)
+                {
+                    f << center[vi] << "\t";
+                }
+                
+                if ( center.size() < 3 )
+                {
+                    f << "0.0";
+                }
+                
+                f << endl;
+            }
+            
+            // Write point data out. Only take the first value after coordinates
+            
+            f << endl;
+            f << "POINT_DATA " << track->size() << endl;
+            f << "SCALARS track_step FLOAT" << endl;
+            f << "LOOKUP_TABLE default" << endl;
+            
+            size_t step = 0;
+            
+            for ( ti=track->begin(); ti!=track->end(); ti++ )
+            {
+                //f << ti->points.size() << endl;
+                f << step++ << endl;
+            }
+            
+            f.close();
+        }
+    }
+
+    template <class T>
+    void
     VisitUtils<T>::write_cluster_weight_response_vtk(const string &base_name,
                                                      const typename Cluster<T>::list &clusters,
                                                      WeightFunction<T> *w,

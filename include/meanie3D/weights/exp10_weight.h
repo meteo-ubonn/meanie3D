@@ -22,9 +22,9 @@ namespace m3D { namespace weights {
     {
     private:
         
-        vector<NcVar>                       m_vars;     // variables for weighting
-        cfa::utils::ScalarIndex<T,T>        m_weight;
-        CoordinateSystem<T>                 *m_coordinate_system;
+        vector<NcVar>       m_vars;     // variables for weighting
+        MultiArray<T>       *m_weight;
+        CoordinateSystem<T> *m_coordinate_system;
         
         void
         build_saliency_field(FeatureSpace<T> *fs)
@@ -35,7 +35,7 @@ namespace m3D { namespace weights {
                 
                 T saliency = this->compute_weight(p);
                 
-                m_weight.set(p->gridpoint, saliency);
+                m_weight->set(p->gridpoint, saliency);
             }
         };
         
@@ -47,10 +47,19 @@ namespace m3D { namespace weights {
          */
         EXP10WeightFunction(FeatureSpace<T> *fs)
         : m_vars(fs->variables())
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
             build_saliency_field(fs);
+        }
+        
+        ~EXP10WeightFunction()
+        {
+            if (m_weight!=NULL)
+            {
+                delete m_weight;
+                m_weight = NULL;
+            }
         }
         
         /** Actual weight computation happens here
@@ -91,17 +100,17 @@ namespace m3D { namespace weights {
                 return 0.0;
             }
             
-            return m_weight.get(gp);
+            return m_weight->get(gp);
         }
         
         T operator()(const typename Point<T>::ptr p) const
         {
-            return m_weight.get(p->gridpoint);
+            return m_weight->get(p->gridpoint);
         }
         
-        T operator()(const vector<size_t> &gridpoint) const
+        T operator()(const vector<int> &gridpoint) const
         {
-            return m_weight.get(gridpoint);
+            return m_weight->get(gridpoint);
         }
         
     };

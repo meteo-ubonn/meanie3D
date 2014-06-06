@@ -39,7 +39,7 @@ ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 
 # Create script
 
-cat ${MEANIE3D_HOME}/visit/visualize_results/visualize_tracks.py | sed -e "s/P_SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/P_BASENAME/$ESCAPED_BASENAME/g" | sed -e "s/P_M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > ${SCRIPTFILE}
+cat ${MEANIE3D_HOME}/visit/visualize_results/visualize_conrad_tracks.py | sed -e "s/P_SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/P_BASENAME/$ESCAPED_BASENAME/g" | sed -e "s/P_M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > ${SCRIPTFILE}
 
 # Run script
 

@@ -1158,7 +1158,7 @@ namespace m3D {
             
             size_t spatial_dims = fs->coordinate_system->size();
             
-            vector<size_t> gridpoint(spatial_dims,0);
+            vector<int> gridpoint(spatial_dims,0);
             
             for (size_t k=0; k < spatial_dims; k++)
             {

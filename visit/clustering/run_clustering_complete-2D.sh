@@ -12,6 +12,7 @@ then
     echo "Please set environment variable VISIT_EXECUTABLE"
     exit 0
 fi
+
 if [ "X${MEANIE3D_HOME}" = "X" ]
 then
     echo "Please set environment variable MEANIE3D_HOME"

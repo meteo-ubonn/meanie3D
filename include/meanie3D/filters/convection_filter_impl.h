@@ -73,7 +73,7 @@ namespace m3D {
         
         // Create a field to hold the convection mask
         
-        cfa::utils::ScalarIndex<bool,T> convective_mask(fs->coordinate_system,false);
+        MultiArrayBlitz<bool> convective_mask(fs->coordinate_system->get_dimension_sizes(),false);
         
         // Iterate over the feature-space to create the convective mask
         
@@ -154,7 +154,7 @@ namespace m3D {
                 {
                     Point<T> *sp = sample->at(i);
                     
-                    convective_mask.set( sp->coordinate, true);
+                    convective_mask.set( sp->gridpoint, true);
                 }
 
                 delete sample;
@@ -183,7 +183,7 @@ namespace m3D {
             
             if (m_erase_non_convective)
             {
-                if (convective_mask.get(p->coordinate))
+                if (convective_mask.get(p->gridpoint))
                 {
                     accepted.push_back(p);
                 }

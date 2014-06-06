@@ -19,6 +19,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <iomanip>
 #include <exception>
 #include <locale>
 #include <limits>
@@ -49,9 +50,7 @@ typedef vector<string> svec_t;
 #pragma mark comand line parsing
 
 void parse_commmandline(program_options::variables_map vm,
-                        string &basename,
                         string &sourcepath,
-                        svec_t &vtk_dim_names,
                         bool &create_length_stats,
                         bin_t &length_histogram_bins,
                         bool &create_speed_stats,
@@ -60,40 +59,20 @@ void parse_commmandline(program_options::variables_map vm,
                         fvec_t &direction_histogram_classes,
                         bool &create_cluster_stats,
                         bin_t &cluster_histogram_bins,
-                        bool &include_degenerates,
-                        bool &create_cumulated_size_stats,
-                        bin_t &size_histogram_bins,
+                        bool &exclude_degenerates,
                         bool &write_center_tracks_as_vtk,
-                        bool &write_cumulated_tracks_as_vtk,
                         bool &write_gnuplot_files,
                         bool &write_track_dictionary)
 {
-    if ( vm.count("basename") == 0 )
-    {
-        cerr << "Missing --basename argument" << endl;
-        
-        exit( 1 );
-    }
-    
-    basename = vm["basename"].as<string>();
-    sourcepath = vm["sourcepath"].as<string>();
+    sourcepath = vm["filename"].as<string>();
     
     write_center_tracks_as_vtk = vm.count("write-center-tracks-as-vtk") > 0;
     
     write_gnuplot_files = vm.count("write-gnuplot-files") > 0;
     
-    write_cumulated_tracks_as_vtk = vm.count("write-cumulated-tracks-as-vtk") > 0;
-    
     write_track_dictionary = vm.count("write-track-dictionary") > 0;
     
-    include_degenerates = vm["exclude-degenerates"].as<bool>();
-    
-    // Default is the dimensions
-    
-    if (vm.count("vtk-dimensions") > 0)
-    {
-        vtk_dim_names = vm["vtk-dimensions"].as<svec_t>();
-    }
+    exclude_degenerates = vm.count("exclude-degenerates") > 0;
     
     create_length_stats = vm.count("create-length-statistics") > 0;
     length_histogram_bins = vm["length-histogram-classes"].as<bin_t>();
@@ -104,9 +83,6 @@ void parse_commmandline(program_options::variables_map vm,
     create_direction_stats = vm.count("create-direction-statistics") > 0;
     direction_histogram_classes = vm["direction-histogram-classes"].as<fvec_t>();
 
-    create_cumulated_size_stats = vm.count("create-cumulated-size-statistics") > 0;
-    size_histogram_bins = vm["size-histogram-classes"].as<bin_t>();
-    
     create_cluster_stats = vm.count("create-cluster-statistics") > 0;
     cluster_histogram_bins = vm["cluster-histogram-classes"].as<bin_t>();
 }
@@ -307,9 +283,10 @@ int main(int argc, char** argv)
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
-    ("basename,b", program_options::value<string>(), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files.")
-    ("sourcepath,p", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
-    ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
+//    ("basename,b", program_options::value<string>(), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files.")
+    ("filename,f", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
+    
+    ("exclude-degenerates", "Exclude results of tracks of length one")
     
     ("create-length-statistics","Create a statistic of track lengths.")
     ("length-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(length_hist_default),"List of track-length values for histogram bins")
@@ -323,16 +300,16 @@ int main(int argc, char** argv)
     ("create-cluster-statistics","Evaluate each cluster in each track in terms of size.")
     ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default),"List of cluster size values for histogram bins")
     
-    ("create-cumulated-size-statistics","Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
-    ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
+//    ("create-cumulated-size-statistics","Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
+//    ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
     
     ("write-center-tracks-as-vtk", "Write tracks out as .vtk files")
     
     ("write-track-dictionary","Write out a dictionary listing tracks with number of clusters etc.")
     
-    ("write-cumulated-tracks-as-vtk", "Write cumulated tracks out as .vtk files. Only has effect if --create-cumulated-size-statistics is used")
+//    ("write-cumulated-tracks-as-vtk", "Write cumulated tracks out as .vtk files. Only has effect if --create-cumulated-size-statistics is used")
     
-    ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
+//    ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("write-gnuplot-files,g","write individual files for the statistics fit for use with gnuplot")
     ;
     
@@ -376,12 +353,12 @@ int main(int argc, char** argv)
     bool create_direction_statistics = false;
     fvec_t direction_histogram_classes;
 
-    bool create_cumulated_size_statistics = false;
-    bin_t size_histogram_classes;
+//    bool create_cumulated_size_statistics = false;
+//    bin_t size_histogram_classes;
 
     bool write_center_tracks_as_vtk = false;
-    bool write_cumulated_tracks_as_vtk = false;
-    svec_t vtk_dim_names;
+//    bool write_cumulated_tracks_as_vtk = false;
+//    svec_t vtk_dim_names;
     
     bool write_gnuplot_files = false;
     
@@ -390,9 +367,7 @@ int main(int argc, char** argv)
     try
     {
         parse_commmandline(vm,
-                           basename,
                            sourcepath,
-                           vtk_dim_names,
                            create_length_statistics,
                            length_histogram_classes,
                            create_speed_statistics,
@@ -402,10 +377,7 @@ int main(int argc, char** argv)
                            create_cluster_statistics,
                            cluster_histogram_classes,
                            exclude_degenerates,
-                           create_cumulated_size_statistics,
-                           size_histogram_classes,
                            write_center_tracks_as_vtk,
-                           write_cumulated_tracks_as_vtk,
                            write_gnuplot_files,
                            write_track_dictionary);
         
@@ -420,14 +392,17 @@ int main(int argc, char** argv)
     
     size_t number_of_degenerates = 0;
     bin_t length_histogram(length_histogram_classes.size(),0);
-    bin_t size_histogram(size_histogram_classes.size(),0);
+//    bin_t size_histogram(size_histogram_classes.size(),0);
     bin_t cluster_histogram(cluster_histogram_classes.size(),0);
     bin_t speed_histogram(speed_histogram_classes.size(),0);
     bin_t direction_histogram(direction_histogram_classes.size(),0);
     
     // This map contains a mapping from the id type to lists of clusters.
+    
+    typedef std::vector< ConradCluster<FS_TYPE> >   track_t;
+    typedef std::map<cfa::id_t, track_t* >          trackmap_t;
 
-    Tracking<FS_TYPE>::trackmap_t track_map;
+    trackmap_t track_map;
     
     // Collect all files at sourcepath that start with basename and
     // end with -clusters.nc
@@ -436,173 +411,85 @@ int main(int argc, char** argv)
     
     fs::path source_path(sourcepath);
     
-    size_t spatial_dimensions = 0;
-    
-    std::string coords_filename;
+    basename = fs::basename(sourcepath);
     
     cout << "Collecting track data from NetCDF files: " << endl;
     
-    if (fs::is_directory(source_path))
+    if (fs::exists(sourcepath))
     {
-        fs::directory_iterator dir_iter(source_path);
-        fs::directory_iterator end;
+        // Re-using track_t here. Technically identical,
+        // but don't get confused. This is not a track but
+        // the list of all clusters from that file.
         
-        // Iterate over the "-clusters.nc" - files in sourcepath
+        track_t clusters = ConradCluster<FS_TYPE>::read_conrad_short(sourcepath);
         
-        while (dir_iter != end)
+        if (clusters.empty())
         {
-            fs::path f = dir_iter->path();
+            cout << "No clusters to process." << endl;
+            exit(0);
+        }
+        else
+        {
+            cout << "Processing " << clusters.size() << " clusters" << endl;
+        }
+        
+        track_t::const_iterator ci;
+        
+        for (ci=clusters.begin(); ci != clusters.end(); ++ci)
+        {
+            ConradCluster<FS_TYPE> cluster = (*ci);
             
-            if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc"))
+            cfa::id_t id = cluster.id;
+            
+            trackmap_t::const_iterator ti = track_map.find(id);
+            
+            track_t *tm = NULL;
+            
+            if (ti==track_map.end())
             {
-                // read the ClusterList from the file
+                // new entry
                 
-                cout << "Processing " << f.filename().generic_string() << " ... ";
+                tm = new track_t();
                 
-                // Remember the last one
-                
-                coords_filename = f.generic_string();
-                
-                ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read( f.generic_string() );
-                
-                if (spatial_dimensions==0)
-                {
-                    spatial_dimensions = cluster_list->dimensions.size();
-                }
-                else if (spatial_dimensions != cluster_list->dimensions.size())
-                {
-                    cerr << "Spatial dimensions must remain identical across the track" << endl;
-                    exit(-1);
-                }
-                
-                // Iterate over the clusters in the list we just read
-                
-                Cluster<FS_TYPE>::list::iterator ci;
-                
-                for (ci=cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
-                {
-                    Cluster<FS_TYPE>::ptr cluster = (*ci);
-                    
-                    cfa::id_t id = cluster->id;
-                    
-                    Tracking<FS_TYPE>::trackmap_t::const_iterator ti = track_map.find(id);
-                    
-                    Tracking<FS_TYPE>::track_t * tm = NULL;
-                    
-                    if (ti==track_map.end())
-                    {
-                        // new entry
-                        
-                        tm = new Tracking<FS_TYPE>::track_t();
-                        
-                        track_map[id] = tm;
-                    }
-                    else
-                    {
-                        tm = ti->second;
-                    }
-                    
-                    // append the cluster to the end of the track. Note that this
-                    // is a copy operation. It's expensive, but it saves us from
-                    // having to keep track of open files and stuff.
-                    
-                    tm->push_back( *cluster );
-                }
-                
-                // Clean up
-                
-                delete cluster_list;
-                
-                cout << "done." << endl;
+                track_map[id] = tm;
+            }
+            else
+            {
+                tm = ti->second;
             }
             
-            dir_iter++;
+            // append the cluster to the end of the track. Note that this
+            // is a copy operation. It's expensive, but it saves us from
+            // having to keep track of open files and stuff.
+            
+            tm->push_back(cluster);
         }
         
         cout << endl;
-        
-        cout << endl;
-        cout << "Collating dimensions and dimension data ..." << endl;
-        
-        // Construct coordinate system
-        
-        CoordinateSystem<FS_TYPE> *coord_system = NULL;
-        
-        // This file should not be closed until the code has
-        // run through, or netCDF will upchuck exceptions when
-        // accessing coordinate system
-        
-        netCDF::NcFile *coords_file = NULL;
-
-        // collate dimensions
-        vector<NcDim> dimensions;
-        vector<NcVar> dimension_vars;
-        
-        coords_file = new NcFile(coords_filename,NcFile::read);
-        
-        // Read "featurespace_dimensions"
-        
-        string fs_dimensions;
-        coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
-        vector<string> dim_names = ::cfa::utils::vectors::from_string<string>(fs_dimensions);
-        
-        cout << "Attribute 'featurespace_dimensions' = " << dim_names << endl;
-        
-        ::m3D::utils::VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
-        
-        multimap<string,NcVar> vars = coords_file->getVars();
-        multimap<string,NcVar>::iterator vi;
-        
-        // Only use dimensions, that have a variable of the
-        // exact same name
-        
-        for (size_t di = 0; di < dim_names.size(); di++)
-        {
-            NcDim dim = coords_file->getDim(dim_names[di]);
-            
-            if (dim.isNull())
-            {
-                cerr << "ERROR: dimension " << dim_names[di] << " does not exist " << endl;
-                exit(-1);
-            }
-            
-            NcVar var = coords_file->getVar(dim_names[di]);
-            
-            if (var.isNull())
-            {
-                cerr << "ERROR: variable " << dim_names[di] << " does not exist " << endl;
-                exit(-1);
-            }
-            
-            dimensions.push_back(dim);
-            dimension_vars.push_back(var);
-        }
-        
-        coord_system = new CoordinateSystem<FS_TYPE>(dimensions,dimension_vars);
         
         // Now we have a cluster map. Let's print it for debug purposes
         
         cout << "Keying up tracks: " << endl;
         
-        for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        for (trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
-            Tracking<FS_TYPE>::track_t *track = tmi->second;
+            track_t *track = tmi->second;
             
             cout << "Track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
             
             size_t i = 0;
             
-            for ( Tracking<FS_TYPE>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+            for ( track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
             {
-                cout << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
+                cout << "\t[" << i++ << "] x=" << ti->center() << endl;
             }
         }
         
-        // Write center tracks
-        
+//        // Write center tracks
+
         if (write_center_tracks_as_vtk)
         {
-            ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, spatial_dimensions, exclude_degenerates);
+            ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, exclude_degenerates);
         }
         
         // dictionary?
@@ -611,17 +498,17 @@ int main(int argc, char** argv)
         {
             ofstream dict("track-dictionary.txt");
             
-            for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+            for (trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
             {
-                Tracking<FS_TYPE>::track_t *track = tmi->second;
+                track_t *track = tmi->second;
                 
                 dict << "Track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
                 
                 size_t i = 0;
                 
-                for ( Tracking<FS_TYPE>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+                for ( track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
                 {
-                    dict << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
+                    dict << "\t[" << i++ << "] x=" << ti->center() << endl;
                 }
             }
             
@@ -647,11 +534,9 @@ int main(int argc, char** argv)
         
         // Iterate over the collated tracks
         
-        for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        for (trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
-            size_t points_processed = 0;
-            
-            Tracking<FS_TYPE>::track_t *track = tmi->second;
+            track_t *track = tmi->second;
             
             size_t track_length = track->size();
             
@@ -692,28 +577,28 @@ int main(int argc, char** argv)
             // Skip the rest if cumulative size statistics and cluster / speed
             // stats are all off
             
-            if (!create_cumulated_size_statistics && !create_cluster_statistics && !create_speed_statistics && !create_direction_statistics)
+            if (!create_cluster_statistics && !create_speed_statistics && !create_direction_statistics)
             {
                 continue;
             }
 
             // For each track, create an array index. Start with empty index.
             
-            ArrayIndex<FS_TYPE> index(coord_system,false);
+            // ArrayIndex<FS_TYPE> index(coord_system,false);
             
             // Iterate over the clusters in the track and sum up
             
-            Tracking<FS_TYPE>::track_t::iterator ti;
+            track_t::iterator ti;
             
-            Cluster<FS_TYPE>::ptr previous_cluster = NULL;
+            ConradCluster<FS_TYPE> *previous_cluster = NULL;
             
             for (ti = track->begin(); ti != track->end(); ++ti)
             {
-                Cluster<FS_TYPE>::ptr cluster = &(*ti);
+                ConradCluster<FS_TYPE> *cluster = &(*ti);
                 
                 if (create_cluster_statistics)
                 {
-                    size_t cluster_size = cluster->points.size();
+                    size_t cluster_size = cluster->numCorePixels;
                     
                     // add to histogram
                     
@@ -724,7 +609,7 @@ int main(int argc, char** argv)
                     if (exceeded_max_class)
                     {
                         cout << "Cluster #" << cluster->id
-                             << " (size " << cluster->points.size() << ")"
+                             << " (size " << cluster->numCorePixels << ")"
                              << " exceeded max cluster size"
                              << cluster_histogram_classes.back() << endl;
                     }
@@ -749,8 +634,8 @@ int main(int argc, char** argv)
                     {
                         // calculate speed in m/s. All vectors 2D at this time
                         
-                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
-                        vector<FS_TYPE> p2 = cluster->geometrical_center(2);
+                        vector<FS_TYPE> p1 = previous_cluster->center();
+                        vector<FS_TYPE> p2 = cluster->center();
                         
                         // RADOLAN is in km. -> Tranform to meters
                         FS_TYPE dS = vector_norm(p2 - p1) * 1000;
@@ -758,7 +643,7 @@ int main(int argc, char** argv)
                         // TODO: this information must come from somewhere!!
                         // => Cluster files need dT info! See ticket #227
                         
-                        FS_TYPE dT = 300.0;
+                        FS_TYPE dT = (cluster->secondsSinceEpoch() - previous_cluster->secondsSinceEpoch());
                         
                         // Average speed
                         FS_TYPE speed = dS / dT;
@@ -806,8 +691,8 @@ int main(int argc, char** argv)
                     {
                         // calculate speed in m/s. All vectors 2D at this time
                         
-                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
-                        vector<FS_TYPE> p2 = cluster->geometrical_center(2);
+                        vector<FS_TYPE> p1 = previous_cluster->center();
+                        vector<FS_TYPE> p2 = cluster->center();
                         
                         vector<FS_TYPE> dP = p1 - p2;
                         
@@ -888,114 +773,18 @@ int main(int argc, char** argv)
                 
                 previous_cluster = cluster;
 
-                // Skip the rest if cumulative size statistics are off
-                
-                if (!create_cumulated_size_statistics)
-                {
-                    continue;
-                }
-                
-                // Iterate over the points of the cluster
-                
-                Point<FS_TYPE>::list::iterator pi;
-                
-                for (pi = cluster->points.begin(); pi != cluster->points.end(); ++pi)
-                {
-                    Point<FS_TYPE>::ptr p = *pi;
-                    
-                    if (p->gridpoint.empty())
-                    {
-                        CoordinateSystem<FS_TYPE>::GridPoint gp = coord_system->newGridPoint();
-                        
-                        try
-                        {
-                            coord_system->reverse_lookup(p->coordinate, gp);
-                            p->gridpoint = gp;
-                        }
-                        catch (std::out_of_range& e)
-                        {
-                            cerr << "Reverse coordinate transformation failed for coordinate=" << p->coordinate << endl;
-                            
-                            // TODO: perhaps remove this point?
-                            continue;
-                        }
-                    }
-                    
-                    Point<FS_TYPE>::ptr indexed = index.get(p->gridpoint);
-                    
-                    if (indexed==NULL)
-                    {
-                        index.set(p->gridpoint, p);
-                        
-                        indexed = index.get(p->gridpoint);
-                    }
-                    
-                    // only add up the value range
-                    
-                    for (size_t k = p->gridpoint.size(); k < indexed->values.size(); k++)
-                    {
-                        indexed->values[k] += p->values[k];
-                    }
-                    
-                    points_processed++;
-                }
-            }
-            
-            // Extract the point list
-            
-            Point<FS_TYPE>::list cumulatedList;
-            
-            index.replace_points(cumulatedList);
-            
-            // Count the number of tracks with the given size, where
-            // size is the number of points in it's cumulative list
-            
-            size_t track_size = cumulatedList.size();
-            
-            map<size_t,size_t>::iterator tlfi = track_sizes.find(track_size);
-            
-            if (tlfi==track_sizes.end())
-            {
-                track_sizes[track_size] = 1;
-            }
-            else
-            {
-                track_sizes[track_size] = (tlfi->second + 1);
-            }
-            
-            // Update histogram
-            
-            bool exceeded_max_class = false;
-
-            add_value_to_histogram(size_histogram_classes, size_histogram, track_size, exceeded_max_class);
-            
-            // Write out the cumulative file as netcdf and vtk
-            
-            // VTK
-            
-            if (write_cumulated_tracks_as_vtk)
-            {
-                string vtk_path = basename + "_cumulated_track_"+boost::lexical_cast<string>(tmi->first)+".vtk";
-                
-                ::cfa::meanshift::visit::VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>() );
             }
             
             // Don't need it anymore
             
             delete track;
-            
-            index.clear(true);
-            
-            // NETCDF
-            
-            cout <<"\t(processed " << points_processed << " points)" << endl;
         }
         
         cout << "done." << endl;
         
         // Write out statistical data in file file(s)
         
-        string file_fn = basename+"_trackstats.txt";
+        string file_fn = basename + "conrad_trackstats.txt";
         
         ofstream file(file_fn.c_str());
         
@@ -1070,8 +859,8 @@ int main(int argc, char** argv)
             
             if (write_gnuplot_files)
             {
-                write_histogram("lengths-hist.txt", "number of tracks", "track length", length_histogram_classes, length_histogram);
-                write_values<size_t>("lengths.txt", "number of tracks", "track length", track_lengths);
+                write_histogram("conrad_lengths-hist.txt", "number of tracks", "track length", length_histogram_classes, length_histogram);
+                write_values<size_t>("conrad_lengths.txt", "number of tracks", "track length", track_lengths);
             }
         }
         
@@ -1125,8 +914,8 @@ int main(int argc, char** argv)
             
             if (write_gnuplot_files)
             {
-                write_histogram("speeds-hist.txt", "number of clusters", "speed [m/s]", speed_histogram_classes, speed_histogram);
-                write_values<float>("speeds.txt", "number of clusters", "speed in [m/s]", speeds);
+                write_histogram("conrad_speeds-hist.txt", "number of clusters", "speed [m/s]", speed_histogram_classes, speed_histogram);
+                write_values<float>("conrad_speeds.txt", "number of clusters", "speed in [m/s]", speeds);
             }
 
         }
@@ -1177,13 +966,12 @@ int main(int argc, char** argv)
             
             if (write_gnuplot_files)
             {
-                write_histogram("directions-hist.txt", "number of clusters", "direction in [deg]", direction_histogram_classes, direction_histogram);
-                write_values<float>("directions.txt", "number of clusters", "direction in [deg]", directions);
+                write_histogram("conrad_directions-hist.txt", "number of clusters", "direction in [deg]", direction_histogram_classes, direction_histogram);
+                write_values<float>("conrad_directions.txt", "number of clusters", "direction in [deg]", directions);
             }
 
         }
 
-        
         //
         // Cluster sizes
         //
@@ -1236,74 +1024,10 @@ int main(int argc, char** argv)
             
             if (write_gnuplot_files)
             {
-                write_histogram("sizes-hist.txt", "number of clusters", "size [#gridpoints]", cluster_histogram_classes, cluster_histogram);
-                write_values("sizes.txt", "number of clusters", "size [#gridpoints]", cluster_sizes);
+                write_histogram("conrad_sizes-hist.txt", "number of clusters", "size [#gridpoints]", cluster_histogram_classes, cluster_histogram);
+                write_values("conrad_sizes.txt", "number of clusters", "size [#gridpoints]", cluster_sizes);
             }
-
         }
-
-        //
-        // Cumulative track stats
-        //
-        
-        if (create_cumulated_size_statistics)
-        {
-            // size of tracks (in terms of cumulative pixels)
-            
-            file << endl;
-            cout << endl;
-
-            file << "------------------------------------------------" << endl;
-            cout << "------------------------------------------------" << endl;
-
-            file << "Track size distribution" << endl;
-            cout << "Track size distribution" << endl;
-            
-            file << "------------------------------------------------" << endl;
-            cout << "------------------------------------------------" << endl;
-
-            double avg = average<size_t>(track_sizes,false);
-            file << "(Average track size = " << avg << ")" << endl;
-            cout << "(Average track size = " << avg << ")" << endl;
-            
-            map<size_t, size_t>::reverse_iterator rend = track_sizes.rbegin();
-            file << "(Maximum track size = " << rend->first << ")" << endl;
-            cout << "(Maximum track size = " << rend->first << ")" << endl;
-
-            file << "size,number" << endl;
-            cout << "size,number" << endl;
-            
-            map<size_t,size_t>::iterator si;
-            
-            for (si=track_sizes.begin(); si!=track_sizes.end(); si++)
-            {
-                file << si->first << "," << si->second << endl;
-                cout << si->first << "," << si->second << endl;
-            }
-            
-            file << endl;
-            cout << endl;
-            
-            file << "Size Histogram:" << endl;
-            cout << "Size Histogram:" << endl;
-            
-            file << "max size,number" << endl;
-            cout << "max size,number" << endl;
-            
-            print_histogram(size_histogram_classes,size_histogram,file);
-            
-            if (write_gnuplot_files)
-            {
-                write_histogram("cumulative-sizes-hist.txt", "number of tracks", "size [#gridpoints]", size_histogram_classes, size_histogram);
-                write_values<size_t>("cumulative-sizes.txt", "number of tracks", "size [#gridpoints]", track_sizes);
-            }
-
-        }
-        
-        // close the cluster file we used to get the coordinate
-        // system data
-        
-        delete coords_file;
     }
     else
     {

@@ -1,5 +1,5 @@
-#ifndef _M3D_DefaultWeightFunction_H_
-#define _M3D_DefaultWeightFunction_H_
+#ifndef _M3D_BrightBandWeight_H_
+#define _M3D_BrightBandWeight_H_
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
@@ -7,25 +7,30 @@
 #include <netcdf>
 #include <vector>
 #include <map>
+
 #include <cf-algorithms/cf-algorithms.h>
 
 namespace m3D { namespace weights {
     
     using namespace netCDF;
     using namespace ::m3D;
+    using namespace cfa::array;
     using std::vector;
     using std::map;
     using cfa::utils::CoordinateSystem;
-    using cfa::array::MultiArray;
-    
+
+    /** Draft of a weight function designed to facilitate 
+     * bright band detection
+     */
     template <class T>
-    class DefaultWeightFunction : public cfa::utils::WeightFunction<T>
+    class BrightBandWeight : public cfa::utils::WeightFunction<T>
     {
-    protected:
+    private:
         
         vector<NcVar>       m_vars;     // variables for weighting
         map<size_t,T>       m_min;      // [index,min]
         map<size_t,T>       m_max;      // [index,max]
+        
         MultiArray<T>       *m_weight;
         CoordinateSystem<T> *m_coordinate_system;
         
@@ -36,7 +41,7 @@ namespace m3D { namespace weights {
             {
                 Point<T> *p = fs->points[i];
                 
-                T saliency = compute_weight(p);
+                T saliency = this->compute_weight(p);
                 
                 m_weight->set(p->gridpoint, saliency);
             }
@@ -48,9 +53,9 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        DefaultWeightFunction(FeatureSpace<T> *fs)
+        BrightBandWeight(FeatureSpace<T> *fs)
         : m_vars(fs->variables())
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
             // Get original limits
@@ -72,19 +77,17 @@ namespace m3D { namespace weights {
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        DefaultWeightFunction(FeatureSpace<T> *fs,
-                              const map<size_t,T> &min,
-                              const map<size_t,T> &max)
+        BrightBandWeight(FeatureSpace<T> *fs, const map<size_t,T> &min, const map<size_t,T> &max)
         : m_vars(fs->variables())
         , m_min(min)
         , m_max(max)
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
             build_saliency_field(fs);
         }
         
-        ~DefaultWeightFunction()
+        ~BrightBandWeight()
         {
             if (this->m_weight != NULL) {
                 delete m_weight;
@@ -94,7 +97,7 @@ namespace m3D { namespace weights {
         
         /** Actual weight computation happens here
          */
-        virtual T compute_weight(Point<T> *p)
+        T compute_weight(Point<T> *p)
         {
             T sum = 0.0;
             
@@ -106,18 +109,15 @@ namespace m3D { namespace weights {
                 
                 T value = p->values[p->coordinate.size()+var_index];
                 
-                // value scaled to [0..1]
-                
-                T range = (m_max.at(var_index) - m_min.at(var_index));
-                
-                T var_weight = (value - m_min.at(var_index)) / range;
-                
-                if (var_weight > 1)
+                if (var.getName() == "zh")
                 {
-                    cerr << "ERROR: weight function at " << p->coordinate << " returns " << var_weight << endl;
                 }
-
-                sum += var_weight; //pow(var_weight, 1.0);
+                else if (var.getName() == "zdr")
+                {
+                }
+                else if (var.getName() == "kdp")
+                {
+                }
             }
             
             return sum;
@@ -137,6 +137,8 @@ namespace m3D { namespace weights {
             catch (std::out_of_range& e)
             {
                 cerr << "Reverse coordinate transformation failed for coordinate=" << values << endl;
+                
+                return 0.0;
             }
             
             return m_weight->get(gp);
@@ -146,14 +148,10 @@ namespace m3D { namespace weights {
         {
             return m_weight->get(p->gridpoint);
         }
-
-        T operator()(const vector<int> &gridpoint) const
-        {
-            return m_weight->get(gridpoint);
-        }
-        
         
     };
+
+    
 }}
 
 #endif

@@ -22,23 +22,48 @@ namespace m3D { namespace weights {
     {
     private:
         
-        vector<NcVar>       m_vars;     // variables for weighting
-        map<size_t,T>       m_min;      // [index,min]
-        map<size_t,T>       m_max;      // [index,max]
-        cfa::utils::ScalarIndex<T,T>      m_weight;
+        vector<NcVar>       m_vars;             // variables for weighting
+        map<size_t,T>       m_min;              // [index,min]
+        map<size_t,T>       m_max;              // [index,max]
+        MultiArray<T>       *m_weight;
         CoordinateSystem<T> *m_coordinate_system;
         
+        // Weight function with range weight
+        
+        PointIndex<T>       *m_index;           // index for range search
+        vector<T>           m_bandwidth;        // bandwidth for range weight
+        SearchParameters    *m_search_params;   // search params for search
+        Kernel<T>           *m_kernel;          // kernel for weighing 
+                
         void
         build_saliency_field(FeatureSpace<T> *fs)
         {
+            size_t spatial_dim = fs->coordinate_system->size();
+            
+            vector<size_t> indexes(spatial_dim);
+            
+            for (size_t i=0; i<spatial_dim; i++) indexes[i]=i;
+
+            m_index = PointIndex<T>::create( &fs->points, indexes );
+            
+            m_kernel = new GaussianNormalKernel<T>(vector_norm(m_bandwidth));
+            
+            m_search_params = new RangeSearchParams<T>(m_bandwidth);
+            
             for (size_t i=0; i < fs->points.size(); i++)
             {
                 Point<T> *p = fs->points[i];
                 
                 T saliency = this->compute_weight(p);
                 
-                m_weight.set(p->gridpoint, saliency);
+                m_weight->set(p->gridpoint, saliency);
             }
+            
+            delete m_index;
+            
+            delete m_kernel;
+            
+            delete m_search_params;
         };
         
     public:
@@ -47,10 +72,12 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        OASEWeightFunction(FeatureSpace<T> *fs)
+        OASEWeightFunction(FeatureSpace<T> *fs, 
+                                const vector<T> &bandwidth)
         : m_vars(fs->variables())
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
+        , m_bandwidth(bandwidth)
         {
             // Get original limits
             
@@ -71,57 +98,79 @@ namespace m3D { namespace weights {
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        OASEWeightFunction(FeatureSpace<T> *fs, const map<size_t,T> &min, const map<size_t,T> &max)
+        OASEWeightFunction(FeatureSpace<T> *fs, 
+                                const vector<T> &bandwidth,
+                                const map<size_t,T> &min, 
+                                const map<size_t,T> &max)
         : m_vars(fs->variables())
         , m_min(min)
         , m_max(max)
-        , m_weight(cfa::utils::ScalarIndex<T,T>(fs->coordinate_system,0.0))
+        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
+        , m_bandwidth(bandwidth)
         {
             build_saliency_field(fs);
         }
         
-        /** Actual weight computation happens here
-         */
-        T compute_weight(Point<T> *p)
+        ~OASEWeightFunction()
+        {
+            if (this->m_weight != NULL) {
+                delete m_weight;
+                m_weight=NULL;
+            }
+        }
+
+        
+        /** Calculate the unweighed weight at point p
+        */
+        T raw_weight_at(Point<T> *p)
         {
             T sum = 0.0;
-            
+
             const float msevi_l2_nwcsaf_ct_multiplier = 1.0;
             const float cband_radolan_rx_multiplier = 10.0;
             const float linet_oase_tl_multiplier = 10.0;
-            
-            
+
             size_t num_vars = p->values.size() - p->coordinate.size();
-            
+
             for (size_t var_index = 0; var_index < num_vars; var_index++)
             {
                 NcVar var = m_vars[var_index];
-                
+
                 T value = p->values[p->coordinate.size()+var_index];
-                
+
                 if (var.getName() == "cband_radolan_rx")
                 {
                     // varies from 0 .. 1. Multiplier 10x
-                    
+
                     T rx_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
 
                     sum += cband_radolan_rx_multiplier * rx_weight;
                 }
-//                else if (var.getName() == "msevi_l2_cmsaf_cot")
-//                {
-//                    T cot_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
-//                    sum += cot_weight;
-//                    
-//                }
+                else if (var.getName() == "msevi_l2_cmsaf_cot")
+                {
+                    T cot_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                    sum += cot_weight;
+                }
+                else if (var.getName() == "msevi_l15_ir_108")
+                {
+                    T ir_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
+                    sum += ir_weight;
+                }
                 else if (var.getName() == "msevi_l2_nwcsaf_ct")
                 {
 //                    
 //                    http://www.nwcsaf.org/HTMLContributions/CT/Prod_CT.htm
-//                    0   non-processed 	containing no data or corrupted data
-//                    1	cloud free land 	no contamination by snow/ice covered surface, no contamination by clouds ; but contamination by thin dust/volcanic clouds not checked
-//                    2	cloud free sea 	no contamination by snow/ice covered surface, no contamination by clouds ; but contamination by thin dust/volcanic clouds not checked
-//                    3	 land contaminated by snow
+//                    0  non-processed          containing no data or corrupted data
+//                    
+//                    1	cloud free land 	no contamination by snow/ice covered surface, 
+//                                              no contamination by clouds ; but contamination 
+//                                              by thin dust/volcanic clouds not checked
+//                    
+//                    2	cloud free sea          no contamination by snow/ice covered surface, 
+//                                              no contamination by clouds ; but contamination 
+//                                              by thin dust/volcanic clouds not checked
+//                    3	land contaminated by snow
 //                    4	sea contaminated by snow/ice
 //                    5	very low and cumuliform clouds
 //                    6	very low and stratiform clouds
@@ -143,9 +192,9 @@ namespace m3D { namespace weights {
                     // weight: low = 1 point, medium = 1.5 points, high = 2 points, very high = 2.5 points.
                     //          stratiform = x1 cumulus = x2
                     // weight from 0 .. 5, multiplier 1x
-                    
+
                     float height_factor = 0.0;
-                    
+
                     if (value >= 7 && value <= 8)
                         height_factor = 1.0;
                     else if (value >= 9 && value <= 10)
@@ -154,24 +203,24 @@ namespace m3D { namespace weights {
                         height_factor = 2.0;
                     else if (value >= 13 && value <= 14)
                         height_factor = 2.5;
-                    
+
                     // default = stratiform
                     float type_multiplier = 1.0;
-                    
+
                     // double for cumuliform
                     if (value==7 || value==11 || value==13)
                     {
                         type_multiplier = 2.0;
                     }
-                    
+
                     T ct_weight = height_factor * type_multiplier;
-                    
+
                     sum += msevi_l2_nwcsaf_ct_multiplier * ct_weight;
                 }
                 else if (var.getName() == "linet_oase_tl")
                 {
                     // varies from 0 .. 1. Multiplier 100x
-                    
+
                     T linet_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
                     sum += linet_oase_tl_multiplier * linet_weight;
                 }
@@ -195,9 +244,41 @@ namespace m3D { namespace weights {
 //                    
 //                    sum += var_weight;
                 }
-            }
+            }            
             
             return sum;
+        }
+        
+        /** Actual weight computation happens here
+         */
+        T compute_weight(Point<T> *p)
+        {
+            
+
+            typename Point<T>::list *neighbors = m_index->search(p->coordinate,m_search_params);
+            
+            T weight = 0;
+            
+            for (size_t pi = 0; pi < neighbors->size(); pi++)
+            {
+                typename Point<T>::ptr n = neighbors->at(pi);
+                
+                // calculate weight at that point
+                
+                T point_weight = raw_weight_at(n);
+                
+                // calculate distance between n and p
+                
+                T dist = vector_norm(p->coordinate - n->coordinate);
+                
+                // calculate gaussian weighed sum 
+
+                weight += m_kernel->apply(dist) * point_weight;
+            }
+            
+            delete neighbors;
+            
+            return weight;
         }
         
         /** unfavorable, since it performs a reverse lookup, which is a very
@@ -218,17 +299,17 @@ namespace m3D { namespace weights {
                 return 0.0;
             }
             
-            return m_weight.get(gp);
+            return m_weight->get(gp);
         }
         
         T operator()(const typename Point<T>::ptr p) const
         {
-            return m_weight.get(p->gridpoint);
+            return m_weight->get(p->gridpoint);
         }
         
-        T operator()(const vector<size_t> &gridpoint) const
+        T operator()(const vector<int> &gridpoint) const
         {
-            return m_weight.get(gridpoint);
+            return m_weight->get(gridpoint);
         }
         
     };
