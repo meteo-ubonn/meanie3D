@@ -124,7 +124,7 @@ namespace m3D {
         {
             std::vector< ConradCluster<T> > result;
             
-            std::ifstream file(filename);
+            std::ifstream file(filename.c_str());
             
             if (file.is_open())
             {
