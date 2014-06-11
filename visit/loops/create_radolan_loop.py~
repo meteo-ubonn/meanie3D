@@ -97,6 +97,21 @@ for netcdf_file in netcdf_list:
     p.opacity=1.0
     
     if VAR_NAME == "RX":
+<<<<<<< HEAD
+=======
+        
+        AddOperator("Threshold")
+        t = ThresholdAttributes();
+        t.lowerBounds=(0)
+        t.upperBounds=(65)
+        SetOperatorOptions(t)
+
+        cp=PseudocolorAttributes();
+        cp.minFlag,cp.maxFlag = 1,1
+        cp.min,cp.max = 0,65.0
+        SetPlotOptions(cp)
+
+>>>>>>> 47c6aa2b9f8a24fbb061610c4af0acd45a0b5351
         
         p.minFlag,p.maxFlag = 1,1
         p.min,p.max = RX_MIN,RX_MAX
