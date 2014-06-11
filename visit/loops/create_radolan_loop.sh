@@ -28,10 +28,16 @@ fi
 #DL_PATH=$MEANIE3D_HOME/Release
 DL_PATH=/usr/local/lib
 
-SCRIPTFILE="/tmp/tracking-$RANDOM.py"
+SCRIPTFILE="/tmp/radolanloop-$RANDOM.py"
 ESCAPED_SOURCE_DIR=$(echo $1 | sed -e "s/\//\\\\\//g")
 ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 ESCAPED_DL_PATH=$(echo $DL_PATH | sed -e "s/\//\\\\\//g")
 
-cat $MEANIE3D_HOME/visit/create_radolan_loop.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" | sed -e "s/RADOLAN_VAR_NAME/$2/g" > $SCRIPTFILE
-${VISIT_EXECUTABLE} -cli -nowin -s $SCRIPTFILE
+cat $MEANIE3D_HOME/visit/loops/create_radolan_loop.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" | sed -e "s/RADOLAN_VAR_NAME/$2/g" > $SCRIPTFILE
+
+if [ "${RUN_VISIT_HEADLESS}" = "true" ]
+then
+    ${VISIT_EXECUTABLE} -cli -nowin -s ${SCRIPTFILE}
+else
+    ${VISIT_EXECUTABLE} -s ${SCRIPTFILE}
+fi
