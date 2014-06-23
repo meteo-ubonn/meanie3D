@@ -21,10 +21,19 @@ from subprocess import call
 
 # General parameters
 VAR_NAME = "RX"
-VAR_MIN = 20;
-#VAR_MIN = 35;
-#VAR_MIN = 46;
+VAR_MIN = 15;
 VAR_MAX = 65;
+
+# Control
+
+WITH_BACKGROUND_GRADIENT=False
+WITH_TOPOGRAPHY=False
+WITH_RIVERS_AND_BOUNDARIES=True
+WITH_SOURCE_BACKROUND=False
+WITH_DATETIME=True
+
+CREATE_SOURCE_MOVIE=False
+CREATE_CLUSTERS_MOVIE=True
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
@@ -36,11 +45,11 @@ CONVERSION_PARAMS += " --vtk-dimensions x,y"
 #-f herz-oase-20120805t1510utc-0500m-bonnjue-3d-v01a_clusters.nc "
 
 # binaries
-DYLD_LIBRARY_PATH="/usr/local/lib"
+DYLD_LIBRARY_PATH="/usr/local/lib:/usr/lib"
 bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
 conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
-print "Conversion Command:"
-print conversion_bin
+#conversion_bin = "/usr/local/bin/" + "meanie3D-cfm2vtk"
+print "Conversion Command:" + conversion_bin + " " + CONVERSION_PARAMS
 
 # Silent
 SuppressMessages(True)
@@ -59,21 +68,20 @@ a.userInfoFlag=0
 a.timeInfoFlag=0
 SetAnnotationAttributes(a)
 
-print a
-
 # Add gray/black background gradient
-visitUtils.add_background_gradient();
+if WITH_BACKGROUND_GRADIENT:
+    visitUtils.add_background_gradient();
 
-print "Cleaning up *.vtk *.vtr *.png"
-return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
+print "Cleaning up *.vt* tracking_*.png source_*.png"
+return_code=call("rm -f *.vt* tracking_*.png source_*.png", shell=True)
 
 # Set view to nationwide composite
 visit2D.set_view_to_radolan();
 
 print "-- Creating colortables ---"
 num_colors = visitUtils.create_cluster_colortable("cluster_colors")
-visitUtils.create_topography_colortable()
-print "    done."
+#visitUtils.create_topography_colortable()
+#print "    done."
 
 # Glob the netcdf directory
 netcdf_files = sorted(glob.glob(NETCDF_DIR+"/*.nc"));
@@ -103,80 +111,104 @@ for netcdf_file in netcdf_files:
         print "Cluster file does not exist. Skipping."
         continue
 
-    # add topograpy
-    visit2D.add_topography("national_topo_2D")
+    # plot source data?
 
-    # now plot the data
     OpenDatabase(netcdf_file);
 
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
+    if CREATE_SOURCE_MOVIE:
 
-    # Re-add the source with "xray"
-    visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",0.75,1)
-    p = PseudocolorAttributes()
-    p.minFlag,p.maxFlag=1,1
-    p.min,p.max=VAR_MIN,VAR_MAX
-    SetPlotOptions(p)
-    DrawPlots();
+        if WITH_TOPOGRAPHY:
+            print "-- Adding topography data --"
+            visit2D.add_topography("national_topo_2D")
 
-    AddOperator("Threshold")
-    t = ThresholdAttributes();
-    t.lowerBounds=(VAR_MIN)
-    t.upperBounds=(VAR_MAX)
-    SetOperatorOptions(t)
+        if WITH_RIVERS_AND_BOUNDARIES:
+            print "-- Adding map data --"
+            visit2D.add_map_rivers("national")
+            visit2D.add_map_borders("national")
+            
+        if WITH_DATETIME:
+            print "-- Adding timestamp --"
+            visitUtils.add_datetime(netcdf_file)
 
-    DrawPlots()
-    visitUtils.save_window("source_",1)
-    image_count=image_count+1;
+        print "-- Plotting source data --"
+        start_time = time.time()
 
-    DeleteAllPlots()
-    ClearWindow()
+        visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",1.0,1)
+        p = PseudocolorAttributes()
+        p.minFlag,p.maxFlag=1,1
+        p.min,p.max=VAR_MIN,VAR_MAX
+        SetPlotOptions(p)
+        DrawPlots();
 
-    start_time = time.time()
-    print "-- Converting clusters to .vtr --"
+        AddOperator("Threshold")
+        t = ThresholdAttributes();
+        t.lowerBounds=(VAR_MIN)
+        t.upperBounds=(VAR_MAX)
+        SetOperatorOptions(t)
 
-    # build the clustering command
-    command=conversion_bin+" -f "+cluster_file+" "+CONVERSION_PARAMS
-    print command
-    return_code = call( command, shell=True)
+        DrawPlots()
+        visitUtils.save_window("source_",1)
+        image_count=image_count+1;
 
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
-    print "-- Rendering cluster scene --"
-    start_time = time.time()
+        DeleteAllPlots()
+        ClearWindow()
 
-    # add 2D topograpy
-    visit2D.add_topography("national_topo_2D")
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
 
-    # re-plot source data as canvas
-    # visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.33, 0 )
+    if CREATE_CLUSTERS_MOVIE:
 
-    # threshold as before
-    #AddOperator("Threshold")
-    #t = ThresholdAttributes();
-    #t.lowerBounds=(VAR_MIN)
-    #t.upperBounds=(VAR_MAX)
-    #SetOperatorOptions(t)
-    
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
+        start_time = time.time()
+        print "-- Converting clusters to .vtr --"
 
-    # Add the clusters
-    basename = CLUSTER_DIR+"/"
-    visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
+        # build the clustering command
+        command=conversion_bin+" -f "+cluster_file+" "+CONVERSION_PARAMS
+        print command
+        return_code = call( command, shell=True)
 
-    # or the boundaries
-    #visit2D.add_boundaries(basename,"cluster_colors",num_colors)
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
 
-    # Add modes as labels
-    visitUtils.add_labels(label_file,"geometrical_center")
+        if WITH_TOPOGRAPHY:
+            print "-- Adding topography data --"
+            visit2D.add_topography("national_topo_2D")
 
-    # save as image
-    DrawPlots()
-    visitUtils.save_window("tracking_",1)
-    image_count=image_count+1;
+        if WITH_RIVERS_AND_BOUNDARIES:
+            print "-- Adding map data --"
+            visit2D.add_map_rivers("national")
+            visit2D.add_map_borders("national")
 
-    print "    done. (%.2f seconds)" % (time.time()-start_time)
+        if WITH_DATETIME:
+            print "-- Adding timestamp --"
+            visitUtils.add_datetime(netcdf_file)
+
+        print "-- Rendering cluster scene --"
+        start_time = time.time()
+        
+        if WITH_SOURCE_BACKROUND:
+
+            # re-plot source data as canvas
+            visit2D.add_pseudocolor(netcdf_file, VAR_NAME, "gray", 0.33, 0 )
+
+            # threshold as before
+            AddOperator("Threshold")
+            t = ThresholdAttributes();
+            t.lowerBounds=(VAR_MIN)
+            t.upperBounds=(VAR_MAX)
+            SetOperatorOptions(t)
+        
+        # Add the clusters
+        basename = CLUSTER_DIR+"/"
+        visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
+
+        # Add modes as labels
+        visitUtils.add_labels(label_file,"geometrical_center")
+
+        # save as image
+        DrawPlots()
+
+        visitUtils.save_window("tracking_",1)
+        image_count=image_count+1;
+
+        print "    done. (%.2f seconds)" % (time.time()-start_time)
 
     # clean up
     DeleteAllPlots();
@@ -194,10 +226,13 @@ for netcdf_file in netcdf_files:
         CloseComputeEngine()
 
 # create loops
-visitUtils.create_movie("source_","source.gif")
-visitUtils.create_movie("source_","source.m4v")
-visitUtils.create_movie("tracking_","tracking.gif")
-visitUtils.create_movie("tracking_","tracking.m4v")
+if CREATE_SOURCE_MOVIE:
+    visitUtils.create_movie("source_","source.gif")
+    visitUtils.create_movie("source_","source.m4v")
+
+if  CREATE_CLUSTERS_MOVIE:
+    visitUtils.create_movie("tracking_","tracking.gif")
+    visitUtils.create_movie("tracking_","tracking.m4v")
 
 # clean up
 print "Cleaning up ..."
@@ -205,4 +240,4 @@ return_code=call("mkdir images", shell=True)
 return_code=call("mv *.png images", shell=True)
 return_code=call("mkdir movies", shell=True)
 return_code=call("mv *.gif *.m4v movies", shell=True)
-return_code=call("rm -f *.vt*", shell=True)
+return_code=call("rm -f *.vt* visitlog.py", shell=True)

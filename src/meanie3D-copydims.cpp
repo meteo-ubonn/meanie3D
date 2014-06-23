@@ -274,7 +274,7 @@ int main(int argc, char** argv)
                         
                         // Copy the variable
                         
-                        size_t size = num_vals(original_var);
+                        size_t size = cfa::utils::netcdf::num_vals(original_var);
 
                         // create a copy
                         

@@ -30,6 +30,8 @@ namespace m3D {
      * At the same time, this class represents a serialized form of a list of clusters
      * to be used in further processing, such as tracking. Serialization/Deserialization
      * to and from files are done using the read/write methods.
+     *
+     * TODO: decouple the cluster list from the NetCDF layer
      */
     template <class T>
     class ClusterList
@@ -174,7 +176,7 @@ namespace m3D {
                     const vector<NcVar> &variables,
                     const string& sourcefile )
         : ncFile(NULL)
-        , feature_variables(variables)
+        , feature_variables(feature_variables)
         , dimensions(dims)
         , source_file(sourcefile)
         , clusters(list)

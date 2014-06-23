@@ -56,7 +56,8 @@ def add_labels(file,variable):
     #a.numberOfLabels = 200
     a.specifyTextColor1 = 0
     a.textColor1 = (255, 0, 0, 0)
-    a.textHeight1 = 0.035
+    #a.textHeight1 = 0.035
+    a.textHeight1 = 0.02
     #a.specifyTextColor2 = 0
     #a.textColor2 = (0, 0, 255, 0)
     #a.textHeight2 = 0.03

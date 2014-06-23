@@ -25,13 +25,16 @@ last_completed_run_count = 0
 # RADOLAN
 
 VAR_NAME="RX"
+VAR_MIN=15
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds RX=46 -m 15"
+DETECT_PARAMS     += " --lower-thresholds RX="+str(VAR_MIN)
+DETECT_PARAMS     += " -m 15"
 
 CLUSTERING_PARAMS =  "-d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " --verbosity 1"
 CLUSTERING_PARAMS += " --weight-function default"
+CLUSTERING_PARAMS += " --wwf-lower-threshold 0"
 #CLUSTERING_PARAMS += " --write-variables-as-vtk="+VAR_NAME
 #CLUSTERING_PARAMS += " --write-clusters-as-vtk"
 #CLUSTERING_PARAMS += " --write-cluster-centers"

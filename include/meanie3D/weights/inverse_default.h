@@ -48,9 +48,10 @@ namespace m3D { namespace weights {
          * @param featurespace
          */
         InverseDefaultWeightFunction(FeatureSpace<T> *fs,
+                                     const NetCDFDataStore<T> *data_store,
                                      const map<int,double> &lower_thresholds,
                                      const map<int,double> &upper_thresholds)
-        : m_vars(fs->variables())
+        : m_vars(data_store->variables())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
@@ -96,9 +97,10 @@ namespace m3D { namespace weights {
          * @param map of upper bounds
          */
         InverseDefaultWeightFunction(FeatureSpace<T> *fs,
+                                     const NetCDFDataStore<T> *data_store,
                                      const map<size_t,T> &min,
                                      const map<size_t,T> &max)
-        : m_vars(fs->variables())
+        : m_vars(data_store->variables())
         , m_min(min)
         , m_max(max)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))

@@ -25,15 +25,13 @@ print "M3D_HOME="+M3D_HOME
 
 print "Setting rendering attributes"
 r = RenderingAttributes()
-print r
 r.geometryRepresentation = r.Points;
-print r
 SetRenderingAttributes(r);
 
 print ColorTableNames()
 
-print "Setting annotation attributes:"
-visit2D.set_annotations()
+#print "Setting annotation attributes:"
+#visit2D.set_annotations()
 
 print "Cleaning up *.vtk *.vtr *.png *.gif"
 return_code=call("rm -f *.vtk *.vtr *.png *.gif", shell=True)

@@ -32,10 +32,12 @@
 
 using namespace std;
 using namespace boost;
+using namespace netCDF;
+
 using namespace cfa::meanshift;
 using namespace cfa::utils::visit;
+using namespace cfa::utils::netcdf;
 using namespace cfa::utils::vectors;
-using namespace netCDF;
 using namespace m3D::utils::visit;
 using namespace m3D::utils;
 using namespace m3D::weights;
@@ -819,15 +821,20 @@ int main(int argc, char** argv) {
 
     // TODO: threshold should be applied as a filter somehow
     // this approach seems a little half-cocked
+    
+    NetCDFDataStore<FS_TYPE> *data_store
+        = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variables,time_index);
 
-    FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename,
-            coord_system,
-            variables,
-            time_index,
-            lower_thresholds,
-            upper_thresholds,
-            replacement_values,
-            show_progress);
+    bool omit_value_range = false;
+    
+    FeatureSpace<FS_TYPE> *fs
+        = new FeatureSpace<FS_TYPE>(coord_system,
+                                    data_store,
+                                    omit_value_range,
+                                    lower_thresholds,
+                                    upper_thresholds,
+                                    replacement_values,
+                                    show_progress);
 
     // if ranges are not explicitly given, figure the out
     // based on scale
@@ -846,9 +853,8 @@ int main(int argc, char** argv) {
 
         // value range
 
-        for (size_t i = 0; i < variables.size(); i++) {
-            FS_TYPE range = fs->valid_max().at(i) - fs->valid_min().at(i);
-
+        for (size_t i = 0; i < data_store->rank(); i++) {
+            FS_TYPE range = data_store->valid_max().at(i) - data_store->valid_min().at(i);
             ranges.push_back(range);
         }
 
@@ -892,19 +898,23 @@ int main(int argc, char** argv) {
 
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs, ranges, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
+                                                              data_store,
+                                                              ranges,
+                                                              sf.get_filtered_min(),
+                                                              sf.get_filtered_max());
         }
         else if (weight_function_name == "inverse")
         {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         }
         else if (weight_function_name == "pow10")
         {
-            weight_function = new EXP10WeightFunction<FS_TYPE>(fs);
+            weight_function = new EXP10WeightFunction<FS_TYPE>(fs,data_store);
         }
         else
         {
-            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         }
 
 #if WRITE_WEIGHT_FUNCTION
@@ -932,19 +942,19 @@ int main(int argc, char** argv) {
 
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs,ranges);
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         }
         else if (weight_function_name == "inverse")
         {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, lower_thresholds, upper_thresholds);
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, lower_thresholds, upper_thresholds);
         }
         else if (weight_function_name == "pow10")
         {
-            weight_function = new EXP10WeightFunction<FS_TYPE>(fs);
+            weight_function = new EXP10WeightFunction<FS_TYPE>(fs,data_store);
         }
         else
         {
-            weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
+            weight_function = new DefaultWeightFunction<FS_TYPE>(fs,data_store);
         }
 
 #if WRITE_WEIGHT_FUNCTION
@@ -981,7 +991,9 @@ int main(int argc, char** argv) {
         if (verbosity > VerbositySilent)
             cout << "Writing featurespace-variables ...";
 
-        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables, false);
+        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs,
+                                                                          data_store->variables(),
+                                                                          vtk_variables, false);
 
         if (verbosity > VerbositySilent)
             cout << " done." << endl;
@@ -999,7 +1011,7 @@ int main(int argc, char** argv) {
     fs->weight_sample_points.push_back(sample_point);
 #endif
 
-    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs);
+    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
 
     //PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs,PointIndex<FS_TYPE>::IndexTypeRectilinearGrid);
 
@@ -1007,7 +1019,7 @@ int main(int argc, char** argv) {
     // Simple clustering
     //
 
-    ClusterOperation<FS_TYPE> cop(fs, index);
+    ClusterOperation<FS_TYPE> cop(fs, data_store, index);
 
     // estimate kernel size
 

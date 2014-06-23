@@ -981,7 +981,7 @@ namespace m3D {
                         // Neither current point nor neighbour have cluster
                         // => create new cluster
                         
-                        size_t spatial_dims = fs->coordinate_system->size();
+                        size_t spatial_dims = fs->coordinate_system->rank();
                         
                         typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,spatial_dims);
                         
@@ -1156,7 +1156,7 @@ namespace m3D {
             
             // Find the predecessor through gridded shift
             
-            size_t spatial_dims = fs->coordinate_system->size();
+            size_t spatial_dims = fs->coordinate_system->rank();
             
             vector<int> gridpoint(spatial_dims,0);
             
@@ -1190,7 +1190,7 @@ namespace m3D {
                     // Neither point has a cluster
                     // => create new one
                     
-                    typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->size());
+                    typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->rank());
                     c->id = cluster_id++;
                     c->add_point(current_point);
                     c->add_point(predecessor);
@@ -1384,7 +1384,7 @@ namespace m3D {
 
             typename Cluster<T>::ptr c = *clit;
             
-            vector<T> mode = vector<T>( fs->feature_variables().size(), 0.0);
+            vector<T> mode = vector<T>( fs->rank(), 0.0);
             
             typename Point<T>::list::iterator pi;
             
@@ -1671,7 +1671,7 @@ namespace m3D {
             std::string fn = fs->filename() + "_boundary_" + boost::lexical_cast<string>(index) + ".vtk";
             boost::replace_all( fn, "/", "_" );
             boost::replace_all( fn, "..", "" );
-            cfa::utils::VisitUtils<T>::write_pointlist_vtk(fn, &b, fs->coordinate_system->size());
+            cfa::utils::VisitUtils<T>::write_pointlist_vtk(fn, &b, fs->coordinate_system->rank());
         }
     
         std::string fn = fs->filename() + "_boundary_correlations.txt";

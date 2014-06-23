@@ -239,19 +239,36 @@ void convert_composite(const string &filename, const string& variable_name, cons
         
         variables.push_back(file->getVar(variable_name));
         
+        vector<NcVar> feature_variables(dim_vars);
+        for (size_t i=0; i<variables.size(); i++)
+            feature_variables.push_back(variables[i]);
+        
         CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>( dimensions,dim_vars );
         
         const map<int,double> lower_thresholds,upper_thresholds,fill_values;
         
-        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename, cs, variables, 0, lower_thresholds,upper_thresholds, fill_values);
+        NetCDFDataStore<FS_TYPE> *dataStore = new NetCDFDataStore<FS_TYPE>(filename, cs, variables, 0);
         
-        ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename, fs, variables);
+        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(cs,
+                                                              dataStore,
+                                                              false,
+                                                              lower_thresholds,
+                                                              upper_thresholds,
+                                                              fill_values);
+        
+
+        ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename,
+                                                                            fs,
+                                                                            feature_variables,
+                                                                            variables);
         
         delete cs;
  
         delete fs;
         
         delete file;
+        
+        delete dataStore;
     }
     catch (const netCDF::exceptions::NcException &e)
     {

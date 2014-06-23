@@ -30,6 +30,8 @@ namespace m3D {
         
     private:
         
+        NetCDFDataStore<T>          *m_data_store;
+        
         boost::progress_display     *m_progress_bar;
         size_t                      m_cluster_threadcount;
         
@@ -53,8 +55,11 @@ namespace m3D {
         void report_done();
         
         ClusterOperation(FeatureSpace<T> *fs,
+                         NetCDFDataStore<T> *data_store,
         		 	 	 PointIndex<T> *index)
-        : Operation<T>( fs, index ), m_progress_bar(NULL) {};
+        : Operation<T>( fs, index )
+        , m_progress_bar(NULL)
+        , m_data_store(data_store) {};
         
         virtual ~ClusterOperation() {}
         

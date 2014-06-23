@@ -6,6 +6,8 @@
 #include <cf-algorithms/cf-algorithms.h>
 #include <meanie3D/utils/visit.h>
 
+#include <vector>
+
 namespace m3D {
 
 	using namespace cfa::meanshift;
@@ -114,10 +116,16 @@ namespace m3D {
             
             m_progress_bar = new boost::progress_display( this->feature_space->size() );
         }
+        
+        // Compose featur-variables
+        
+        std::vector<NcVar> feature_variables(this->feature_space->coordinate_system->dimension_variables());
+        for (size_t i=0; i<this->m_data_store->rank(); i++)
+            feature_variables.push_back(this->m_data_store->variables()[i]);
 
-        ClusterList<T> cluster_list(this->feature_space->feature_variables(),
+        ClusterList<T> cluster_list(feature_variables,
                                     this->feature_space->coordinate_system->dimensions(),
-                                    this->feature_space->filename());
+                                    this->m_data_store->filename());
         
         // Guard against empty feature-space
         

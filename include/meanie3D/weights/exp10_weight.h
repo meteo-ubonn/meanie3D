@@ -45,8 +45,9 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        EXP10WeightFunction(FeatureSpace<T> *fs)
-        : m_vars(fs->variables())
+        EXP10WeightFunction(FeatureSpace<T> *fs,
+                            const NetCDFDataStore<T> *data_store)
+        : m_vars(data_store->variables())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {

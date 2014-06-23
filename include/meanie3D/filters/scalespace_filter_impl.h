@@ -116,7 +116,11 @@ namespace m3D {
             {
                 // recurse
 
-                applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, dimensionIndex+1, gridpoint);
+                applyWithArrayIndexRecursive(fs, originalIndex,
+                                             filteredPoints,
+                                             dimensionIndexes,
+                                             dimensionIndex+1,
+                                             gridpoint);
             }
             else
             {
@@ -127,154 +131,143 @@ namespace m3D {
                     m_progress_bar->operator++();
                 }
 
-// #pragma omp parallel for
-                for (int varIndex=0; varIndex < fs->variables().size(); varIndex++)
+                // exclude points that were off limits
+                // in any of the original data sets
+
+                if (fs->off_limits()->get(gridpoint))
                 {
-                    // exclude points that were off limits
-                    // in any of the original data sets 
-                    
-                    if (fs->off_limits()->get(gridpoint))
-                    {
-                        continue;
-                    }
-                    
-                    // threshold at weight function response of 1.0
-                    
-                    ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
-                    
-                    // Find the boundaries. Take care not to step
-                    // outside the bounds of the array
-                    
-                    int width = g.values().size() - 1;
-                    
-                    int gpIndex = (int)gridpoint[realDimIndex];
-                    
-                    int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
-                    
-                    int maxIndex = ((gpIndex + width) < (dim.getSize()-1)) ? (gpIndex + width) : (dim.getSize()-1);
-                    
-                    // Convolute in 1D around the given point with
-                    // the mask size determined by the kernel
-                    // Run the convolution for each feature variable
-                    
-                    typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
+                    continue;
+                }
+
+                ScaleSpaceKernel<T> g = this->m_kernels[realDimIndex];
                 
-                    T sum = 0.0;
+                // Find the boundaries. Take care not to step
+                // outside the bounds of the array
+                
+                int width = g.values().size() - 1;
+                
+                int gpIndex = (int)gridpoint[realDimIndex];
+                
+                int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
+                
+                int maxIndex = ((gpIndex + width) < (dim.getSize()-1)) ? (gpIndex + width) : (dim.getSize()-1);
+                
+                // Convolute in 1D around the given point with
+                // the mask size determined by the kernel
+                // Run the convolution for each feature variable
+                
+                typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
+            
+                T sum = 0.0;
+                
+                size_t sumCount = 0;
+                
+                for (int i=minIndex; i<maxIndex; i++)
+                {
+                    // set gridpoint to current position
                     
-                    size_t sumCount = 0;
+                    gridIter[realDimIndex] = i;
                     
-                    for (int i=minIndex; i<maxIndex; i++)
+                    // Make sure no points originally marked as
+                    // off limits are used.
+                    
+                    if (fs->off_limits()->get(gridIter))
+                        continue;
+                    
+                    // get the point at the current position from
+                    // the array index
+
+                    Point<T> *pIter = originalIndex->get(gridIter);
+                    
+                    if ( pIter == NULL ) continue;
+                    
+                    // apply the pre-sampled gaussian and sum up
+
+                    size_t d = (i <= index) ? (index-i) : (i-index);
+                    
+                    for (int varIndex=0; varIndex < fs->value_rank(); varIndex++)
                     {
-                        // set gridpoint to current position
-                        
-                        gridIter[realDimIndex] = i;
-                        
-                        // Make sure no points originally marked as
-                        // off limits are used.
-                        
-                        if (fs->off_limits()->get(gridIter))
-                        {
-                            continue;
-                        }
-                        
-                        // get the point at the current position from
-                        // the array index
-
-                        Point<T> *pIter = originalIndex->get(gridIter);
-                        
-                        if ( pIter == NULL ) continue;
-                        
-                        // apply the pre-sampled gaussian and sum up
-
-                        size_t d = (i <= index) ? (index-i) : (i-index);
-                        
-                        T value = pIter->values[cs->size()+varIndex];
-                        
+                        T value = pIter->values[cs->rank()+varIndex];
                         sum += g.value(d) * value;
-                        
-                        sumCount++;
                     }
                     
-                    // No muss, no fuss?
+                    sumCount++;
+                }
+                
+                // No muss, no fuss?
+                
+                if (sumCount==0) continue;
+                
+                // Fuss! Fetch the point from the array index
+                
+                Point<T> *p = filteredPoints->get(gridpoint);
+                
+                // If no point existed, decide if we need to create one
+                
+                if ( p == NULL )
+                {
+                    // Create a new point with default values
+                    // and insert into array index
                     
-                    if (sumCount==0) continue;
+                    typename CoordinateSystem<T>::Coordinate coordinate = cs->newCoordinate();
                     
-                    // Fuss! Fetch the point from the array index
+                    cs->lookup(gridpoint,coordinate);
                     
-                    Point<T> *p = filteredPoints->get(gridpoint);
+                    vector<T> values = coordinate;
                     
-                    // If no point existed, decide if we need to create one
+                    values.resize(fs->value_rank(),0.0);
                     
-                    if ( p == NULL )
+                    p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
+                    
+                    // Did this exist in the original index?
+                    
+                    Point<T> *op = originalIndex->get(gridpoint);
+                    
+                    bool isOriginal = false;
+                    
+                    if (op != NULL)
                     {
-                        // Create a new point with default values
-                        // and insert into array index
-                        
-                        typename CoordinateSystem<T>::Coordinate coordinate = cs->newCoordinate();
-                        
-                        cs->lookup(gridpoint,coordinate);
-                        
-                        vector<T> values = coordinate;
-                        
-                        values.resize(fs->feature_variables().size(),0.0);
-                        
-                        p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
-                        
-                        // Did this exist in the original index?
-                        
-                        Point<T> *op = originalIndex->get(gridpoint);
-                        
-                        bool isOriginal = false;
-                        
-                        if (op != NULL)
-                        {
-                            isOriginal = op->isOriginalPoint;
-                        }
-                        
-                        p->isOriginalPoint = isOriginal;
-                        
-                        // Since we just created this point, there
-                        // is no need to copy it again
-                        
-                        filteredPoints->set(gridpoint,p,false);
-                        
-                        if (!isOriginal) m_created_points++;
-                    }
-                    else
-                    {
-                        m_modified_points++;
+                        isOriginal = op->isOriginalPoint;
                     }
                     
-                    // If we have a point after all that, update it with the
-                    // filtered value
+                    p->isOriginalPoint = isOriginal;
                     
-                    if ( p != NULL )
-                    {
-                        p->values[fs->coordinate_system->size()+varIndex] = sum;
-                        
-                        // Track limits
+                    // Since we just created this point, there
+                    // is no need to copy it again
+                    
+                    filteredPoints->set(gridpoint,p,false);
+                    
+                    if (!isOriginal) m_created_points++;
+                }
+                else
+                {
+                    m_modified_points++;
+                }
+                
+                // If we have a point after all that, update it with the
+                // filtered value
+                
+                if ( p != NULL )
+                {
+                    // Track limits
 
+                    for (int varIndex=0; varIndex < fs->value_rank(); varIndex++)
+                    {
+                        p->values[fs->coordinate_system->rank()+varIndex] = sum;
+                        
                         typename map<size_t,T>::iterator m;
 
                         if ( (m = m_min.find(varIndex)) == m_min.end() )
-                        {
                             m_min[varIndex] = std::numeric_limits<T>::max();
-                        }
 
                         if ( (m = m_max.find(varIndex)) == m_max.end() )
-                        {
                             m_max[varIndex] = std::numeric_limits<T>::min();
-                        }
 
                         if (sum < m_min[varIndex] )
-                        {
                             m_min[varIndex] = sum;
-                        }
                         
                         if (sum > m_max[varIndex] )
-                        {
                             m_max[varIndex] = sum;
-                        }
                     }
                 }
             }
@@ -295,7 +288,7 @@ namespace m3D {
      
         vector<size_t> dimensionIndexes;
         
-        for (size_t j=0; j<fs->coordinate_system->size(); j++)
+        for (size_t j=0; j<fs->coordinate_system->rank(); j++)
         {
             if (j==fixedDimensionIndex) continue;
             dimensionIndexes.push_back(j);
@@ -356,11 +349,11 @@ namespace m3D {
         
         m_modified_points = m_created_points = 0;
         
-        for (size_t dimIndex=0; dimIndex < fs->coordinate_system->size(); dimIndex++)
+        for (size_t dimIndex=0; dimIndex < fs->coordinate_system->rank(); dimIndex++)
         {
             applyWithArrayIndexForDimension(fs, originalIndex, filteredIndex, dimIndex);
             
-            if (dimIndex < (fs->coordinate_system->size() - 1))
+            if (dimIndex < (fs->coordinate_system->rank() - 1))
             {
                 delete originalIndex;
             

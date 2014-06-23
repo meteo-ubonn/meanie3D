@@ -10,7 +10,6 @@ import glob
 # plotting more comfortably from the various visualization
 # routines
 
-MAPSTUFF_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
 TOPO_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
 TOPO_COLORMAP = "topography"
 TOPO_COLORMAP_INVERT = 0
@@ -188,7 +187,7 @@ def add_mapstuff(extent):
 def add_map_topography(extent):
     
     # open the file and add the plot
-    OpenDatabase(MAPSTUFF_FILE)
+    OpenDatabase(TOPO_FILE)
     
     if extent!="local" and extent !="national":
         print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
@@ -221,7 +220,7 @@ def add_map_topography(extent):
 def add_map_borders(extent):
     
     # open the file and add the plot
-    OpenDatabase(MAPSTUFF_FILE)
+    OpenDatabase(TOPO_FILE)
     
     if extent!="local" and extent !="national":
         print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
@@ -247,7 +246,7 @@ def add_map_borders(extent):
 def add_map_rivers(extent):
     
     # open the file and add the plot
-    OpenDatabase(MAPSTUFF_FILE)
+    OpenDatabase(TOPO_FILE)
     
     if extent!="local" and extent !="national":
         print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
@@ -257,7 +256,7 @@ def add_map_rivers(extent):
     
     AddPlot("Pseudocolor", "as_zonal/"+extent+"_rivers_2D")
     p = PseudocolorAttributes()
-    p.colorTableName = "Blues"
+    p.colorTableName = "hot"
     p.lightingFlag = 0
     p.legendFlag = 0;
     p.invertColorTable = 1;
@@ -267,12 +266,6 @@ def add_map_rivers(extent):
     SetPlotOptions(p)
     
     return
-
-# Closes databases connected with topo
-def close_mapstuff():
-    CloseDatabase(MAPSTUFF_FILE);
-    return
-
 
 # Sets up standard values for axis etc
 #
