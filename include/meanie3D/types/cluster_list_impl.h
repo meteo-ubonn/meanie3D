@@ -1081,19 +1081,12 @@ namespace m3D {
         
         // Assign ID
         
-        for (size_t i=0; i < clusters.size(); i++)
+        if (show_progress)
         {
-            typename Cluster<T>::ptr c = clusters.at(i);
-            
-            if (show_progress)
-            {
-                cout << "Found zeroshift cluster #" << i << " (" << c->points.size() << " points)." << endl;
-            }
-        }
-        
-        if ( show_progress )
-        {
+#if DEBUG_ZEROSHIFT_CLUSTERS
+            cout << "Found " << clusters.size() << "zeroshift clusters" << endl;
             cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
+#endif
             delete progress;
         }
     }

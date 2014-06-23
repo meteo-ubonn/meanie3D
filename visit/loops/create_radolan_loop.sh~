@@ -40,4 +40,8 @@ then
     ${VISIT_EXECUTABLE} -cli -nowin -s ${SCRIPTFILE}
 else
     ${VISIT_EXECUTABLE} -s ${SCRIPTFILE}
+<<<<<<< HEAD
 fi
+=======
+fi
+>>>>>>> 884ff2414b8764201b1a00ab8458c6d2cc445132

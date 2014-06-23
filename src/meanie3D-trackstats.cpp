@@ -809,7 +809,7 @@ int main(int argc, char** argv)
                         vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
                         vector<FS_TYPE> p2 = cluster->geometrical_center(2);
                         
-                        vector<FS_TYPE> dP = p1 - p2;
+                        vector<FS_TYPE> dP = p2 - p1;
                         
                         RDCartesianPoint p;
 
@@ -822,8 +822,12 @@ int main(int argc, char** argv)
                         }
                         else
                         {
-                            p.x = 0;
-                            p.y = 1;
+                            // traditionally the coordinates in NetCDF files
+                            // come in the z,y,x order. Thus pick the default
+                            // indexes accordingly
+                            
+                            p.x = p1.at(1);
+                            p.y = p1.at(0);
                         }
                         
                         // Obtain geographical coordinate
@@ -859,7 +863,7 @@ int main(int argc, char** argv)
                         
                         float alpha = acos( (ey * dP) / vector_norm(dP) );
                         
-                        // the direction with north is the sum of the two vectors
+                        // the direction with north is the sum of the two angles
                         // in DEG
                         
                         float direction = 180.0 * (alpha + beta) / M_PI_2;
