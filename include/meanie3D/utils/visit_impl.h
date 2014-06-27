@@ -401,9 +401,7 @@ namespace m3D { namespace utils {
                                       bool write_xml)
     {
         // escape dangerous characters from basename
-        string basename = base_name;
-        boost::replace_all( basename, "/", "_" );
-        boost::replace_all( basename, "..", "" );
+        string basename = boost::filesystem::path(base_name).stem().string();
         
         for ( size_t ci = 0; ci < list->clusters.size(); ci++ )
         {
@@ -642,16 +640,15 @@ namespace m3D { namespace utils {
     template <typename T>
     void
     VisitUtils<T>::write_clusters_vtr(const ClusterList<T> *list,
-                                      CoordinateSystem<T> *cs,
+                                      const CoordinateSystem<T> *cs,
                                       const string &base_name,
                                       bool use_ids,
                                       bool only_boundary,
                                       bool write_ascii)
     {
         // escape dangerous characters from basename
-        string basename = base_name;
-        boost::replace_all( basename, "/", "_" );
-        boost::replace_all( basename, "..", "" );
+        
+        boost::filesystem::path path(base_name);
         
         int nx,ny,nz;
         
@@ -667,7 +664,7 @@ namespace m3D { namespace utils {
         {
             cfa::id_t cluster_id = (use_ids ? list->clusters[ci]->id : ci);
             
-            string filename = basename + "_cluster_" + boost::lexical_cast<string>( cluster_id );
+            string filename = path.stem().string() + "_cluster_" + boost::lexical_cast<string>( cluster_id );
             
             typename Point<T>::ptr point = list->clusters[ci]->points[0];
             

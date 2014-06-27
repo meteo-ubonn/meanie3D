@@ -12,8 +12,7 @@ then
     exit 0
 fi
 
-export scales="10"
-#export scales="10 25 50 100 250"
+export scales="5 10 25 50 100"
 echo "Running complete sets on scales ${scales}"
 
 #
@@ -42,3 +41,4 @@ done
 # Collate stats
 #
 ${MEANIE3D_HOME}/visit/statistics/trackstats.sh
+${MEANIE3D_HOME}/visit/statistics/plot_scale_comparison.sh

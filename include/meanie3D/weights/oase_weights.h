@@ -26,7 +26,7 @@ namespace m3D { namespace weights {
         map<size_t,T>       m_min;              // [index,min]
         map<size_t,T>       m_max;              // [index,max]
         MultiArray<T>       *m_weight;
-        CoordinateSystem<T> *m_coordinate_system;
+        const CoordinateSystem<T> *m_coordinate_system;
         
         // Weight function with range weight
         
@@ -38,7 +38,7 @@ namespace m3D { namespace weights {
         void
         build_saliency_field(FeatureSpace<T> *fs)
         {
-            size_t spatial_dim = fs->coordinate_system->size();
+            size_t spatial_dim = fs->coordinate_system->rank();
             
             vector<size_t> indexes(spatial_dim);
             
@@ -72,9 +72,10 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        OASEWeightFunction(FeatureSpace<T> *fs, 
-                                const vector<T> &bandwidth)
-        : m_vars(fs->variables())
+        OASEWeightFunction(FeatureSpace<T> *fs,
+                           const NetCDFDataStore<T> *data_store,
+                           const vector<T> &bandwidth)
+        : m_vars(data_store->variables())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         , m_bandwidth(bandwidth)
@@ -98,11 +99,12 @@ namespace m3D { namespace weights {
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        OASEWeightFunction(FeatureSpace<T> *fs, 
-                                const vector<T> &bandwidth,
-                                const map<size_t,T> &min, 
-                                const map<size_t,T> &max)
-        : m_vars(fs->variables())
+        OASEWeightFunction(FeatureSpace<T> *fs,
+                           const NetCDFDataStore<T> *data_store,
+                           const vector<T> &bandwidth,
+                           const map<size_t,T> &min,
+                           const map<size_t,T> &max)
+        : m_vars(data_store->variables())
         , m_min(min)
         , m_max(max)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))

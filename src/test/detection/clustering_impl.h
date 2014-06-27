@@ -18,7 +18,7 @@ void FSClusteringTest2D<T>::write_cloud( const NcVar &var, vector<T> mean, vecto
     
     GaussianNormal<T> gauss;
     
-    T gauss_zero = gauss( vector<T>(this->coordinate_system()->size(),0) );
+    T gauss_zero = gauss( vector<T>(this->coordinate_system()->rank(),0) );
     
     typename CoordinateSystem<T>::GridPoint gridpoint = this->coordinate_system()->newGridPoint();
     
@@ -26,7 +26,7 @@ void FSClusteringTest2D<T>::write_cloud( const NcVar &var, vector<T> mean, vecto
     {
         // genrate a random coordinate
         
-        for ( size_t d = 0; d < this->coordinate_system()->size(); d++ )
+        for ( size_t d = 0; d < this->coordinate_system()->rank(); d++ )
         {
             bool valid = false;
             
@@ -124,7 +124,7 @@ void FSClusteringTest2D<T>::create_clouds( const NcVar &var )
     
     vector<NcDim *>::iterator dim_iter;
     
-    for ( size_t index = 0; index < this->coordinate_system()->size(); index++ )
+    for ( size_t index = 0; index < this->coordinate_system()->rank(); index++ )
     {
         NcDim dim = this->coordinate_system()->dimensions()[index];
         
@@ -264,7 +264,9 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         
         // KNNSearchParams *params = new KNNSearchParams( 200 );
         
-        ClusterOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex);
+        ClusterOperation<TypeParam> op(this->m_featureSpace,
+                                       this->m_dataStore,
+                                       this->m_featureSpaceIndex);
         
         ClusterList<TypeParam> clusters = op.cluster( params, kernel, weight );
         
@@ -370,7 +372,9 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         start_timer();
         
         //        VariableWeighed<TypeParam> *weight = new VariableWeighed<TypeParam>( this->m_file, this->coordinate_system, this->m_variables.front() );
-        ClusterOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
+        ClusterOperation<TypeParam> op(this->m_featureSpace,
+                                       this->m_dataStore,
+                                       this->m_featureSpaceIndex );
         
         // Create 'bandwidth' parameter from grid resolution and
         // the maximum value in the value range

@@ -15,7 +15,6 @@ namespace m3D { namespace weights {
     using namespace ::m3D;
     using std::vector;
     using std::map;
-    using cfa::utils::CoordinateSystem;
     using cfa::array::MultiArray;
     
     template <class T>
@@ -23,14 +22,14 @@ namespace m3D { namespace weights {
     {
     protected:
         
-        vector<NcVar>       m_vars;     // variables for weighting
-        map<size_t,T>       m_min;      // [index,min]
-        map<size_t,T>       m_max;      // [index,max]
+        const FeatureSpace<T>       *m_fs;
+        
+        map<size_t,T>       m_min;
+        map<size_t,T>       m_max;
         MultiArray<T>       *m_weight;
-        CoordinateSystem<T> *m_coordinate_system;
         
         void
-        build_saliency_field(FeatureSpace<T> *fs)
+        build_saliency_field(const FeatureSpace<T> *fs)
         {
             for (size_t i=0; i < fs->points.size(); i++)
             {
@@ -48,21 +47,12 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        DefaultWeightFunction(FeatureSpace<T> *fs)
-        : m_vars(fs->variables())
+        DefaultWeightFunction(const FeatureSpace<T> *fs)
+        : m_fs(fs)
+        , m_min(fs->min())
+        , m_max(fs->max())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
-        , m_coordinate_system(fs->coordinate_system)
         {
-            // Get original limits
-            
-            for ( size_t index = 0; index < m_vars.size(); index++ )
-            {
-                T min_value,max_value;
-                ::cfa::utils::netcdf::unpacked_limits<T>(m_vars[index], min_value, max_value);
-                m_min[index] = min_value;
-                m_max[index] = max_value;
-            }
-            
             build_saliency_field(fs);
         }
         
@@ -73,13 +63,13 @@ namespace m3D { namespace weights {
          * @param map of upper bounds
          */
         DefaultWeightFunction(FeatureSpace<T> *fs,
+                              const DataStore<T> *data_store,
                               const map<size_t,T> &min,
                               const map<size_t,T> &max)
-        : m_vars(fs->variables())
+        : m_fs(fs)
         , m_min(min)
         , m_max(max)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
-        , m_coordinate_system(fs->coordinate_system)
         {
             build_saliency_field(fs);
         }
@@ -98,19 +88,17 @@ namespace m3D { namespace weights {
         {
             T sum = 0.0;
             
-            size_t num_vars = p->values.size() - p->coordinate.size();
-            
-            for (size_t var_index = 0; var_index < num_vars; var_index++)
+            for (size_t var_index = 0; var_index < m_fs->value_rank(); var_index++)
             {
-                NcVar var = m_vars[var_index];
+                bool is_valid = false;
                 
-                T value = p->values[p->coordinate.size()+var_index];
+                T value = p->values.at(m_fs->spatial_rank()+var_index);
                 
                 // value scaled to [0..1]
                 
-                T range = (m_max.at(var_index) - m_min.at(var_index));
+                T range = (m_max[var_index] - m_min[var_index]);
                 
-                T var_weight = (value - m_min.at(var_index)) / range;
+                T var_weight = (value - m_min[var_index]) / range;
                 
                 if (var_weight > 1)
                 {
@@ -128,11 +116,12 @@ namespace m3D { namespace weights {
          */
         T operator()( const vector<T> &values ) const
         {
-            typename CoordinateSystem<T>::GridPoint gp = this->m_coordinate_system->newGridPoint();
+            typename CoordinateSystem<T>::GridPoint gp
+                = m_fs->coordinate_system->newGridPoint();
             
             try
             {
-                this->m_coordinate_system->reverse_lookup(values,gp);
+                m_fs->coordinate_system->reverse_lookup(values,gp);
             }
             catch (std::out_of_range& e)
             {

@@ -981,7 +981,7 @@ namespace m3D {
                         // Neither current point nor neighbour have cluster
                         // => create new cluster
                         
-                        size_t spatial_dims = fs->coordinate_system->size();
+                        size_t spatial_dims = fs->coordinate_system->rank();
                         
                         typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,spatial_dims);
                         
@@ -1140,16 +1140,14 @@ namespace m3D {
             
             M3DPoint<T> *current_point = (M3DPoint<T> *) fs->points[i];
             
-            // skip zeroshift to save time
+            // skip zeroshift and non-original points
             
-            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
-            {
+            if (vector_norm(fs->spatial_component(current_point->shift)) == 0 || !current_point->isOriginalPoint)
                 continue;
-            }
             
             // Find the predecessor through gridded shift
             
-            size_t spatial_dims = fs->coordinate_system->size();
+            size_t spatial_dims = fs->coordinate_system->rank();
             
             vector<int> gridpoint(spatial_dims,0);
             
@@ -1183,7 +1181,7 @@ namespace m3D {
                     // Neither point has a cluster
                     // => create new one
                     
-                    typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->size());
+                    typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->rank());
                     c->id = cluster_id++;
                     c->add_point(current_point);
                     c->add_point(predecessor);
@@ -1364,8 +1362,6 @@ namespace m3D {
             progress = new boost::progress_display( clusters.size() );
         }
         
-        set< Point<T> * > erased;
-        
         size_t running_id = 0;
         
         for (typename Cluster<T>::list::iterator clit = clusters.begin(); clit != clusters.end();)
@@ -1377,45 +1373,35 @@ namespace m3D {
 
             typename Cluster<T>::ptr c = *clit;
             
-            vector<T> mode = vector<T>( fs->feature_variables().size(), 0.0);
+            vector<T> mode = vector<T>( fs->rank(), 0.0);
             
-            typename Point<T>::list::iterator pi;
+            typename Point<T>::list keepers;
             
-            for ( pi = c->points.begin(); pi != c->points.end(); )
+            // Make pointers unique
+            
+            typedef std::set< typename Point<T>::ptr > point_set_t;
+            
+            point_set_t point_set;
+            point_set.insert(c->points.begin(), c->points.end());
+
+            // Iterate over the unique set
+            
+            for (typename point_set_t::iterator si = point_set.begin(); si != point_set.end(); ++si)
             {
-                Point<T> *p = *pi;
+                typename Point<T>::ptr p = *si;
                 
-                if (!p->isOriginalPoint)
+                if (p->isOriginalPoint)
                 {
-                    c->points.erase(pi);
-                    
-                    if (erased.find(p) != erased.end())
-                    {
-                        cerr << "WARNING: point "<< p <<" was erased twice" << endl;
-                    }
-                    else
-                    {
-                        erased.insert(p);
-                    }
+                    keepers.push_back(p);
+                    mode += p->values;
                 }
                 else
                 {
-                    mode += p->values;
-                    pi++;
+                    delete p;
                 }
             }
             
-            for ( pi = c->points.begin(); pi != c->points.end(); pi++)
-            {
-                Point<T> *p = *pi;
-                
-                if (!p->isOriginalPoint)
-                {
-                    cerr << "ADDED POINT SURVIVED" << endl;
-                }
-            }
-            
-            if (c->points.empty())
+            if (keepers.empty())
             {
                 // removed them all? Kill cluster
                 clusters.erase(clit);
@@ -1423,30 +1409,14 @@ namespace m3D {
             }
             else
             {
-                mode /= ((T) c->points.size());
+                mode /= ((T) keepers.size());
+                c->points = keepers;
                 c->mode = mode;
                 c->id = running_id;
                 running_id++;
                 clit++;
             }
         }
-        
-        typename set< Point<T> * >::iterator ei;
-        for (ei=erased.begin(); ei!=erased.end(); ei++)
-        {
-            Point<T> *p = *ei;
-            
-            typename Point<T>::list::iterator fsi = find(fs->points.begin(),fs->points.end(), p);
-            if (fsi != fs->points.end())
-            {
-                fs->points.erase(fsi);
-            }
-                
-            delete p;
-        }
-        
-        // Sanity checking
-        this->check_clusters(index);
         
         if ( show_progress )
         {
@@ -1664,7 +1634,7 @@ namespace m3D {
             std::string fn = fs->filename() + "_boundary_" + boost::lexical_cast<string>(index) + ".vtk";
             boost::replace_all( fn, "/", "_" );
             boost::replace_all( fn, "..", "" );
-            cfa::utils::VisitUtils<T>::write_pointlist_vtk(fn, &b, fs->coordinate_system->size());
+            cfa::utils::VisitUtils<T>::write_pointlist_vtk(fn, &b, fs->coordinate_system->rank());
         }
     
         std::string fn = fs->filename() + "_boundary_correlations.txt";

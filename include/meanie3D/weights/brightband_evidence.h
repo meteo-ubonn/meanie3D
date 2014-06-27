@@ -53,8 +53,8 @@ namespace m3D { namespace weights {
          * for valid_min/valid_max
          * @param featurespace
          */
-        BrightBandWeight(FeatureSpace<T> *fs)
-        : m_vars(fs->variables())
+        BrightBandWeight(FeatureSpace<T> *fs, const NetCDFDataStore<T> *data_store)
+        : m_vars(data_store->variables())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
@@ -77,8 +77,11 @@ namespace m3D { namespace weights {
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        BrightBandWeight(FeatureSpace<T> *fs, const map<size_t,T> &min, const map<size_t,T> &max)
-        : m_vars(fs->variables())
+        BrightBandWeight(FeatureSpace<T> *fs,
+                         const NetCDFDataStore<T> *data_store,
+                         const map<size_t,T> &min,
+                         const map<size_t,T> &max)
+        : m_vars(data_store->variables())
         , m_min(min)
         , m_max(max)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))

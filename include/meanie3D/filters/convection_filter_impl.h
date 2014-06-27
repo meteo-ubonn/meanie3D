@@ -50,18 +50,9 @@ namespace m3D {
         
         // Create a point index with spatial components only
         
-        size_t spatial_dimension = fs->coordinate_system->size();
+        PointIndex<T> *index = PointIndex<T>::create( fs->get_points(), fs->rank() );
         
-        vector<netCDF::NcVar> index_variables(spatial_dimension);
-        
-        for (size_t i=0; i<spatial_dimension; i++)
-        {
-            index_variables[i]=fs->feature_variables().at(i);
-        }
-        
-        PointIndex<T> *index = PointIndex<T>::create( fs, index_variables );
-        
-        PointIndex<T> *convective_radius_index = PointIndex<T>::create( fs, index_variables );
+        PointIndex<T> *convective_radius_index = PointIndex<T>::create( fs->get_points(), fs->rank() );
         
         // params for index search
         

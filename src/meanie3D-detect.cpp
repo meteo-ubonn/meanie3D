@@ -32,10 +32,12 @@
 
 using namespace std;
 using namespace boost;
+using namespace netCDF;
+
 using namespace cfa::meanshift;
 using namespace cfa::utils::visit;
+using namespace cfa::utils::netcdf;
 using namespace cfa::utils::vectors;
-using namespace netCDF;
 using namespace m3D::utils::visit;
 using namespace m3D::utils;
 using namespace m3D::weights;
@@ -67,9 +69,11 @@ void parse_commmandline(program_options::variables_map vm,
         vector<FS_TYPE> &ranges,
         std::string **previous_file,
         FS_TYPE &cluster_coverage_threshold,
+        bool &spatial_range_only,
         bool &coalesceWithStrongestNeighbour,
         bool &write_vtk,
         bool &write_weight_response,
+        bool &write_cluster_modes,
         bool &write_cluster_centers,
         vector<size_t> &vtk_dimension_indexes,
         Verbosity &verbosity,
@@ -379,10 +383,16 @@ void parse_commmandline(program_options::variables_map vm,
     // Coalescence?
 
     coalesceWithStrongestNeighbour = vm.count("coalesce-with-strongest-neighbour") > 0;
+    
+    // only spatial range?
+    
+    spatial_range_only = vm.count("spatial-range-only") > 0;
 
     // VTK output?
 
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
+    
+    write_cluster_modes = vm.count("write-cluster-modes") > 0;
 
     write_cluster_centers = vm.count("write-cluster-centers") > 0;
 
@@ -390,7 +400,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     // VTK dimension mapping
 
-    if (vm.count("vtk-dimensions") > 0) {
+    if (vm.count("vtk-dimensions") > 0)
+    {
         // parse dimension list
 
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -480,11 +491,88 @@ void parse_commmandline(program_options::variables_map vm,
     }
 }
 
+void print_compile_time_options()
+{
+    #if WRITE_BANDWIDTH
+        cout << "\tWRITE_BANDWIDTH=1" << endl;
+    #else
+        cout << "\tWRITE_BANDWIDTH=0" << endl;
+    #endif
+        
+    #if WRITE_CLUSTER_MEANSHIFT
+        cout << "\tWRITE_CLUSTER_MEANSHIFT=1" << endl;
+    #else
+        cout << "\tWRITE_CLUSTER_MEANSHIFT=0" << endl;
+    #endif
+    
+    #if WRITE_FEATURESPACE
+        cout << "\tWRITE_FEATURESPACE=1" << endl;
+    #else
+        cout << "\tWRITE_FEATURESPACE=0" << endl;
+    #endif
+        
+    #if WRITE_INDEX
+        cout << "\tWRITE_INDEX=1" << endl;
+    #else
+        cout << "\tWRITE_INDEX=0" << endl;
+    #endif
+        
+    #if WRITE_ITERATION_ORIGINS
+        cout << "\tWRITE_ITERATION_ORIGINS=1" << endl;
+    #else
+        cout << "\tWRITE_ITERATION_ORIGINS=0" << endl;
+    #endif
+        
+    #if WRITE_MEANSHIFT_SAMPLES
+        cout << "\tWRITE_MEANSHIFT_SAMPLES=1" << endl;
+    #else
+        cout << "\tWRITE_MEANSHIFT_SAMPLES=0" << endl;
+    #endif
+        
+    #if WRITE_MEANSHIFT_VECTORS
+        cout << "\tWRITE_MEANSHIFT_VECTORS=1" << endl;
+    #else
+        cout << "\tWRITE_MEANSHIFT_VECTORS=0" << endl;
+    #endif
+        
+    #if WRITE_MEANSHIFT_WEIGHTS
+        cout << "\tWRITE_MEANSHIFT_WEIGHTS=1" << endl;
+    #else
+        cout << "\tWRITE_MEANSHIFT_WEIGHTS=0" << endl;
+    #endif
+        
+    #if WRITE_MODES
+        cout << "\tWRITE_MODES=1" << endl;
+    #else
+        cout << "\tWRITE_MODES=0" << endl;
+    #endif
+        
+    #if WRITE_OFF_LIMITS_MASK
+        cout << "\tWRITE_OFF_LIMITS_MASK=1" << endl;
+    #else
+        cout << "\tWRITE_OFF_LIMITS_MASK=0" << endl;
+    #endif
+        
+    #if WRITE_WEIGHT_FUNCTION
+        cout << "\tWRITE_WEIGHT_FUNCTION=1" << endl;
+    #else
+        cout << "\tWRITE_WEIGHT_FUNCTION=0" << endl;
+    #endif
+        
+    #if WRITE_ZEROSHIFT_CLUSTERS
+        cout << "\tWRITE_ZEROSHIFT_CLUSTERS=1" << endl;
+    #else
+        cout << "\tWRITE_ZEROSHIFT_CLUSTERS=0" << endl;
+    #endif
+        cout << endl;
+}
+
 /**
  *
  *
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     using namespace cfa::utils::timer;
     using namespace cfa::utils::visit;
     using namespace m3D;
@@ -505,8 +593,9 @@ int main(int argc, char** argv) {
             ("replacement-values", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
             ("kernel-name,k",program_options::value<string>()->default_value("uniform"), "uniform,gauss,epnachnikov or none")
             ("weight-function-name,w", program_options::value<string>()->default_value("default"), "default,inverse,pow10 or oase")
-            ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0.05), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
+            ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
             ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
+            ("spatial-range-only","If this flag is present, the mean-shift only considers the spatial range")
             ("coalesce-with-strongest-neighbour", "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
             ("convection-filter-variable,c", program_options::value<string>(), "Name the variable to eliminate all but the points marked as convective according to the classification scheme by Steiner,Houza & Yates (1995) in.")
             ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
@@ -516,8 +605,9 @@ int main(int argc, char** argv) {
             ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
             ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66), "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
             ("write-variables-as-vtk", program_options::value<string>(), "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
-            ("write-clusters-as-vtk", "write clusters out in .vtk file format additionally (useful for visualization with visit for example)")
-            ("write-cluster-centers", "write cluster centers out in .vtk file format (useful for visualization with visit for example)")
+            ("write-clusters-as-vtk", "write clusters out as .vtk files")
+            ("write-cluster-modes","write the final meanshift modes in .vtk file format")
+            ("write-cluster-centers", "write cluster centers out in .vtk file format")
             ("write-cluster-weight-response", "write out the clusters with weight responses as value")
             ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
             ;
@@ -562,12 +652,14 @@ int main(int argc, char** argv) {
     FS_TYPE cluster_coverage_threshold = 0.66;
     int convection_filter_index = -1;
     bool coalesceWithStrongestNeighbour = false;
+    bool spatial_range_only = false;
     double scale = NO_SCALE;
 
     vector<NcVar> vtk_variables;
     SearchParameters *search_params = NULL;
     bool write_vtk = false;
     bool write_weight_response = false;
+    bool write_cluster_modes = false;
     bool write_cluster_centers = false;
     Verbosity verbosity = VerbosityNormal;
 
@@ -598,9 +690,11 @@ int main(int argc, char** argv) {
                 ranges,
                 &previous_file,
                 cluster_coverage_threshold,
+                spatial_range_only,
                 coalesceWithStrongestNeighbour,
                 write_vtk,
                 write_weight_response,
+                write_cluster_modes,
                 write_cluster_centers,
                 vtk_dimension_indexes,
                 verbosity,
@@ -710,8 +804,8 @@ int main(int argc, char** argv) {
             cout << "\tminimum cluster size = " << min_cluster_size << endl;
         }
         
+        cout << "\tmean-shift is limited to spatial range: " << (spatial_range_only ? "yes":"no") << endl;
         cout << "\tcoalesce results with strongest neighbor: " << (coalesceWithStrongestNeighbour ? "yes":"no") << endl;
-
         cout << "\toutput written to file: " << output_filename << endl;
 
         if (!vtk_variables.empty()) {
@@ -725,115 +819,39 @@ int main(int argc, char** argv) {
         if (verbosity > VerbosityNormal) {
             cout << endl;
             cout << "Compiled options (use -D to switch them on and off during compile time)" << endl;
-
-#if WRITE_BANDWIDTH
-            cout << "\tWRITE_BANDWIDTH=1" << endl;
-#else
-            cout << "\tWRITE_BANDWIDTH=0" << endl;
-#endif
-
-#if WRITE_CLUSTER_MEANSHIFT
-            cout << "\tWRITE_CLUSTER_MEANSHIFT=1" << endl;
-#else
-            cout << "\tWRITE_CLUSTER_MEANSHIFT=0" << endl;
-#endif
-
-#if WRITE_CLUSTER_MODES
-            cout << "\tWRITE_CLUSTER_MODES=1" << endl;
-#else
-            cout << "\tWRITE_CLUSTER_MODES=0" << endl;
-#endif
-
-#if WRITE_FEATURESPACE
-            cout << "\tWRITE_FEATURESPACE=1" << endl;
-#else
-            cout << "\tWRITE_FEATURESPACE=0" << endl;
-#endif
-
-#if WRITE_INDEX
-            cout << "\tWRITE_INDEX=1" << endl;
-#else
-            cout << "\tWRITE_INDEX=0" << endl;
-#endif
-
-#if WRITE_ITERATION_ORIGINS
-            cout << "\tWRITE_ITERATION_ORIGINS=1" << endl;
-#else
-            cout << "\tWRITE_ITERATION_ORIGINS=0" << endl;
-#endif
-
-#if WRITE_MEANSHIFT_SAMPLES
-            cout << "\tWRITE_MEANSHIFT_SAMPLES=1" << endl;
-#else
-            cout << "\tWRITE_MEANSHIFT_SAMPLES=0" << endl;
-#endif
-
-#if WRITE_MEANSHIFT_VECTORS
-            cout << "\tWRITE_MEANSHIFT_VECTORS=1" << endl;
-#else
-            cout << "\tWRITE_MEANSHIFT_VECTORS=0" << endl;
-#endif
-
-#if WRITE_MEANSHIFT_WEIGHTS
-            cout << "\tWRITE_MEANSHIFT_WEIGHTS=1" << endl;
-#else
-            cout << "\tWRITE_MEANSHIFT_WEIGHTS=0" << endl;
-#endif
-
-#if WRITE_MODES
-            cout << "\tWRITE_MODES=1" << endl;
-#else
-            cout << "\tWRITE_MODES=0" << endl;
-#endif
-
-#if WRITE_OFF_LIMITS_MASK
-            cout << "\tWRITE_OFF_LIMITS_MASK=1" << endl;
-#else
-            cout << "\tWRITE_OFF_LIMITS_MASK=0" << endl;
-#endif
-
-#if WRITE_WEIGHT_FUNCTION
-            cout << "\tWRITE_WEIGHT_FUNCTION=1" << endl;
-#else
-            cout << "\tWRITE_WEIGHT_FUNCTION=0" << endl;
-#endif
-
-#if WRITE_ZEROSHIFT_CLUSTERS
-            cout << "\tWRITE_ZEROSHIFT_CLUSTERS=1" << endl;
-#else
-            cout << "\tWRITE_ZEROSHIFT_CLUSTERS=0" << endl;
-#endif
-            cout << endl;
+            print_compile_time_options();
         }
     }
 
-    // Construct Featurespace
-
-    // Coordinate system
-
     CoordinateSystem<FS_TYPE> *coord_system = new CoordinateSystem<FS_TYPE>(dimensions, dimension_variables);
 
-    // Feature Space
-
     start_timer();
+    
+    // used in writing out debug data
+    boost::filesystem::path path(filename);
 
-    // TODO: threshold should be applied as a filter somehow
-    // this approach seems a little half-cocked
+    NetCDFDataStore<FS_TYPE> *data_store
+        = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variables,time_index);
 
-    FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(filename,
-            coord_system,
-            variables,
-            time_index,
-            lower_thresholds,
-            upper_thresholds,
-            replacement_values,
-            show_progress);
+    FeatureSpace<FS_TYPE> *fs
+        = new FeatureSpace<FS_TYPE>(coord_system,
+                                    data_store,
+                                    lower_thresholds,
+                                    upper_thresholds,
+                                    replacement_values,
+                                    show_progress);
+#if WRITE_FEATURESPACE
+    static size_t fs_index = 0;
+    std::string fn = path.stem().string() + "_featurespace_" + boost::lexical_cast<string>(fs_index++) + ".vtk";
+    ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_vtk(fn,fs);
+#endif
 
-    // if ranges are not explicitly given, figure the out
-    // based on scale
-
-    if (ranges.empty()) {
-        // spatial range first
+    if (ranges.empty())
+    {
+        // if ranges are not explicitly given, figure the out
+        // based on scale
+        
+        // spatial range
 
         FS_TYPE t = (scale == NO_SCALE) ? 1.0 : scale;
 
@@ -846,9 +864,8 @@ int main(int argc, char** argv) {
 
         // value range
 
-        for (size_t i = 0; i < variables.size(); i++) {
-            FS_TYPE range = fs->valid_max().at(i) - fs->valid_min().at(i);
-
+        for (size_t i = 0; i < data_store->rank(); i++) {
+            FS_TYPE range = data_store->valid_max(i) - data_store->valid_min(i);
             ranges.push_back(range);
         }
 
@@ -861,9 +878,6 @@ int main(int argc, char** argv) {
 #if WRITE_OFF_LIMITS_MASK
     fs->off_limits()->write("off_limits.vtk", "off_limits");
 #endif
-
-    // used in writing out debug data
-    boost::filesystem::path path(filename);
 
     // Convection Filter?
 
@@ -883,34 +897,40 @@ int main(int argc, char** argv) {
 
         FS_TYPE decay = 0.01;
 
-        ScaleSpaceFilter<FS_TYPE> sf(scale, fs->coordinate_system->resolution(), exclude_from_scale_space_filtering, decay, show_progress);
-
+        vector<FS_TYPE> resolution = fs->coordinate_system->resolution();
+        ScaleSpaceFilter<FS_TYPE> sf(scale, resolution, exclude_from_scale_space_filtering, decay, show_progress);
+        
         sf.apply(fs);
+        
+#if WRITE_FEATURESPACE
+        std::string fn = path.stem().string() + "_scale_" + boost::lexical_cast<string>(scale) + ".vtk";
+        ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_vtk( fn, fs );
+#endif
 
         if (verbosity > VerbositySilent)
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
 
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs, ranges, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
+                                                              data_store,
+                                                              ranges,
+                                                              sf.get_filtered_min(),
+                                                              sf.get_filtered_max());
         }
         else if (weight_function_name == "inverse")
         {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         }
         else if (weight_function_name == "pow10")
         {
-            weight_function = new EXP10WeightFunction<FS_TYPE>(fs);
+            weight_function = new EXP10WeightFunction<FS_TYPE>(fs,data_store);
         }
         else
         {
-            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         }
 
-#if WRITE_WEIGHT_FUNCTION
-        std::string wfname = path.filename().stem().string() + "-weights";
-        ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
-#endif
         if (verbosity > VerbositySilent)
             cout << " done." << endl;
 
@@ -932,25 +952,20 @@ int main(int argc, char** argv) {
 
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs,ranges);
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         }
         else if (weight_function_name == "inverse")
         {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, lower_thresholds, upper_thresholds);
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, lower_thresholds, upper_thresholds);
         }
         else if (weight_function_name == "pow10")
         {
-            weight_function = new EXP10WeightFunction<FS_TYPE>(fs);
+            weight_function = new EXP10WeightFunction<FS_TYPE>(fs,data_store);
         }
         else
         {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
-
-#if WRITE_WEIGHT_FUNCTION
-        std::string wfname = path.filename().stem().string() + "-weights";
-        ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
-#endif
 
         // Apply weight function filter
 
@@ -964,15 +979,18 @@ int main(int argc, char** argv) {
         if (verbosity > VerbositySilent)
             cout << " done." << endl;
     }
+    
+#if WRITE_WEIGHT_FUNCTION
+    std::string wfname = path.filename().stem().string() + "-weights";
+    ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
+#endif
 
-    if (!vtk_variables.empty()) {
-        string filename_only = boost::filesystem::path(filename).filename().string();
-
+    if (!vtk_variables.empty())
+    {
+        string filename_only = path.filename().string();
         boost::filesystem::path destination_path = boost::filesystem::path(".");
 
         destination_path /= filename_only;
-
-        //destination_path.replace_extension("vtk");
 
         destination_path.replace_extension();
 
@@ -981,7 +999,9 @@ int main(int argc, char** argv) {
         if (verbosity > VerbositySilent)
             cout << "Writing featurespace-variables ...";
 
-        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs, vtk_variables, false);
+        cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs,
+                                                                          data_store->variables(),
+                                                                          vtk_variables);
 
         if (verbosity > VerbositySilent)
             cout << " done." << endl;
@@ -990,8 +1010,6 @@ int main(int argc, char** argv) {
     if (verbosity == VerbosityAll)
         fs->print();
 
-    // Calculate termcrit_epsilon if necessary
-
 #if WRITE_MEANSHIFT_WEIGHTS
     vector<FS_TYPE> sample_point(2);
     sample_point[0] = -43.4621658325195;
@@ -999,17 +1017,12 @@ int main(int argc, char** argv) {
     fs->weight_sample_points.push_back(sample_point);
 #endif
 
-    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs);
+    // Clustering
 
-    //PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs,PointIndex<FS_TYPE>::IndexTypeRectilinearGrid);
+    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
+    ClusterOperation<FS_TYPE> cop(fs, data_store, index);
 
-    //
-    // Simple clustering
-    //
-
-    ClusterOperation<FS_TYPE> cop(fs, index);
-
-    // estimate kernel size
+    // Create specified kernel
 
     Kernel<FS_TYPE> *kernel = NULL;
     
@@ -1028,10 +1041,6 @@ int main(int argc, char** argv) {
 
     ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, show_progress);
 
-    // Sanity check
-
-    // clusters.sanity_check( fs );
-
     // Number the result sequentially to make it easier to follow
     // previous results in comparison
 
@@ -1044,7 +1053,7 @@ int main(int argc, char** argv) {
     if (verbosity > VerbosityDetails)
         clusters.print();
 
-    // Collate with previous clusters, if those are provided
+    // Collate with previous clusters, if provided
     
     if (previous_file != NULL)
     {
@@ -1079,17 +1088,17 @@ int main(int argc, char** argv) {
     // Write out the cluster list
 
     if (write_vtk && clusters.clusters.size() > 0) {
-        //::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtk(clusters, coord_system, path.filename().string());
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(&clusters, coord_system, path.filename().string());
     }
 
-#if WRITE_CLUSTER_MODES
-    // MODES are needed for tagging with IDs
-    string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
-    ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, clusters.clusters, true);
-#endif
+    if (write_cluster_modes)
+    {
+        string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, clusters.clusters, true);
+    }
 
-    if (write_cluster_centers) {
+    if (write_cluster_centers)
+    {
         string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, clusters.clusters);
     }

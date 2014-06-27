@@ -67,7 +67,9 @@ protected:
 
     size_t                  m_pointCount;            
     
-    size_t                  m_totalPointCount;       
+    size_t                  m_totalPointCount;
+    
+    NetCDFDataStore<T>      *m_dataStore;
     
     FeatureSpace<T>         *m_featureSpace;
     
