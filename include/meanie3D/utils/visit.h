@@ -136,7 +136,7 @@ namespace m3D { namespace utils {
         static
         void
         write_clusters_vtr(const ClusterList<T> *list,
-                           CoordinateSystem<T> *cs,
+                           const CoordinateSystem<T> *cs,
                            const string &base_name,
                            bool use_ids=true,
                            bool only_boundary=false,

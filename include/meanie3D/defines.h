@@ -39,10 +39,6 @@
 // file per cluster
 #define WRITE_CLUSTER_CENTERS 0
 
-// Write out the modes of the clusters in a single
-// file per cluster
-#define WRITE_CLUSTER_MODES 0
-
 // Write out the result of the initial clustering
 // step into separate files.
 #define WRITE_ZEROSHIFT_CLUSTERS 0

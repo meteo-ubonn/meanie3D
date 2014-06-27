@@ -26,7 +26,7 @@ namespace m3D { namespace weights {
         map<size_t,T>       m_min;              // [index,min]
         map<size_t,T>       m_max;              // [index,max]
         MultiArray<T>       *m_weight;
-        CoordinateSystem<T> *m_coordinate_system;
+        const CoordinateSystem<T> *m_coordinate_system;
         
         // Weight function with range weight
         

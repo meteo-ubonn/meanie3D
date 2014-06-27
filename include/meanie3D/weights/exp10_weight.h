@@ -24,7 +24,7 @@ namespace m3D { namespace weights {
         
         vector<NcVar>       m_vars;     // variables for weighting
         MultiArray<T>       *m_weight;
-        CoordinateSystem<T> *m_coordinate_system;
+        const CoordinateSystem<T> *m_coordinate_system;
         
         void
         build_saliency_field(FeatureSpace<T> *fs)
