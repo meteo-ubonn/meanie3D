@@ -6,7 +6,8 @@ version = 'v1.3'
 from visit import *
 import glob
 
-MAPSTUFF_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
+MAPS_HOME=os.environ['MEANIE3D_MAPDATA']
+MAPSTUFF_FILE=MAPS_HOME+"/oase-mapdata.nc"
 TOPO_COLORMAP = "topography"
 TOPO_COLORMAP_INVERT = 0
 

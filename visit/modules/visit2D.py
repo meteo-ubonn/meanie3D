@@ -10,7 +10,8 @@ import glob
 # plotting more comfortably from the various visualization
 # routines
 
-TOPO_FILE = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc"
+MAPS_HOME=os.environ['MEANIE3D_MAPDATA']
+TOPO_FILE = MAPS_HOME+"/oase-mapdata.nc"
 TOPO_COLORMAP = "topography"
 TOPO_COLORMAP_INVERT = 0
 
@@ -28,7 +29,7 @@ def add_clusters(basename,infix,col_tables,opacity):
     cluster_list=glob.glob(cluster_pattern)
     
     #print "Processing clusters:"
-    #print cluster_list
+    #print cluster_lis
     
     for cluster_file in cluster_list:
         
