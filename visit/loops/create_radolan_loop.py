@@ -67,7 +67,7 @@ SetAnnotationAttributes(a)
 
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"
-netcdf_list=glob.glob(netcdf_pattern)
+netcdf_list=sorted(glob.glob(netcdf_pattern))
 
 run_count = 0
 

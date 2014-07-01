@@ -5,6 +5,7 @@ version = 'v1.3'
 
 from visit import *
 import glob
+import os
 
 # This module bundles python routines for handling Visit3D
 # plotting more comfortably from the various visualization
