@@ -5,6 +5,7 @@ version = 'v1.3'
 
 from visit import *
 import glob
+import os
 
 MAPS_HOME=os.environ['MEANIE3D_MAPDATA']
 MAPSTUFF_FILE=MAPS_HOME+"/oase-mapdata.nc"
