@@ -118,6 +118,8 @@ namespace m3D {
             
             bool file_existed = boost::filesystem::exists(path);
             
+            std::string filename = file_existed ? path+"-new" : path;
+            
             try
             {
                 // Be aware of the fact that this->ncFile is probably
@@ -128,11 +130,11 @@ namespace m3D {
                 // it off and finally deleting the original when done, replacing
                 // the original in that way.
                 
-                file = new NcFile((file_existed?path+"-new":path), NcFile::replace);
+                file = new NcFile(filename,NcFile::replace);
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
-                cerr << "Exception opening file " << path << " for writing : " << e.what() << endl;
+                cerr << "Exception opening file " << filename << " for writing : " << e.what() << endl;
                 exit(-1);
             }
             
