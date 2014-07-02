@@ -1057,11 +1057,26 @@ int main(int argc, char** argv)
     
     if (previous_file != NULL)
     {
-        cout << endl << "Collating with previous results. Have " << clusters.clusters.size() << " clusters:" << endl;
-        clusters.print();
+        cout << endl << "Collating with previous results:" << endl;
+        
+        if (verbosity > VerbosityNormal)
+                clusters.print();
 
-        try {
-            ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(*previous_file);
+        try 
+        {
+            ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_file->c_str());
+            
+            if (verbosity >= VerbosityNormal)
+                cout << "Comparing " << clusters.clusters.size() << " new clusters to " 
+                    << previous->clusters.size() << " clusters" << endl;
+          
+            if (verbosity > VerbosityNormal)
+            {
+                cout << "List of new clusters:" << endl;
+                clusters.print();
+                cout << endl << "List of previous clusters:" << endl;
+                previous->print();
+            }
 
             ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
 

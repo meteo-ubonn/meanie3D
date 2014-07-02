@@ -12,9 +12,12 @@
 
 #include <stdlib.h>
 
+#include "cluster.h"
+#include "cluster_list.h"
+
 namespace m3D {
 
-	using namespace std;
+    using namespace std;
     using namespace netCDF;
     using namespace cfa::utils::console;
     using namespace cfa::utils::timer;
@@ -22,14 +25,13 @@ namespace m3D {
     using namespace cfa::utils::maps;
     using namespace cfa::utils::sets;
     using namespace cfa::utils::visit;
-	using cfa::meanshift::Point;
-	using cfa::meanshift::FeatureSpace;
-	using cfa::meanshift::PointIndex;
-	using cfa::meanshift::KNNSearchParams;
-	using cfa::meanshift::RangeSearchParams;
-	using cfa::meanshift::SearchParameters;
+    using cfa::meanshift::Point;
+    using cfa::meanshift::FeatureSpace;
+    using cfa::meanshift::PointIndex;
+    using cfa::meanshift::KNNSearchParams;
+    using cfa::meanshift::RangeSearchParams;
+    using cfa::meanshift::SearchParameters;
     using cfa::id_t;
-
 
 #pragma mark -
 #pragma mark Macros
@@ -126,7 +128,7 @@ namespace m3D {
                 // it off and finally deleting the original when done, replacing
                 // the original in that way.
                 
-                file = new NcFile((file_existed?path+"-new":path), NcFile::replace, NcFile::classic);
+                file = new NcFile((file_existed?path+"-new":path), NcFile::replace);
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
@@ -496,7 +498,7 @@ namespace m3D {
         // TODO: let this exception go up
         try
         {
-            file = new NcFile( path, NcFile::write );
+            file = new NcFile( path, NcFile::read );
         }
         catch ( const netCDF::exceptions::NcException &e )
         {
@@ -552,8 +554,13 @@ namespace m3D {
             
             try
             {
-                file->getAtt("tracking_performed").getValues(value);
-                tracking_performed = (value == "yes");
+                NcGroupAtt tracked = file->getAtt("tracking_performed");
+                
+                if (!tracked.isNull())
+                {
+                        tracked.getValues(value);
+                        tracking_performed = (value == "yes");
+                }
                 
                 if (tracking_performed)
                 {
@@ -724,7 +731,9 @@ namespace m3D {
             cerr << e.what() << endl;
         }
         
-        ClusterList<T>::ptr cl = new ClusterList<T>( list, dimensions, feature_variables, source_file );
+        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, source_file, false);
+        
+        cl->clusters  = list;
         cl->ncFile = file;
         cl->timestamp = timestamp;
 
