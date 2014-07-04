@@ -2,37 +2,62 @@
 
 if [ "X$1" = "X" ]
 then
-    echo "run_tb4_clustering <path to directory containing tb4 files> <variable>"
+    echo "run_tb4_clustering.sh <sourcedir>"
     echo "Creates a python script for cluster creation and tracking and runs it in Visit"
-    exit 0
+exit 0
 fi
 
-if [ "X$2" = "X" ]
-then
-    echo "run_tb4_clustering <path to directory containing tb4 files>"
-    echo "Creates a python script for cluster creation and tracking and runs it in Visit"
-    exit 0
-fi
-
-if [ "X${VISIT_EXECUTABLE}" = "X" ]
-then
-    echo "Please set environment variable VISIT_EXECUTABLE"
-    exit 0
-fi
 if [ "X${MEANIE3D_HOME}" = "X" ]
 then
     echo "Please set environment variable MEANIE3D_HOME"
-    exit 0
+exit 0
 fi
 
-#DL_PATH=$MEANIE3D_HOME/Release
-DL_PATH=/usr/local/lib
+# clean up previous runs
 
-SCRIPTFILE="/tmp/tracking-$RANDOM.py"
-ESCAPED_SOURCE_DIR=$(echo $1 | sed -e "s/\//\\\\\//g")
-ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
-ESCAPED_DL_PATH=$(echo $DL_PATH | sed -e "s/\//\\\\\//g")
+if [ ! -d "images" ]
+then
+    mkdir images
+else
+    rm -rf images/*.png
+fi
 
-cat $MEANIE3D_HOME/visit/run_tb4_clustering.py | sed -e "s/SOURCE_DIR/$ESCAPED_SOURCE_DIR/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" | sed -e "s/VAR_P/$2/g" > $SCRIPTFILE
-${VISIT_EXECUTABLE} -cli -nowin -s $SCRIPTFILE
-#${VISIT_EXECUTABLE} -s $SCRIPTFILE
+if [ ! -d "clusters" ]
+then
+    mkdir clusters
+else
+    rm -rf clusters/*.nc
+fi
+
+MEANIE3D_PARAMS="-d lat,lon --vtk-dimensions lon,lat -r 0.5,0.5,300 --weight-function=inverse --wwf-lower-threshold=0.001 -m 5 --write-weight-function"
+
+FILES=`find $1 -name "*.nc"`
+for file in $FILES
+do
+    fn=${file##*/}
+    basename=${fn%.nc}
+
+    echo "Processing file $file"
+
+    for var in observation simulation
+    do
+
+        outfile="${basename}-${var}-clusters.nc"
+        PARAMS="${MEANIE3D_PARAMS} -v $var --upper-thresholds $var=253.15 -f $file -o $outfile"
+        echo "meanie3D-detect $PARAMS"
+        meanie3D-detect $PARAMS
+
+        echo "Visualizing results ..."
+        echo "$MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var"
+        $MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var
+
+        exit
+
+        mv ${basename}*.png images
+    done
+
+done
+
+mv *.nc clusters
+rm visitlog.py
+

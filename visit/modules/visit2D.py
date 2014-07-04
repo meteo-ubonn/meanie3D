@@ -78,7 +78,7 @@ def add_clusters_with_colortable(basename,infix,color_table_name,color_count):
     # now the clusters
     cluster_pattern="*"+infix+"*.vt*"
     print "Looking for cluster files at " + cluster_pattern
-    cluster_list=glob.glob(cluster_pattern)
+    cluster_list=sorted(glob.glob(cluster_pattern))
     
     for cluster_file in cluster_list:
         

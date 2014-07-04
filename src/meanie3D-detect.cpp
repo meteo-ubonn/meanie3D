@@ -72,6 +72,7 @@ void parse_commmandline(program_options::variables_map vm,
         bool &spatial_range_only,
         bool &coalesceWithStrongestNeighbour,
         bool &write_vtk,
+        bool &write_weight_function,
         bool &write_weight_response,
         bool &write_cluster_modes,
         bool &write_cluster_centers,
@@ -397,6 +398,8 @@ void parse_commmandline(program_options::variables_map vm,
     write_cluster_centers = vm.count("write-cluster-centers") > 0;
 
     write_weight_response = vm.count("write-cluster-weight-response") > 0;
+    
+    write_weight_function =vm.count("write-weight-function") > 0;
 
     // VTK dimension mapping
 
@@ -553,12 +556,6 @@ void print_compile_time_options()
         cout << "\tWRITE_OFF_LIMITS_MASK=0" << endl;
     #endif
         
-    #if WRITE_WEIGHT_FUNCTION
-        cout << "\tWRITE_WEIGHT_FUNCTION=1" << endl;
-    #else
-        cout << "\tWRITE_WEIGHT_FUNCTION=0" << endl;
-    #endif
-        
     #if WRITE_ZEROSHIFT_CLUSTERS
         cout << "\tWRITE_ZEROSHIFT_CLUSTERS=1" << endl;
     #else
@@ -605,6 +602,7 @@ int main(int argc, char** argv)
             ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
             ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66), "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
             ("write-variables-as-vtk", program_options::value<string>(), "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
+            ("write-weight-function","write weight function out as .vtk file")
             ("write-clusters-as-vtk", "write clusters out as .vtk files")
             ("write-cluster-modes","write the final meanshift modes in .vtk file format")
             ("write-cluster-centers", "write cluster centers out in .vtk file format")
@@ -658,6 +656,7 @@ int main(int argc, char** argv)
     vector<NcVar> vtk_variables;
     SearchParameters *search_params = NULL;
     bool write_vtk = false;
+    bool write_weight_function = false;
     bool write_weight_response = false;
     bool write_cluster_modes = false;
     bool write_cluster_centers = false;
@@ -693,6 +692,7 @@ int main(int argc, char** argv)
                 spatial_range_only,
                 coalesceWithStrongestNeighbour,
                 write_vtk,
+                write_weight_function,
                 write_weight_response,
                 write_cluster_modes,
                 write_cluster_centers,
@@ -980,10 +980,11 @@ int main(int argc, char** argv)
             cout << " done." << endl;
     }
     
-#if WRITE_WEIGHT_FUNCTION
-    std::string wfname = path.filename().stem().string() + "-weights";
-    ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
-#endif
+    if (write_weight_function)
+    {
+        std::string wfname = path.filename().stem().string() + "-weights";
+        ::cfa::utils::VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
+    }
 
     if (!vtk_variables.empty())
     {

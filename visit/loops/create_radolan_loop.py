@@ -22,9 +22,6 @@ SuppressQueryOutputOn()
 print "SOURCE_DIR="+NETCDF_DIR
 print "MEANIE3D_HOME="+MEANIE3D_HOME
 
-RX_MIN=15
-RX_MAX=75
-
 # Set view and annotation attributes
 
 print "Setting rendering attributes"
@@ -97,17 +94,24 @@ for netcdf_file in netcdf_list:
     p.opacity=1.0
     
     if VAR_NAME == "RX":
-        
         p.minFlag,p.maxFlag = 1,1
-        p.min,p.max = RX_MIN,RX_MAX
-        
-        # threshold
+        p.min,p.max = 0,65
         AddOperator("Threshold")
         t = ThresholdAttributes();
-        t.lowerBounds=(RX_MIN)
-        t.upperBounds=(RX_MAX)
+        t.lowerBounds=(0)
+        t.upperBounds=(65)
         SetOperatorOptions(t)
     
+    elif VAR_NAME=="RW" or VAR_NAME=="RZ":
+        p.minFlag,p.maxFlag = 1,1
+        p.min,p.max = 0.001,20
+        p.scaling=p.Log
+        AddOperator("Threshold")
+        t = ThresholdAttributes();
+        t.lowerBounds=(0.001)
+        t.upperBounds=(20)
+        SetOperatorOptions(t)
+
     SetPlotOptions(p)
 
     # date/time
@@ -130,7 +134,6 @@ for netcdf_file in netcdf_list:
         CloseComputeEngine()
 
 print "Done. Closing Visit."
-exit()
 
 # create loops
 print "Creating animated gif ..."

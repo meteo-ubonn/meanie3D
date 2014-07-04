@@ -22,9 +22,6 @@ SuppressQueryOutputOn()
 print "SOURCE_DIR="+NETCDF_DIR
 print "MEANIE3D_HOME="+MEANIE3D_HOME
 
-RX_MIN=15
-RX_MAX=75
-
 # Set view and annotation attributes
 
 print "Setting rendering attributes"
@@ -67,7 +64,7 @@ SetAnnotationAttributes(a)
 
 # Get a list of the files we need to process
 netcdf_pattern = NETCDF_DIR + "/*.nc"
-netcdf_list=glob.glob(netcdf_pattern)
+netcdf_list=sorted(glob.glob(netcdf_pattern))
 
 run_count = 0
 
@@ -97,32 +94,24 @@ for netcdf_file in netcdf_list:
     p.opacity=1.0
     
     if VAR_NAME == "RX":
-<<<<<<< HEAD
-=======
-        
+        p.minFlag,p.maxFlag = 1,1
+        p.min,p.max = 0,65
         AddOperator("Threshold")
         t = ThresholdAttributes();
         t.lowerBounds=(0)
         t.upperBounds=(65)
         SetOperatorOptions(t)
-
-        cp=PseudocolorAttributes();
-        cp.minFlag,cp.maxFlag = 1,1
-        cp.min,cp.max = 0,65.0
-        SetPlotOptions(cp)
-
->>>>>>> 47c6aa2b9f8a24fbb061610c4af0acd45a0b5351
-        
+    
+    elif VAR_NAME=="RW" or VAR_NAME=="RZ":
         p.minFlag,p.maxFlag = 1,1
-        p.min,p.max = RX_MIN,RX_MAX
-        
-        # threshold
+        p.min,p.max = 0.001,20
+        p.scaling=p.Log
         AddOperator("Threshold")
         t = ThresholdAttributes();
-        t.lowerBounds=(RX_MIN)
-        t.upperBounds=(RX_MAX)
+        t.lowerBounds=(0.001)
+        t.upperBounds=(20)
         SetOperatorOptions(t)
-    
+
     SetPlotOptions(p)
 
     # date/time
