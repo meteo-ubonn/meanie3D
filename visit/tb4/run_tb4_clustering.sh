@@ -2,9 +2,16 @@
 
 if [ "X$1" = "X" ]
 then
-    echo "run_tb4_clustering.sh <sourcedir>"
+    echo "run_tb4_clustering.sh <sourcedir> <spatial bandwidth in degrees>"
     echo "Creates a python script for cluster creation and tracking and runs it in Visit"
-exit 0
+    exit 0
+fi
+
+if [ "X$2" = "X" ]
+then
+    echo "run_tb4_clustering.sh <sourcedir> <spatial bandwidth in degrees>"
+    echo "Creates a python script for cluster creation and tracking and runs it in Visit"
+    exit 0
 fi
 
 if [ "X${MEANIE3D_HOME}" = "X" ]
@@ -29,7 +36,10 @@ else
     rm -rf clusters/*.nc
 fi
 
-MEANIE3D_PARAMS="-d lat,lon --vtk-dimensions lon,lat -r 0.5,0.5,300 --weight-function=inverse --wwf-lower-threshold=0.001 -m 5 --write-weight-function"
+echo "Cleaning up vtk and image files"
+rm *.vt* *.png
+
+MEANIE3D_PARAMS="--verbosity 2 -d lat,lon --vtk-dimensions lon,lat -r $2,$2,200 --weight-function=inverse --wwf-lower-threshold=0.001 -m 10 --write-weight-function"
 
 FILES=`find $1 -name "*.nc"`
 for file in $FILES
@@ -43,21 +53,20 @@ do
     do
 
         outfile="${basename}-${var}-clusters.nc"
-        PARAMS="${MEANIE3D_PARAMS} -v $var --upper-thresholds $var=253.15 -f $file -o $outfile"
+        PARAMS="${MEANIE3D_PARAMS} -v $var --upper-threshold $var=253.15 -f $file -o $outfile"
         echo "meanie3D-detect $PARAMS"
         meanie3D-detect $PARAMS
 
-        echo "Visualizing results ..."
-        echo "$MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var"
-        $MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var
+        #echo "Visualizing results ..."
+        #echo "$MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var"
+        #$MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var
 
-        exit
-
-        mv ${basename}*.png images
     done
 
 done
 
+mv *.png images
 mv *.nc clusters
 rm visitlog.py
+rm *.vt*
 

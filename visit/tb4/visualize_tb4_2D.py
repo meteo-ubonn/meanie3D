@@ -97,8 +97,9 @@ cluster_basename        = os.path.split(cluster_fn)[0]
 label_file              = cluster_basename+"-clusters_centers.vtk"
 
 v = GetView2D()
-v.windowCoords = (2,18.95,45,55.95)
-v.viewportCoords = (0.2,0.95,0.15,0.95)
+v.windowCoords = (2, 18.95, 45, 55.95)
+v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
+v.fullFrameActivationMode = v.On
 SetView2D(v)
 
 OpenDatabase(NETCDF_FILE);
@@ -108,7 +109,7 @@ start_time = time.time()
 
 visit2D.add_pseudocolor(NETCDF_FILE,VAR_NAME,"hot_desaturated",1.0,1)
 p = PseudocolorAttributes()
-p.minFlag,p.maxFlag=1,1
+p.maxFlag=1
 p.max=VAR_MAX
 p.invertColorTable=1
 SetPlotOptions(p)
@@ -136,12 +137,17 @@ print "    done. (%.2f seconds)" % (time.time()-start_time)
 print "-- Rendering cluster scene --"
 start_time = time.time()
 
-visit2D.add_pseudocolor(NETCDF_FILE,VAR_NAME,"hot_desaturated",0.1,1)
+visit2D.add_pseudocolor(NETCDF_FILE,VAR_NAME,"xray",0.25,0)
 p = PseudocolorAttributes()
-p.minFlag,p.maxFlag=1,1
+p.maxFlag=1
 p.max=VAR_MAX
-p.invertColorTable=1
+p.invertColorTable=0
 SetPlotOptions(p)
+
+AddOperator("Threshold")
+t = ThresholdAttributes();
+t.upperBounds=(VAR_MAX)
+SetOperatorOptions(t)
 
 # Add the clusters
 visit2D.add_clusters_with_colortable(cluster_basename,"_cluster_","cluster_colors",num_colors)
@@ -165,4 +171,4 @@ visit2D.close_topography()
 visitUtils.close_pattern(basename+"*.vtr")
 visitUtils.close_pattern(basename+"*.vtk")
 
-#return_code=call("rm -f *.vt*", shell=True)
+return_code=call("rm -f *.vt*", shell=True)

@@ -756,7 +756,8 @@ int main(int argc, char** argv)
 
             kernel_width = boost::numeric_cast<FS_TYPE>(0.0);
 
-            for (size_t i = 0; i < dimensions.size(); i++) {
+            for (size_t i = 0; i < dimensions.size(); i++)
+            {
                 kernel_width += ranges[i];
             }
 
@@ -1051,7 +1052,7 @@ int main(int argc, char** argv)
 
     clusters.apply_size_threshold(min_cluster_size);
 
-    if (verbosity > VerbosityDetails)
+    if (verbosity >= VerbosityDetails)
         clusters.print();
 
     // Collate with previous clusters, if provided
@@ -1060,7 +1061,7 @@ int main(int argc, char** argv)
     {
         cout << endl << "Collating with previous results:" << endl;
         
-        if (verbosity > VerbosityNormal)
+        if (verbosity >= VerbosityDetails)
                 clusters.print();
 
         try 
@@ -1071,7 +1072,7 @@ int main(int argc, char** argv)
                 cout << "Comparing " << clusters.clusters.size() << " new clusters to " 
                     << previous->clusters.size() << " clusters" << endl;
           
-            if (verbosity > VerbosityNormal)
+            if (verbosity >= VerbosityDetails)
             {
                 cout << "List of new clusters:" << endl;
                 clusters.print();
@@ -1089,7 +1090,7 @@ int main(int argc, char** argv)
         
         cout << endl << "Done. Have " << clusters.clusters.size() << " clusters:" << endl;
 
-        if (verbosity > VerbosityDetails)
+        if (verbosity >= VerbosityDetails)
             clusters.print();
     }
 
@@ -1098,7 +1099,7 @@ int main(int argc, char** argv)
     if (verbosity > VerbositySilent)
         cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
     
-    if (verbosity > VerbosityDetails)
+    if (verbosity >= VerbosityDetails)
         clusters.print();
 
     // Write out the cluster list

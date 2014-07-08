@@ -75,8 +75,8 @@ ENDIF()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # Debug, Release, MinSizeRel and RelWithDebInfo
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wlocal-type-template-args -finline")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O4 -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wlocal-type-template-args -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O3 -ftree-vectorize -msse2 -finline")
     SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline")
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
