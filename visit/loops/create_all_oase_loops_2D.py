@@ -64,8 +64,7 @@ SetAnnotationAttributes(a)
 print "Processing files in directory " + SOURCE_DIR
 netcdf_files = glob.glob(SOURCE_DIR+"/*.nc");
 
-
-
+# Counter for re-setting the engine periodically
 image_count = 0
 
 VARIABLES=("cband_radolan_rx",
@@ -88,14 +87,18 @@ VARIABLES=("cband_radolan_rx",
            "msevi_l15_ir_097",
            "msevi_l15_ir_108",
            "msevi_l15_ir_120",
-           "msevi_l15_ir_134"
-           )
+           "msevi_l15_ir_134")
+
+VARIABLES=("msevi_l15_wv_062",
+           "msevi_l15_wv_073")
 
 for VAR_NAME in VARIABLES:
     
     print "------------------------------------------------------------------------"
     print VAR_NAME
     print "------------------------------------------------------------------------"
+    
+    debug_count = 0;
 
     for netcdf_file in netcdf_files:
         
@@ -121,6 +124,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="hot_desaturated"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,65
             SetPlotOptions(p)
@@ -133,6 +137,7 @@ for VAR_NAME in VARIABLES:
         
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"YlOrRd",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="YlOrRd"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=1,20
             SetPlotOptions(p)
@@ -145,6 +150,7 @@ for VAR_NAME in VARIABLES:
 
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"Purples",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="Purples"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,2
             SetPlotOptions(p)
@@ -157,6 +163,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="hot_desaturated"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,5000
             SetPlotOptions(p)
@@ -169,6 +176,7 @@ for VAR_NAME in VARIABLES:
     
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="hot_desaturated"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,250
             SetPlotOptions(p)
@@ -181,6 +189,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"hot_desaturated",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="hot_desaturated"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,50
             SetPlotOptions(p)
@@ -193,6 +202,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"bluehot",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="bluehot"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=2500,15000
             SetPlotOptions(p)
@@ -205,6 +215,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"levels",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="levels"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,20
             SetPlotOptions(p)
@@ -218,6 +229,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"levels",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="levels"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,5
             SetPlotOptions(p)
@@ -231,6 +243,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"gray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="gray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,13
             SetPlotOptions(p)
@@ -239,6 +252,7 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"gray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="gray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,12
             SetPlotOptions(p)
@@ -247,22 +261,16 @@ for VAR_NAME in VARIABLES:
             
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
-            p.min,p.max=0,12
-            SetPlotOptions(p)
-
-        elif VAR_NAME == "msevi_l15_wv_073":
-            
-            visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
-            p = PseudocolorAttributes()
-            p.minFlag,p.maxFlag=1,1
-            p.min,p.max=0,12
+            p.min,p.max=0,3.5
             SetPlotOptions(p)
 
         elif VAR_NAME == "msevi_l15_wv_073":
     
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,12
             SetPlotOptions(p)
@@ -270,6 +278,7 @@ for VAR_NAME in VARIABLES:
         elif VAR_NAME == "msevi_l15_ir_016":
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"gray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="gray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,7
             SetPlotOptions(p)
@@ -277,6 +286,7 @@ for VAR_NAME in VARIABLES:
         elif VAR_NAME == "msevi_l15_ir_039":
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,1
             SetPlotOptions(p)
@@ -284,6 +294,7 @@ for VAR_NAME in VARIABLES:
         elif VAR_NAME == "msevi_l15_ir_087":
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=0,70
             SetPlotOptions(p)
@@ -291,6 +302,7 @@ for VAR_NAME in VARIABLES:
         elif VAR_NAME == "msevi_l15_ir_097":
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=10,50
             SetPlotOptions(p)
@@ -298,6 +310,7 @@ for VAR_NAME in VARIABLES:
         elif VAR_NAME == "msevi_l15_ir_108":
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=10,120
             SetPlotOptions(p)
@@ -305,6 +318,7 @@ for VAR_NAME in VARIABLES:
         elif VAR_NAME == "msevi_l15_ir_120":
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=20,125
             SetPlotOptions(p)
@@ -312,6 +326,7 @@ for VAR_NAME in VARIABLES:
         elif VAR_NAME == "msevi_l15_ir_134":
             visit2D.add_pseudocolor(netcdf_file,VAR_NAME,"xray",OPACITY,1)
             p = PseudocolorAttributes()
+            p.colorTableName="xray"
             p.minFlag,p.maxFlag=1,1
             p.min,p.max=25,100
             SetPlotOptions(p)
@@ -334,6 +349,10 @@ for VAR_NAME in VARIABLES:
         if image_count > 100:
             CloseComputeEngine()
             image_count = 0
+    
+        debug_count = debug_count + 1;
+        if debug_count == 10:
+            break
 
     print "Creating movie ..."
     return_code=call("mkdir "+VAR_NAME, shell=True)
