@@ -108,6 +108,8 @@ def add_clusters_with_colortable(basename,infix,color_table_name,color_count):
         cp.min,cp.max = 0,color_count
         cp.colorTableName = color_table_name
         cp.opacity=1
+        
+        SetActivePlots(GetNumPlots()-1)
         SetPlotOptions(cp)
     
     return

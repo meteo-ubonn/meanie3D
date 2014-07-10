@@ -62,7 +62,9 @@ def add_labels(file,variable):
     #a.textColor2 = (0, 0, 255, 0)
     #a.textHeight2 = 0.03
     a.formatTemplate = "%g"
+    SetActivePlots(GetNumPlots()-1)
     SetPlotOptions(a)
+    
     return
 
 # Extracts the path part from the given filename

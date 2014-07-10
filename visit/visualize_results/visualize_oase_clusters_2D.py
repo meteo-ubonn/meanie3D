@@ -19,14 +19,34 @@ from subprocess import call
 #print [key for key in locals().keys()
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
-# General parameters
-VAR_NAME = "msevi_l2_nwcsaf_ct"
-VAR_MIN = 7;
-VAR_MAX = 14;
+
+WITH_BACKGROUND_GRADIENT=False
+WITH_TOPOGRAPHY=False
+WITH_RIVERS_AND_BOUNDARIES=True
+WITH_DATETIME=True
+
+# Color tables
+
+# IR 10.8
+#msevi_l15_ir_108_ctable = "GnBu"
+msevi_l15_ir_108_ctable = "xray"
+invert_msevi_l15_ir_108_ctable = 1
+
+# C-Band RX
+#cband_radolan_rx_ctable = "RdYlBu"
+#invert_cband_radolan_rx_ctable = 1
+#cband_radolan_rx_ctable = "Spectral"
+cband_radolan_rx_ctable = "hot_desaturated"
+invert_cband_radolan_rx_ctable = 0
+
+# LINET
+linet_oase_tl_ctable = "contoured"
+invert_linet_oase_tl_ctable = 0
+
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
-CONVERSION_PARAMS += " -v "+VAR_NAME
+CONVERSION_PARAMS += " -v msevi_l15_ir_108"
 CONVERSION_PARAMS += " --write-as-xml=false"
 CONVERSION_PARAMS += " --extract-skin=false"
 CONVERSION_PARAMS += " --vtk-dimensions x,y"
@@ -47,21 +67,21 @@ SuppressQueryOutputOn()
 # Set view and annotation attributes
 
 a = GetAnnotationAttributes()
-a.axes3D.visible=1
-a.axes3D.autoSetScaling=0
-a.userInfoFlag=0
-a.timeInfoFlag=0
-a.legendInfoFlag=1
-a.databaseInfoFlag=1
-a.axes3D.xAxis.title.visible=0
-a.axes3D.yAxis.title.visible=0
-a.axes3D.zAxis.title.visible=0
+a.databaseInfoFlag = 0
+a.timeInfoFlag = 0
+a.userInfoFlag = 0
+a.legendInfoFlag = 1
+a.axes2D.visible=1
+a.axes2D.xAxis.title.visible=0
+a.axes2D.yAxis.title.visible=0
+a.axes2D.autoSetScaling=0
 SetAnnotationAttributes(a)
 
 print ColorTableNames()
 
 # Add gray/black background gradient
-visitUtils.add_background_gradient();
+if WITH_BACKGROUND_GRADIENT:
+    visitUtils.add_background_gradient();
 
 print "Cleaning up *.vtk *.vtr *.png"
 return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
@@ -71,13 +91,14 @@ visit2D.set_view_to_radolan();
 
 print "-- Creating colortables ---"
 num_colors = visitUtils.create_cluster_colortable("cluster_colors")
-visitUtils.create_topography_colortable()
+
+if WITH_TOPOGRAPHY:
+    visitUtils.create_topography_colortable()
+
 print "    done."
 
 # Glob the netcdf directory
 netcdf_files = glob.glob(NETCDF_DIR+"/*.nc");
-#print "Processing files in directory " + NETCDF_DIR
-#print netcdf_files
 
 for netcdf_file in netcdf_files:
 
@@ -104,52 +125,75 @@ for netcdf_file in netcdf_files:
         print "Cluster file does not exist. Skipping."
         continue
 
-    # add topograpy
-    visit2D.add_mapstuff("national")
+    if WITH_TOPOGRAPHY:
+        print "-- Adding topography data --"
+        visit2D.add_topography("national_topo_2D")
+        
+    if WITH_RIVERS_AND_BOUNDARIES:
+        print "-- Adding map data --"
+        visit2D.add_map_rivers("national")
+        visit2D.add_map_borders("national")
+        
+    if WITH_DATETIME:
+        print "-- Adding timestamp --"
+        visitUtils.add_datetime(netcdf_file)
 
     # now plot the data
     OpenDatabase(netcdf_file);
 
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
+    num_base_plots = GetNumPlots();
 
-    # Cloud Type
-    visit2D.add_pseudocolor(netcdf_file,"msevi_l2_nwcsaf_ct","Set1",1,1)
+    # IR 10.8
 
-    # threshold
-    AddOperator("Threshold")
-    t = ThresholdAttributes();
-    t.lowerBounds=(7)
-    t.upperBounds=(14)
-    SetOperatorOptions(t)
-
-    # Adjust
+    visit2D.add_pseudocolor(netcdf_file,"msevi_l15_ir_108",msevi_l15_ir_108_ctable,1,1)
     p = PseudocolorAttributes()
-    p.colorTableName="Set1"
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = 7,14
-    p.invertColorTable=1
-
+    p.colorTableName=msevi_l15_ir_108_ctable
+    p.minFlag,p.maxFlag=1,1
+    p.min,p.max=10,71.9493
+    p.invertColorTable = invert_msevi_l15_ir_108_ctable
+    SetActivePlots(num_base_plots+1)
     SetPlotOptions(p)
-
-    # C-band radar
-    visit2D.add_pseudocolor(netcdf_file,"cband_radolan_rx","hot_desaturated",1,1)
-
-    # threshold
+    
     AddOperator("Threshold")
     t = ThresholdAttributes();
-    t.lowerBounds=(32)
-    t.upperBounds=(150)
+    t.upperBounds=(71.9493)
     SetOperatorOptions(t)
 
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
+    # C-band RX
+
+    visit2D.add_pseudocolor(netcdf_file,"cband_radolan_rx",cband_radolan_rx_ctable,1,1)
+    p = PseudocolorAttributes()
+    p.colorTableName=cband_radolan_rx_ctable
+    p.minFlag,p.maxFlag=1,1
+    p.min,p.max=0,65
+    p.invertColorTable=invert_cband_radolan_rx_ctable
+    SetActivePlots(num_base_plots+2)
+    SetPlotOptions(p)
+    AddOperator("Threshold")
+    t = ThresholdAttributes();
+    t.lowerBounds=(15)
+    SetOperatorOptions(t)
+
+    # LINET
+
+    visit2D.add_pseudocolor(netcdf_file,"linet_oase_tl",linet_oase_tl_ctable,1,1)
+    p = PseudocolorAttributes()
+    p.colorTableName=linet_oase_tl_ctable
+    p.minFlag,p.maxFlag=1,1
+    p.min,p.max=1,20
+    p.invertColorTable = invert_linet_oase_tl_ctable
+    SetActivePlots(num_base_plots+3)
+    SetPlotOptions(p)
+    AddOperator("Threshold")
+    t = ThresholdAttributes();
+    t.lowerBounds=(1)
+    SetOperatorOptions(t)
 
     DrawPlots()
     visitUtils.save_window("source_",1)
 
-    DeleteAllPlots()
-    ClearWindow()
+    #DeleteAllPlots()
+    #    ClearWindow()
 
     start_time = time.time()
     print "-- Converting clusters to .vtr --"
@@ -163,18 +207,22 @@ for netcdf_file in netcdf_files:
     print "-- Rendering cluster scene --"
     start_time = time.time()
 
-    # add 2D topograpy
-    visit2D.add_mapstuff("national")
+#    if WITH_TOPOGRAPHY:
+#        print "-- Adding topography data --"
+#        visit2D.add_topography("national_topo_2D")
 
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
+#    if WITH_RIVERS_AND_BOUNDARIES:
+#        print "-- Adding map data --"
+#        visit2D.add_map_rivers("national")
+#        visit2D.add_map_borders("national")
+
+#    if WITH_DATETIME:
+#        print "-- Adding timestamp --"
+#        visitUtils.add_datetime(netcdf_file)
 
     # Add the clusters
     basename = CLUSTER_DIR+"/"
     visit2D.add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
-
-    # date/time
-    visitUtils.add_datetime(netcdf_file)
 
     # Add modes as labels
     visitUtils.add_labels(label_file,"geometrical_center")
@@ -185,12 +233,14 @@ for netcdf_file in netcdf_files:
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
 
+    exit(0)
+
     # clean up
     DeleteAllPlots();
     ClearWindow()
     CloseDatabase(netcdf_file)
     CloseDatabase(label_file)
-    visit2D.close_mapstuff()
+    visit2D.close_topography()
     visitUtils.close_pattern(basename+"*.vtr")
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)

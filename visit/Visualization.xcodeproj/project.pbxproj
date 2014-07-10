@@ -20,6 +20,7 @@
 		F44C92C5189832C900B05E23 /* create_all_oase_loops_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_all_oase_loops_2D.sh; sourceTree = "<group>"; };
 		F4670B0B18AFEE9000875B79 /* visualize_rico_clusters_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = visualize_rico_clusters_2D.py; sourceTree = "<group>"; };
 		F4670B0C18AFEE9000875B79 /* visualize_rico_clusters_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = visualize_rico_clusters_2D.sh; sourceTree = "<group>"; };
+		F46A4717196EF6C5003B4FFB /* multiscale_run_oase-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "multiscale_run_oase-2D.sh"; sourceTree = "<group>"; };
 		F47666D3188E778E002CA240 /* create_composite_loop_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_composite_loop_2D.py; sourceTree = "<group>"; };
 		F47666D4188E778E002CA240 /* create_composite_loop_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_composite_loop_2D.sh; sourceTree = "<group>"; };
 		F490385619338F0C000C2283 /* trackstats-conrad.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "trackstats-conrad.sh"; sourceTree = "<group>"; };
@@ -198,10 +199,11 @@
 				F4B4B20118AE2590001384F2 /* run_rico_tracking_2D.py */,
 				F4B4B20218AE2590001384F2 /* run_rico_tracking_2D.sh */,
 				F4ECD594191C0E880001F0F3 /* multiscale_run_RX-2D.sh */,
+				F46A4717196EF6C5003B4FFB /* multiscale_run_oase-2D.sh */,
+				F4B8C8441920DC6800B00CDA /* multiscale_run_oase-3D.sh */,
 				F4B8C8401920D15000B00CDA /* run_oase_tracking-3D.py */,
 				F4B8C8411920D15000B00CDA /* run_oase_tracking-3D.sh */,
 				F4B8C8451920DC6E00B00CDA /* multiscale_run_RX-2D.sh */,
-				F4B8C8441920DC6800B00CDA /* multiscale_run_oase-3D.sh */,
 			);
 			path = tracking;
 			sourceTree = "<group>";

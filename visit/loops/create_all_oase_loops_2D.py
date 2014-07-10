@@ -89,8 +89,8 @@ VARIABLES=("cband_radolan_rx",
            "msevi_l15_ir_120",
            "msevi_l15_ir_134")
 
-VARIABLES=("msevi_l15_wv_062",
-           "msevi_l15_wv_073")
+#VARIABLES=("msevi_l15_wv_062",
+#           "msevi_l15_wv_073")
 
 for VAR_NAME in VARIABLES:
     
@@ -350,9 +350,9 @@ for VAR_NAME in VARIABLES:
             CloseComputeEngine()
             image_count = 0
     
-        debug_count = debug_count + 1;
-        if debug_count == 10:
-            break
+    #debug_count = debug_count + 1;
+    #    if debug_count == 10:
+    #        break
 
     print "Creating movie ..."
     return_code=call("mkdir "+VAR_NAME, shell=True)

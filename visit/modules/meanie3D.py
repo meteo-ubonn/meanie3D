@@ -14,10 +14,13 @@ import shutil
 import time
 from subprocess import call
 
-# binaries
-detection_bin = "meanie3D-detect"
-tracking_bin  = "meanie3D-track"
-trackplot_bin = "meanie3D-trackplot"
+# TODO: *sigh*
+BIN_PREFIX = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:/usr/local/lib;"
+
+detection_bin = BIN_PREFIX + "meanie3D-detect"
+tracking_bin  = BIN_PREFIX + "meanie3D-track"
+trackplot_bin = BIN_PREFIX + "meanie3D-trackplot"
+
 
 # Deletes the directories 'log' and 'netcdf' underneath
 # base path. Removes previous ones if they do exist
@@ -54,7 +57,7 @@ def run_tracking(source_directory,
                  tracking_params,
                  last_completed_run_count,
                  time_index):
-
+    
     # TODO: find a more elegant way to resume
     # if > 0 a previous run is resumed
     last_completed_run_count = 0
@@ -81,6 +84,9 @@ def run_tracking(source_directory,
     # Get a list of the files we need to process
     netcdf_pattern = source_directory + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
+
+    print "Files in " + netcdf_pattern
+    print netcdf_list
 
     last_cluster_file=""
 
