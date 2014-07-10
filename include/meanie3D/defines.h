@@ -24,11 +24,6 @@
 #define DEBUG_TRACKING 0
 #define DEBUG_HISTOGRAM_CORRELATION 0
 
-// Write out a files which contain the meanshift
-// vectors. One file contains the threedimensional
-// version, one file the spatial components only
-#define WRITE_MEANSHIFT_VECTORS 1
-
 // Write out a VTK file that contains 1 and 0 for
 // all points. 1 means, that the point was marked
 // as 'off limits' in the original feature-space

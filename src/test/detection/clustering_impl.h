@@ -297,38 +297,6 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         cout << "done." << endl;
 #endif
         
-#if WRITE_MEANSHIFT_VECTORS
-        
-        // compile and write vectors
-        
-        vector< vector<TypeParam> > origins, vectors;
-        
-        for ( size_t index = 0; index < this->m_featureSpace->points.size(); index++ )
-        {
-            Point<TypeParam> *p = this->m_featureSpace->points[ index ];
-            vector<TypeParam> origin = p->values;
-            origins.push_back( origin );
-            //
-            //            vector<TypeParam> shift( origin.size(), 0 );
-            //
-            //            if ( p->next )
-            //            {
-            //                vector_subtract_r( origin, p->next->values, shift );
-            //            }
-            //
-            //            vectors.push_back( shift );
-            
-            vectors.push_back( p->shift );
-            
-        }
-        
-        string vectors_filename = string(test_info->test_case_name()) + "_meanshift.vtk";
-        boost::replace_all( vectors_filename, "/", "_" );
-        cout << "Writing meanshift vectors to " << vectors_filename << " ... ";
-        cfa::utils::VisitUtils<TypeParam>::write_vectors_vtk( vectors_filename, origins, vectors );
-        cout << "done." << endl;
-#endif
-        
 #if WRITE_CLUSTERS
         cout << "Writing clusters ... ";
         m3D::utils::VisitUtils<TypeParam>::write_clusters_vtk( test_info->test_case_name(), clusters.clusters, h );
@@ -411,39 +379,6 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         boost::replace_all( fs_filename, "/", "_" );
         cout << "Writing Featurespace to " + fs_filename << " ... ";
         VisitUtils<TypeParam>::write_featurespace_vtk( fs_filename, this->m_featureSpace );
-        cout << "done." << endl;
-#endif
-        
-#if WRITE_MEANSHIFT_VECTORS
-        
-        // compile and write vectors
-        
-        vector< vector<TypeParam> > origins, vectors;
-        
-        for ( size_t index = 0; index < this->m_featureSpace->points.size(); index++ )
-        {
-            Point<TypeParam> *p = this->m_featureSpace->points[ index ];
-            vector<TypeParam> origin = p->values;
-            origins.push_back( origin );
-            //
-            //            vector<TypeParam> shift( origin.size(), 0 );
-            //
-            //            if ( p->next )
-            //            {
-            //                vector_subtract_r( origin, p->next->values, shift );
-            //            }
-            //
-            //            vectors.push_back( shift );
-            
-            vectors.push_back( p->shift );
-            
-        }
-        
-        string vectors_filename = string(test_info->test_case_name()) + "_meanshift.vtk";
-        boost::replace_all( vectors_filename, "/", "_" );
-        cout << "Writing meanshift vectors to " << vectors_filename << " ... ";
-        VisitUtils<TypeParam>::write_vectors_vtk( vectors_filename, origins, vectors );
-        VisitUtils<TypeParam>::write_vectors_vtk( "blahblah.vtk", origins, vectors );
         cout << "done." << endl;
 #endif
         

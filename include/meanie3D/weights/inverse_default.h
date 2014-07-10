@@ -29,7 +29,7 @@ namespace m3D { namespace weights {
         const CoordinateSystem<T> *m_coordinate_system;
 
         void
-        build_saliency_field(FeatureSpace<T> *fs)
+        calculate_weight_function(FeatureSpace<T> *fs)
         {
             for (size_t i=0; i < fs->points.size(); i++)
             {
@@ -87,7 +87,7 @@ namespace m3D { namespace weights {
                 }
             }
             
-            build_saliency_field(fs);
+            calculate_weight_function(fs);
         }
         
         /** Construct the weight function, using the given values
@@ -106,7 +106,7 @@ namespace m3D { namespace weights {
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
-            build_saliency_field(fs);
+            calculate_weight_function(fs);
         }
         
         ~InverseDefaultWeightFunction()

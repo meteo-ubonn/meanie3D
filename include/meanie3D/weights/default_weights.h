@@ -29,7 +29,7 @@ namespace m3D { namespace weights {
         MultiArray<T>       *m_weight;
         
         void
-        build_saliency_field(const FeatureSpace<T> *fs)
+        calculate_weight_function(const FeatureSpace<T> *fs)
         {
             for (size_t i=0; i < fs->points.size(); i++)
             {
@@ -53,7 +53,7 @@ namespace m3D { namespace weights {
         , m_max(fs->max())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
         {
-            build_saliency_field(fs);
+            calculate_weight_function(fs);
         }
         
         /** Construct the weight function, using the given values
@@ -71,7 +71,7 @@ namespace m3D { namespace weights {
         , m_max(max)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
         {
-            build_saliency_field(fs);
+            calculate_weight_function(fs);
         }
         
         ~DefaultWeightFunction()

@@ -285,12 +285,13 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/visit_impl.h
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
-    include/meanie3D/weights/weights.h
-    include/meanie3D/weights/oase_weights.h
-    include/meanie3D/weights/exp10_weight.h
-    include/meanie3D/weights/default_weights.h
-    include/meanie3D/weights/inverse_default.h
     include/meanie3D/weights/brightband_evidence.h
+    include/meanie3D/weights/ci_weights.h
+    include/meanie3D/weights/default_weights.h
+    include/meanie3D/weights/exp10_weight.h
+    include/meanie3D/weights/inverse_default.h
+    include/meanie3D/weights/oase_weights.h
+    include/meanie3D/weights/weights.h
     include/meanie3D/implementations.h
 )
 
@@ -346,6 +347,7 @@ SOURCE_GROUP("meanie3d/utils" FILES
 
 SOURCE_GROUP("meanie3d/weights" FILES
     include/meanie3D/weights/weights.h
+    include/meanie3D/weights/ci_weights.h
     include/meanie3D/weights/oase_weights.h
     include/meanie3D/weights/exp10_weight.h
     include/meanie3D/weights/default_weights.h

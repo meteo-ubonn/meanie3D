@@ -70,19 +70,21 @@ namespace m3D {
          * to clear this, call reset_clustering() on the feature space.
          *
          * @param params                : range search or knn search parameter
-         * @param fuzziness             : absolute, minimum spatial distance between modes.
          * @param kernel                : kernel function for weighing sample points
-         * @param weighing function     : externally handed in weighing function, can be NULL
-         * @param termcrit_epsilon      : if the distance between iterations gets lower or equal to this value,
-         *                                the iteration is stopped.
-         * @param termcrit_iterations   : if more than this number of iterations have been done, it stops.
+         * @param weight function       : externally handed in weighing function, can be NULL
+         * @param write_vectors         : If <code>true</code>, vtk. files containing the
+         *                                vectors are written out. Defaults to <code>false</code>
+         * @param coalesce              : If <code>true</code> the coalescence post-processing
+         *                                is engaged. Note that this is a big performance hit.
          * @param show_progress_bar     : bool flag. if true, clustering progress is printed out in the console.
-         * @return vector of clusters
+         *
+         * @return ClusterList object with the results.
          */
         ClusterList<T> cluster(const SearchParameters *params,
                                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
                                const WeightFunction<T> *weight_function = NULL,
                                const bool coalesceWithStrongestNeighbour = false,
+                               const bool write_meanshift_vectors = false,
                                const bool show_progress_bar = true );
         
 #pragma mark -

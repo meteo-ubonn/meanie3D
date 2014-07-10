@@ -74,6 +74,7 @@ namespace m3D {
                                  const Kernel<T> *kernel,
                                  const WeightFunction<T> *weight_function,
                                  const bool coalesceWithStrongestNeighbour,
+                                 const bool write_meanshift_vectors,
                                  const bool show_progress_bar)
     {
         using namespace cfa::utils::timer;
@@ -213,10 +214,13 @@ namespace m3D {
         
 #endif
         
-#if WRITE_MEANSHIFT_VECTORS
-        ::cfa::utils::VisitUtils<T>::write_shift_vectors( "meanshift_vectors.vtk", this->feature_space, false );
-        ::cfa::utils::VisitUtils<T>::write_shift_vectors( "meanshift_vectors-spatial.vtk", this->feature_space, true );
-#endif
+        using ::cfa::utils::VisitUtils;
+        
+        if (write_meanshift_vectors)
+        {
+            VisitUtils<T>::write_shift_vectors( "meanshift_vectors.vtk", this->feature_space, false );
+            VisitUtils<T>::write_shift_vectors( "meanshift_vectors-spatial.vtk", this->feature_space, true );
+        }
         
         if ( show_progress_bar )
         {

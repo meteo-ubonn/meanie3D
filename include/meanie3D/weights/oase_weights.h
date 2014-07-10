@@ -36,7 +36,7 @@ namespace m3D { namespace weights {
         Kernel<T>           *m_kernel;          // kernel for weighing 
                 
         void
-        build_saliency_field(FeatureSpace<T> *fs)
+        calculate_weight_function(FeatureSpace<T> *fs)
         {
             size_t spatial_dim = fs->coordinate_system->rank();
             
@@ -90,7 +90,7 @@ namespace m3D { namespace weights {
                 m_max[index] = max_value;
             }
             
-            build_saliency_field(fs);
+            calculate_weight_function(fs);
         }
         
         /** Construct the weight function, using the given values
@@ -111,7 +111,7 @@ namespace m3D { namespace weights {
         , m_coordinate_system(fs->coordinate_system)
         , m_bandwidth(bandwidth)
         {
-            build_saliency_field(fs);
+            calculate_weight_function(fs);
         }
         
         ~OASEWeightFunction()
@@ -123,9 +123,11 @@ namespace m3D { namespace weights {
         }
 
         
-        /** Calculate the unweighed weight at point p
-        */
-        T raw_weight_at(Point<T> *p)
+        /** Calculate the unweighed weight at point p from 
+         * cloud type, 10.8um, cband_radolan, cloud optical 
+         * thickness and lightning counts
+         */
+        T weight_version_one(Point<T> *p)
         {
             T sum = 0.0;
 
@@ -251,6 +253,13 @@ namespace m3D { namespace weights {
             return sum;
         }
         
+        
+        T convective_initiation_weight(Point<T> *p)
+        {
+            
+        }
+       
+        
         /** Actual weight computation happens here
          */
         T compute_weight(Point<T> *p)
@@ -267,7 +276,7 @@ namespace m3D { namespace weights {
                 
                 // calculate weight at that point
                 
-                T point_weight = raw_weight_at(n);
+                T point_weight = weight_version_one(n);
                 
                 // calculate distance between n and p
                 
