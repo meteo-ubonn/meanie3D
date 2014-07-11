@@ -12,7 +12,7 @@ then
     exit 0
 fi
 
-export scales="5 10 25 50 100"
+export scales="5 10 25 50"
 echo "Running complete sets on scales ${scales}"
 
 #

@@ -25,7 +25,7 @@ except ImportError as e:
 VAR_NAME="xband_oase_zh"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds "+VAR_NAME+"=20"
+DETECT_PARAMS     += " --lower-thresholds "+VAR_NAME+"=35"
 DETECT_PARAMS     += " --upper-thresholds "+VAR_NAME+"=75"
 DETECT_PARAMS     += " -m 10"
 
