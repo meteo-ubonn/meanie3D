@@ -12,15 +12,17 @@ then
     exit 0
 fi
 
-export scales="5 10 25 50 100"
-echo "Running complete sets on scales ${scales}"
+scales=( 5 10 25 50 100 )
+echo "Running complete sets on scales ${scales[@]}"
+
+pids=()
 
 #
 # Iterate over scales
 #
-for scale in $scales; do
+for scale in ${scales[@]}; do
 
-    export dest="scale${scale}"
+    dest="scale${scale}"
 
     if [ ! -d $dest ]; then
         echo "Creating directory ${dest}"
@@ -31,10 +33,32 @@ for scale in $scales; do
     fi
 
     cd ${dest}
-    ${MEANIE3D_HOME}/visit/tracking/run_oase_tracking-2D.sh "$1" "$scale"
-    rm -f nohup.out
+    ${MEANIE3D_HOME}/visit/tracking/run_oase_tracking-2D.sh "$1" "$scale" &
+
+    pid=$!
+    pids=( "${pids[@]}" "${pid}" )
     cd ..
 
+done
+
+# Poll until all jobs are finished
+
+
+num_finished=0
+num_processes=${#pids[@]}
+echo "Polling for pids ${pids[@]} to finish ($num_processes processes)"
+
+while [ ! $num_processes = $num_finished ]; do
+    finished_pids=()
+    for pid in $pids; do
+        if [ "X`ps | awk '{print $1}' | grep ${pid}`" = "X" ]
+        then
+            echo "Process $pid finished."
+            finished_pids=( "${finished_pids[@]}" "${pid}" )
+        fi
+    done
+    num_finished=${#finished_pids[@]}
+    sleep 1
 done
 
 #

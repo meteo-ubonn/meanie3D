@@ -26,4 +26,6 @@ ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 ESCAPED_DL_PATH=$(echo $DL_PATH | sed -e "s/\//\\\\\//g")
 
 cat run_clustering_complete-2D.py | sed -e "s/SOURCE_FILE/$ESCAPED_SOURCE_FILE/g" | sed -e "s/DL_PATH/$ESCAPED_DL_PATH/g" | sed -e "s/M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > $SCRIPTFILE
-${VISIT_EXECUTABLE} -s $SCRIPTFILE
+
+
+python ${SCRIPTFILE}

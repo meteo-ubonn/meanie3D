@@ -86,7 +86,6 @@ def run_tracking(source_directory,
     netcdf_list=sorted(glob.glob(netcdf_pattern))
 
     print "Files in " + netcdf_pattern
-    print netcdf_list
 
     last_cluster_file=""
 

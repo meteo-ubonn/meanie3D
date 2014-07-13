@@ -5,19 +5,19 @@
 	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
 	<false/>
 	<key>IDESourceControlProjectIdentifier</key>
-	<string>3316972E-4778-4D83-84EB-6F206B93D4EA</string>
+	<string>1BA0D08C-FE5A-4A65-BE6E-02C32214A251</string>
 	<key>IDESourceControlProjectName</key>
 	<string>Visualization</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>43E0F56A-161E-4099-8B88-A26AE89753DA</key>
+		<key>D158CB62-F810-40B4-86BA-C95E73396DC5</key>
 		<string>http://git.meteo.uni-bonn.de/git/meanie3d</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
 	<string>visit/Visualization.xcodeproj/project.xcworkspace</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>43E0F56A-161E-4099-8B88-A26AE89753DA</key>
+		<key>D158CB62-F810-40B4-86BA-C95E73396DC5</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
@@ -25,14 +25,14 @@
 	<key>IDESourceControlProjectVersion</key>
 	<integer>110</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>43E0F56A-161E-4099-8B88-A26AE89753DA</string>
+	<string>D158CB62-F810-40B4-86BA-C95E73396DC5</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>43E0F56A-161E-4099-8B88-A26AE89753DA</string>
+			<string>D158CB62-F810-40B4-86BA-C95E73396DC5</string>
 			<key>IDESourceControlWCCName</key>
 			<string>meanie3d</string>
 		</dict>

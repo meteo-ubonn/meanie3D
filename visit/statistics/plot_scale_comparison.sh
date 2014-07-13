@@ -1,11 +1,5 @@
 #!/usr/local/bin/gnuplot
 
-# NOTE: this script expects the conrad_ - versions of the histogram
-# files to be present in the directory ABOVE the one you're plotting
-# in. This is due to the fact that Meanie3D runs on numerous scales
-# and the CONRAD stats would have to be copied for each scale. It's
-# easier this way.
-
 set terminal png
 set style fill transparent pattern 4 border 2
 
