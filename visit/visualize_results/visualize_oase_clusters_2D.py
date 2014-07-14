@@ -4,6 +4,7 @@
 NETCDF_DIR = "P_NETCDF_DIR"
 CLUSTER_DIR = "P_CLUSTER_DIR"
 M3D_HOME = "P_M3D_HOME"
+OVERLAY_VALUE = "P_OVERLAY"
 
 # Import modules
 import sys
@@ -19,6 +20,7 @@ from subprocess import call
 #print [key for key in locals().keys()
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
+OVERLAY=bool(OVERLAY_VALUE == "YES")
 CREATE_SOURCE_MOVIE=True
 CREATE_CLUSTERS_MOVIE=True
 OVERLAY_CLUSTERS=True
@@ -45,7 +47,6 @@ invert_cband_radolan_rx_ctable = 0
 # LINET
 linet_oase_tl_ctable = "contoured"
 invert_linet_oase_tl_ctable = 0
-
 
 # Conversion program params
 CONVERSION_PARAMS  = "-t cluster "
@@ -78,6 +79,11 @@ a.axes2D.visible=1
 a.axes2D.xAxis.title.visible=0
 a.axes2D.yAxis.title.visible=0
 a.axes2D.autoSetScaling=0
+
+if OVERLAY:
+    a.legendInfoFlag=0
+    a.axes2D.visible=0
+
 SetAnnotationAttributes(a)
 
 print ColorTableNames()
@@ -128,20 +134,22 @@ for netcdf_file in netcdf_files:
         print "Cluster file does not exist. Skipping."
         continue
     
-    if CREATE_SOURCE_MOVIE or (CREATE_CLUSTERS_MOVIE and not OVERLAY_CLUSTERS):
+    if (CREATE_SOURCE_MOVIE or (CREATE_CLUSTERS_MOVIE and not OVERLAY_CLUSTERS)):
 
-        if WITH_TOPOGRAPHY:
-            print "-- Adding topography data --"
-            visit2D.add_topography("national_topo_2D")
-            
-        if WITH_RIVERS_AND_BOUNDARIES:
-            print "-- Adding map data --"
-            visit2D.add_map_rivers("national")
-            visit2D.add_map_borders("national")
-            
-        if WITH_DATETIME:
-            print "-- Adding timestamp --"
-            visitUtils.add_datetime(netcdf_file)
+        if not OVERLAY:
+
+            if WITH_TOPOGRAPHY:
+                print "-- Adding topography data --"
+                visit2D.add_topography("national_topo_2D")
+                
+            if WITH_RIVERS_AND_BOUNDARIES:
+                print "-- Adding map data --"
+                visit2D.add_map_rivers("national")
+                visit2D.add_map_borders("national")
+                
+            if WITH_DATETIME:
+                print "-- Adding timestamp --"
+                visitUtils.add_datetime(netcdf_file)
 
         # now plot the data
         OpenDatabase(netcdf_file);
@@ -150,19 +158,21 @@ for netcdf_file in netcdf_files:
 
         # IR 10.8
 
-        visit2D.add_pseudocolor(netcdf_file,"msevi_l15_ir_108",msevi_l15_ir_108_ctable,1,1)
-        p = PseudocolorAttributes()
-        p.colorTableName=msevi_l15_ir_108_ctable
-        p.minFlag,p.maxFlag=1,1
-        p.min,p.max=10,71.9493
-        p.invertColorTable = invert_msevi_l15_ir_108_ctable
-        SetActivePlots(num_base_plots+1)
-        SetPlotOptions(p)
-        
-        AddOperator("Threshold")
-        t = ThresholdAttributes();
-        t.upperBounds=(71.9493)
-        SetOperatorOptions(t)
+        if not OVERLAY:
+
+            visit2D.add_pseudocolor(netcdf_file,"msevi_l15_ir_108",msevi_l15_ir_108_ctable,1,1)
+            p = PseudocolorAttributes()
+            p.colorTableName=msevi_l15_ir_108_ctable
+            p.minFlag,p.maxFlag=1,1
+            p.min,p.max=10,71.9493
+            p.invertColorTable = invert_msevi_l15_ir_108_ctable
+            SetActivePlots(num_base_plots+1)
+            SetPlotOptions(p)
+            
+            AddOperator("Threshold")
+            t = ThresholdAttributes();
+            t.upperBounds=(71.9493)
+            SetOperatorOptions(t)
 
         # C-band RX
 
@@ -178,6 +188,11 @@ for netcdf_file in netcdf_files:
         t = ThresholdAttributes();
         t.lowerBounds=(15)
         SetOperatorOptions(t)
+
+        if OVERLAY:
+            DrawPlots()
+            visitUtils.save_window("cband_rx_",1)
+            DeleteAllPlots()
 
         # LINET
 
@@ -195,8 +210,13 @@ for netcdf_file in netcdf_files:
         SetOperatorOptions(t)
 
         DrawPlots()
+            
+        if OVERLAY:
+            visitUtils.save_window("linet_",1)
+            DeleteAllPlots()
 
-        visitUtils.save_window("source_",1)
+        if not OVERLAY:
+            visitUtils.save_window("source_",1)
 
     if CREATE_CLUSTERS_MOVIE:
         
@@ -216,8 +236,8 @@ for netcdf_file in netcdf_files:
         print "-- Rendering cluster scene --"
         start_time = time.time()
 
-        if not OVERLAY_CLUSTERS:
-            
+        if not (OVERLAY_CLUSTERS and OVERLAY):
+    
             if WITH_TOPOGRAPHY:
                 print "-- Adding topography data --"
                 visit2D.add_topography("national_topo_2D")
@@ -241,7 +261,13 @@ for netcdf_file in netcdf_files:
         # save as image
         DrawPlots()
 
-        visitUtils.save_window("tracking_",1)
+        if OVERLAY:
+            visitUtils.save_window("clusters_",1)
+        else:
+            visitUtils.save_window("tracking_",1)
+
+        DeleteAllPlots()
+        ClearWindow()
 
     print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -255,19 +281,64 @@ for netcdf_file in netcdf_files:
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)
 
-# create loops
-if CREATE_SOURCE_MOVIE:
-    visitUtils.create_movie("source_","source.gif")
-    visitUtils.create_movie("source_","source.m4v")
 
-if  CREATE_CLUSTERS_MOVIE:
-    visitUtils.create_movie("tracking_","tracking.gif")
-    visitUtils.create_movie("tracking_","tracking.m4v")
+if OVERLAY:
 
-# clean up
+    # run imagemagick
+    background=M3D_HOME+"/visit/1024x1024-transparent.png"
+
+    # cband
+
+    files=sorted(glob.glob("cband_rx_*.png"))
+    for f in files:
+        return_code=call("convert "+f+" -transparent white -crop 765x765+207+104 "+f, shell=True)
+        return_code=call("convert -composite -geometry +205+105 "+background+" "+f+" "+f, shell=True)
+
+    # linet
+
+    files=sorted(glob.glob("linet_*.png"))
+    for f in files:
+        return_code=call("convert "+f+" -transparent white -crop 765x765+207+104 "+f, shell=True)
+        return_code=call("convert -composite -geometry +205+105 "+background+" "+f+" "+f, shell=True)
+
+    # clusters
+
+    files=sorted(glob.glob("clusters_*.png"))
+    for f in files:
+        return_code=call("convert "+f+" -transparent white -crop 765x765+207+104 "+f, shell=True)
+        return_code=call("convert -composite -geometry +205+105 "+background+" "+f+" "+f, shell=True)
+
+    # create loops
+    if CREATE_SOURCE_MOVIE:
+        
+        visitUtils.create_movie("cband","cband_rx.gif")
+        visitUtils.create_movie("cband","cband_rx.m4v")
+
+        visitUtils.create_movie("linet","linet.gif")
+        visitUtils.create_movie("linet","linet.m4v")
+
+    if  CREATE_CLUSTERS_MOVIE:
+        
+        visitUtils.create_movie("clusters","clusters.gif")
+        visitUtils.create_movie("clusters","clusters.m4v")
+
+else:
+
+    # create loops
+    if CREATE_SOURCE_MOVIE:
+        visitUtils.create_movie("source_","source.gif")
+        visitUtils.create_movie("source_","source.m4v")
+
+    if  CREATE_CLUSTERS_MOVIE:
+        visitUtils.create_movie("tracking_","tracking.gif")
+        visitUtils.create_movie("tracking_","tracking.m4v")
+
+# Clean up
 print "Cleaning up ..."
 return_code=call("mkdir images", shell=True)
 return_code=call("mv *.png images", shell=True)
 return_code=call("mkdir movies", shell=True)
 return_code=call("mv *.gif *.m4v movies", shell=True)
 return_code=call("rm -f *.vt* visitlog.py", shell=True)
+
+

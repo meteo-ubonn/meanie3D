@@ -210,7 +210,7 @@ def add_datetime(filename):
         return
 
 def create_movie(basename,moviename):
-    convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 "+basename+"*.png "+moviename
+    convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 -dispose Background "+basename+"*.png "+moviename
     return_code=call(convert_cmd, shell=True)
     return
 

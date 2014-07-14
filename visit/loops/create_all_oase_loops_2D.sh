@@ -9,7 +9,7 @@ fi
 
 if [ "X${VISIT_EXECUTABLE}" = "X" ]
 then
-    echo "Please set environment variable VISIT_EXECUTABLE"
+    echo "Please set environment variable VISIT_EXECUTABLE"/Users/simon/Desktop/tracking_0144-cropped.png
     exit 0
 fi
 
