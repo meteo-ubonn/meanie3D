@@ -151,4 +151,4 @@ return_code=call("rm -f *.vt* *.py", shell=True)
 
 print "Done."
 
-
+quit()

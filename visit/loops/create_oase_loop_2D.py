@@ -111,4 +111,4 @@ return_code=call("mv "+VAR_NAME+"*.gif "+VAR_NAME, shell=True)
 return_code=call("mv "+VAR_NAME+"*.m4v "+VAR_NAME, shell=True)
 
 print "Done."
-exit(0)
+quit()

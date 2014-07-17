@@ -85,13 +85,11 @@ def run_tracking(source_directory,
     netcdf_pattern = source_directory + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
 
-    print "Files in " + netcdf_pattern
-
     last_cluster_file=""
-
     run_count = 0
 
     # Process the files one by one
+    
     for netcdf_file in netcdf_list:
         
         basename = os.path.basename(netcdf_file)
@@ -134,6 +132,12 @@ def run_tracking(source_directory,
         if (run_count > 0) or (time_index > 0):
             command = command + " -p " + last_cluster_file
         
+        # add ci-comparison-file if applicable
+        if run_count >= 3:
+            # 15 mins ago
+            command = command + " --ci-comparison-file " + netcdf_list[run_count-3];
+
+        # complete command with directing output to logfile
         command = command + " > " + logfile
         
         # execute

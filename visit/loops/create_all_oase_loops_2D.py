@@ -368,6 +368,7 @@ for VAR_NAME in VARIABLES:
     return_code=call("mv "+VAR_NAME+"*.gif "+VAR_NAME, shell=True)
     return_code=call("mv "+VAR_NAME+"*.m4v "+VAR_NAME, shell=True)
 
-return_code=call("visitlog.py", shell=True)
+return_code=call("rm visitlog.py", shell=True)
+
 print "Done."
-exit(0)
+quit()

@@ -103,3 +103,5 @@ visitUtils.save_window("tracks",0)
 
 print "Cleaning up *.vtk"
 return_code=call("rm -f *.vtk", shell=True)
+
+quit()

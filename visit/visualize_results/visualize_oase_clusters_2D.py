@@ -5,6 +5,7 @@ NETCDF_DIR = "P_NETCDF_DIR"
 CLUSTER_DIR = "P_CLUSTER_DIR"
 M3D_HOME = "P_M3D_HOME"
 OVERLAY_VALUE = "P_OVERLAY"
+RESUME_AT_FILE = "P_RESUME_AT_FILE"
 
 # Import modules
 import sys
@@ -29,6 +30,11 @@ WITH_BACKGROUND_GRADIENT=False
 WITH_TOPOGRAPHY=False
 WITH_RIVERS_AND_BOUNDARIES=True
 WITH_DATETIME=True
+
+RESUME_MODE=bool(RESUME_AT_FILE!="")
+if RESUME_MODE:
+    RESUME_AT_FILE = os.path.split(RESUME_AT_FILE)[1]
+    print "Resuming at file " + RESUME_AT_FILE
 
 # Color tables
 
@@ -92,8 +98,12 @@ print ColorTableNames()
 if WITH_BACKGROUND_GRADIENT:
     visitUtils.add_background_gradient();
 
-print "Cleaning up *.vtk *.vtr *.png"
-return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
+if not RESUME_MODE:
+    print "Cleaning up *.vtk *.vtr *.png"
+    return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
+else:
+    print "Cleaning up *.vtk *.vtr"
+    return_code=call("rm -f *.vtk *.vtr", shell=True)
 
 # Set view to nationwide composite
 visit2D.set_view_to_radolan();
@@ -120,16 +130,22 @@ for netcdf_file in netcdf_files:
     cluster_file            = CLUSTER_DIR+"/"+basename+"-clusters.nc"
     label_file              = basename+"-clusters_centers.vtk"
 
-    print "netcdf_file  = " + netcdf_file
-    print "filename     = " + filename
-    print "basename     = " + basename
-    print "cluster_file = " + cluster_file
-    print "label_file   = " + label_file
+    #print "netcdf_file  = " + netcdf_file
+    #print "filename     = " + filename
+    #print "basename     = " + basename
+    #print "cluster_file = " + cluster_file
+    #print "label_file   = " + label_file
     
-    #./herz-oase-20120805t1405utc-0500m-bonnjue-3d-v01a-clusters_centers.vtk
-
+    # If we're resuming, skip until the appointed file
+    
+    if RESUME_MODE:
+        if filename == RESUME_AT_FILE:
+            RESUME_MODE=False
+        else:
+            continue
+    
     # check if the files both exist
-    print "Visualzing file "+netcdf_file+" and cluster file "+cluster_file
+    print "Processing file "+netcdf_file+" and cluster file "+cluster_file
     if not os.path.exists(cluster_file):
         print "Cluster file does not exist. Skipping."
         continue
@@ -341,4 +357,4 @@ return_code=call("mkdir movies", shell=True)
 return_code=call("mv *.gif *.m4v movies", shell=True)
 return_code=call("rm -f *.vt* visitlog.py", shell=True)
 
-
+quit()

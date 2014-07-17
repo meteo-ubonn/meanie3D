@@ -161,3 +161,5 @@ for time_index in xrange(0, time_slices):
     visitUtils.close_pattern(basename+"*.vtk")
 
     return_code=call("rm -f *.vt*", shell=True)
+
+quit()

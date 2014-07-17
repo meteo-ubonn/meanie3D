@@ -171,12 +171,14 @@ void FSTestBase<T>::generate_featurespace()
     
     map<int,double> lower,upper,fill_values;
     
+    vector<string> variable_names;
+    for (size_t i=0; i<this->m_variables.size(); i++)
+        variable_names.push_back(this->m_variables.at(i).getName());
+
     this->m_dataStore
         = new NetCDFDataStore<T>(this->m_filename,
                                        this->coordinate_system(),
-                                       this->m_variables,-1);
-    
-    bool omit_value_range = false;
+                                       variable_names,-1);
     
     this->m_featureSpace
         = new FeatureSpace<T>(this->coordinate_system(),

@@ -181,4 +181,4 @@ for netcdf_file in netcdf_files:
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)
 
-
+quit()

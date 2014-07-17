@@ -145,3 +145,5 @@ return_code=call("mv *.gif composite", shell=True)
 return_code=call("mv *.m4v composite", shell=True)
 
 print "Done."
+
+quit()

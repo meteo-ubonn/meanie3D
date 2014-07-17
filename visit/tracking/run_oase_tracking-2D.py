@@ -26,7 +26,7 @@ last_completed_run_count = 0
 CLUSTERING_PARAMS =  " -s "+PARAM_T
 CLUSTERING_PARAMS += " -v msevi_l15_ir_108 --upper-thresholds msevi_l15_ir_108=71.9493"
 CLUSTERING_PARAMS += " -d y,x --vtk-dimensions x,y"
-CLUSTERING_PARAMS += " --weight-function oase --wwf-lower-threshold 2"
+CLUSTERING_PARAMS += " --weight-function oase --wwf-lower-threshold 5"
 CLUSTERING_PARAMS += " -m 10"
 CLUSTERING_PARAMS += " --verbosity 1"
 

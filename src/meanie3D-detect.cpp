@@ -68,6 +68,7 @@ void parse_commmandline(program_options::variables_map vm,
                         string &parameters,
                         vector<FS_TYPE> &ranges,
                         std::string **previous_file,
+                        std::string **ci_comparison_file,
                         FS_TYPE &cluster_coverage_threshold,
                         bool &spatial_range_only,
                         bool &coalesceWithStrongestNeighbour,
@@ -460,6 +461,25 @@ void parse_commmandline(program_options::variables_map vm,
         }
     }
     
+    // ci_comparison_file
+    
+    if (vm.count("ci-comparison-file") > 0)
+    {
+        std::string previous = vm["ci-comparison-file"].as<string>();
+        
+        boost::filesystem::path previous_path(previous);
+        
+        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path))
+        {
+            *ci_comparison_file = new std::string(previous);
+        }
+        else
+        {
+            cerr << "Illegal value for parameter --ci-comparison-file: does not exist or is no regular file" << endl;
+        }
+    }
+    
+    
     cluster_coverage_threshold = vm["previous-cluster-coverage-threshold"].as<FS_TYPE>();
     
     // Verbosity
@@ -599,6 +619,7 @@ int main(int argc, char** argv)
     ("weight-function-name,w", program_options::value<string>()->default_value("default"), "default,inverse,pow10 or oase")
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
+    ("ci-comparison-file", program_options::value<string>(), "Only used is weight function is 'oase'. Used for obtaining time trends for CI-score according to Walker et al. 2012.")
     //            ("spatial-range-only","If this flag is present, the mean-shift only considers the spatial range")
     ("coalesce-with-strongest-neighbour", "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
     //            ("convection-filter-variable,c", program_options::value<string>(), "Name the variable to eliminate all but the points marked as convective according to the classification scheme by Steiner,Houza & Yates (1995) in.")
@@ -655,6 +676,7 @@ int main(int argc, char** argv)
     std::string weight_function_name = "default";
     std::string kernel_name = "uniform";
     std::string *previous_file = NULL;
+    std::string *ci_comparison_file = NULL;
     FS_TYPE cluster_coverage_threshold = 0.66;
     int convection_filter_index = -1;
     bool coalesceWithStrongestNeighbour = false;
@@ -697,6 +719,7 @@ int main(int argc, char** argv)
                            parameters,
                            ranges,
                            &previous_file,
+                           &ci_comparison_file,
                            cluster_coverage_threshold,
                            spatial_range_only,
                            coalesceWithStrongestNeighbour,
@@ -843,8 +866,13 @@ int main(int argc, char** argv)
     // used in writing out debug data
     boost::filesystem::path path(filename);
     
+    // Compile a list of variable names
+    vector<std::string> variable_names;
+    for (size_t i=0; i<variables.size(); i++)
+        variable_names.push_back(variables.at(i).getName());
+    
     NetCDFDataStore<FS_TYPE> *data_store
-    = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variables,time_index);
+    = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variable_names,time_index);
     
     FeatureSpace<FS_TYPE> *fs
     = new FeatureSpace<FS_TYPE>(coord_system,
@@ -921,19 +949,18 @@ int main(int argc, char** argv)
 #endif
         
         if (verbosity > VerbositySilent)
-        cout << endl << "Constructing " << weight_function_name << " weight function ...";
+        {
+            cout << endl << "Constructing " << weight_function_name << " weight function ...";
+            start_timer();
+        }
         
         if (weight_function_name == "oase")
         {
-            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename);
+            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename,ci_comparison_file);
             
             FS_TYPE temp = 0.0;
             FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
-            
-            cout << "-------------------------------------------------------------------" << endl;
-            cout << "Temperature = " << temp << " C = " << radiance << " mW/m2sr(cm-1)-1" << endl;
-            cout << "-------------------------------------------------------------------" << endl;
-            
+
 //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
 //                                                              data_store,
 //                                                              ranges,
@@ -953,36 +980,32 @@ int main(int argc, char** argv)
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         }
         
-        if (verbosity > VerbositySilent)
-        cout << " done." << endl;
+        cout << " done (" << stop_timer() << "s)." << endl;
         
         // Apply weight function filter
-        // TODO: make that a command line parameter
         
         WeightThresholdFilter<FS_TYPE> wtf(weight_function, wwf_lower_threshold, wwf_upper_threshold, true);
         
         wtf.apply(fs);
         
         if (verbosity > VerbositySilent)
-        cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
-        
+        {
+            cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
+        }
+
     }
     else
     {
         if (verbosity > VerbositySilent)
-        cout << endl << "Constructing " << weight_function_name << " weight function ...";
+        {
+            cout << endl << "Constructing " << weight_function_name << " weight function ...";
+            start_timer();
+        }
         
         if (weight_function_name == "oase")
         {
-            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename);
+            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename,ci_comparison_file);
             
-            FS_TYPE temp = 0.0;
-            FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
-            
-            cout << "-------------------------------------------------------------------" << endl;
-            cout << "Temperature = " << temp << " C = " << radiance << " mW/m2sr(cm-1)-1" << endl;
-            cout << "-------------------------------------------------------------------" << endl;
-
 //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         }
         else if (weight_function_name == "inverse")
@@ -998,6 +1021,8 @@ int main(int argc, char** argv)
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
         
+        cout << " done (" << stop_timer() << "s)." << endl;
+        
         // Apply weight function filter
         
         WeightThresholdFilter<FS_TYPE> wtf(weight_function, wwf_lower_threshold, wwf_upper_threshold, true);
@@ -1005,10 +1030,9 @@ int main(int argc, char** argv)
         wtf.apply(fs);
         
         if (verbosity > VerbositySilent)
-        cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
-        
-        if (verbosity > VerbositySilent)
-        cout << " done." << endl;
+        {
+            cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
+        }
     }
     
     if (write_weight_function)

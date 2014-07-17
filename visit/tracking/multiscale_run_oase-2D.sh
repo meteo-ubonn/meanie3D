@@ -12,7 +12,10 @@ then
     exit 0
 fi
 
-scales=( 5 10 25 50 100 )
+#scales=( 5 10 25 50 100 )
+scales=( 5 10 )
+
+
 echo "Running complete sets on scales ${scales[@]}"
 
 pids=()
@@ -48,16 +51,14 @@ num_finished=0
 num_processes=${#pids[@]}
 echo "Polling for pids ${pids[@]} to finish ($num_processes processes)"
 
-while [ ! $num_processes = $num_finished ]; do
-    finished_pids=()
-    for pid in $pids; do
+while [ $num_processes -ne $num_finished ]; do
+    num_finished=0
+    for pid in "${pids[@]}"; do
         if [ "X`ps | awk '{print $1}' | grep ${pid}`" = "X" ]
         then
-            echo "Process $pid finished."
-            finished_pids=( "${finished_pids[@]}" "${pid}" )
+            num_finished=${num_finished}+1
         fi
     done
-    num_finished=${#finished_pids[@]}
     sleep 1
 done
 

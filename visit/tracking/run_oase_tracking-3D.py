@@ -49,4 +49,3 @@ print "MEANIE3D_HOME="+MEANIE3D_HOME
 last_completed_run_count = 0
 
 meanie3D.run_tracking(NETCDF_DIR,".",CLUSTERING_PARAMS,TRACKING_PARAMS,last_completed_run_count,-1)
-

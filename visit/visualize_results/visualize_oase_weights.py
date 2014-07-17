@@ -95,3 +95,5 @@ vp.invertColorTable = 1
 SetPlotOptions(vp)
 
 DrawPlots()
+
+quit()

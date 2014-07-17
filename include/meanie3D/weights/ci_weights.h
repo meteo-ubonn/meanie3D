@@ -66,9 +66,11 @@ namespace m3D { namespace weights {
         //
         
         NetCDFDataStore<T>          *m_data_store;
+        const std::string           *m_ci_comparison_file;
+        NetCDFDataStore<T>          *m_ci_comparison_data_store;
         const CoordinateSystem<T>   *m_coordinate_system;
         MultiArray<T>               *m_weight;
-        vector<NcVar>               m_vars;
+        std::vector<std::string>    m_variable_names;
         
         //
         // Attributes for calculating brightness
@@ -95,8 +97,11 @@ namespace m3D { namespace weights {
          */
         OASECIWeightFunction(FeatureSpace<T> *fs,
                              const std::string &filename,
+                             const std::string *ci_comparison_file = NULL,
                              const int time_index = -1)
         : m_data_store(NULL)
+        , m_ci_comparison_file(ci_comparison_file)
+        , m_ci_comparison_data_store(NULL)
         , m_coordinate_system(fs->coordinate_system)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         {
@@ -105,9 +110,11 @@ namespace m3D { namespace weights {
             try
             {
                 NcFile file(filename.c_str(), NcFile::read);
-            
+                
                 for (size_t i=0; i < CI_WEIGHT_NUM_VARS; i++)
                 {
+                    m_variable_names.push_back(std::string(CI_WEIGHT_VARS[i]));
+                    
                     NcVar var = file.getVar(CI_WEIGHT_VARS[i]);
                     
                     if (var.isNull())
@@ -115,8 +122,6 @@ namespace m3D { namespace weights {
                         cerr << "CRITICAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" << endl;
                         exit(-1);
                     }
-                    
-                    this->m_vars.push_back(var);
                     
                     // Obtain the constants for transforming radiances
                     // into brightness temperatures fromt he attributes:
@@ -135,7 +140,6 @@ namespace m3D { namespace weights {
                             m_beta[i] = nu::get_attribute_value<T>(var,"beta");
                         }
                     }
-                    
                 }
             }
             catch (netCDF::exceptions::NcException &e)
@@ -146,7 +150,12 @@ namespace m3D { namespace weights {
 
             // Create the data store
             
-            this->m_data_store = new NetCDFDataStore<T>(filename,fs->coordinate_system,this->m_vars,time_index);
+            this->m_data_store = new NetCDFDataStore<T>(filename,fs->coordinate_system,this->m_variable_names,time_index);
+            
+            if (this->m_ci_comparison_file != NULL)
+            {
+                m_ci_comparison_data_store = new NetCDFDataStore<T>(*ci_comparison_file,fs->coordinate_system,this->m_variable_names,time_index);
+            }
             
             // calculate the entire function as one
             
@@ -171,6 +180,12 @@ namespace m3D { namespace weights {
             {
                 delete this->m_search_params;
                 this->m_search_params = NULL;
+            }
+            
+            if (this->m_ci_comparison_data_store != NULL)
+            {
+                delete this->m_ci_comparison_data_store;
+                this->m_ci_comparison_data_store = NULL;
             }
         }
         
@@ -257,6 +272,10 @@ namespace m3D { namespace weights {
          */
         T compute_weight(Point<T> *p)
         {
+            // Silke's suggestion: when radar is present, use max score to
+            // make sure objects are tracked.
+            T max_score = (this->m_ci_comparison_file != NULL) ? 8 : 6;
+            
             vector<int> g = p->gridpoint;
 
             bool isValid = false;
@@ -301,6 +320,39 @@ namespace m3D { namespace weights {
                 score++;
             }
             
+            if (this->m_ci_comparison_file != NULL)
+            {
+                // WARNING: this assumes the dime difference is 15 mins!!
+                // TODO: adapt the calculation for different intervals?
+                
+                T ir_108_radiance_prev = this->m_ci_comparison_data_store->get(msevi_l15_ir_108,g,isValid);
+                T ir_108_temp_prev = brightness_temperature(msevi_l15_ir_108,ir_108_radiance_prev);
+                
+                T wv_062_rad_prev = this->m_ci_comparison_data_store->get(msevi_l15_wv_062,g,isValid);
+                T wv_062_temp_prev = brightness_temperature(msevi_l15_wv_062,wv_062_rad_prev);
+                
+                T ir_134_rad_prev = this->m_ci_comparison_data_store->get(msevi_l15_ir_134,g,isValid);
+                T ir_134_temp_prev = brightness_temperature(msevi_l15_ir_134,ir_134_rad_prev);
+                
+                T dT1 = ir_108_temp - ir_108_temp_prev;
+                if ( dT1 <= -4.0 )
+                {
+                    score++;
+                }
+                
+                T dT2 = (wv_062_temp - ir_108_temp) - (wv_062_temp_prev - ir_108_temp_prev);
+                if ( dT2  > 3.0 )
+                {
+                    score++;
+                }
+                
+                T dT3 = (ir_134_temp - ir_108_temp) - (ir_134_temp_prev - ir_108_temp_prev);
+                if ( dT3 > 3.0 )
+                {
+                    score++;
+                }
+            }
+            
             // Is radar signature > 35dBZ and/or lightning present in 5km radius?
             
             bool has_lightning = false;
@@ -337,30 +389,30 @@ namespace m3D { namespace weights {
             
             delete neighbors;
 
+            // If any lightning is present in 5km radius:
+            // increase score
+            
+            if (has_lightning)
+            {
+                score++;
+            }
             
             // If radar >= 35dBZ is present in 5km radius:
             // increase score
             
             if (has_radar)
             {
-                score++;
+                // score++;
+                return max_score;
             }
             
-            // If any lightning is present in 5km radius:
-            // increase score
-
-            if (has_lightning)
-            {
-                score++;
-            }
-            
-            // If both lightning and radar are present:
-            // increase score once more
-
-            if (has_radar && has_lightning)
-            {
-                score++;
-            }
+//            // If both lightning and radar are present:
+//            // increase score once more
+//
+//            if (has_radar && has_lightning)
+//            {
+//                score++;
+//            }
             
             return score;
         }

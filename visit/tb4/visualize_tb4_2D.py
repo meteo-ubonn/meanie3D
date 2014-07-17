@@ -172,3 +172,5 @@ visitUtils.close_pattern(basename+"*.vtr")
 visitUtils.close_pattern(basename+"*.vtk")
 
 return_code=call("rm -f *.vt*", shell=True)
+
+quit()

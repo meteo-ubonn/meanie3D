@@ -247,8 +247,12 @@ void convert_composite(const string &filename, const string& variable_name, cons
         
         const map<int,double> lower_thresholds,upper_thresholds,fill_values;
         
+        vector<string> variable_names;
+        for (size_t i=0; i<variables.size(); i++)
+            variable_names.push_back(variables.at(i).getName());
+
         NetCDFDataStore<FS_TYPE> *dataStore =
-            new NetCDFDataStore<FS_TYPE>(filename, cs, variables, 0);
+            new NetCDFDataStore<FS_TYPE>(filename, cs, variable_names, 0);
         
         FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(cs,
                                                               dataStore,

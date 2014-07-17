@@ -68,7 +68,7 @@ namespace m3D {
         
         if ( show_progress )
         {
-            cout << endl << "Applying size threshold of " << min_cluster_size << " ... " << endl;
+            cout << endl << "Applying size threshold of " << min_cluster_size << " ... ";
             
             start_timer();
             
@@ -102,7 +102,7 @@ namespace m3D {
         
         if ( show_progress )
         {
-            cout << endl << "done. (Removed " << axe_count << " objects in " << stop_timer() << "s)" << endl;
+            cout << "done. (Removed " << axe_count << " objects in " << stop_timer() << "s)" << endl;
             
             delete progress;
         }

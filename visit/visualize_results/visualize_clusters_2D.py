@@ -241,3 +241,5 @@ return_code=call("mv *.png images", shell=True)
 return_code=call("mkdir movies", shell=True)
 return_code=call("mv *.gif *.m4v movies", shell=True)
 return_code=call("rm -f *.vt* visitlog.py", shell=True)
+
+quit()
