@@ -11,7 +11,9 @@ set xtics 5
 set xrange [2:50]
 set logscale y
 set output "lengths-hist-comparison.png"
-plot "scale10/lengths-hist.txt" with linespoints title "t=10km",\
+plot \
+"scale5/lengths-hist.txt" with linespoints title "t=5km",\
+"scale10/lengths-hist.txt" with linespoints title "t=10km",\
 "scale25/lengths-hist.txt" with linespoints title "t=25km",\
 "scale50/lengths-hist.txt" with linespoints title "t=50km",\
 "scale100/lengths-hist.txt" with linespoints title "t=100km",\
@@ -28,7 +30,9 @@ set logscale x
 set xrange [10:10000]
 set xtics auto
 set output "sizes-hist-comparison.png"
-plot "scale10/sizes-hist.txt" with linespoints title "t=10km", \
+plot \
+"scale5/sizes-hist.txt" with linespoints title "t=5km", \
+"scale10/sizes-hist.txt" with linespoints title "t=10km", \
 "scale25/sizes-hist.txt" with linespoints title "t=25km", \
 "scale50/sizes-hist.txt" with linespoints title "t=50km", \
 "scale100/sizes-hist.txt" with linespoints title "t=100km", \
@@ -43,7 +47,9 @@ set xlabel "Cluster speed in [m/s]"
 set ylabel "Number of clusters"
 set xtics 5
 set output "speeds-hist-comparison.png"
-plot "scale10/speeds-hist.txt" with linespoints title "t=10km", \
+plot \
+"scale5/speeds-hist.txt" with linespoints title "t=5km", \
+"scale10/speeds-hist.txt" with linespoints title "t=10km", \
 "scale25/speeds-hist.txt" with linespoints title "t=25km", \
 "scale50/speeds-hist.txt" with linespoints title "t=50km", \
 "scale100/speeds-hist.txt" with linespoints title "t=100km", \
@@ -56,7 +62,9 @@ set ylabel "Number of clusters"
 set xtics 30
 set xrange [15:360]
 set output "directions-hist-comparison.png"
-plot "scale10/directions-hist.txt" with linespoints title "t=10km", \
+plot \
+"scale5/directions-hist.txt" with linespoints title "t=5km", \
+"scale10/directions-hist.txt" with linespoints title "t=10km", \
 "scale25/directions-hist.txt" with linespoints title "t=25km", \
 "scale50/directions-hist.txt" with linespoints title "t=50km", \
 "scale100/directions-hist.txt" with linespoints title "t=100km", \
