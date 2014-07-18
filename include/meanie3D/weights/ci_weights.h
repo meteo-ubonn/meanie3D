@@ -93,8 +93,8 @@ namespace m3D { namespace weights {
         OASECIWeightFunction(FeatureSpace<T> *fs,
                              const std::string &filename,
                              const std::string *ci_comparison_file = NULL,
-                             const int time_index = -1,
-                             bool satellite_only = false)
+                             bool satellite_only = false,
+                             const int time_index = -1)
         : m_data_store(NULL)
         , m_ci_comparison_file(ci_comparison_file)
         , m_ci_comparison_data_store(NULL)

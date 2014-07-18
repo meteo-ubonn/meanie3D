@@ -973,11 +973,11 @@ int main(int argc, char** argv)
         
         if (weight_function_name == "oase")
         {
-            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename,ci_comparison_file);
+            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename,ci_comparison_file,ci_satellite_only);
             
-            FS_TYPE temp = 0.0;
-            FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
-
+//            FS_TYPE temp = 0.0;
+//            FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
+//
 //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
 //                                                              data_store,
 //                                                              ranges,
@@ -1021,7 +1021,7 @@ int main(int argc, char** argv)
         
         if (weight_function_name == "oase")
         {
-            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename,ci_comparison_file);
+            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,filename,ci_comparison_file,ci_satellite_only);
             
 //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         }
