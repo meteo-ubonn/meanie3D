@@ -64,11 +64,13 @@ void parse_commmandline(program_options::variables_map vm,
                         std::string &weight_function_name,
                         FS_TYPE &wwf_lower_threshold,
                         FS_TYPE &wwf_upper_threshold,
+                        bool include_weight,
                         int &convection_filter_index,
                         string &parameters,
                         vector<FS_TYPE> &ranges,
                         std::string **previous_file,
                         std::string **ci_comparison_file,
+                        bool &ci_satellite_only,
                         FS_TYPE &cluster_coverage_threshold,
                         bool &spatial_range_only,
                         bool &coalesceWithStrongestNeighbour,
@@ -409,6 +411,10 @@ void parse_commmandline(program_options::variables_map vm,
     
     write_meanshift_vectors = vm.count("write-meanshift-vectors") > 0;
     
+    ci_satellite_only = vm.count("ci-satellite-only") > 0;
+    
+    include_weight = vm.count("include-weight-function-in-results") > 0;
+    
     // VTK dimension mapping
     
     if (vm.count("vtk-dimensions") > 0)
@@ -620,6 +626,7 @@ int main(int argc, char** argv)
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
     ("ci-comparison-file", program_options::value<string>(), "Only used is weight function is 'oase'. Used for obtaining time trends for CI-score according to Walker et al. 2012.")
+    ("ci-satellite-only", "If true, only satellite values are used (original score), otherwise ")
     //            ("spatial-range-only","If this flag is present, the mean-shift only considers the spatial range")
     ("coalesce-with-strongest-neighbour", "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
     //            ("convection-filter-variable,c", program_options::value<string>(), "Name the variable to eliminate all but the points marked as convective according to the classification scheme by Steiner,Houza & Yates (1995) in.")
@@ -631,6 +638,7 @@ int main(int argc, char** argv)
     ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66), "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
     ("write-variables-as-vtk", program_options::value<string>(), "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
     ("write-weight-function","write weight function out as .vtk file")
+    ("include-weight-function-in-results,i","Add a netcdf variable 'weight' to the result file, containining the weight function response at each point in the feature-space")
     ("write-meanshift-vectors","write out .vtk files containing the meanshift vectors")
     ("write-clusters-as-vtk", "write clusters out as .vtk files")
     ("write-cluster-modes","write the final meanshift modes in .vtk file format")
@@ -677,6 +685,8 @@ int main(int argc, char** argv)
     std::string kernel_name = "uniform";
     std::string *previous_file = NULL;
     std::string *ci_comparison_file = NULL;
+    bool ci_satellite_only = false;
+    bool include_weight_in_result = true;
     FS_TYPE cluster_coverage_threshold = 0.66;
     int convection_filter_index = -1;
     bool coalesceWithStrongestNeighbour = false;
@@ -715,11 +725,13 @@ int main(int argc, char** argv)
                            weight_function_name,
                            wwf_lower_threshold,
                            wwf_upper_threshold,
+                           include_weight_in_result,
                            convection_filter_index,
                            parameters,
                            ranges,
                            &previous_file,
                            &ci_comparison_file,
+                           ci_satellite_only,
                            cluster_coverage_threshold,
                            spatial_range_only,
                            coalesceWithStrongestNeighbour,
@@ -824,6 +836,11 @@ int main(int argc, char** argv)
         cout << "\tweight-function:" << weight_function_name << endl;
         cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
         cout << "\t\tupper weight-function threshold: " << wwf_upper_threshold << endl;
+
+        if (ci_comparison_file != NULL)
+        {
+            cout << "\tCI comparison file for time trends:" << *ci_comparison_file << endl;
+        }
         
         if (previous_file != NULL)
         {
@@ -1192,6 +1209,13 @@ int main(int argc, char** argv)
     clusters.timestamp = timestamp;
     
     clusters.write(output_filename);
+    
+    if (include_weight_in_result)
+    {
+        cout << "NOT IMPLEMENTED" << endl;
+        // cout << "Writing weight function to result file ... ";
+        // cout << "done." << endl;
+    }
     
     if (verbosity > VerbositySilent)
     cout << "done." << endl;

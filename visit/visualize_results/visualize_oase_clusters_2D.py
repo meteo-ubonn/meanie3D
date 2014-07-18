@@ -25,6 +25,7 @@ OVERLAY=bool(OVERLAY_VALUE == "YES")
 CREATE_SOURCE_MOVIE=True
 CREATE_CLUSTERS_MOVIE=True
 OVERLAY_CLUSTERS=True
+USE_HRV_BACKDROP=True
 
 WITH_BACKGROUND_GRADIENT=False
 WITH_TOPOGRAPHY=False
@@ -92,7 +93,7 @@ if OVERLAY:
 
 SetAnnotationAttributes(a)
 
-print ColorTableNames()
+#print ColorTableNames()
 
 # Add gray/black background gradient
 if WITH_BACKGROUND_GRADIENT:
@@ -176,11 +177,12 @@ for netcdf_file in netcdf_files:
 
         if not OVERLAY:
 
+            #
             visit2D.add_pseudocolor(netcdf_file,"msevi_l15_ir_108",msevi_l15_ir_108_ctable,1,1)
             p = PseudocolorAttributes()
             p.colorTableName=msevi_l15_ir_108_ctable
             p.minFlag,p.maxFlag=1,1
-            p.min,p.max=10,71.9493
+            p.min,p.max=0,71.9493
             p.invertColorTable = invert_msevi_l15_ir_108_ctable
             SetActivePlots(num_base_plots+1)
             SetPlotOptions(p)
@@ -253,19 +255,30 @@ for netcdf_file in netcdf_files:
         start_time = time.time()
 
         if not (OVERLAY_CLUSTERS and OVERLAY):
-    
-            if WITH_TOPOGRAPHY:
-                print "-- Adding topography data --"
-                visit2D.add_topography("national_topo_2D")
+            
+            if USE_HRV_BACKDROP:
+                
+                visit2D.add_pseudocolor(netcdf_file,"msevi_l15_hrv","gray",1,1)
+                p = PseudocolorAttributes()
+                p.colorTableName="gray"
+                p.minFlag,p.maxFlag=1,1
+                p.min,p.max=0,13
+                SetPlotOptions(p)
+            
+            else:
 
-            if WITH_RIVERS_AND_BOUNDARIES:
-                print "-- Adding map data --"
-                visit2D.add_map_rivers("national")
-                visit2D.add_map_borders("national")
+                if WITH_TOPOGRAPHY:
+                    print "-- Adding topography data --"
+                    visit2D.add_topography("national_topo_2D")
 
-            if WITH_DATETIME:
-                print "-- Adding timestamp --"
-                visitUtils.add_datetime(netcdf_file)
+                if WITH_RIVERS_AND_BOUNDARIES:
+                    print "-- Adding map data --"
+                    visit2D.add_map_rivers("national")
+                    visit2D.add_map_borders("national")
+
+                if WITH_DATETIME:
+                    print "-- Adding timestamp --"
+                    visitUtils.add_datetime(netcdf_file)
 
         # Add the clusters
         basename = CLUSTER_DIR+"/"

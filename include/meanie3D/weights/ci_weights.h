@@ -40,13 +40,6 @@ namespace m3D { namespace weights {
     static const int cband_radolan_rx = 3;
     static const int linet_oase_tl = 4;
     
-    // Used in converting brightness temperature
-    // to radiance and vica versa
-    
-    static const double NU = 931.7; // cm^-1
-    static const double NU3 = NU * NU * NU;
-
-    
     /** This class represents a weight function loosely based on the CI score
      * by Walker, MacKenzie Mecicalski, Jewett (2012). Only the static score
      * criteria are used (no time differences).
@@ -71,6 +64,7 @@ namespace m3D { namespace weights {
         const CoordinateSystem<T>   *m_coordinate_system;
         MultiArray<T>               *m_weight;
         std::vector<std::string>    m_variable_names;
+        bool                        m_satellite_only;
         
         //
         // Attributes for calculating brightness
@@ -81,6 +75,7 @@ namespace m3D { namespace weights {
         map<size_t,T>       m_c2;
         map<size_t,T>       m_alpha;
         map<size_t,T>       m_beta;
+        map<size_t,T>       m_wavenumber;
         
         //
         // Members for range based weight calculations
@@ -98,12 +93,14 @@ namespace m3D { namespace weights {
         OASECIWeightFunction(FeatureSpace<T> *fs,
                              const std::string &filename,
                              const std::string *ci_comparison_file = NULL,
-                             const int time_index = -1)
+                             const int time_index = -1,
+                             bool satellite_only = false)
         : m_data_store(NULL)
         , m_ci_comparison_file(ci_comparison_file)
         , m_ci_comparison_data_store(NULL)
         , m_coordinate_system(fs->coordinate_system)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
+        , m_satellite_only(satellite_only)
         {
             // Obtain a data store with all the relevant variables
             
@@ -138,6 +135,7 @@ namespace m3D { namespace weights {
                             m_c2[i] = nu::get_attribute_value<T>(var,"rad_const2");
                             m_alpha[i] = nu::get_attribute_value<T>(var,"alpha");
                             m_beta[i] = nu::get_attribute_value<T>(var,"beta");
+                            m_wavenumber[i] = nu::get_attribute_value<T>(var,"wavenum");
                         }
                     }
                 }
@@ -245,7 +243,9 @@ namespace m3D { namespace weights {
          */
         T brightness_temperature(const size_t var_index, const T &radiance)
         {
-            T Tbb = m_c2[var_index] * NU / log(1 + NU3 * m_c1[var_index] / radiance );
+            T wavenum = m_wavenumber[var_index];
+            
+            T Tbb = m_c2[var_index] * wavenum / log(1 + wavenum*wavenum*wavenum * m_c1[var_index] / radiance );
             
             T Tb = (Tbb - m_beta[var_index]) / m_alpha[var_index];
             
@@ -260,9 +260,11 @@ namespace m3D { namespace weights {
          */
         T spectral_radiance(const size_t var_index, const T &temperature)
         {
+            T wavenum = m_wavenumber[var_index];
+
             T Tbb = (temperature + 273.15) * m_alpha[var_index] + m_beta[var_index];
             
-            return NU3 * m_c1[var_index] / (exp(m_c2[var_index] * NU / Tbb) - 1);
+            return wavenum*wavenum*wavenum * m_c1[var_index] / (exp(m_c2[var_index] * wavenum / Tbb) - 1);
         }
         
     private:
@@ -353,66 +355,62 @@ namespace m3D { namespace weights {
                 }
             }
             
-            // Is radar signature > 35dBZ and/or lightning present in 5km radius?
-            
-            bool has_lightning = false;
-            bool has_radar = false;
-
-            typename Point<T>::list *neighbors = m_index->search(p->coordinate,m_search_params);
-            
-            for (size_t pi = 0; pi < neighbors->size() && !(has_lightning && has_radar); pi++)
+            if (!this->m_satellite_only)
             {
-                typename Point<T>::ptr n = neighbors->at(pi);
+                // Is radar signature > 35dBZ and/or lightning present in 5km radius?
                 
-                bool neighbour_is_valid = false;
+                bool has_lightning = false;
+                bool has_radar = false;
 
-                if (!has_radar)
+                typename Point<T>::list *neighbors = m_index->search(p->coordinate,m_search_params);
+                
+                for (size_t pi = 0; pi < neighbors->size() && !(has_lightning && has_radar); pi++)
                 {
-                    T cband_rx = this->m_data_store->get(cband_radolan_rx,
-                                                         n->gridpoint,
-                                                         neighbour_is_valid);
+                    typename Point<T>::ptr n = neighbors->at(pi);
                     
-                    has_radar = (neighbour_is_valid && cband_rx >= 35.0);
+                    bool neighbour_is_valid = false;
+
+                    if (!has_radar)
+                    {
+                        T cband_rx = this->m_data_store->get(cband_radolan_rx,
+                                                             n->gridpoint,
+                                                             neighbour_is_valid);
+                        
+                        has_radar = (neighbour_is_valid && cband_rx >= 35.0);
+                    }
+                    
+                    if (!has_lightning)
+                    {
+                        neighbour_is_valid = false;
+
+                        T linet_count = this->m_data_store->get(linet_oase_tl,
+                                                                n->gridpoint,
+                                                                neighbour_is_valid);
+                        
+                        has_lightning = (neighbour_is_valid && linet_count > 0.0);
+                    }
                 }
                 
-                if (!has_lightning)
+                delete neighbors;
+
+                // If any lightning is present in 5km radius:
+                // increase score
+                
+                if (has_lightning)
                 {
-                    neighbour_is_valid = false;
-
-                    T linet_count = this->m_data_store->get(linet_oase_tl,
-                                                            n->gridpoint,
-                                                            neighbour_is_valid);
-                    
-                    has_lightning = (neighbour_is_valid && linet_count > 0.0);
+                    score++;
                 }
+                
+                // If radar >= 35dBZ is present in 5km radius:
+                // increase score
+                
+                if (has_radar)
+                {
+                    // score++;
+                    return max_score;
+                }
+            
             }
-            
-            delete neighbors;
-
-            // If any lightning is present in 5km radius:
-            // increase score
-            
-            if (has_lightning)
-            {
-                score++;
-            }
-            
-            // If radar >= 35dBZ is present in 5km radius:
-            // increase score
-            
-            if (has_radar)
-            {
-                // score++;
-                return max_score;
-            }
-            
-//            // If both lightning and radar are present:
-//            // increase score once more
-//
-//            if (has_radar && has_lightning)
-//            {
-//                score++;
-//            }
             
             return score;
         }

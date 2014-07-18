@@ -38,8 +38,6 @@
 		F4B4B20218AE2590001384F2 /* run_rico_tracking_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = run_rico_tracking_2D.sh; sourceTree = "<group>"; };
 		F4B8C8401920D15000B00CDA /* run_oase_tracking-3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_oase_tracking-3D.py"; sourceTree = "<group>"; };
 		F4B8C8411920D15000B00CDA /* run_oase_tracking-3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_oase_tracking-3D.sh"; sourceTree = "<group>"; };
-		F4B8C8421920D2CC00B00CDA /* visualize_oase_clusters-3D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "visualize_oase_clusters-3D.py"; sourceTree = "<group>"; };
-		F4B8C8431920D2CC00B00CDA /* visualize_oase_clusters-3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "visualize_oase_clusters-3D.sh"; sourceTree = "<group>"; };
 		F4B8C8441920DC6800B00CDA /* multiscale_run_oase-3D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "multiscale_run_oase-3D.sh"; sourceTree = "<group>"; };
 		F4B8C8451920DC6E00B00CDA /* multiscale_run_RX-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "multiscale_run_RX-2D.sh"; sourceTree = "<group>"; };
 		F4C9F0F819487FEA004F810C /* plot_scale_comparison.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = plot_scale_comparison.sh; sourceTree = "<group>"; };
@@ -228,8 +226,6 @@
 				F4FA809F188D29BC00C426C5 /* visualize_tracked_clusters.template */,
 				F4670B0B18AFEE9000875B79 /* visualize_rico_clusters_2D.py */,
 				F4670B0C18AFEE9000875B79 /* visualize_rico_clusters_2D.sh */,
-				F4B8C8421920D2CC00B00CDA /* visualize_oase_clusters-3D.py */,
-				F4B8C8431920D2CC00B00CDA /* visualize_oase_clusters-3D.sh */,
 				F4A0888D1934D97400F967A8 /* visualize_conrad_tracks.py */,
 				F4A0888E1934D97400F967A8 /* visualize_conrad_tracks.sh */,
 				F4A0888F1934D97400F967A8 /* visualize_radolan_tracks.py */,
