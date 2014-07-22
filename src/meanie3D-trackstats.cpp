@@ -68,16 +68,17 @@ void parse_commmandline(program_options::variables_map vm,
                         bool &write_gnuplot_files,
                         bool &write_track_dictionary)
 {
-    if ( vm.count("basename") == 0 )
-    {
-        cerr << "Missing --basename argument" << endl;
-        
-        exit( 1 );
-    }
-    
-    basename = vm["basename"].as<string>();
     sourcepath = vm["sourcepath"].as<string>();
     
+    if ( vm.count("basename") == 0 )
+    {
+        basename = ::m3D::utils::common_component(sourcepath,".nc");
+    }
+    else
+    {
+        basename = vm["basename"].as<string>();
+    }
+
     write_center_tracks_as_vtk = vm.count("write-center-tracks-as-vtk") > 0;
     
     write_gnuplot_files = vm.count("write-gnuplot-files") > 0;
@@ -307,7 +308,7 @@ int main(int argc, char** argv)
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
-    ("basename,b", program_options::value<string>(), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files.")
+    ("basename,b", program_options::value<string>()->implicit_value(""), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files (optional)")
     ("sourcepath,p", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
     ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
     

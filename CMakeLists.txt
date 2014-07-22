@@ -285,6 +285,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/visit_impl.h
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
+    include/meanie3D/utils/file_utils.h
     include/meanie3D/weights/brightband_evidence.h
     include/meanie3D/weights/ci_weights.h
     include/meanie3D/weights/default_weights.h
@@ -343,6 +344,7 @@ SOURCE_GROUP("meanie3d/utils" FILES
     include/meanie3D/utils/scalar_index_impl.h
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
+    include/meanie3D/utils/file_utils.h
 )
 
 SOURCE_GROUP("meanie3d/weights" FILES
