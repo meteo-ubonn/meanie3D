@@ -209,11 +209,72 @@ def add_datetime(filename):
         add_text_annotation(0.725,0.95,text);
         return
 
+# Creates a movie from a .png image series.
+# @param basename of the image series
 def create_movie(basename,moviename):
     print "Creating movie '" +moviename+"' from files '" + basename+"*.png ..."
     convert_cmd="/usr/local/bin/convert -limit memory 4GB -delay 50 -quality 100 -dispose Background "+basename+"*.png "+moviename
     return_code=call(convert_cmd, shell=True)
     print "done."
     return
+
+# Creates a series of images combined from two series of images
+# as one. It removes the date stamp on the left side and cuts
+# the right side such, that no legend is visible
+#
+# @param basename of the left image series
+# @param basename of the right image series
+# @param basename of the combined image series
+def create_dual_panel(basename_left,basename_right,basename_combined):
+
+    left_files=sorted(glob.glob(basename_left+"*.png"))
+    right_files=sorted(glob.glob(basename_right+"*.png"))
+
+    if len(left_files) != len(right_files):
+        print "ERROR:the two image series "+basename_left+"*.png and "+basename_right+"*.png have different lengths!"
+        return
+
+    # create a small image to blank the datestamp with
+    call("/usr/local/bin/convert -size 280x50 xc:white dateblind.png",shell=True)
+
+    # Iterate over the series
+    for i in range(len(left_files)):
+
+        # create backdrop
+        combined=basename_combined+str(i)+".png"
+        call("/usr/local/bin/convert -size 1852x1024 xc:white "+combined,shell=True)
+
+        # copy images and blank date
+        call("/usr/local/bin/composite -geometry +826+0 "+right_files[i]+" "+combined+" "+combined,shell=True)
+        call("/usr/local/bin/composite -geometry +0+0 "+left_files[i]+" "+combined+" "+combined,shell=True)
+        call("/usr/local/bin/composite -geometry +735+20 dateblind.png "+combined+" "+combined,shell=True)
+
+    # delete the dateblind
+    call("rm dateblind.png",shell=True)
+
+    return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # End of visitUtils.py

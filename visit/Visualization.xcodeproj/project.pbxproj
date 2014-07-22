@@ -209,17 +209,17 @@
 		F4FA8090188D29BC00C426C5 /* visualize_results */ = {
 			isa = PBXGroup;
 			children = (
+				F4FA809B188D29BC00C426C5 /* visualize_oase_clusters_2D.sh */,
+				F4FA809A188D29BC00C426C5 /* visualize_oase_clusters_2D.py */,
+				F4FA8096188D29BC00C426C5 /* visualize_clusters_2D.py */,
+				F4FA8097188D29BC00C426C5 /* visualize_clusters_2D.sh */,
+				F4FA8098188D29BC00C426C5 /* visualize_clusters_3D.py */,
+				F4FA8099188D29BC00C426C5 /* visualize_clusters_3D.sh */,
 				F4FA8091188D29BC00C426C5 /* visualize_cluster_weights_2D.py */,
 				F4FA8092188D29BC00C426C5 /* visualize_cluster_weights_2D.sh */,
 				F4FA8093188D29BC00C426C5 /* visualize_cluster_weights_3D.py */,
 				F4FA8094188D29BC00C426C5 /* visualize_cluster_weights_3D.sh */,
 				F4FA8095188D29BC00C426C5 /* visualize_clusters.sh */,
-				F4FA8096188D29BC00C426C5 /* visualize_clusters_2D.py */,
-				F4FA8097188D29BC00C426C5 /* visualize_clusters_2D.sh */,
-				F4FA8098188D29BC00C426C5 /* visualize_clusters_3D.py */,
-				F4FA8099188D29BC00C426C5 /* visualize_clusters_3D.sh */,
-				F4FA809B188D29BC00C426C5 /* visualize_oase_clusters_2D.sh */,
-				F4FA809A188D29BC00C426C5 /* visualize_oase_clusters_2D.py */,
 				F4FA809C188D29BC00C426C5 /* visualize_oase_weights.py */,
 				F4FA809D188D29BC00C426C5 /* visualize_oase_weights.sh */,
 				F4FA809E188D29BC00C426C5 /* visualize_tracked_clusters.sh */,

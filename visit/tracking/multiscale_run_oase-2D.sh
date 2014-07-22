@@ -13,8 +13,7 @@ then
 fi
 
 #scales=( 5 10 25 50 100 )
-scales=( 5 10 )
-
+scales=( 5 25 50 )
 
 echo "Running complete sets on scales ${scales[@]}"
 

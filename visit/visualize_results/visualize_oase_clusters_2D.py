@@ -258,11 +258,15 @@ for netcdf_file in netcdf_files:
             
             if USE_HRV_BACKDROP:
                 
+                DeleteAllPlots();
+                ClearWindow();
+                
                 visit2D.add_pseudocolor(netcdf_file,"msevi_l15_hrv","gray",1,1)
                 p = PseudocolorAttributes()
                 p.colorTableName="gray"
                 p.minFlag,p.maxFlag=1,1
                 p.min,p.max=0,13
+                p.legendFlag=0
                 SetPlotOptions(p)
             
             else:
@@ -309,7 +313,6 @@ for netcdf_file in netcdf_files:
     visitUtils.close_pattern(basename+"*.vtr")
     visitUtils.close_pattern(basename+"*.vtk")
     return_code=call("rm -f *.vt*", shell=True)
-
 
 if OVERLAY:
 
@@ -361,6 +364,11 @@ else:
     if  CREATE_CLUSTERS_MOVIE:
         visitUtils.create_movie("tracking_","tracking.gif")
         visitUtils.create_movie("tracking_","tracking.m4v")
+
+    if USE_HRV_BACKDROP:
+        visitUtils.create_dual_panel("source_","tracking_","combined_");
+        visitUtils.create_movie("combined_","combined.gif")
+        visitUtils.create_movie("combined_","combined.m4v")
 
 # Clean up
 print "Cleaning up ..."
