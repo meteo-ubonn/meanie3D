@@ -126,6 +126,34 @@
 			);
 			sourceTree = "<group>";
 		};
+		F495A6B8197E6F45009B89AC /* resume_refac */ = {
+			isa = PBXGroup;
+			children = (
+				F46A4717196EF6C5003B4FFB /* multiscale_run_oase-2D.sh */,
+				F4B8C8441920DC6800B00CDA /* multiscale_run_oase-3D.sh */,
+				F4FA808B188D29BC00C426C5 /* run_oase_tracking-2D.sh */,
+				F4FA808A188D29BC00C426C5 /* run_oase_tracking-2D.py */,
+				F4B8C8411920D15000B00CDA /* run_oase_tracking-3D.sh */,
+				F4B8C8401920D15000B00CDA /* run_oase_tracking-3D.py */,
+			);
+			name = resume_refac;
+			sourceTree = "<group>";
+		};
+		F495A6B9197E6F66009B89AC /* resume_refac_todo */ = {
+			isa = PBXGroup;
+			children = (
+				F4FA808C188D29BC00C426C5 /* run_tracking-2D.py */,
+				F4FA808D188D29BC00C426C5 /* run_tracking-2D.sh */,
+				F4FA808E188D29BC00C426C5 /* run_tracking-3D.py */,
+				F4FA808F188D29BC00C426C5 /* run_tracking-3D.sh */,
+				F4B4B20118AE2590001384F2 /* run_rico_tracking_2D.py */,
+				F4B4B20218AE2590001384F2 /* run_rico_tracking_2D.sh */,
+				F4ECD594191C0E880001F0F3 /* multiscale_run_RX-2D.sh */,
+				F4B8C8451920DC6E00B00CDA /* multiscale_run_RX-2D.sh */,
+			);
+			name = resume_refac_todo;
+			sourceTree = "<group>";
+		};
 		F4E3F978191942B000CF524D /* statistics */ = {
 			isa = PBXGroup;
 			children = (
@@ -188,20 +216,8 @@
 		F4FA8089188D29BC00C426C5 /* tracking */ = {
 			isa = PBXGroup;
 			children = (
-				F4FA808A188D29BC00C426C5 /* run_oase_tracking-2D.py */,
-				F4FA808B188D29BC00C426C5 /* run_oase_tracking-2D.sh */,
-				F4FA808C188D29BC00C426C5 /* run_tracking-2D.py */,
-				F4FA808D188D29BC00C426C5 /* run_tracking-2D.sh */,
-				F4FA808E188D29BC00C426C5 /* run_tracking-3D.py */,
-				F4FA808F188D29BC00C426C5 /* run_tracking-3D.sh */,
-				F4B4B20118AE2590001384F2 /* run_rico_tracking_2D.py */,
-				F4B4B20218AE2590001384F2 /* run_rico_tracking_2D.sh */,
-				F4ECD594191C0E880001F0F3 /* multiscale_run_RX-2D.sh */,
-				F46A4717196EF6C5003B4FFB /* multiscale_run_oase-2D.sh */,
-				F4B8C8441920DC6800B00CDA /* multiscale_run_oase-3D.sh */,
-				F4B8C8401920D15000B00CDA /* run_oase_tracking-3D.py */,
-				F4B8C8411920D15000B00CDA /* run_oase_tracking-3D.sh */,
-				F4B8C8451920DC6E00B00CDA /* multiscale_run_RX-2D.sh */,
+				F495A6B8197E6F45009B89AC /* resume_refac */,
+				F495A6B9197E6F66009B89AC /* resume_refac_todo */,
 			);
 			path = tracking;
 			sourceTree = "<group>";

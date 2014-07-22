@@ -498,15 +498,8 @@ namespace m3D {
         cfa::id_t   highest_id;
         
         // TODO: let this exception go up
-        try
-        {
-            file = new NcFile( path, NcFile::read );
-        }
-        catch ( const netCDF::exceptions::NcException &e )
-        {
-            cerr << "Could not open file " << path << " : " << e.what() << endl;
-            exit( -1 );
-        }
+        
+        file = new NcFile( path, NcFile::read );
         
         try
         {

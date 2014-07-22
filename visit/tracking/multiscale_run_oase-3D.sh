@@ -1,15 +1,20 @@
 #!/bin/bash
 
 if [ "X$1" = "X" ]; then
-echo "multiscale_run_RX-2D.sh <path to directory containing composite files>"
-echo "Runs the clustering for a whole set of scales"
-exit 0
+    echo "multiscale_run_oase-3D.sh <path to directory containing composite files> [resume]"
+    echo "Runs the clustering for a whole set of scales"
+    exit 0
 fi
 
 if [ "X${MEANIE3D_HOME}" = "X" ]
 then
-echo "Please set environment variable MEANIE3D_HOME"
-exit 0
+    echo "Please set environment variable MEANIE3D_HOME"
+    exit 0
+fi
+
+resume="NO"
+if [ "$2" = "resume"]; then
+    resume="YES"
 fi
 
 scales=( 5 10 )
@@ -33,7 +38,7 @@ for scale in ${scales[@]}; do
     fi
 
     cd ${dest}
-    ${MEANIE3D_HOME}/visit/tracking/run_oase_tracking-3D.sh "$1" "$scale"&
+    ${MEANIE3D_HOME}/visit/tracking/run_oase_tracking-3D.sh "$1" "$scale" "$resume" &
 
     pid=$!
     pids=( "${pids[@]}" "${pid}" )

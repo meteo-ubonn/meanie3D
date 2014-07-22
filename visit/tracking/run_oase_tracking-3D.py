@@ -1,13 +1,9 @@
 #!/usr/bin/python
 
-# python script template for tracking
-
-# TODO: parse command line params to this script instead of templating
-# TODO: Extend this script to handle multiple scales at once
-
-MEANIE3D_HOME     = "M3D_HOME"
-NETCDF_DIR        = "SOURCE_DIR"
-PARAM_T           = "SCALE"
+MEANIE3D_HOME     = "P_M3D_HOME"
+NETCDF_DIR        = "P_SOURCE_DIR"
+PARAM_T           = "P_SCALE"
+RESUME            = "P_RESUME"
 
 try:
     import sys
@@ -19,8 +15,6 @@ try:
 except ImportError as e:
     print 'Exception error is: %s' % e
     sys.exit()
-
-# RADOLAN
 
 VAR_NAME="xband_oase_zh"
 
@@ -39,13 +33,4 @@ TRACKING_PARAMS =  " --verbosity 1 "
 TRACKING_PARAMS += " -t "+VAR_NAME
 TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
 
-# print parameters
-
-print "Running clustering on directory "+NETCDF_DIR
-print "MEANIE3D_HOME="+MEANIE3D_HOME
-
-# TODO: find a more elegant way to resume
-# if > 0 a previous run is resumed
-last_completed_run_count = 0
-
-meanie3D.run_tracking(NETCDF_DIR,".",CLUSTERING_PARAMS,TRACKING_PARAMS,last_completed_run_count,-1)
+meanie3D.run_tracking(NETCDF_DIR,".",CLUSTERING_PARAMS,TRACKING_PARAMS,bool(RESUME=="YES"),-1)

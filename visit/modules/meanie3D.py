@@ -21,6 +21,12 @@ detection_bin = BIN_PREFIX + "meanie3D-detect"
 tracking_bin  = BIN_PREFIX + "meanie3D-track"
 trackplot_bin = BIN_PREFIX + "meanie3D-trackplot"
 
+# Counts the number of netcdf files in the given
+# directory
+def number_of_netcdf_files(source_directory):
+    netcdf_pattern = source_directory + "/*.nc"
+    netcdf_list=sorted(glob.glob(netcdf_pattern))
+    return len(netcdf_list)
 
 # Deletes the directories 'log' and 'netcdf' underneath
 # base path. Removes previous ones if they do exist
@@ -55,16 +61,22 @@ def run_tracking(source_directory,
                  output_directory,
                  clustering_params,
                  tracking_params,
-                 last_completed_run_count,
+                 resume,
                  time_index):
     
-    # TODO: find a more elegant way to resume
-    # if > 0 a previous run is resumed
-    last_completed_run_count = 0
-
-    if last_completed_run_count == 0:
+    if resume:
         
+        # find the index to resume from by counting the
+        # files in the result directory
+        
+        resume_at_index = number_of_netcdf_files(output_directory+"/netcdf")
+    
+    else:
+
         # delete previous results (if not in a time series)
+        
+        resume_at_index = 0;
+
         if time_index < 0:
             
             # if not resuming, create direcories
@@ -105,7 +117,7 @@ def run_tracking(source_directory,
         
         # if there is a resume counter, keep skipping
         # until the count is right
-        if (last_completed_run_count > 0) and (run_count <= last_completed_run_count):
+        if (resume_at_index > 0) and (run_count < resume_at_index):
             last_cluster_file = cluster_file
             run_count = run_count + 1
             continue

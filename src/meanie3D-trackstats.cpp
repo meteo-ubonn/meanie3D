@@ -460,59 +460,71 @@ int main(int argc, char** argv)
                 
                 cout << "Processing " << f.filename().generic_string() << " ... ";
                 
-                // Remember the last one
+                // Remember the first one
                 
-                coords_filename = f.generic_string();
-                
-                ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read( f.generic_string() );
-                
-                if (spatial_dimensions==0)
+                if (coords_filename.empty())
                 {
-                    spatial_dimensions = cluster_list->dimensions.size();
-                }
-                else if (spatial_dimensions != cluster_list->dimensions.size())
-                {
-                    cerr << "Spatial dimensions must remain identical across the track" << endl;
-                    exit(-1);
+                    coords_filename = f.generic_string();
                 }
                 
-                // Iterate over the clusters in the list we just read
-                
-                Cluster<FS_TYPE>::list::iterator ci;
-                
-                for (ci=cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
+                try
                 {
-                    Cluster<FS_TYPE>::ptr cluster = (*ci);
+                    ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read( f.generic_string() );
                     
-                    cfa::id_t id = cluster->id;
-                    
-                    Tracking<FS_TYPE>::trackmap_t::const_iterator ti = track_map.find(id);
-                    
-                    Tracking<FS_TYPE>::track_t * tm = NULL;
-                    
-                    if (ti==track_map.end())
+                    if (spatial_dimensions==0)
                     {
-                        // new entry
-                        
-                        tm = new Tracking<FS_TYPE>::track_t();
-                        
-                        track_map[id] = tm;
+                        spatial_dimensions = cluster_list->dimensions.size();
                     }
-                    else
+                    else if (spatial_dimensions != cluster_list->dimensions.size())
                     {
-                        tm = ti->second;
+                        cerr << "Spatial dimensions must remain identical across the track" << endl;
+                        exit(-1);
                     }
                     
-                    // append the cluster to the end of the track. Note that this
-                    // is a copy operation. It's expensive, but it saves us from
-                    // having to keep track of open files and stuff.
+                    // Iterate over the clusters in the list we just read
                     
-                    tm->push_back( *cluster );
+                    Cluster<FS_TYPE>::list::iterator ci;
+                    
+                    for (ci=cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
+                    {
+                        Cluster<FS_TYPE>::ptr cluster = (*ci);
+                        
+                        cfa::id_t id = cluster->id;
+                        
+                        Tracking<FS_TYPE>::trackmap_t::const_iterator ti = track_map.find(id);
+                        
+                        Tracking<FS_TYPE>::track_t * tm = NULL;
+                        
+                        if (ti==track_map.end())
+                        {
+                            // new entry
+                            
+                            tm = new Tracking<FS_TYPE>::track_t();
+                            
+                            track_map[id] = tm;
+                        }
+                        else
+                        {
+                            tm = ti->second;
+                        }
+                        
+                        // append the cluster to the end of the track. Note that this
+                        // is a copy operation. It's expensive, but it saves us from
+                        // having to keep track of open files and stuff.
+                        
+                        tm->push_back( *cluster );
+                    }
+                    
+                    delete cluster_list;
                 }
-                
-                // Clean up
-                
-                delete cluster_list;
+                catch (netCDF::exceptions::NcException &e)
+                {
+                    cerr << "ERROR:" << e.what() << endl;
+                }
+                catch (std::exception &e)
+                {
+                    cerr << "ERROR:" << e.what() << endl;
+                }
                 
                 cout << "done." << endl;
             }

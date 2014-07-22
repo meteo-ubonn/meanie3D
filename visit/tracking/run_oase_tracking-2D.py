@@ -7,6 +7,7 @@ MEANIE3D_HOME     = "M3D_HOME"
 NETCDF_DIR        = "PARAM_SOURCE_DIR"
 PARAM_T           = "PARAM_SCALE"
 DYLD_PATH         = "PARAM_DL_PATH"
+RESUME            = "P_RESUME"
 
 try:
     import sys
@@ -18,10 +19,6 @@ try:
 except ImportError as e:
     print 'Exception error is: %s' % e
     sys.exit()
-
-# TODO: find a more elegant way to resume
-# if > 0 a previous run is resumed
-last_completed_run_count = 0
 
 CLUSTERING_PARAMS =  " -s "+PARAM_T
 #CLUSTERING_PARAMS += " -v msevi_l15_ir_108 --upper-thresholds msevi_l15_ir_108=71.9493"
@@ -38,15 +35,4 @@ TRACKING_PARAMS += " -t msevi_l15_ir_108"
 TRACKING_PARAMS += " --wr=1.0 --ws=0.0 --wt=0.0"
 TRACKING_PARAMS += " --verbosity 1 "
 
-BIN_PREFIX = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_PATH+";"
-
-# print parameters
-
-print "Running clustering on directory "+NETCDF_DIR
-print "MEANIE3D_HOME="+MEANIE3D_HOME
-
-# TODO: find a more elegant way to resume
-# if > 0 a previous run is resumed
-last_completed_run_count = 0
-
-meanie3D.run_tracking(NETCDF_DIR,".",CLUSTERING_PARAMS,TRACKING_PARAMS,last_completed_run_count,-1)
+meanie3D.run_tracking(NETCDF_DIR,".",CLUSTERING_PARAMS,TRACKING_PARAMS,bool(RESUME=="YES"),-1)

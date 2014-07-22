@@ -12,6 +12,11 @@ then
     exit 0
 fi
 
+resume="NO"
+if [ "$2" = "resume"]; then
+    resume="YES"
+fi
+
 #scales=( 5 10 25 50 100 )
 scales=( 5 25 50 )
 
@@ -35,7 +40,7 @@ for scale in ${scales[@]}; do
     fi
 
     cd ${dest}
-    ${MEANIE3D_HOME}/visit/tracking/run_oase_tracking-2D.sh "$1" "$scale" &
+    ${MEANIE3D_HOME}/visit/tracking/run_oase_tracking-2D.sh "$1" "$scale" "$resume" &
 
     pid=$!
     pids=( "${pids[@]}" "${pid}" )
