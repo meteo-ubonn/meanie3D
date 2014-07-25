@@ -23,13 +23,14 @@ namespace m3D { namespace weights {
     
     // Variables used for scoring scheme
     
-    static const size_t CI_WEIGHT_NUM_VARS = 5;
+    static const size_t CI_WEIGHT_NUM_VARS = 6;
     static const char * CI_WEIGHT_VARS[] = {
         "msevi_l15_ir_108",
         "msevi_l15_wv_062",
         "msevi_l15_ir_134",
         "cband_radolan_rx",
-        "linet_oase_tl"
+        "linet_oase_tl",
+        "msevi_l15_hrv"
     };
     
     // Shorthands used to access variables in order
@@ -39,6 +40,7 @@ namespace m3D { namespace weights {
     static const int msevi_l15_ir_134 = 2;
     static const int cband_radolan_rx = 3;
     static const int linet_oase_tl = 4;
+    static const int msevi_l15_hrv = 5;
     
     /** This class represents a weight function loosely based on the CI score
      * by Walker, MacKenzie Mecicalski, Jewett (2012). Only the static score
@@ -152,7 +154,15 @@ namespace m3D { namespace weights {
             
             if (this->m_ci_comparison_file != NULL)
             {
-                m_ci_comparison_data_store = new NetCDFDataStore<T>(*ci_comparison_file,fs->coordinate_system,this->m_variable_names,time_index);
+                namespace ov = m3D::utils::opencv;
+                    
+                m_ci_comparison_data_store = ov::shifted_store_from_flow_of_variable(filename, *ci_comparison_file,
+                                                                                    fs->coordinate_system,
+                                                                                    this->m_variable_names,
+                                                                                    msevi_l15_hrv, 7.0);
+                
+//                m_ci_comparison_data_store = new NetCDFDataStore<T>(*ci_comparison_file,fs->coordinate_system,
+//                                                                    this->m_variable_names,time_index);
             }
             
             // calculate the entire function as one

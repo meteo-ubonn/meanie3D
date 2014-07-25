@@ -168,13 +168,24 @@ IF (WITH_TBB)
     ENDIF (NOT TBB_FOUND)
 ENDIF(WITH_TBB)
 
-#FIND_PACKAGE(OpenMP REQUIRED)
-#IF (OPENMP_FOUND)
-#    MESSAGE("OPENMP FOUND")
-#    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-#ENDIF (OPENMP_FOUND)
+IF (WITH_OPENMP)
+    FIND_PACKAGE(OpenMP REQUIRED)
+    IF (OPENMP_FOUND)
+        MESSAGE("OPENMP FOUND")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    ENDIF (OPENMP_FOUND)
+ENDIF(WITH_OPENMP)
+
+FIND_PACKAGE(OpenCV)
+IF (OpenCV_FOUND)
+    MESSAGE("OpenCV FOUND")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenCV_C_FLAGS}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenCV_CXX_FLAGS}")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenCV_EXE_LINKER_FLAGS}")
+ENDIF (OPENMP_FOUND)
+
 
 # VTK
 FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
@@ -286,6 +297,7 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
     include/meanie3D/utils/file_utils.h
+    include/meanie3D/utils/opencv_utils.h
     include/meanie3D/weights/brightband_evidence.h
     include/meanie3D/weights/ci_weights.h
     include/meanie3D/weights/default_weights.h
@@ -345,6 +357,7 @@ SOURCE_GROUP("meanie3d/utils" FILES
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
     include/meanie3D/utils/file_utils.h
+    include/meanie3D/utils/opencv_utils.h
 )
 
 SOURCE_GROUP("meanie3d/weights" FILES
@@ -389,6 +402,34 @@ ELSE()
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
         ${VTK_LIBRARIES})
+ENDIF()
+
+# CI Score based detection
+
+ADD_EXECUTABLE(meanie3D-ci-detect
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-ci-detect.cpp)
+
+IF(WITH_TBB)
+    TARGET_LINK_LIBRARIES(meanie3D-ci-detect
+        meanie3D
+    	cf-algorithms
+        ${NETCDF_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${HDF5_LIBRARIES}
+        ${TBB_LIBRARIES}
+        ${VTK_LIBRARIES}
+        ${OpenCV_LIBS})
+ELSE()
+    TARGET_LINK_LIBRARIES(meanie3D-ci-detect
+        meanie3D
+    	cf-algorithms
+        ${NETCDF_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${HDF5_LIBRARIES}
+        ${VTK_LIBRARIES}
+        ${OpenCV_LIBS})
 ENDIF()
 
 # tracking tool

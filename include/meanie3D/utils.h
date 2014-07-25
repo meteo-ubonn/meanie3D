@@ -3,6 +3,7 @@
 
 #include <meanie3D/utils/file_utils.h>
 #include <meanie3D/utils/matrix.h>
+#include <meanie3D/utils/opencv_utils.h>
 #include <meanie3D/utils/verbosity.h>
 #include <meanie3D/utils/visit.h>
 
