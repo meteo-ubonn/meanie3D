@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <stdexcept>
 #include <netcdf>
 #include <vector>
 #include <set>
@@ -108,6 +109,20 @@ namespace m3D {
         }
     }
     
+    
+    template <typename T>
+    void
+    ClusterList<T>::save()
+    {
+        if (this->filename.empty())
+        {
+            throw std::runtime_error("Can not use save() because cluster list was not written or read before.");
+        }
+        
+        this->write(this->filename);
+    }
+    
+    
     template <typename T>
     void 
     ClusterList<T>::write( const std::string& path )
@@ -115,6 +130,10 @@ namespace m3D {
         try
         {
             NcFile *file = NULL;
+            
+            NcFile sourcefile(this->source_file,NcFile::read);
+            
+            this->filename = std::string(path);
             
             bool file_existed = boost::filesystem::exists(path);
             
@@ -203,23 +222,14 @@ namespace m3D {
             
             ::cfa::utils::netcdf::add_time(file,this->timestamp,true);
             
-            // compile a list of the feature space variables used,
-            // including the spatial dimensions
-            
-            vector<string> variable_names;
-            
             // feature variables
             
             for ( size_t i=0; i < this->feature_variables.size(); i++ )
             {
-                NcVar var = this->feature_variables[i];
+                NcVar var = sourcefile.getVar(this->variable_names[i]);
                 
                 // cout << "Copying " << var.getName() << endl;
 
-                // append to list
-                
-                variable_names.push_back(var.getName());
-                
                 NcDim *dim = NULL;
 
                 // Copy data (in case of dimension variables)
@@ -464,7 +474,6 @@ namespace m3D {
                     }
                 }
             }
-            
         }
         catch (const std::exception &e)
         {
@@ -740,6 +749,8 @@ namespace m3D {
             cl->merges = merges;
             cl->splits = splits;
         }
+        
+        cl->filename = path;
         
         return cl;
     }

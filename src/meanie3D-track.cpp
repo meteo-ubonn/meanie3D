@@ -351,7 +351,7 @@ int main(int argc, char** argv)
     
     tracking.setMaxTrackingSpeed(max_speed);
     
-    tracking.track( previous, current, cs, tracking_var, verbosity );
+    tracking.track( previous, current, cs, &tracking_variable_name, verbosity );
     
     if ( write_vtk )
     {

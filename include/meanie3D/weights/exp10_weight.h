@@ -22,7 +22,7 @@ namespace m3D { namespace weights {
     {
     private:
         
-        vector<NcVar>       m_vars;     // variables for weighting
+        vector<string>      m_vars;     // variables for weighting
         MultiArray<T>       *m_weight;
         const CoordinateSystem<T> *m_coordinate_system;
         
@@ -47,7 +47,7 @@ namespace m3D { namespace weights {
          */
         EXP10WeightFunction(FeatureSpace<T> *fs,
                             const NetCDFDataStore<T> *data_store)
-        : m_vars(data_store->variables())
+        : m_vars(data_store->variable_names())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         {
@@ -73,8 +73,6 @@ namespace m3D { namespace weights {
             
             for (size_t var_index = 0; var_index < num_vars; var_index++)
             {
-                NcVar var = m_vars[var_index];
-                
                 T value = p->values[p->coordinate.size()+var_index];
                 
                 sum += pow(boost::numeric_cast<double>(value),10.0);

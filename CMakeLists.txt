@@ -76,9 +76,9 @@ ENDIF()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # Debug, Release, MinSizeRel and RelWithDebInfo
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wlocal-type-template-args -finline")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O3 -ftree-vectorize -msse2 -finline")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline")
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O3 -ftree-vectorize –vec-report2 -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize –vec-report2 -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -msse2 -finline")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     # using Intel C++
     MESSAGE(ERROR "Compiler not currently supported")
@@ -184,7 +184,7 @@ IF (OpenCV_FOUND)
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenCV_C_FLAGS}")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenCV_CXX_FLAGS}")
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenCV_EXE_LINKER_FLAGS}")
-ENDIF (OPENMP_FOUND)
+ENDIF (OpenCV_FOUND)
 
 
 # VTK
@@ -291,6 +291,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/tracking/tracking.h
     include/meanie3D/tracking/tracking_impl.h
     include/meanie3D/utils.h
+    include/meanie3D/utils/cluster_index.h
+    include/meanie3D/utils/cluster_index_impl.h
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/utils/visit_impl.h
@@ -349,15 +351,15 @@ SOURCE_GROUP("meanie3d/tracking" FILES
 )
 
 SOURCE_GROUP("meanie3d/utils" FILES
+    include/meanie3D/utils/cluster_index.h
+    include/meanie3D/utils/cluster_index_impl.h
+    include/meanie3D/utils/file_utils.h
+    include/meanie3D/utils/matrix.h
+    include/meanie3D/utils/matrix_impl.h
+    include/meanie3D/utils/opencv_utils.h
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/utils/visit_impl.h
-    include/meanie3D/utils/scalar_index.h
-    include/meanie3D/utils/scalar_index_impl.h
-    include/meanie3D/utils/matrix.h
-    include/meanie3D/utils/matrix_impl.h
-    include/meanie3D/utils/file_utils.h
-    include/meanie3D/utils/opencv_utils.h
 )
 
 SOURCE_GROUP("meanie3d/weights" FILES

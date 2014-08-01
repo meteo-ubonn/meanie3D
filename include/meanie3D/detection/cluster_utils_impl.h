@@ -16,6 +16,7 @@ namespace m3D {
     void
     ClusterUtils<T>::filter_with_previous_clusters(typename ClusterList<T>::ptr previous,
                                                    typename ClusterList<T>::ptr current,
+                                                   CoordinateSystem<T> *coord_system,
                                                    WeightFunction<T> *weight_function,
                                                    const Verbosity verbosity)
     {
@@ -35,6 +36,11 @@ namespace m3D {
                 return;
             }
         }
+        
+
+        // Provide index for overlap calculations
+        
+        ClusterIndex<T> index_of_previous(previous->clusters,coord_system->get_dimension_sizes());
         
         size_t new_count = current->clusters.size();
         size_t old_count = previous->clusters.size();
@@ -69,7 +75,7 @@ namespace m3D {
 
                 // Calculate overlap
                 
-                T overlap = newCluster->percent_covered_by( oldCluster );
+                T overlap = index_of_previous.occupation_ratio(newCluster,oldCluster);
                 
                 if (overlap > 0 && verbosity >= VerbosityDetails)
                 {

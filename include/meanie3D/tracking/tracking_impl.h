@@ -23,8 +23,8 @@ namespace m3D {
     void
     Tracking<T>::track(typename ClusterList<T>::ptr previous,
                        typename ClusterList<T>::ptr current,
-                       CoordinateSystem<T> *cs,
-                       const NcVar &track_variable,
+                       const CoordinateSystem<T> *cs,
+                       const std::string *tracking_variable_name,
                        Verbosity verbosity)
     {
         if ( verbosity >= VerbosityNormal )
@@ -44,14 +44,6 @@ namespace m3D {
             
             return;
         }
-        
-        // figure out tracking variable index (for histogram)
-        
-        int index = index_of_first( current->feature_variables, track_variable );
-        
-        assert( index >= 0 );
-        
-        size_t tracking_var_index = (size_t) index;
         
         // Check cluster sizes
         
@@ -75,12 +67,34 @@ namespace m3D {
             }
         }
 
-        
-        // Valid min/max of tracking variable
-        
+        // figure out tracking variable index (for histogram)
+
+        std::string tracking_variable;
+        int tracking_var_index = -1;
         T valid_min, valid_max;
         
-        get_valid_range(track_variable, valid_min, valid_max );
+        if (tracking_variable_name != NULL)
+        {
+            for (size_t i=0; i<current->feature_variables.size(); i++)
+            {
+                if (current->feature_variables[i].getName() == *tracking_variable_name)
+                {
+                    tracking_variable = current->feature_variables[i].getName();
+                    tracking_var_index = i;
+                    break;
+                }
+            }
+            
+            if (tracking_var_index < 0)
+            {
+                cerr << "ERROR:Illegal variable name " << *tracking_variable_name << " for histogram comparison " << endl;
+                exit(-1);
+            }
+            
+            // Valid min/max of tracking variable
+            
+            get_valid_range(current->ncFile->getVar(tracking_variable), valid_min, valid_max );
+        }
         
         // Find out the highest id from the previous list
         
@@ -119,7 +133,9 @@ namespace m3D {
         
         if (this->m_deltaT > m_max_deltaT)
         {
-            cerr << "ERROR:files too far apart in time. Time difference:" << this->m_deltaT << "s, longest accepted:" << m_max_deltaT << "s" << endl;
+            cerr << "ERROR:files too far apart in time. Time difference:"
+                 << this->m_deltaT << "s, longest accepted:"
+                 << m_max_deltaT << "s" << endl;
             return;
         }
         
@@ -180,6 +196,11 @@ namespace m3D {
         int maxHistD = numeric_limits<int>::min();
         ::units::values::m maxMidD = ::units::values::m(numeric_limits<T>::min());
         
+        // Index the cluster lists for quick overlap calculations
+        
+        ClusterIndex<T> old_index(previous->clusters, cs->get_dimension_sizes());
+        ClusterIndex<T> new_index(current->clusters, cs->get_dimension_sizes());
+        
         int n,m;
         
         // check out the values for midDisplacement, histSizeDifference and kendall's tau
@@ -188,7 +209,12 @@ namespace m3D {
         {
             typename Cluster<T>::ptr newCluster = current->clusters[n];
             
-            typename Histogram<T>::ptr newHistogram = newCluster->histogram(tracking_var_index,valid_min,valid_max);
+            typename Histogram<T>::ptr newHistogram;
+            
+            if (tracking_var_index >= 0)
+            {
+                newCluster->histogram(tracking_var_index,valid_min,valid_max);
+            }
             
             for ( m=0; m < old_count; m++ )
             {
@@ -202,7 +228,12 @@ namespace m3D {
                 
                 // Histogram Size
                 
-                typename Histogram<T>::ptr oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
+                typename Histogram<T>::ptr oldHistogram;
+                
+                if (tracking_var_index >= 0)
+                {
+                    oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
+                }
 //
 //                size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
 //                
@@ -238,9 +269,8 @@ namespace m3D {
                 // TODO: calculate overlap constraint radius in the same dimension
                 // as the dimension variables!
                 
-                coverOldByNew[n][m] = oldCluster->percent_covered_by( newCluster );
-
-                coverNewByOld[n][m] = newCluster->percent_covered_by( oldCluster );
+                coverOldByNew[n][m] = new_index.occupation_ratio(oldCluster,newCluster);
+                coverOldByNew[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
 
                 if (m_useOverlapConstraint)
                 {
@@ -281,18 +311,21 @@ namespace m3D {
 
                 // Histogram Correlation
                 
-                // calculate spearman's tau
-                
-                if ( m_corr_weight != 0.0 )
+                if (tracking_var_index >= 0)
                 {
-                    rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
-                }
+                    // calculate spearman's tau
+                    
+                    if ( m_corr_weight != 0.0 )
+                    {
+                        rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
+                    }
 
-                // track maxHistD and maxMidD
-                
-                if ( histDiff[n][m] > maxHistD )
-                {
-                    maxHistD = histDiff[n][m];
+                    // track maxHistD and maxMidD
+                    
+                    if ( histDiff[n][m] > maxHistD )
+                    {
+                        maxHistD = histDiff[n][m];
+                    }
                 }
                 
                 if (midDisplacement[n][m] > maxMidD)
@@ -341,9 +374,14 @@ namespace m3D {
                 {
                     float prob_r = m_dist_weight * erfc( midDisplacement[n][m].get() / maxMidD.get() );
                     
-                    float prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
+                    float prob_h = 0;
+                    float prob_t = 0;
                     
-                    float prob_t = m_corr_weight * rank_correlation[n][m];
+                    if (tracking_var_index >= 0)
+                    {
+                        prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
+                        prob_t = m_corr_weight * rank_correlation[n][m];
+                    }
                     
                     sum_prob[n][m] = prob_t + prob_r + prob_h;
                     

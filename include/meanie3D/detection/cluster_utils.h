@@ -31,6 +31,7 @@ namespace m3D {
             void
             filter_with_previous_clusters(typename ClusterList<T>::ptr previous,
                                           typename ClusterList<T>::ptr current,
+                                          CoordinateSystem<T> *coord_system,
                                           WeightFunction<T> *weight_function,
                                           const Verbosity verbosity = VerbosityNormal);
     };

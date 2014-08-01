@@ -19,6 +19,10 @@
 #include <cf-algorithms/cf-algorithms.h>
 #include <meanie3D/meanie3D.h>
 
+#include <opencv2/video/tracking.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
 #include <map>
 #include <vector>
 #include <string>
@@ -70,6 +74,7 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<FS_TYPE> &ranges,
                         std::string **previous_file,
                         std::string **ci_comparison_file,
+                        std::string **ci_comparison_protocluster_file,
                         bool &ci_satellite_only,
                         FS_TYPE &cluster_coverage_threshold,
                         bool &spatial_range_only,
@@ -485,6 +490,23 @@ void parse_commmandline(program_options::variables_map vm,
         }
     }
     
+    // ci-comparison-protocluster-file
+    
+    if (vm.count("ci-comparison-protocluster-file") > 0)
+    {
+        std::string previous = vm["ci-comparison-protocluster-file"].as<string>();
+        
+        boost::filesystem::path previous_path(previous);
+        
+        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path))
+        {
+            *ci_comparison_protocluster_file = new std::string(previous);
+        }
+        else
+        {
+            cerr << "Illegal value for parameter --ci-comparison-protocluster-file: does not exist or is no regular file" << endl;
+        }
+    }
     
     cluster_coverage_threshold = vm["previous-cluster-coverage-threshold"].as<FS_TYPE>();
     
@@ -625,8 +647,9 @@ int main(int argc, char** argv)
     ("weight-function-name,w", program_options::value<string>()->default_value("default"), "default,inverse,pow10 or oase")
     ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
     ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
-    ("ci-comparison-file", program_options::value<string>(), "Only used is weight function is 'oase'. Used for obtaining time trends for CI-score according to Walker et al. 2012.")
-    ("ci-satellite-only", "If true, only satellite values are used (original score), otherwise ")
+    ("ci-comparison-file", program_options::value<string>(), "File for calculating time trends for CI-score according to Walker et al. 2012.")
+    ("ci-comparison-protocluster-file", program_options::value<string>(), "Protoclusters from the comparison file")
+    ("ci-satellite-only", "If present, only satellite values are used (original score), otherwise ")
     //            ("spatial-range-only","If this flag is present, the mean-shift only considers the spatial range")
     ("coalesce-with-strongest-neighbour", "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
     //            ("convection-filter-variable,c", program_options::value<string>(), "Name the variable to eliminate all but the points marked as convective according to the classification scheme by Steiner,Houza & Yates (1995) in.")
@@ -685,6 +708,7 @@ int main(int argc, char** argv)
     std::string kernel_name = "uniform";
     std::string *previous_file = NULL;
     std::string *ci_comparison_file = NULL;
+    std::string *ci_comparison_protocluster_file = NULL;
     bool ci_satellite_only = false;
     bool include_weight_in_result = true;
     FS_TYPE cluster_coverage_threshold = 0.66;
@@ -731,6 +755,7 @@ int main(int argc, char** argv)
                            ranges,
                            &previous_file,
                            &ci_comparison_file,
+                           &ci_comparison_protocluster_file,
                            ci_satellite_only,
                            cluster_coverage_threshold,
                            spatial_range_only,
@@ -889,15 +914,15 @@ int main(int argc, char** argv)
         variable_names.push_back(variables.at(i).getName());
     
     NetCDFDataStore<FS_TYPE> *data_store
-    = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variable_names,time_index);
+        = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variable_names,time_index);
     
-    FeatureSpace<FS_TYPE> *fs
-    = new FeatureSpace<FS_TYPE>(coord_system,
-                                data_store,
-                                lower_thresholds,
-                                upper_thresholds,
-                                replacement_values,
-                                show_progress);
+    FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(coord_system,
+                                                          data_store,
+                                                          lower_thresholds,
+                                                          upper_thresholds,
+                                                          replacement_values,
+                                                          show_progress);
+    
 #if WRITE_FEATURESPACE
     static size_t fs_index = 0;
     std::string fn = path.stem().string() + "_featurespace_" + boost::lexical_cast<string>(fs_index++) + ".vtk";
@@ -939,7 +964,8 @@ int main(int argc, char** argv)
     
     // Convection Filter?
     
-    if (convection_filter_index >= 0) {
+    if (convection_filter_index >= 0)
+    {
         ConvectionFilter<FS_TYPE> convection_filter(ranges, convection_filter_index, show_progress);
         convection_filter.apply(fs);
     }
@@ -950,7 +976,8 @@ int main(int argc, char** argv)
     
     // Scale-Space smoothing
     
-    if (scale != NO_SCALE) {
+    if (scale != NO_SCALE)
+    {
         // TODO: make decay a parameter or at least a constant
         
         FS_TYPE decay = 0.01;
@@ -965,6 +992,8 @@ int main(int argc, char** argv)
         ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_vtk( fn, fs );
 #endif
         
+
+        
         if (verbosity > VerbositySilent)
         {
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
@@ -973,11 +1002,20 @@ int main(int argc, char** argv)
         
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
-                                                              data_store,
-                                                              ranges,
-                                                              sf.get_filtered_min(),
-                                                              sf.get_filtered_max());
+            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
+                                                                filename,
+                                                                ci_comparison_file,
+                                                                ci_comparison_protocluster_file,
+                                                                ci_satellite_only);
+            
+//            FS_TYPE temp = 0.0;
+//            FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
+//
+//            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
+//                                                              data_store,
+//                                                              ranges,
+//                                                              sf.get_filtered_min(),
+//                                                              sf.get_filtered_max());
         }
         else if (weight_function_name == "inverse")
         {
@@ -1008,6 +1046,9 @@ int main(int argc, char** argv)
     }
     else
     {
+        cerr << "TODO: implement me!!" << endl;
+        exit(-1);
+        
         if (verbosity > VerbositySilent)
         {
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
@@ -1016,7 +1057,13 @@ int main(int argc, char** argv)
         
         if (weight_function_name == "oase")
         {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
+            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
+                                                                filename,
+                                                                ci_comparison_file,
+                                                                ci_comparison_protocluster_file,
+                                                                ci_satellite_only);
+            
+//            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         }
         else if (weight_function_name == "inverse")
         {
@@ -1065,13 +1112,13 @@ int main(int argc, char** argv)
         if (verbosity > VerbositySilent)
         cout << "Writing featurespace-variables ...";
         
-        vector<string> vtk_var_names;
-        for (size_t i=0; i < vtk_variables.size(); i++)
-            vtk_var_names.push_back(vtk_variables[i].getName());
+        vector<string> vtk_variable_names;
+        for (size_t i=0; i<vtk_variables.size(); i++)
+            vtk_variable_names.push_back(vtk_variables[i].getName());
         
         cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs,
                                                                           data_store->variable_names(),
-                                                                          vtk_var_names);
+                                                                          vtk_variable_names);
         
         if (verbosity > VerbositySilent)
         cout << " done." << endl;
@@ -1151,9 +1198,7 @@ int main(int argc, char** argv)
             ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
             
             cluster_filter.filter_with_previous_clusters(previous, &clusters, coord_system, weight_function, verbosity);
-        }
-        catch (const std::exception &e)
-        {
+        }        catch (const std::exception &e) {
             cerr << "ERROR reading previous cluster file: " << e.what() << endl;
             exit(-1);
         }

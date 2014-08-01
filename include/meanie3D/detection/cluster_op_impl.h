@@ -118,15 +118,21 @@ namespace m3D {
             m_progress_bar = new boost::progress_display( this->feature_space->size() );
         }
         
-        // Compose featur-variables
+        // Compile list of dimension names
         
-        std::vector<NcVar> feature_variables(this->feature_space->coordinate_system->dimension_variables());
-        for (size_t i=0; i<this->m_data_store->rank(); i++)
-            feature_variables.push_back(this->m_data_store->variables()[i]);
+        const CoordinateSystem<T> *cs = this->feature_space->coordinate_system;
 
-        ClusterList<T> cluster_list(feature_variables,
-                                    this->feature_space->coordinate_system->dimensions(),
-                                    this->m_data_store->filename());
+        NcFile file(m_data_store->filename(), NcFile::read);
+        
+        vector<NcVar> vars(cs->dimension_variables());
+        
+        for (size_t i=0; i < m_data_store->rank(); i++)
+        {
+            NcVar variable = file.getVar(m_data_store->variable_names()[i]);
+            vars.push_back(variable);
+        }
+
+        ClusterList<T> cluster_list(vars,cs->dimensions(),m_data_store->filename());
         
         // Guard against empty feature-space
         

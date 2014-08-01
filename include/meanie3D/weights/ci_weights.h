@@ -32,7 +32,7 @@ namespace m3D { namespace weights {
         "linet_oase_tl",
         "msevi_l15_hrv"
     };
-    
+
     // Shorthands used to access variables in order
     
     static const int msevi_l15_ir_108 = 0;
@@ -41,6 +41,13 @@ namespace m3D { namespace weights {
     static const int cband_radolan_rx = 3;
     static const int linet_oase_tl = 4;
     static const int msevi_l15_hrv = 5;
+
+    // Variables used for protoclusters
+
+    static const size_t PROTOCLUSTER_NUM_VARS = 1;
+    static const char * PROTOCLUSTER_VARS[] = {
+        "msevi_l15_ir_108"
+    };
     
     /** This class represents a weight function loosely based on the CI score
      * by Walker, MacKenzie Mecicalski, Jewett (2012). Only the static score
@@ -68,6 +75,9 @@ namespace m3D { namespace weights {
         std::vector<std::string>    m_variable_names;
         bool                        m_satellite_only;
         
+        std::vector<std::string>    m_protocluster_variables;
+        ClusterList<T>              m_protoclusters;
+
         //
         // Attributes for calculating brightness
         // temperature from the spectral radiances
@@ -95,6 +105,7 @@ namespace m3D { namespace weights {
         OASECIWeightFunction(FeatureSpace<T> *fs,
                              const std::string &filename,
                              const std::string *ci_comparison_file = NULL,
+                             const std::string *ci_comparison_protocluster_file = NULL,
                              bool satellite_only = false,
                              const int time_index = -1)
         : m_data_store(NULL)
@@ -150,19 +161,59 @@ namespace m3D { namespace weights {
 
             // Create the data store
             
-            this->m_data_store = new NetCDFDataStore<T>(filename,fs->coordinate_system,this->m_variable_names,time_index);
+            this->m_data_store = new NetCDFDataStore<T>(filename,
+                                                        fs->coordinate_system,
+                                                        this->m_variable_names,
+                                                        time_index);
+
+            // Set up variables used for protoclustering
             
+            try
+            {
+                for (size_t i=0; i < PROTOCLUSTER_NUM_VARS; i++)
+                {
+                    m_protocluster_variables.push_back(std::string(PROTOCLUSTER_VARS[i]));
+                }
+            }
+            catch (netCDF::exceptions::NcException &e)
+            {
+                cerr << "CRITICAL: can not read from netcdf file " << m_ci_comparison_data_store->filename() << endl;
+                exit(-1);
+            }
+            
+            // obtain protoclusters
+            
+            this->obtain_protoclusters();
+
             if (this->m_ci_comparison_file != NULL)
             {
-                namespace ov = m3D::utils::opencv;
-                    
-                m_ci_comparison_data_store = ov::shifted_store_from_flow_of_variable(filename, *ci_comparison_file,
-                                                                                    fs->coordinate_system,
-                                                                                    this->m_variable_names,
-                                                                                    msevi_l15_hrv, 7.0);
+                //
+                // Attempt (b) : estimate dense motion vector field using opencv
+                // and shift values along the field
+                //
                 
-//                m_ci_comparison_data_store = new NetCDFDataStore<T>(*ci_comparison_file,fs->coordinate_system,
-//                                                                    this->m_variable_names,time_index);
+                //namespace ov = m3D::utils::opencv;
+                //m_ci_comparison_data_store = ov::shifted_store_from_flow_of_variable(filename, *ci_comparison_file,
+                //                                                                    fs->coordinate_system,
+                //                                                                    this->m_variable_names,
+                //                                                                    msevi_l15_hrv, 7.0);
+                
+                m_ci_comparison_data_store
+                    = new NetCDFDataStore<T>(*ci_comparison_file,
+                                             fs->coordinate_system,
+                                             this->m_variable_names,
+                                             time_index);
+                
+                if (ci_comparison_protocluster_file != NULL)
+                {
+                    this->shift_comparison_data_using_protoclusters(ci_comparison_protocluster_file);
+                }
+            }
+            
+            // shift previous data by tracking protoclusters
+            
+            if (this->m_ci_comparison_data_store != NULL)
+            {
             }
             
             // calculate the entire function as one
@@ -198,6 +249,225 @@ namespace m3D { namespace weights {
         }
         
     private:
+        
+        void
+        obtain_protoclusters()
+        {
+            cout << endl;
+            cout << "+ ---------------------------- +" << endl;
+            cout << "+ Obtaining protoclusters      +" << endl;
+            cout << "+ ---------------------------- +" << endl;
+
+            // construct protocluster featurespace
+            
+            std::map<int,double>        lower_thresholds;
+            std::map<int,double>        upper_thresholds;
+            std::map<int,double>        replacement_values;
+            
+            // cut at max 0 centigrade
+            upper_thresholds[0] = spectral_radiance(msevi_l15_ir_108,-40);
+            
+            NetCDFDataStore<T> *proto_store
+            = new NetCDFDataStore<T>(m_data_store->filename(),
+                                     m_coordinate_system,
+                                     m_protocluster_variables,
+                                     -1);
+            
+            FeatureSpace<T> *proto_fs
+            = new FeatureSpace<T>(m_coordinate_system,
+                                  proto_store,
+                                  lower_thresholds,
+                                  upper_thresholds,
+                                  replacement_values,
+                                  true);
+            
+            // obtain protoclusters
+            
+            T kernel_size = 10.0;
+            int size_threshold = 10;
+            
+            Kernel<T> *proto_kernel = new UniformKernel<T>(kernel_size);
+            WeightFunction<T> *proto_weight = new DefaultWeightFunction<T>(proto_fs);
+            PointIndex<T> *proto_index = PointIndex<T>::create(proto_fs->get_points(), proto_fs->rank());
+            
+            ClusterOperation<T> proto_cop(proto_fs,
+                                          proto_store,
+                                          proto_index);
+            
+            // Search radius 10km
+            vector<T> bandwidth(m_coordinate_system->rank(),kernel_size);
+            SearchParameters *search_params = new RangeSearchParams<T>(bandwidth);
+            
+            m_protoclusters = proto_cop.cluster(search_params,
+                                                proto_kernel,
+                                                proto_weight,
+                                                false,
+                                                true);
+            
+            m_protoclusters.apply_size_threshold(size_threshold);
+            
+            m_protoclusters.retag_identifiers();
+            
+            // Write protoclusters out
+            
+            boost::filesystem::path input_path(m_data_store->filename());
+            std::string proto_filename=input_path.stem().generic_string<std::string>() + "-protoclusters.nc";
+            m_protoclusters.write(proto_filename);
+            
+            // clean up
+            
+            delete proto_store;
+            delete proto_fs;
+            delete proto_kernel;
+            delete proto_weight;
+            delete proto_index;
+            delete search_params;
+        }
+        
+        void
+        shift_comparison_data_using_protoclusters(const std::string *ci_comparison_protocluster_file)
+        {
+            cout << "+ ---------------------------- +" << endl;
+            cout << "+ Filtering with protoclusters +" << endl;
+            cout << "+ ---------------------------- +" << endl;
+            
+            if (ci_comparison_protocluster_file != NULL)
+            {
+                // Load previous proto-clusters
+                
+                ClusterList<T> *previous_protoclusters = ClusterList<T>::read(*ci_comparison_protocluster_file);
+                
+                vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
+                
+                // Perform a tracking run
+                
+                Tracking<T> proto_tracker;
+                
+                proto_tracker.set_max_deltaT(::units::values::s(900));
+                
+                // TODO: tracking needs to be refactored to work on
+                // weight function histograms rather than variable
+                // histograms
+                
+                proto_tracker.track(previous_protoclusters, &m_protoclusters, m_coordinate_system);
+                
+                m_protoclusters.save();
+                
+                // Find object pairs and shift the all data from
+                // the comparison scan within that object's area
+                // to the 'forecasted' position using the center
+                // displacement vector
+                
+                // Idea: improve on the result by using OpenCV's
+                // affine transformation finder algorithm and
+                // morph the pixels into position
+                
+                std::vector< std::vector<T> > origins, vectors;
+                
+                // initialize storage for shifted data
+                
+                typedef std::map< size_t,MultiArray<T> * > data_map_t;
+                
+                data_map_t shifted_data;
+                
+                for (size_t var_index=0; var_index < m_ci_comparison_data_store->rank(); var_index++)
+                {
+                    T NOT_SET = m_ci_comparison_data_store->min(var_index);
+                    shifted_data[var_index] = new MultiArrayBlitz<T>(dims,NOT_SET);
+                }
+                
+                // ::m3D::utils::opencv::display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
+//                ::m3D::utils::opencv::display_array(m_ci_comparison_data_store->get_data(msevi_l15_ir_108),
+//                                                    m_ci_comparison_data_store->min(msevi_l15_ir_108),
+//                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
+
+                // iterate over clusters
+                
+                for (size_t pi=0; pi < previous_protoclusters->size(); pi++)
+                {
+                    typename Cluster<T>::ptr pc = previous_protoclusters->clusters.at(pi);
+                    
+                    // find the matched candidate
+                    
+                    for (size_t ci=0; ci < m_protoclusters.size(); ci++)
+                    {
+                        typename Cluster<T>::ptr cc = m_protoclusters.clusters.at(ci);
+                        
+                        if (pc->id == cc->id)
+                        {
+                            // Calculate average displacement
+                            
+                            typedef std::vector<T> vec_t;
+                            
+                            vec_t center_p = pc->geometrical_center(m_coordinate_system->rank());
+                            vec_t center_c = cc->geometrical_center(m_coordinate_system->rank());
+                            vec_t displacement = center_c - center_p;
+                            
+                            origins.push_back(center_p);
+                            vectors.push_back(displacement);
+                            
+                            // Move previous data by displacement vector
+                            
+                            typename Point<T>::list::iterator point_iter;
+                            
+                            for (point_iter=pc->points.begin(); point_iter != pc->points.end(); point_iter++)
+                            {
+                                typename Point<T>::ptr p = *point_iter;
+
+                                vector<T> x = p->coordinate + displacement;
+                                
+                                vector<int> source_gridpoint = p->gridpoint;
+                                
+                                vector<int> dest_gridpoint = m_coordinate_system->newGridPoint();
+
+                                try
+                                {
+                                    m_coordinate_system->reverse_lookup(x,dest_gridpoint);
+                                
+                                    for (size_t var_index=0; var_index < m_ci_comparison_data_store->rank(); var_index++)
+                                    {
+                                        bool is_valid = false;
+                                        
+                                        T value = m_ci_comparison_data_store->get(var_index,source_gridpoint,is_valid);
+                                        
+                                        if (is_valid)
+                                        {
+                                            shifted_data[var_index]->set(dest_gridpoint,value);
+                                        }
+                                    }
+                                }
+                                catch (std::out_of_range &e) {}
+                            }
+                        }
+                    }
+                }
+                
+//                ::m3D::utils::opencv::display_array(shifted_data[msevi_l15_ir_108],
+//                                                    m_ci_comparison_data_store->min(msevi_l15_ir_108),
+//                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
+
+                // replace the original data with the shifted data
+
+                for (size_t var_index=0; var_index < m_ci_comparison_data_store->rank(); var_index++)
+                {
+                    MultiArray<T> *dest = shifted_data[var_index];
+                    
+                    m_ci_comparison_data_store->set_data(var_index, dest);
+                }
+                
+                //::m3D::utils::opencv:: display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
+                
+                boost::filesystem::path ppath(previous_protoclusters->source_file);
+                
+                std::string fn = ppath.filename().stem().generic_string() + "-shifted.nc";
+                m_ci_comparison_data_store->save_as(fn);
+                
+                fn = ppath.filename().stem().generic_string() + "-vectors.vtk";
+                ::cfa::utils::VisitUtils<T>::write_vectors_vtk(fn,origins,vectors);
+                
+                delete previous_protoclusters;
+            }
+        }
         
         void
         calculate_weight_function(FeatureSpace<T> *fs)

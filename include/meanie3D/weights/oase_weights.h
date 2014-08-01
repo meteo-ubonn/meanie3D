@@ -22,7 +22,7 @@ namespace m3D { namespace weights {
     {
     private:
         
-        vector<NcVar>       m_vars;             // variables for weighting
+        vector<string>      m_vars;             // variables for weighting
         map<size_t,T>       m_min;              // [index,min]
         map<size_t,T>       m_max;              // [index,max]
         MultiArray<T>       *m_weight;
@@ -75,7 +75,7 @@ namespace m3D { namespace weights {
         OASEWeightFunction(FeatureSpace<T> *fs,
                            const NetCDFDataStore<T> *data_store,
                            const vector<T> &bandwidth)
-        : m_vars(data_store->variables())
+        : m_vars(data_store->variable_names())
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_coordinate_system(fs->coordinate_system)
         , m_bandwidth(bandwidth)
@@ -84,10 +84,8 @@ namespace m3D { namespace weights {
             
             for ( size_t index = 0; index < m_vars.size(); index++ )
             {
-                T min_value,max_value;
-                ::cfa::utils::netcdf::unpacked_limits<T>(m_vars[index], min_value, max_value);
-                m_min[index] = min_value;
-                m_max[index] = max_value;
+                m_min[index] = data_store->min(index);
+                m_max[index] = data_store->max(index);
             }
             
             calculate_weight_function(fs);
@@ -104,7 +102,7 @@ namespace m3D { namespace weights {
                            const vector<T> &bandwidth,
                            const map<size_t,T> &min,
                            const map<size_t,T> &max)
-        : m_vars(data_store->variables())
+        : m_vars(data_store->variable_names())
         , m_min(min)
         , m_max(max)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
@@ -139,11 +137,11 @@ namespace m3D { namespace weights {
 
             for (size_t var_index = 0; var_index < num_vars; var_index++)
             {
-                NcVar var = m_vars[var_index];
+                string var = m_vars[var_index];
 
                 T value = p->values[p->coordinate.size()+var_index];
 
-                if (var.getName() == "cband_radolan_rx")
+                if (var == "cband_radolan_rx")
                 {
                     // varies from 0 .. 1. Multiplier 10x
 
@@ -151,17 +149,17 @@ namespace m3D { namespace weights {
 
                     sum += cband_radolan_rx_multiplier * rx_weight;
                 }
-                else if (var.getName() == "msevi_l2_cmsaf_cot")
+                else if (var == "msevi_l2_cmsaf_cot")
                 {
                     T cot_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
                     sum += cot_weight;
                 }
-                else if (var.getName() == "msevi_l15_ir_108")
+                else if (var == "msevi_l15_ir_108")
                 {
                     T ir_weight = (value - m_min.at(var_index)) / (m_max.at(var_index) - m_min.at(var_index));
                     sum += ir_weight;
                 }
-                else if (var.getName() == "msevi_l2_nwcsaf_ct")
+                else if (var == "msevi_l2_nwcsaf_ct")
                 {
 //                    
 //                    http://www.nwcsaf.org/HTMLContributions/CT/Prod_CT.htm
@@ -221,7 +219,7 @@ namespace m3D { namespace weights {
 
                     sum += msevi_l2_nwcsaf_ct_multiplier * ct_weight;
                 }
-                else if (var.getName() == "linet_oase_tl")
+                else if (var == "linet_oase_tl")
                 {
                     // varies from 0 .. 1. Multiplier 100x
 

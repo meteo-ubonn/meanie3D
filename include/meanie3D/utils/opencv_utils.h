@@ -11,6 +11,57 @@ namespace m3D { namespace utils { namespace opencv {
     #define VISUALIZE_FLOW_FIELD 1
     
     template <typename T>
+    cv::Mat matrix_from_multiaray(MultiArray<T> *array,
+                                  T min,
+                                  T max,
+                                  bool invert = false)
+    {
+        
+        vector<size_t> dimension_sizes = array->get_dimensions();
+        
+        if (dimension_sizes.size() != 2)
+        {
+            cerr << "ERROR:this method is only supported for 2D data" << endl;
+            exit(-1);
+        }
+        
+        using namespace cv;
+        
+        // transform the data into a grey image with values
+        // between 0 (valid_min) and 255 (valid_max)
+        
+        Mat image;
+        image.create( dimension_sizes[0], dimension_sizes[1], CV_8U);
+        
+        for (size_t i=0; i<dimension_sizes[0]; i++)
+        {
+            for (size_t j=0; j<dimension_sizes[1]; j++)
+            {
+                vector<int> gridpoint(2);
+                gridpoint[1] = i;
+                gridpoint[0] = j;
+                
+                bool isValid = false;
+                
+                T value = array->get(gridpoint);
+                
+                T scaled_value = (256.0/(max-min)) * (value - min);
+                    
+                unsigned char grayValue = (unsigned char) round(scaled_value);
+                
+                if (invert)
+                {
+                    grayValue = 255.0 - grayValue;
+                }
+                
+                image.at<uchar>( dimension_sizes[1] - j - 1, i, 0 ) = grayValue;
+            }
+        }
+        
+        return image;
+    }
+    
+    template <typename T>
     cv::Mat matrix_from_variable(DataStore<T> *dataStore,
                                  size_t variableIndex,
                                  T lower_treshold = std::numeric_limits<T>::min(),
@@ -70,7 +121,8 @@ namespace m3D { namespace utils { namespace opencv {
     
     /** Helper method. Visualizes a flow field
      */
-    static void drawOptFlowMap(const cv::Mat& flow, cv::Mat& cflowmap, int step, double, const cv::Scalar& color)
+    static inline void
+    drawOptFlowMap(const cv::Mat& flow, cv::Mat& cflowmap, int step, double, const cv::Scalar& color)
     {
         using namespace cv;
         
@@ -263,6 +315,49 @@ namespace m3D { namespace utils { namespace opencv {
         
         return prev_data;
     }
+
+    template<typename T>
+    void
+    display_variable(NetCDFDataStore<T> *ds, int var_index)
+    {
+        using namespace cv;
+        
+        Mat image = matrix_from_variable(ds, var_index);
+        
+        std::string window_name = ds->variable_names()[var_index];
+        
+        namedWindow(window_name, 1);
+        
+        imshow(window_name, image);
+        
+        cvWaitKey(0);
+        
+        cvDestroyWindow(window_name.c_str());
+        
+        image.release();
+    }
+    
+    template<typename T>
+    void
+    display_array(MultiArray<T> *ds, T min, T max, bool invert=false)
+    {
+        using namespace cv;
+        
+        Mat image = matrix_from_multiaray(ds,min,max,invert);
+        
+        std::string window_name = "raw array output";
+        
+        namedWindow(window_name, 1);
+        
+        imshow(window_name, image);
+        
+        cvWaitKey(0);
+        
+        cvDestroyWindow(window_name.c_str());
+        
+        image.release();
+    }
+    
     
 }}}
 
