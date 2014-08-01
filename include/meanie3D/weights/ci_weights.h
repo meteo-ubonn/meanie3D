@@ -432,7 +432,15 @@ namespace m3D { namespace weights {
                                         
                                         if (is_valid)
                                         {
-                                            shifted_data[var_index]->set(dest_gridpoint,value);
+                                            // we are manipulating raw data in the NetCDFDataStore, which
+                                            // keeps the values in 'packed' format internally. When calling
+                                            // the get method above, the value is unpacked for convencience.
+                                            // This means we need to pack the value again before writing it
+                                            // out or the value range will be messed up.
+                                            
+                                            T packed_value = m_ci_comparison_data_store->packed_value(var_index,value);
+                                            
+                                            shifted_data[var_index]->set(dest_gridpoint,packed_value);
                                         }
                                     }
                                 }
