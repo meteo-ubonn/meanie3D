@@ -188,12 +188,6 @@ namespace m3D {
         , highest_id(0)
         , m_use_original_points_only(true)
         {
-            for (size_t i=0; i < dims.size(); i++)
-                dimensions.push_back(dims[i].getName());
-            
-            for (size_t i=0; i < vars.size(); i++)
-                feature_variables.push_back(vars[i].getName());
-
             long timestamp = cfa::utils::netcdf::get_time<long> (sourcefile);
             this->set_time_in_seconds(::units::values::s(timestamp));
         };
