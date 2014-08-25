@@ -227,10 +227,10 @@
 			children = (
 				F4FA809B188D29BC00C426C5 /* visualize_oase_clusters_2D.sh */,
 				F4FA809A188D29BC00C426C5 /* visualize_oase_clusters_2D.py */,
-				F4FA8096188D29BC00C426C5 /* visualize_clusters_2D.py */,
 				F4FA8097188D29BC00C426C5 /* visualize_clusters_2D.sh */,
-				F4FA8098188D29BC00C426C5 /* visualize_clusters_3D.py */,
+				F4FA8096188D29BC00C426C5 /* visualize_clusters_2D.py */,
 				F4FA8099188D29BC00C426C5 /* visualize_clusters_3D.sh */,
+				F4FA8098188D29BC00C426C5 /* visualize_clusters_3D.py */,
 				F4FA8091188D29BC00C426C5 /* visualize_cluster_weights_2D.py */,
 				F4FA8092188D29BC00C426C5 /* visualize_cluster_weights_2D.sh */,
 				F4FA8093188D29BC00C426C5 /* visualize_cluster_weights_3D.py */,

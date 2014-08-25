@@ -172,30 +172,60 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity,legendFlag):
     SetPlotOptions(p)
     return
 
-# Add 3D local topography
+# Add 2D local topography, rivers and borders
 # @param "local" or "national"
 #
 def add_mapstuff(extent):
     
+    # Topography
+    add_map_topography(extent);
+    
+    # Rivers & Boundaries
+    add_map_borders(extent);
+    add_map_rivers(extent);
+    
+    return
+
+# Add 2D local topography
+# @param "local" or "national"
+#
+def add_map_topography(extent):
+    
     # open the file and add the plot
     OpenDatabase(MAPSTUFF_FILE)
-
+    
     if extent!="local" and extent !="national":
         print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
         return
-
+    
     # Topography
     AddPlot("Pseudocolor", extent+"_topo_3D")
     p = PseudocolorAttributes()
     p.pointSizePixels = 2
-    p.colorTableName = TOPO_COLORMAP
-    p.invertColorTable = TOPO_COLORMAP_INVERT
+    p.invertColorTable=1
+    p.colorTableName = "xray"
+    p.scaling = p.Skew
+    p.skewFactor=0.0001
+    
     p.lightingFlag = 0
     p.legendFlag = 0;
     p.opacity = 1
-    p.minFlag,p.maxFlag = 1,1
-    p.min,p.max = -100.0, 3200.0
     SetPlotOptions(p)
+    
+    return
+
+
+# Add 2D borders
+# @param "local" or "national"
+#
+def add_map_borders(extent):
+    
+    # open the file and add the plot
+    OpenDatabase(MAPSTUFF_FILE)
+    
+    if extent!="local" and extent !="national":
+        print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
+        return
     
     # Rivers & Boundaries
     
@@ -209,9 +239,25 @@ def add_mapstuff(extent):
     p.min,p.max = 0, 1
     SetPlotOptions(p)
     
+    return
+
+# Add 2D borders
+# @param "local" or "national"
+#
+def add_map_rivers(extent):
+    
+    # open the file and add the plot
+    OpenDatabase(MAPSTUFF_FILE)
+    
+    if extent!="local" and extent !="national":
+        print "ERROR:add_backdrop only accepts 'local' or 'national' as argument"
+        return
+    
+    # Rivers & Boundaries
+    
     AddPlot("Pseudocolor", "as_zonal/"+extent+"_rivers_3D")
     p = PseudocolorAttributes()
-    p.colorTableName = "Blues"
+    p.colorTableName = "hot"
     p.lightingFlag = 0
     p.legendFlag = 0;
     p.invertColorTable = 1;
@@ -228,53 +274,94 @@ def close_mapstuff():
     return
 
 #
-# Sets default 2D view params for RADOLAN grid
+# Sets default 3D view params for RADOLAN grid
+# @param "local" or "national"
 # @param perspective 1,2
+# @param scale factor
 #
-def set_view_to_radolan(perspective,scale_factor_z):
+def set_view_to_radolan(extend,perspective,scale_factor_z):
 
     v = GetView3D();
     
-    if perspective==1:
-        v.viewNormal = (0.204365, -0.63669, 0.743546)
-        v.focus = (-239.212, -4222.9, 7.31354)
-        v.viewUp = (-0.201314, 0.716005, 0.668438)
-        v.viewAngle = 30
-        v.parallelScale = 173.531
-        v.nearPlane = -347.062
-        v.farPlane = 347.062
-        v.imagePan = (-0.00977129, 0.0399963)
-        v.imageZoom = 1.4641
-        v.perspective = 1
-        v.eyeAngle = 2
-        v.centerOfRotationSet = 0
-        v.centerOfRotation = (0, 0, 0)
-        v.axis3DScaleFlag = 0
-        v.axis3DScales = (1, 1, 1)
-        v.shear = (0, 0, 1)
+    if extend == "local":
     
-    elif perspective==2:
-        v.viewNormal = (0.996852, 0.0147052, 0.0779102)
-        v.focus = (-239.212, -4222.9, 21.9406)
-        v.viewUp = (-0.0779426, 0.00164413, 0.996956)
-        v.viewAngle = 30
-        v.parallelScale = 175.151
-        v.nearPlane = -350.302
-        v.farPlane = 350.302
-        v.imagePan = (-0.00977129, 0.0399963)
-        v.imageZoom = 1.7715
-        v.perspective = 1
-        v.eyeAngle = 2
-        v.centerOfRotationSet = 0
-        v.centerOfRotation = (0, 0, 0)
-        v.axis3DScaleFlag = 0
-        v.axis3DScales = (1, 1, 1)
-        v.shear = (0, 0, 1)
+        if perspective==1:
+            v.viewNormal = (0.204365, -0.63669, 0.743546)
+            v.focus = (-239.212, -4222.9, 7.31354)
+            v.viewUp = (-0.201314, 0.716005, 0.668438)
+            v.viewAngle = 30
+            v.parallelScale = 173.531
+            v.nearPlane = -347.062
+            v.farPlane = 347.062
+            v.imagePan = (-0.00977129, 0.0399963)
+            v.imageZoom = 1.4641
+            v.perspective = 1
+            v.eyeAngle = 2
+            v.centerOfRotationSet = 0
+            v.centerOfRotation = (0, 0, 0)
+            v.axis3DScaleFlag = 0
+            v.axis3DScales = (1, 1, 1)
+            v.shear = (0, 0, 1)
+        
+        elif perspective==2:
+            v.viewNormal = (0.996852, 0.0147052, 0.0779102)
+            v.focus = (-239.212, -4222.9, 21.9406)
+            v.viewUp = (-0.0779426, 0.00164413, 0.996956)
+            v.viewAngle = 30
+            v.parallelScale = 175.151
+            v.nearPlane = -350.302
+            v.farPlane = 350.302
+            v.imagePan = (-0.00977129, 0.0399963)
+            v.imageZoom = 1.7715
+            v.perspective = 1
+            v.eyeAngle = 2
+            v.centerOfRotationSet = 0
+            v.centerOfRotation = (0, 0, 0)
+            v.axis3DScaleFlag = 0
+            v.axis3DScales = (1, 1, 1)
+            v.shear = (0, 0, 1)
+
+    elif extend == "national":
     
+        if perspective==1:
+            v.viewNormal = (0.0244371, -0.668218, 0.743564)
+            v.focus = (-73.9622, -4209.15, 7.31354)
+            v.viewUp = (0.00033399, 0.743792, 0.668411)
+            v.viewAngle = 30
+            v.parallelScale = 636.44
+            v.nearPlane = -1272.88
+            v.farPlane = 1272.88
+            v.imagePan = (0.00341995, 0.049739)
+            v.imageZoom = 1.21
+            v.perspective = 1
+            v.eyeAngle = 2
+            v.centerOfRotationSet = 0
+            v.centerOfRotation = (0, 0, 0)
+            v.axis3DScaleFlag = 0
+            v.axis3DScales = (1, 1, 1)
+            v.shear = (0, 0, 1)
+        
+        elif perspective==2:
+            v.viewNormal = (-0.0310283, -0.976439, 0.213551)
+            v.focus = (-73.9622, -4209.15, 7.31354)
+            v.viewUp = (0.00253423, 0.213576, 0.976923)
+            v.viewAngle = 30
+            v.parallelScale = 636.44
+            v.nearPlane = -1272.88
+            v.farPlane = 1272.88
+            v.imagePan = (0.0182949, -0.0442553)
+            v.imageZoom = 1.4641
+            v.perspective = 1
+            v.eyeAngle = 2
+            v.centerOfRotationSet = 0
+            v.centerOfRotation = (0, 0, 0)
+            v.axis3DScaleFlag = 0
+            v.axis3DScales = (1, 1, 1)
+            v.shear = (0, 0, 1)
+
     if scale_factor_z != 1.0:
         v.axis3DScaleFlag = 1
         v.axis3DScales = (1, 1, scale_factor_z)
-
 
     print "3D View Settings:"
     print v

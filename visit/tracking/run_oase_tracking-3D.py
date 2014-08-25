@@ -16,7 +16,8 @@ except ImportError as e:
     print 'Exception error is: %s' % e
     sys.exit()
 
-VAR_NAME="xband_oase_zh"
+#VAR_NAME="xband_oase_zh"
+VAR_NAME="cband_oase_zh"
 
 DETECT_PARAMS      = " -s "+PARAM_T
 DETECT_PARAMS     += " --lower-thresholds "+VAR_NAME+"=35"

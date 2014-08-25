@@ -181,8 +181,9 @@ def add_datetime(filename):
         add_text_annotation(0.725,0.95,text);
         return
     
-    # OASE 2D
+    # OASE 2D/3D
     #oase-20110622t2055z-1km-germany-2d-v01a.nc
+    #oase-20130620t2100z-1km-germany-3d-test2
     baseIndex=string.find(fn,"oase-")
 
     if baseIndex >= 0:
