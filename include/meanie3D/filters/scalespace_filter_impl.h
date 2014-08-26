@@ -289,9 +289,9 @@ namespace m3D {
             start_timer();
         }
 
-        ArrayIndex<T> *originalIndex = new ArrayIndex<T>(cs, fs->points, true);
+        ArrayIndex<T> *originalIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), fs->points, true);
         
-        ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs,false);
+        ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), false);
         
         if ( this->show_progress() )
         {
@@ -336,7 +336,7 @@ namespace m3D {
             {
                 originalIndex = filteredIndex;
                 
-                filteredIndex = new ArrayIndex<T>(cs,false);
+                filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(),false);
             }
         }
         

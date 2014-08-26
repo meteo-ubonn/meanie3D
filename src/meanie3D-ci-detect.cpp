@@ -1134,11 +1134,6 @@ int main(int argc, char** argv)
     fs->weight_sample_points.push_back(sample_point);
 #endif
     
-    // Clustering
-    
-    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
-    ClusterOperation<FS_TYPE> cop(fs, data_store, index);
-    
     // Create specified kernel
     
     Kernel<FS_TYPE> *kernel = NULL;
@@ -1156,6 +1151,10 @@ int main(int argc, char** argv)
         kernel = new EpanechnikovKernel<FS_TYPE>(kernel_width);
     }
     
+    // Run the clustering
+    
+    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
+    ClusterOperation<FS_TYPE> cop(fs, data_store, index);
     ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, show_progress);
     
     // Number the result sequentially to make it easier to follow

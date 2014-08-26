@@ -21,6 +21,9 @@ from subprocess import call
 #print [key for key in locals().keys()
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
+#CLUSTER_POSTFIX="-clusters"
+CLUSTER_POSTFIX="-protoclusters"
+
 OVERLAY=bool(OVERLAY_VALUE == "YES")
 CREATE_SOURCE_MOVIE=True
 CREATE_CLUSTERS_MOVIE=True
@@ -128,7 +131,7 @@ for netcdf_file in netcdf_files:
     netcdf_path,filename    = os.path.split(netcdf_file);
     basename                = os.path.splitext(filename)[0]
 
-    cluster_file            = CLUSTER_DIR+"/"+basename+"-clusters.nc"
+    cluster_file            = CLUSTER_DIR+"/"+basename+CLUSTER_POSTFIX+".nc"
     label_file              = basename+"-clusters_centers.vtk"
 
     #print "netcdf_file  = " + netcdf_file

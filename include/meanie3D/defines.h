@@ -23,6 +23,7 @@
 #define DEBUG_CLUSTER_MERGING_DECISION 0
 #define DEBUG_TRACKING 0
 #define DEBUG_HISTOGRAM_CORRELATION 0
+#define DEBUG_GRAPH_AGGREGATION 1
 
 // Write out a VTK file that contains 1 and 0 for
 // all points. 1 means, that the point was marked

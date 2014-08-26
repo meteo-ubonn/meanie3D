@@ -1,12 +1,15 @@
 #ifndef _M3D_ClusterList_Impl_H_
 #define _M3D_ClusterList_Impl_H_
 
+#include <meanie3D/defines.h>
+#include <meanie3D/namespaces.h>
+
 #include <algorithm>
 #include <sstream>
-#include <stdexcept>
 #include <netcdf>
 #include <vector>
 #include <set>
+#include <stdexcept>
 
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -15,6 +18,8 @@
 
 #include "cluster.h"
 #include "cluster_list.h"
+
+#define DEBUG_GRAPH_AGGREGATION 1
 
 namespace m3D {
 
@@ -806,7 +811,7 @@ namespace m3D {
                                     typename Point<T>::list &list,
                                     size_t reach)
     {
-        NcDim dim = arrayIndex.coordinate_system()->dimensions()[dimensionIndex];
+        size_t dimSize = arrayIndex.dimensions()[dimensionIndex];
         
         // iterate over dimensions
         
@@ -820,7 +825,7 @@ namespace m3D {
             
             // guard against index error
             
-            if (index < 0 || index > (dim.getSize()-1))
+            if (index < 0 || index > (dimSize-1))
             {
                 continue;
             }
@@ -1117,9 +1122,46 @@ namespace m3D {
         
         boost::progress_display *progress = NULL;
         
-        ArrayIndex<T> index(fs->coordinate_system,fs->points,false);
+        #if DEBUG_GRAPH_AGGREGATION
+            for ( size_t i = 0; i < fs->points.size(); i++ )
+            {
+                M3DPoint<T> *p = (M3DPoint<T> *) fs->points[i];
+                if (p->coordinate.size() != p->gridpoint.size() || p->gridpoint.size() > 5)
+                {
+                    cerr << "ERROR: bogus point " << p << endl;
+                }
+                
+                
+            }
+        #endif
+        
+        vector<size_t> dimensions = fs->coordinate_system->get_dimension_sizes();
+        
+        ArrayIndex<T> index(dimensions,fs->points,false);
+        
+        #if DEBUG_GRAPH_AGGREGATION
+                for ( size_t i = 0; i < fs->points.size(); i++ )
+                {
+                    M3DPoint<T> *p = (M3DPoint<T> *) fs->points[i];
+                    if (p->coordinate.size() != p->gridpoint.size())
+                    {
+                        cerr << "ERROR: bogus point " << p << endl;
+                    }
+                }
+        #endif
         
         this->aggregate_zeroshifts(fs,weight_function,index,coalesceWithStrongestNeighbour,show_progress);
+        
+        #if DEBUG_GRAPH_AGGREGATION
+                for ( size_t i = 0; i < fs->points.size(); i++ )
+                {
+                    M3DPoint<T> *p = (M3DPoint<T> *) fs->points[i];
+                    if (p->coordinate.size() != p->gridpoint.size())
+                    {
+                        cerr << "ERROR: bogus point " << p << endl;
+                    }
+                }
+        #endif
         
 #if WRITE_ZEROSHIFT_CLUSTERS
         typename Cluster<T>::list::iterator ci;
@@ -1162,16 +1204,17 @@ namespace m3D {
             
             // Find the predecessor through gridded shift
             
-            size_t spatial_dims = fs->coordinate_system->rank();
+            vector<int> gridpoint = current_point->gridpoint + current_point->gridded_shift;
             
-            vector<int> gridpoint(spatial_dims,0);
+            M3DPoint<T> *predecessor = NULL;
             
-            for (size_t k=0; k < spatial_dims; k++)
+            try
             {
-                gridpoint[k] = current_point->gridpoint[k] + current_point->gridded_shift[k];
+                predecessor =  (M3DPoint<T> *)index.get(gridpoint);
             }
-            
-            M3DPoint<T> *predecessor = (M3DPoint<T> *)index.get(gridpoint);
+            catch (std::invalid_argument &e)
+            {
+            }
 
             // Start testing
             
@@ -1225,7 +1268,7 @@ namespace m3D {
                     current_point->cluster->add_point(predecessor);
 
                     #if DEBUG_GRAPH_AGGREGATION
-                    cout << "added predecessor to cluster " << current_point->cluster << " (" << current_point->cluster->points.size() << " points)" << endl;
+                        cout << "added predecessor to cluster " << current_point->cluster << " (" << current_point->cluster->points.size() << " points)" << endl;
                     #endif
                 }
                 else if (current_point->cluster != predecessor->cluster)
@@ -1234,25 +1277,38 @@ namespace m3D {
                     // => merge current cluster's points to predecessor's cluster
                     //    and delete current cluster
                     
-                    typename Cluster<T>::ptr c1 = current_point->cluster;
+                    // Save a little time by merging the smaller into the bigger cluster
+                    
+                    typename Cluster<T>::ptr merged;
+                    typename Cluster<T>::ptr mergee;
+                    
+                    if ( current_point->cluster->points.size() >= predecessor->cluster->points.size())
+                    {
+                        merged = current_point->cluster;
+                        mergee = predecessor->cluster;
+                    }
+                    else
+                    {
+                        merged = predecessor->cluster;
+                        mergee = current_point->cluster;
+                    }
                     
                     #if DEBUG_GRAPH_AGGREGATION
-                        cout << "merging clusters " << c1 << " (" << c1->points.size() << " points)"
-                             << "into " << predecessor->cluster << " (" << predecessor->cluster->points.size() << " points)"
+                        cout << "merging cluster " << mergee << " (" << mergee->points.size() << " points)"
+                             << "into " << merged << " (" << merged->points.size() << " points)"
                              << endl;
                     #endif
                     
                     // absorb predecessor
-                
-                    predecessor->cluster->add_points(c1->points,false);
+                    merged->add_points(mergee->points,false);
                     
                     // remove it
                     
-                    typename Cluster<T>::list::iterator fi;
+                    typename Cluster<T>::list::iterator fi = find(clusters.begin(),clusters.end(),mergee);
                     
-                    clusters.erase(find(clusters.begin(),clusters.end(),c1));
+                    clusters.erase(fi);
                     
-                    delete c1;
+                    delete mergee;
                 }
                 else
                 {

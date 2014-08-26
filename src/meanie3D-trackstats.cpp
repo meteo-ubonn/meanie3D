@@ -712,7 +712,7 @@ int main(int argc, char** argv)
 
             // For each track, create an array index. Start with empty index.
             
-            ArrayIndex<FS_TYPE> index(coord_system,false);
+            ArrayIndex<FS_TYPE> index(coord_system->get_dimension_sizes(),false);
             
             // Iterate over the clusters in the track and sum up
             
