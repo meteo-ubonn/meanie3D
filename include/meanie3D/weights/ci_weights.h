@@ -58,7 +58,7 @@ namespace m3D { namespace weights {
      *
      */
     template <class T>
-    class OASECIWeightFunction : public cfa::utils::WeightFunction<T>
+    class OASECIWeightFunction : public cfa::utils::WeightFunction<T>, public MultiArray<bool>::ForEachFunctor
     {
         
     private:
@@ -72,11 +72,16 @@ namespace m3D { namespace weights {
         NetCDFDataStore<T>          *m_ci_comparison_data_store;
         const CoordinateSystem<T>   *m_coordinate_system;
         MultiArray<T>               *m_weight;
+        MultiArray<bool>            *m_overlap;
         std::vector<std::string>    m_variable_names;
         bool                        m_satellite_only;
         
         std::vector<std::string>    m_protocluster_variables;
         ClusterList<T>              m_protoclusters;
+        ClusterList<T>              *m_previous_protoclusters;
+        
+        MultiArray<bool>            *m_prev_cluster_area;
+        MultiArray<bool>            *m_curr_cluster_area;
 
         //
         // Attributes for calculating brightness
@@ -114,6 +119,7 @@ namespace m3D { namespace weights {
         , m_coordinate_system(fs->coordinate_system)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_satellite_only(satellite_only)
+        , m_previous_protoclusters(NULL)
         {
             // Obtain a data store with all the relevant variables
             
@@ -206,14 +212,20 @@ namespace m3D { namespace weights {
                 
                 if (ci_comparison_protocluster_file != NULL)
                 {
+                    // Load previous proto-clusters
+                    
+                    m_previous_protoclusters = ClusterList<T>::read(*ci_comparison_protocluster_file);
+                    
+                    // Shift previous data by tracking protoclusters and use
+                    // the resulting tracking vectors / clusters
+
                     this->shift_comparison_data_using_protoclusters(ci_comparison_protocluster_file);
+                    
+                    // reduce the data by calculating the cluster overlap area
+                    // (used later in weight function calculation)
+                    
+                    this->calculate_overlap();
                 }
-            }
-            
-            // shift previous data by tracking protoclusters
-            
-            if (this->m_ci_comparison_data_store != NULL)
-            {
             }
             
             // calculate the entire function as one
@@ -246,6 +258,30 @@ namespace m3D { namespace weights {
                 delete this->m_ci_comparison_data_store;
                 this->m_ci_comparison_data_store = NULL;
             }
+            
+            if (this->m_previous_protoclusters != NULL)
+            {
+                delete this->m_previous_protoclusters;
+                this->m_previous_protoclusters = NULL;
+            }
+            
+            if (this->m_overlap != NULL)
+            {
+                delete this->m_overlap;
+                this->m_overlap = NULL;
+            }
+            
+            if (this->m_prev_cluster_area != NULL)
+            {
+                delete this->m_prev_cluster_area;
+                this->m_prev_cluster_area = NULL;
+            }
+
+            if (this->m_curr_cluster_area != NULL)
+            {
+                delete this->m_curr_cluster_area;
+                this->m_curr_cluster_area = NULL;
+            }
         }
         
     private:
@@ -253,7 +289,7 @@ namespace m3D { namespace weights {
         void
         obtain_protoclusters()
         {
-            cout << endl;
+            cout << endl << endl;
             cout << "+ ---------------------------- +" << endl;
             cout << "+ Obtaining protoclusters      +" << endl;
             cout << "+ ---------------------------- +" << endl;
@@ -327,15 +363,12 @@ namespace m3D { namespace weights {
         void
         shift_comparison_data_using_protoclusters(const std::string *ci_comparison_protocluster_file)
         {
-            cout << "+ ---------------------------- +" << endl;
+            cout << endl << "+ ---------------------------- +" << endl;
             cout << "+ Filtering with protoclusters +" << endl;
             cout << "+ ---------------------------- +" << endl;
             
             if (ci_comparison_protocluster_file != NULL)
             {
-                // Load previous proto-clusters
-                
-                ClusterList<T> *previous_protoclusters = ClusterList<T>::read(*ci_comparison_protocluster_file);
                 
                 vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
                 
@@ -349,7 +382,7 @@ namespace m3D { namespace weights {
                 // weight function histograms rather than variable
                 // histograms
                 
-                proto_tracker.track(previous_protoclusters, &m_protoclusters, m_coordinate_system);
+                proto_tracker.track(m_previous_protoclusters, &m_protoclusters, m_coordinate_system);
                 
                 m_protoclusters.save();
                 
@@ -372,7 +405,7 @@ namespace m3D { namespace weights {
                 
                 for (size_t var_index=0; var_index < m_ci_comparison_data_store->rank(); var_index++)
                 {
-                    T NOT_SET = m_ci_comparison_data_store->min(var_index);
+                    T NOT_SET = m_ci_comparison_data_store->fill_value(var_index);
                     shifted_data[var_index] = new MultiArrayBlitz<T>(dims,NOT_SET);
                 }
                 
@@ -383,9 +416,9 @@ namespace m3D { namespace weights {
 
                 // iterate over clusters
                 
-                for (size_t pi=0; pi < previous_protoclusters->size(); pi++)
+                for (size_t pi=0; pi < m_previous_protoclusters->size(); pi++)
                 {
-                    typename Cluster<T>::ptr pc = previous_protoclusters->clusters.at(pi);
+                    typename Cluster<T>::ptr pc = m_previous_protoclusters->clusters.at(pi);
                     
                     // find the matched candidate
                     
@@ -465,16 +498,74 @@ namespace m3D { namespace weights {
                 
                 //::m3D::utils::opencv:: display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
                 
-                boost::filesystem::path ppath(previous_protoclusters->source_file);
+                boost::filesystem::path ppath(m_previous_protoclusters->source_file);
                 
                 std::string fn = ppath.filename().stem().generic_string() + "-shifted.nc";
                 m_ci_comparison_data_store->save_as(fn);
                 
                 fn = ppath.filename().stem().generic_string() + "-vectors.vtk";
                 ::cfa::utils::VisitUtils<T>::write_vectors_vtk(fn,origins,vectors);
-                
-                delete previous_protoclusters;
             }
+        }
+        
+        void
+        operator()(const vector<int> &index, const bool have_previous)
+        {
+            bool have_current = m_curr_cluster_area->get(index);
+            
+            m_overlap->set(index, have_current && have_previous);
+        }
+        
+        void
+        calculate_overlap()
+        {
+            vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
+            
+            m_overlap = new MultiArrayBlitz<bool>(dims,false);
+            m_prev_cluster_area = new MultiArrayBlitz<bool>(dims,false);
+            m_curr_cluster_area = new MultiArrayBlitz<bool>(dims,false);
+            
+            // Mark area occupied by all protoclusters from previous set
+
+            for (size_t pi=0; pi < m_previous_protoclusters->size(); pi++)
+            {
+                typename Cluster<T>::ptr c = m_previous_protoclusters->clusters.at(pi);
+                
+                typename Point<T>::list::iterator point_iter;
+                
+                for (point_iter=c->points.begin(); point_iter != c->points.end(); point_iter++)
+                {
+                    typename Point<T>::ptr p = *point_iter;
+
+                    m_prev_cluster_area->set(p->gridpoint,true);
+                }
+            }
+            
+            // Mark area occupied by all protoclusters from current set
+
+            for (size_t pi=0; pi < m_protoclusters.size(); pi++)
+            {
+                typename Cluster<T>::ptr c = m_protoclusters.clusters.at(pi);
+                
+                typename Point<T>::list::iterator point_iter;
+                
+                for (point_iter=c->points.begin(); point_iter != c->points.end(); point_iter++)
+                {
+                    typename Point<T>::ptr p = *point_iter;
+                    
+                    m_curr_cluster_area->set(p->gridpoint,true);
+                }
+            }
+            
+            // Collate
+            
+            m_prev_cluster_area->for_each(this);
+            
+            delete m_prev_cluster_area;
+            m_prev_cluster_area = NULL;
+            
+            delete m_curr_cluster_area;
+            m_prev_cluster_area = NULL;
         }
         
         void
@@ -486,9 +577,7 @@ namespace m3D { namespace weights {
             
             vector<size_t> indexes(spatial_dim);
             
-            for (size_t i=0; i<spatial_dim; i++) {
-                indexes[i]=i;
-            }
+            for (size_t i=0; i<spatial_dim; i++) indexes[i]=i;
             
             m_index = PointIndex<T>::create( &fs->points, indexes );
             
@@ -504,9 +593,14 @@ namespace m3D { namespace weights {
             {
                 Point<T> *p = fs->points[i];
                 
-                T saliency = this->compute_weight(p);
+                bool have_overlap = m_overlap->get(p->gridpoint);
                 
-                m_weight->set(p->gridpoint, saliency);
+                if (have_overlap)
+                {
+                    T saliency = this->compute_weight(p);
+                
+                    m_weight->set(p->gridpoint, saliency);
+                }
             }
             
             // dispose of stuff we do not longer need
