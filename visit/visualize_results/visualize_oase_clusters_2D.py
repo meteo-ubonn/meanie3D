@@ -21,8 +21,8 @@ from subprocess import call
 #print [key for key in locals().keys()
 #       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
 
-#CLUSTER_POSTFIX="-clusters"
-CLUSTER_POSTFIX="-protoclusters"
+CLUSTER_POSTFIX="-clusters"
+#CLUSTER_POSTFIX="-protoclusters"
 
 OVERLAY=bool(OVERLAY_VALUE == "YES")
 CREATE_SOURCE_MOVIE=True

@@ -9,6 +9,8 @@
 #include <map>
 #include <cf-algorithms/cf-algorithms.h>
 
+#define DEBUG_CI_SCORE 1
+
 namespace m3D { namespace weights {
     
     using namespace netCDF;
@@ -41,7 +43,7 @@ namespace m3D { namespace weights {
     static const int cband_radolan_rx = 3;
     static const int linet_oase_tl = 4;
     static const int msevi_l15_hrv = 5;
-
+    
     // Variables used for protoclusters
 
     static const size_t PROTOCLUSTER_NUM_VARS = 1;
@@ -58,7 +60,7 @@ namespace m3D { namespace weights {
      *
      */
     template <class T>
-    class OASECIWeightFunction : public cfa::utils::WeightFunction<T>, public MultiArray<bool>::ForEachFunctor
+    class OASECIWeightFunction : public cfa::utils::WeightFunction<T>
     {
         
     private:
@@ -75,6 +77,7 @@ namespace m3D { namespace weights {
         MultiArray<bool>            *m_overlap;
         std::vector<std::string>    m_variable_names;
         bool                        m_satellite_only;
+        bool                        m_use_walker_mecikalski_limits;
         
         std::vector<std::string>    m_protocluster_variables;
         ClusterList<T>              m_protoclusters;
@@ -100,6 +103,15 @@ namespace m3D { namespace weights {
         
         PointIndex<T>       *m_index;           // index for range search
         SearchParameters    *m_search_params;   // search params for search
+        
+#if DEBUG_CI_SCORE
+        MultiArray<T>   *m_score_108;
+        MultiArray<T>   *m_score_108_trend;
+        MultiArray<T>   *m_score_62_108;
+        MultiArray<T>   *m_score_134_108;
+        MultiArray<T>   *m_62_108_trend;
+        MultiArray<T>   *m_134_108_trend;
+#endif
 
     public:
         
@@ -112,6 +124,7 @@ namespace m3D { namespace weights {
                              const std::string *ci_comparison_file = NULL,
                              const std::string *ci_comparison_protocluster_file = NULL,
                              bool satellite_only = false,
+                             bool use_walker_mecikalski_limits = false,
                              const int time_index = -1)
         : m_data_store(NULL)
         , m_ci_comparison_file(ci_comparison_file)
@@ -119,6 +132,7 @@ namespace m3D { namespace weights {
         , m_coordinate_system(fs->coordinate_system)
         , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0))
         , m_satellite_only(satellite_only)
+        , m_use_walker_mecikalski_limits(use_walker_mecikalski_limits)
         , m_previous_protoclusters(NULL)
         {
             // Obtain a data store with all the relevant variables
@@ -219,18 +233,47 @@ namespace m3D { namespace weights {
                     // Shift previous data by tracking protoclusters and use
                     // the resulting tracking vectors / clusters
 
+                    cout << endl << "Shifting comparison data ...";
+                    start_timer();
+                    
                     this->shift_comparison_data_using_protoclusters(ci_comparison_protocluster_file);
+                    
+                    cout << " done (" << stop_timer() << "s)" << endl;
                     
                     // reduce the data by calculating the cluster overlap area
                     // (used later in weight function calculation)
                     
+                    cout << endl << "Calculating overlap ...";
+                    start_timer();
+
                     this->calculate_overlap();
+
+                    cout << " done (" << stop_timer() << "s)" << endl;
+                    
+                    cout << endl << "Replacing with average of 25% coldest pixels (comparison data) ...";
+                    start_timer();
+
+                    this->replace_with_coldest_pixels(m_ci_comparison_data_store);
+                    
+                    cout << " done (" << stop_timer() << "s)" << endl;
+                    
                 }
             }
             
-            // calculate the entire function as one
+            cout << endl << "Replacing with average of 25% coldest pixels (current data) ...";
+            start_timer();
+
+            this->replace_with_coldest_pixels(m_data_store);
             
+            cout << " done (" << stop_timer() << "s)" << endl;
+
+            cout << endl << "Calculating final weight score ...";
+            start_timer();
+
             calculate_weight_function(fs);
+            
+            cout << " done (" << stop_timer() << "s)" << endl;
+            
         }
         
         ~OASECIWeightFunction()
@@ -363,10 +406,6 @@ namespace m3D { namespace weights {
         void
         shift_comparison_data_using_protoclusters(const std::string *ci_comparison_protocluster_file)
         {
-            cout << endl << "+ ---------------------------- +" << endl;
-            cout << "+ Filtering with protoclusters +" << endl;
-            cout << "+ ---------------------------- +" << endl;
-            
             if (ci_comparison_protocluster_file != NULL)
             {
                 
@@ -508,13 +547,7 @@ namespace m3D { namespace weights {
             }
         }
         
-        void
-        operator()(const vector<int> &index, const bool have_previous)
-        {
-            bool have_current = m_curr_cluster_area->get(index);
-            
-            m_overlap->set(index, have_current && have_previous);
-        }
+        // calculate overlap mask
         
         void
         calculate_overlap()
@@ -559,7 +592,30 @@ namespace m3D { namespace weights {
             
             // Collate
             
-            m_prev_cluster_area->for_each(this);
+            class OverlapFunctor : public MultiArray<bool>::ForEachFunctor
+            {
+            public:
+                
+                MultiArray<bool>    *m_overlap;
+                MultiArray<bool>    *m_curr_cluster_area;
+                
+                OverlapFunctor(MultiArray<bool> *overlap,MultiArray<bool> *curr_cluster_area)
+                : m_overlap(overlap),m_curr_cluster_area(curr_cluster_area) {};
+                
+                // for_each callback functor
+                
+                void
+                operator()(const vector<int> &index, const bool have_previous)
+                {
+                    bool have_current = m_curr_cluster_area->get(index);
+                    
+                    m_overlap->set(index, have_current && have_previous);
+                }
+            };
+            
+            OverlapFunctor f(m_overlap,m_curr_cluster_area);
+            
+            m_prev_cluster_area->for_each(&f);
             
             delete m_prev_cluster_area;
             m_prev_cluster_area = NULL;
@@ -568,32 +624,139 @@ namespace m3D { namespace weights {
             m_prev_cluster_area = NULL;
         }
         
+        // replace each data point in the overlap area
+        // with the average of the 25% coldest points
+        // within a radius h around it
+        
+        void
+        replace_with_coldest_pixels(NetCDFDataStore<T> *ds)
+        {
+            float percentage = 0.25;
+            
+            // make this parametrizable
+            vector<T> bandwidth(2);
+            bandwidth[0] = 5;
+            bandwidth[1] = 5;
+            
+            class ReplaceFunctor : public DataStore<T>::ForEachFunctor
+            {
+            public:
+                
+                NetCDFDataStore<T>  *m_ds;              // data store to modify
+                MultiArray<bool>    *m_overlap;         // masks data to protocluster overlap
+                MultiArray<T>       *m_result;
+                size_t              m_variable_index;   // which variable?
+                float               m_percentage;       // percentile of coldest pixels to use (default 25%)
+                
+                vector<int>         m_bandwidth;        // bandwidth in number of gridoints
+
+                ReplaceFunctor(NetCDFDataStore<T> *ds,
+                               size_t variable_index,
+                               MultiArray<bool> *overlap,
+                               const vector<T> &bandwidth,
+                               float percentage = 0.25)
+                : m_ds(ds), m_overlap(overlap), m_variable_index(variable_index), m_percentage(percentage)
+                {
+                    // calculate bandwidth in number of gridoints
+                    
+                    vector<T> resolution = ds->coordinate_system()->resolution();
+                    
+                    for (size_t i=0; i < bandwidth.size(); i++)
+                        m_bandwidth.push_back((int)round(bandwidth[i]/resolution[i]));
+
+                    // Create a copy of the original data
+                    
+                    MultiArray<T> *data = ds->get_data(variable_index);
+                    
+                    m_result = new MultiArrayBlitz<T>(data->get_dimensions());
+                    
+                    m_result->copy_from(data);
+                };
+                
+                virtual
+                ~ReplaceFunctor() {};
+                
+                // for_each callback functor
+                
+                void
+                operator()(DataStore<T> *store, const size_t variable_index, vector<int> &gridpoint, T& value, bool &is_valid)
+                {
+                    if (m_overlap == NULL || m_overlap->get(gridpoint) == true)
+                    {
+                        // Obtain all data around this point
+                        
+                        vector<T> values;
+                        
+                        NetCDFDataStore<T> *nds = (NetCDFDataStore<T> *)store;
+                        nds->get_data(variable_index)->values_around(gridpoint,m_bandwidth,values);
+                        
+                        // sort the data in ascending order
+                        std::sort(values.begin(), values.end());
+                        
+                        // calculate the number of values that make up
+                        // the required percentage
+                        
+                        int num_values = round(values.size() * m_percentage);
+                        
+                        // obtain the average of the last num_values values
+                        T sum = 0.0;
+
+                        for (int i=0; i < num_values; i++)
+                            sum += values[i];
+
+                        T average = sum / ((T)num_values);
+                        
+                        // replace the value in the result array
+                        // with the average
+                        
+                        m_result->set(gridpoint,average);
+                    }
+                }
+                
+                MultiArray<T> *get_result()
+                {
+                    return m_result;
+                }
+            };
+            
+            for (size_t var_index=0; var_index < ds->rank(); var_index++)
+            {
+                ReplaceFunctor *f = new ReplaceFunctor(ds, var_index, m_overlap, bandwidth, percentage);
+                
+                ds->for_each(var_index,f);
+                
+                MultiArray<T> *result = f->get_result();
+                
+                ds->set_data(var_index,result);
+                
+                delete f;
+            }
+            
+            boost::filesystem::path ppath(ds->filename());
+            std::string fn = ppath.filename().stem().generic_string() + "-25perc.nc";
+            ds->save_as(fn);
+        }
+        
         void
         calculate_weight_function(FeatureSpace<T> *fs)
         {
-            // Create a purely spatial index
-            
-            size_t spatial_dim = fs->coordinate_system->rank();
-            
-            vector<size_t> indexes(spatial_dim);
-            
-            for (size_t i=0; i<spatial_dim; i++) indexes[i]=i;
-            
-            m_index = PointIndex<T>::create( &fs->points, indexes );
-            
-            // 5km search radius
-            
-            vector<T> bandwidth(spatial_dim,5.0);
-            
-            m_search_params = new RangeSearchParams<T>(bandwidth);
-            
             // compute the weights
+            
+#if DEBUG_CI_SCORE
+            vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
+            m_score_108 = new MultiArrayBlitz<T>(dims,1000);
+            m_score_108_trend = new MultiArrayBlitz<T>(dims,1000);
+            m_score_62_108 = new MultiArrayBlitz<T>(dims,1000);
+            m_score_134_108 = new MultiArrayBlitz<T>(dims,1000);
+            m_62_108_trend = new MultiArrayBlitz<T>(dims,1000);
+            m_134_108_trend = new MultiArrayBlitz<T>(dims,1000);
+#endif
             
             for (size_t i=0; i < fs->points.size(); i++)
             {
                 Point<T> *p = fs->points[i];
                 
-                bool have_overlap = m_overlap->get(p->gridpoint);
+                bool have_overlap = (m_overlap == NULL || m_overlap->get(p->gridpoint) == true);
                 
                 if (have_overlap)
                 {
@@ -603,13 +766,43 @@ namespace m3D { namespace weights {
                 }
             }
             
+#if DEBUG_CI_SCORE
+            
+            boost::filesystem::path ppath(m_data_store->filename());
+            std::string basename = ppath.filename().stem().generic_string();
+            
+            std::string fn = basename + "-score_108.vtk";
+            ::cfa::utils::VisitUtils<T>::write_multiarray_vtk(fn,"10.8 ",m_coordinate_system,m_score_108);
+            
+            fn = basename + "-score_6.2-10.8.vtk";
+            ::cfa::utils::VisitUtils<T>::write_multiarray_vtk(fn,"6.2-10.8",m_coordinate_system,m_score_62_108);
+            
+            fn = basename + "-score_13.4-10.8.vtk";
+            ::cfa::utils::VisitUtils<T>::write_multiarray_vtk(fn,"13.4-10.8",m_coordinate_system,m_score_134_108);
+
+            fn = basename + "-score_10.8-trend.vtk";
+            ::cfa::utils::VisitUtils<T>::write_multiarray_vtk(fn,"10.8-trend",m_coordinate_system,m_score_108_trend);
+
+            fn = basename + "-score_6.2-10.8-trend.vtk";
+            ::cfa::utils::VisitUtils<T>::write_multiarray_vtk(fn,"6.2-10.8-trend",m_coordinate_system,m_62_108_trend);
+            
+            fn = basename + "-score_13.4-10.8-trend.vtk";
+            ::cfa::utils::VisitUtils<T>::write_multiarray_vtk(fn,"13.4-10.8-trend",m_coordinate_system,m_134_108_trend);
+
+            if (m_overlap != NULL)
+            {
+                fn = basename + "-overlap.vtk";
+                ::cfa::utils::VisitUtils<T>::write_multiarray_vtk(fn,"overlap",m_coordinate_system,m_overlap);
+            }
+            
+            delete m_score_108;
+            delete m_score_108_trend;
+            delete m_score_62_108;
+            delete m_score_134_108;
+            delete m_62_108_trend;
+            delete m_134_108_trend;
+#endif
             // dispose of stuff we do not longer need
-            
-            delete this->m_index;
-            this->m_index = NULL;
-            
-            delete this->m_search_params;
-            this->m_search_params = NULL;
             
             delete this->m_data_store;
             this->m_data_store = NULL;
@@ -658,7 +851,14 @@ namespace m3D { namespace weights {
         {
             // Silke's suggestion: when radar is present, use max score to
             // make sure objects are tracked.
+            
             T max_score = (this->m_ci_comparison_file != NULL) ? 8 : 6;
+            
+            // If only satellite data is used, subtract lightning
+            // and radar from max score
+            
+            if (m_satellite_only)
+                max_score -= 2;
             
             vector<int> g = p->gridpoint;
 
@@ -668,6 +868,10 @@ namespace m3D { namespace weights {
             
             T ir_108_radiance = this->m_data_store->get(msevi_l15_ir_108,g,isValid);
             T ir_108_temp = brightness_temperature(msevi_l15_ir_108,ir_108_radiance);
+            
+#if DEBUG_CI_SCORE
+            m_score_108->set(g,ir_108_temp);
+#endif
             
             T wv_062_rad = this->m_data_store->get(msevi_l15_wv_062,g,isValid);
             T wv_062_temp = brightness_temperature(msevi_l15_wv_062,wv_062_rad);
@@ -690,18 +894,39 @@ namespace m3D { namespace weights {
             
             T delta_wv_062_ir_108 = wv_062_temp - ir_108_temp;
             
-            if (delta_wv_062_ir_108 >= -35.0 && delta_wv_062_ir_108 <= -10.0)
+
+#if DEBUG_CI_SCORE
+            m_score_62_108->set(g,delta_wv_062_ir_108);
+#endif
+            
+            if (m_use_walker_mecikalski_limits)
             {
-                score++;
+                if (delta_wv_062_ir_108 >= -35.0 && delta_wv_062_ir_108 <= -10.0)
+                    score++;
+            }
+            else
+            {
+                if ( delta_wv_062_ir_108 <= 2.0)
+                    score++;
             }
             
             // IR 13.3 - IR 10.7
             
             T delta_ir_134_ir_108 = ir_134_temp - ir_108_temp;
             
-            if (delta_ir_134_ir_108 >= -25.0 && delta_ir_134_ir_108 <= -5.0)
+#if DEBUG_CI_SCORE
+            m_score_134_108->set(g,delta_ir_134_ir_108);
+#endif
+
+            if (m_use_walker_mecikalski_limits)
             {
-                score++;
+                if (delta_ir_134_ir_108 >= -25.0 && delta_ir_134_ir_108 <= -5.0)
+                    score++;
+            }
+            else
+            {
+                if ( -delta_ir_134_ir_108 <= 2.0 )
+                    score++;
             }
             
             if (this->m_ci_comparison_file != NULL)
@@ -719,22 +944,43 @@ namespace m3D { namespace weights {
                 T ir_134_temp_prev = brightness_temperature(msevi_l15_ir_134,ir_134_rad_prev);
                 
                 T dT1 = ir_108_temp - ir_108_temp_prev;
-                if ( dT1 <= -4.0 )
+                
+                if (m_use_walker_mecikalski_limits)
                 {
-                    score++;
+                    if ( dT1 <= -4.0 ) score++;
+                }
+                else
+                {
+                    if ( dT1 <= -2.0 ) score++;
                 }
                 
                 T dT2 = (wv_062_temp - ir_108_temp) - (wv_062_temp_prev - ir_108_temp_prev);
-                if ( dT2  > 3.0 )
+
+                if (m_use_walker_mecikalski_limits)
                 {
-                    score++;
+                    if ( dT2  >= 3.0 ) score++;
+                }
+                else
+                {
+                    if ( dT2 >= 1.0 ) score++;
                 }
                 
                 T dT3 = (ir_134_temp - ir_108_temp) - (ir_134_temp_prev - ir_108_temp_prev);
-                if ( dT3 > 3.0 )
+                
+                if (m_use_walker_mecikalski_limits)
                 {
-                    score++;
+                    if ( dT3 > 3.0 ) score++;
                 }
+                else
+                {
+                    if ( dT3 >= 1.0 ) score++;
+                }
+                
+#if DEBUG_CI_SCORE
+                m_score_108_trend->set(g,dT1);
+                m_62_108_trend->set(g,dT2);
+                m_134_108_trend->set(g,dT3);
+#endif
             }
             
             if (!this->m_satellite_only)

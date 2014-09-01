@@ -11,6 +11,9 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 
+SET(CMAKE_MACOSX_RPATH OFF)
+
+
 ENABLE_LANGUAGE(CXX)
 
 # ------------------------------------- 
@@ -75,10 +78,10 @@ ENDIF()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # Debug, Release, MinSizeRel and RelWithDebInfo
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wlocal-type-template-args -finline")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O3 -ftree-vectorize –vec-report2 -msse2 -finline")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize –vec-report2 -msse2 -finline")
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -O3 -ftree-vectorize –vec-report2 -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto -Ofast -ftree-vectorize –vec-report2 -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1 -msse2 -finline")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     # using Intel C++
     MESSAGE(ERROR "Compiler not currently supported")
@@ -101,7 +104,7 @@ IF (USE_CPP11)
    ELSE (APPLE)
       #TODO
    ENDIF (APPLE)
-   SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g -Wall")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g")
    SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
    SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
 ELSE(USE_CPP11)
