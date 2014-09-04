@@ -9,6 +9,10 @@
 #include <map>
 #include <cf-algorithms/cf-algorithms.h>
 
+#if OPENMP
+    #include <omp.h>
+#endif
+
 #define DEBUG_CI_SCORE 1
 
 namespace m3D { namespace weights {
@@ -102,6 +106,7 @@ namespace m3D { namespace weights {
         //
         
         PointIndex<T>       *m_index;           // index for range search
+        vector<T>           m_bandwidth;        // search radius for numerous operations
         SearchParameters    *m_search_params;   // search params for search
         
 #if DEBUG_CI_SCORE
@@ -121,6 +126,7 @@ namespace m3D { namespace weights {
          */
         OASECIWeightFunction(FeatureSpace<T> *fs,
                              const std::string &filename,
+                             const vector<T> &bandwidth,
                              const std::string *ci_comparison_file = NULL,
                              const std::string *ci_comparison_protocluster_file = NULL,
                              bool satellite_only = false,
@@ -201,6 +207,13 @@ namespace m3D { namespace weights {
                 exit(-1);
             }
             
+            // index for effective range search ops
+            
+            m_bandwidth = fs->spatial_component(bandwidth);
+            
+            m_index = PointIndex<T>::create( &fs->points, fs->coordinate_system->rank() );
+            m_search_params = new RangeSearchParams<T>(m_bandwidth);
+
             // obtain protoclusters
             
             this->obtain_protoclusters();
@@ -253,7 +266,11 @@ namespace m3D { namespace weights {
                     cout << endl << "Replacing with average of 25% coldest pixels (comparison data) ...";
                     start_timer();
 
-                    this->replace_with_coldest_pixels(m_ci_comparison_data_store);
+                    // TODO: using fs here is not entirely correct, because
+                    // the featurespace was constructed from the wrong
+                    // datastore. This 'should' not be a problem, because
+                    // of the overlap calculation
+                    this->replace_with_coldest_pixels(m_ci_comparison_data_store, fs);
                     
                     cout << " done (" << stop_timer() << "s)" << endl;
                     
@@ -263,7 +280,7 @@ namespace m3D { namespace weights {
             cout << endl << "Replacing with average of 25% coldest pixels (current data) ...";
             start_timer();
 
-            this->replace_with_coldest_pixels(m_data_store);
+            this->replace_with_coldest_pixels(m_data_store,fs);
             
             cout << " done (" << stop_timer() << "s)" << endl;
 
@@ -629,15 +646,89 @@ namespace m3D { namespace weights {
         // within a radius h around it
         
         void
-        replace_with_coldest_pixels(NetCDFDataStore<T> *ds)
+        replace_with_coldest_pixels(NetCDFDataStore<T> *ds, FeatureSpace<T> *fs)
         {
             float percentage = 0.25;
-            
-            // make this parametrizable
-            vector<T> bandwidth(2);
-            bandwidth[0] = 5;
-            bandwidth[1] = 5;
-            
+
+//#if USE_APPROXIMATE_INDEX
+//            
+//            vector< MultiArray<T> * > results;
+//            
+//            for (size_t vi=0; vi < ds->rank(); vi++)
+//            {
+//                MultiArray<T> *data = ds->get_data(vi);
+//                
+//                MultiArray<T> *result = new MultiArrayBlitz<T>(data->get_dimensions());
+//                
+//                // result->copy_from(data);
+//                
+//                results.push_back(result);
+//            }
+//            
+//            for (size_t i=0; i < fs->points.size(); i++)
+//            {
+//                Point<T> *p = fs->points[i];
+//                
+//                if (m_overlap == NULL || m_overlap->get(p->gridpoint))
+//                {
+//                    typename Point<T>::list *neighbors = m_index->search(p->coordinate,m_search_params);
+//                    
+//                    // compile a list of valid neighbouring points
+//                    // for each variable
+//                    
+//                    vector< vector<T> > values(ds->rank());
+//
+//                    for (size_t pi = 0; pi < neighbors->size(); pi++)
+//                    {
+//                        typename Point<T>::ptr n = neighbors->at(pi);
+//                        
+//                        if (m_overlap == NULL || m_overlap->get(n->gridpoint))
+//                        {
+//                            for (size_t var_index=0; var_index < ds->rank(); var_index++)
+//                            {
+//                                bool is_valid = false;
+//                                
+//                                T value = ds->get(var_index,n->gridpoint,is_valid);
+//                                
+//                                if (is_valid)
+//                                {
+//                                    values[var_index].push_back(value);
+//                                }
+//                            }
+//                        }
+//                    }
+//                    
+//                    for (size_t var_index=0; var_index < ds->rank(); var_index++)
+//                    {
+//                        // Sort each list and obtain the average of the
+//                        // coldest 25% of pixels
+//                        
+//                        // sort the data in ascending order
+//                        std::sort(values[var_index].begin(), values[var_index].end());
+//                        
+//                        // calculate the number of values that make up
+//                        // the required percentage
+//                        
+//                        int num_values = round(values[var_index].size() * percentage);
+//                        
+//                        // obtain the average of the last num_values values
+//                        T sum = 0.0;
+//                        
+//                        for (int i=0; i < num_values; i++)
+//                            sum += values[var_index][i];
+//                        
+//                        T average = sum / ((T)num_values);
+//                        
+//                        // replace the value in the result array
+//                        // with the average
+//                        
+//                        results[var_index]->set(p->gridpoint,average);
+//                    }
+//                }
+//            }
+//            
+//#else
+
             class ReplaceFunctor : public DataStore<T>::ForEachFunctor
             {
             public:
@@ -721,7 +812,7 @@ namespace m3D { namespace weights {
             
             for (size_t var_index=0; var_index < ds->rank(); var_index++)
             {
-                ReplaceFunctor *f = new ReplaceFunctor(ds, var_index, m_overlap, bandwidth, percentage);
+                ReplaceFunctor *f = new ReplaceFunctor(ds, var_index, m_overlap, m_bandwidth, percentage);
                 
                 ds->for_each(var_index,f);
                 
@@ -731,6 +822,8 @@ namespace m3D { namespace weights {
                 
                 delete f;
             }
+            
+
             
             boost::filesystem::path ppath(ds->filename());
             std::string fn = ppath.filename().stem().generic_string() + "-25perc.nc";
@@ -806,6 +899,12 @@ namespace m3D { namespace weights {
             
             delete this->m_data_store;
             this->m_data_store = NULL;
+            
+            delete this->m_index;
+            this->m_index = NULL;
+            
+            delete this->m_search_params;
+            this->m_search_params = NULL;
         };
 
     public:

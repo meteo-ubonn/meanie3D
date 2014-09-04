@@ -13,8 +13,8 @@ SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 SET(CMAKE_MACOSX_RPATH OFF)
 
-
 ENABLE_LANGUAGE(CXX)
+# SET(CMAKE_CXX_COMPILER /usr/local/bin/clang++)
 
 # ------------------------------------- 
 # Project configuration
@@ -119,7 +119,10 @@ ENDIF (USE_CPP11)
 IF (WITH_OPENMP)
     ADD_DEFINITIONS(-DOPENMP=1)
     IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fopenmp")
     ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         MESSAGE(ERROR "OpenMP not supported for this compiler type")
     ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

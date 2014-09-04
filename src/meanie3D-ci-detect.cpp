@@ -1004,6 +1004,7 @@ int main(int argc, char** argv)
         {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
                                                                 filename,
+                                                                ranges,
                                                                 ci_comparison_file,
                                                                 ci_comparison_protocluster_file,
                                                                 ci_satellite_only);
@@ -1059,6 +1060,7 @@ int main(int argc, char** argv)
         {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
                                                                 filename,
+                                                                ranges,
                                                                 ci_comparison_file,
                                                                 ci_comparison_protocluster_file,
                                                                 ci_satellite_only);

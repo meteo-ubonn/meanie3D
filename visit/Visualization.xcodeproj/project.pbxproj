@@ -23,6 +23,8 @@
 		F46A4717196EF6C5003B4FFB /* multiscale_run_oase-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "multiscale_run_oase-2D.sh"; sourceTree = "<group>"; };
 		F47666D3188E778E002CA240 /* create_composite_loop_2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = create_composite_loop_2D.py; sourceTree = "<group>"; };
 		F47666D4188E778E002CA240 /* create_composite_loop_2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = create_composite_loop_2D.sh; sourceTree = "<group>"; };
+		F478FA0519B87C440052C71E /* run_oase_tracking-ci-2D.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = "run_oase_tracking-ci-2D.py"; sourceTree = "<group>"; };
+		F478FA0619B87C440052C71E /* run_oase_tracking-ci-2D.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "run_oase_tracking-ci-2D.sh"; sourceTree = "<group>"; };
 		F490385619338F0C000C2283 /* trackstats-conrad.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "trackstats-conrad.sh"; sourceTree = "<group>"; };
 		F490385719339BB7000C2283 /* plot-conrad-stats.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "plot-conrad-stats.sh"; sourceTree = "<group>"; };
 		F490385819339DB7000C2283 /* plot-stats-comparison.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "plot-stats-comparison.sh"; sourceTree = "<group>"; };
@@ -133,6 +135,8 @@
 				F4B8C8441920DC6800B00CDA /* multiscale_run_oase-3D.sh */,
 				F4FA808B188D29BC00C426C5 /* run_oase_tracking-2D.sh */,
 				F4FA808A188D29BC00C426C5 /* run_oase_tracking-2D.py */,
+				F478FA0619B87C440052C71E /* run_oase_tracking-ci-2D.sh */,
+				F478FA0519B87C440052C71E /* run_oase_tracking-ci-2D.py */,
 				F4B8C8411920D15000B00CDA /* run_oase_tracking-3D.sh */,
 				F4B8C8401920D15000B00CDA /* run_oase_tracking-3D.py */,
 			);
