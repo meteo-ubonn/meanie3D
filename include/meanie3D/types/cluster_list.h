@@ -44,11 +44,6 @@ namespace m3D {
         ClusterMap      m_cluster_map;
         
         
-        /** Standard constructor is private
-         */
-        ClusterList()
-        {};
-        
         /** Recursive helper method fort find_neighbours
          *
          */
@@ -100,15 +95,17 @@ namespace m3D {
 #pragma mark -
 #pragma mark Public Properties
 
-        // meta-info
         
         NcFile          *ncFile;
+        std::string     filename;                       // this is filled on read() or write()
         
-        vector<NcVar>   feature_variables;            // all variables, including dimension variables
+        // meta-info
         
-        vector<NcDim>   dimensions;                   // all dimensions that were in the featurespace
+        std::vector<NcVar>  feature_variables;    // all variables, including dimension variables
+        vector<string>      variable_names;       // vector of strings. this shit needs cleaning up so bad, man
         
-        string          source_file;                  // Name of the file that the clusters were created from
+        vector<NcDim>       dimensions;           // all dimensions that were in the featurespace
+        string              source_file;          // Name of the file that the clusters were created from
         
         // payload
 
@@ -133,6 +130,8 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Constructor/Destructor
+        
+        ClusterList() {};
 
         /** @constructor
          * @param all variables used to construct the points from, in the same order
@@ -151,18 +150,22 @@ namespace m3D {
          *          if only points from the original data set are added or also points
          *          that resulted from filtering (for example scale-space)
          */
-        ClusterList(const vector<NcVar> &variables,
+        ClusterList(const vector<NcVar> &vars,
                     const vector<NcDim> &dims,
                     const string& sourcefile,
                     bool use_original_points_only=true)
         : ncFile(NULL)
-        , feature_variables(variables)
+        , feature_variables(vars)
+        , variable_names(::cfa::utils::netcdf::to_names(vars))
         , dimensions(dims)
         , source_file(sourcefile)
         , tracking_performed(false)
         , highest_id(0)
         , m_use_original_points_only(use_original_points_only)
-        {};
+        {
+            long timestamp = cfa::utils::netcdf::get_time<long>(sourcefile);
+            this->set_time_in_seconds(::units::values::s(timestamp));
+        };
 
         /** @constructor
          * @param a list of clusters
@@ -173,17 +176,21 @@ namespace m3D {
          */
         ClusterList(const typename Cluster<T>::list &list,
                     const vector<NcDim> &dims,
-                    const vector<NcVar> &variables,
+                    const vector<NcVar> &vars,
                     const string& sourcefile )
         : ncFile(NULL)
-        , feature_variables(feature_variables)
+        , feature_variables(vars)
+        , variable_names(::cfa::utils::netcdf::to_names(vars))
         , dimensions(dims)
         , source_file(sourcefile)
         , clusters(list)
         , tracking_performed(false)
         , highest_id(0)
         , m_use_original_points_only(true)
-        {};
+        {
+            long timestamp = cfa::utils::netcdf::get_time<long> (sourcefile);
+            this->set_time_in_seconds(::units::values::s(timestamp));
+        };
 
         /** Destructor
          */
@@ -212,6 +219,22 @@ namespace m3D {
          * @return cluster at index
          */
         typename Cluster<T>::ptr operator[] (size_t index);
+        
+#pragma mark -
+#pragma mark Timestamp
+        
+        /** @return time in seconds since epoch 
+         */
+        ::units::values::s get_time_in_seconds()
+        {
+            ::units::values::s seconds(this->timestamp);
+            return seconds;
+        }
+        
+        void set_time_in_seconds(::units::values::s seconds)
+        {
+            this->timestamp = seconds.get();
+        }
         
 #pragma mark -
 #pragma mark Clustering by Graph Theory
@@ -307,13 +330,15 @@ namespace m3D {
          * For the format, check documentation at
          * http://git.meteo.uni-bonn.de/projects/meanie3d/wiki/Cluster_File
          * @param full path to filename, including extension '.nc'
-         * @param if the flag is <code>true</code> then the original file is moved
-         * aside, a new file is created and all stuff copied over etc. This is 
-         * necessary because NetCDF does not allow renaming of variables and dimensions
-         * which is a requirement for fulfilling issue request #236
-         * @param parameters used in the run
          */
         void write( const string& path );
+        
+        /** Persists any changes. Requires that the list was read
+         * from a file before.
+         * @throws std::runtime_error if the list was not previously 
+         * written or read.
+         */
+        void save();
         
         /** Static method for reading cluster lists back in.
          * @param path      : path to the cluster file

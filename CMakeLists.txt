@@ -11,7 +11,10 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 
+SET(CMAKE_MACOSX_RPATH OFF)
+
 ENABLE_LANGUAGE(CXX)
+# SET(CMAKE_CXX_COMPILER /usr/local/bin/clang++)
 
 # ------------------------------------- 
 # Project configuration
@@ -66,19 +69,19 @@ SET(USE_CPP11 FALSE)
 
 #Compiler flags
 
-MESSAGE("CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
-MESSAGE("CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
-MESSAGE("Compiler ID = ${CMAKE_CXX_COMPILER_ID}")
+MESSAGE("-- CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
+MESSAGE("-- CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
+MESSAGE("-- Compiler ID = ${CMAKE_CXX_COMPILER_ID}")
 IF(CMAKE_COMPILER_IS_GNUCXX)
-    MESSAGE("Compiler is G++")
+    MESSAGE("-- Compiler is G++")
 ENDIF()
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     # Debug, Release, MinSizeRel and RelWithDebInfo
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -Wlocal-type-template-args -finline")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wlocal-type-template-args -flto -O3 -ftree-vectorize -msse2 -finline")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Wlocal-type-template-args -flto -Ofast -ftree-vectorize -msse2 -finline")
-    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wlocal-type-template-args -O1 -ftree-vectorize -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0 -finline")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto -O3 -ftree-vectorize –vec-report2 -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto -Ofast -ftree-vectorize –vec-report2 -msse2 -finline")
+    SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -O1 -msse2 -finline")
 ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     # using Intel C++
     MESSAGE(ERROR "Compiler not currently supported")
@@ -101,7 +104,7 @@ IF (USE_CPP11)
    ELSE (APPLE)
       #TODO
    ENDIF (APPLE)
-   SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g -Wall")
+   SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g")
    SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
    SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
 ELSE(USE_CPP11)
@@ -116,7 +119,10 @@ ENDIF (USE_CPP11)
 IF (WITH_OPENMP)
     ADD_DEFINITIONS(-DOPENMP=1)
     IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        MESSAGE(ERROR "OpenMP not supported for this compiler type")
+        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fopenmp")
+        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fopenmp")
     ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
         MESSAGE(ERROR "OpenMP not supported for this compiler type")
     ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -168,13 +174,24 @@ IF (WITH_TBB)
     ENDIF (NOT TBB_FOUND)
 ENDIF(WITH_TBB)
 
-#FIND_PACKAGE(OpenMP REQUIRED)
-#IF (OPENMP_FOUND)
-#    MESSAGE("OPENMP FOUND")
-#    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-#ENDIF (OPENMP_FOUND)
+IF (WITH_OPENMP)
+    FIND_PACKAGE(OpenMP REQUIRED)
+    IF (OPENMP_FOUND)
+        MESSAGE("OPENMP FOUND")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    ENDIF (OPENMP_FOUND)
+ENDIF(WITH_OPENMP)
+
+FIND_PACKAGE(OpenCV)
+IF (OpenCV_FOUND)
+    MESSAGE("-- OpenCV FOUND")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenCV_C_FLAGS}")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenCV_CXX_FLAGS}")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenCV_EXE_LINKER_FLAGS}")
+ENDIF (OpenCV_FOUND)
+
 
 # VTK
 FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
@@ -280,12 +297,15 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/tracking/tracking.h
     include/meanie3D/tracking/tracking_impl.h
     include/meanie3D/utils.h
+    include/meanie3D/utils/cluster_index.h
+    include/meanie3D/utils/cluster_index_impl.h
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/utils/visit_impl.h
     include/meanie3D/utils/matrix.h
     include/meanie3D/utils/matrix_impl.h
     include/meanie3D/utils/file_utils.h
+    include/meanie3D/utils/opencv_utils.h
     include/meanie3D/weights/brightband_evidence.h
     include/meanie3D/weights/ci_weights.h
     include/meanie3D/weights/default_weights.h
@@ -337,14 +357,15 @@ SOURCE_GROUP("meanie3d/tracking" FILES
 )
 
 SOURCE_GROUP("meanie3d/utils" FILES
+    include/meanie3D/utils/cluster_index.h
+    include/meanie3D/utils/cluster_index_impl.h
+    include/meanie3D/utils/file_utils.h
+    include/meanie3D/utils/matrix.h
+    include/meanie3D/utils/matrix_impl.h
+    include/meanie3D/utils/opencv_utils.h
     include/meanie3D/utils/verbosity.h
     include/meanie3D/utils/visit.h
     include/meanie3D/utils/visit_impl.h
-    include/meanie3D/utils/scalar_index.h
-    include/meanie3D/utils/scalar_index_impl.h
-    include/meanie3D/utils/matrix.h
-    include/meanie3D/utils/matrix_impl.h
-    include/meanie3D/utils/file_utils.h
 )
 
 SOURCE_GROUP("meanie3d/weights" FILES
@@ -389,6 +410,34 @@ ELSE()
         ${Boost_LIBRARIES}
         ${HDF5_LIBRARIES}
         ${VTK_LIBRARIES})
+ENDIF()
+
+# CI Score based detection
+
+ADD_EXECUTABLE(meanie3D-ci-detect
+    cf-algorithms
+    numericalrecipes
+    src/meanie3D-ci-detect.cpp)
+
+IF(WITH_TBB)
+    TARGET_LINK_LIBRARIES(meanie3D-ci-detect
+        meanie3D
+    	cf-algorithms
+        ${NETCDF_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${HDF5_LIBRARIES}
+        ${TBB_LIBRARIES}
+        ${VTK_LIBRARIES}
+        ${OpenCV_LIBS})
+ELSE()
+    TARGET_LINK_LIBRARIES(meanie3D-ci-detect
+        meanie3D
+    	cf-algorithms
+        ${NETCDF_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${HDF5_LIBRARIES}
+        ${VTK_LIBRARIES}
+        ${OpenCV_LIBS})
 ENDIF()
 
 # tracking tool

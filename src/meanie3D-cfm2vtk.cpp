@@ -260,11 +260,15 @@ void convert_composite(const string &filename, const string& variable_name, cons
                                                               upper_thresholds,
                                                               fill_values);
         
+        vector<string> feature_var_names;
+        for (size_t i=0; i<feature_variables.size(); i++)
+            feature_var_names.push_back(feature_variables[i].getName());
+        
+        vector<string> var_names;
+        for (size_t i=0; i<variables.size(); i++)
+            var_names.push_back(variables[i].getName());
 
-        ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename,
-                                                                            fs,
-                                                                            feature_variables,
-                                                                            variables);
+        ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename, fs, feature_var_names, var_names);
         
         delete cs;
  

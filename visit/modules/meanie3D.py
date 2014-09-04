@@ -49,6 +49,26 @@ def create_per_scale_directories(base_path):
 
     return
 
+# Runs a complete directory through the tracking
+# using the meanie3d-detect-ci algorithm
+#
+# @param source directory
+# @param output directory
+# @param flags for detection program
+# @param flags for tracking program
+# @param count of last completed file (for resuming)
+#
+def run_ci_tracking(source_directory,
+                    output_directory,
+                    clustering_params,
+                    tracking_params,
+                    resume,
+                    time_index):
+    
+    detection_bin = BIN_PREFIX + "meanie3D-detect"
+    run_tracking(source_directory,output_directory,clustering_params,tracking_params,resume,time_index);
+    return
+
 # Runs a complete directory through the tracking.
 #
 # @param source directory

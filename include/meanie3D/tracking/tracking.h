@@ -78,13 +78,16 @@ namespace m3D {
         
         /** Compares two cluster lists and propagates or assigns new identifiers.
          * @param clusters from the last run
-         * @param index of variable to be used for the histogram correlation.
-         * @param new clusters, which need id's
+         * @param clusters form the current run
+         * @param coordinate system
+         * @param name of variable to be used for the histogram correlation. 
+         *        If NULL, histogram comparison is ignored completely.
+         * @param verbosity
          */
         void track(typename ClusterList<T>::ptr previous,
                    typename ClusterList<T>::ptr current,
-                   CoordinateSystem<T> *cs,
-                   const NcVar &track_variable,
+                   const CoordinateSystem<T> *cs,
+                   const std::string *tracking_variable_name = NULL,
                    Verbosity verbosity = VerbosityNormal);
         
         // Accessors
@@ -97,6 +100,9 @@ namespace m3D {
         
         float mergeSplitContinuationThreshold() {return m_msc_threshold;}
         void setMergeSplitContinuationThreshold(float value) {m_msc_threshold=value;}
+        
+        ::units::values::s max_deltaT() {return m_max_deltaT;}
+        void set_max_deltaT(::units::values::s seconds) {m_max_deltaT = seconds;}
 
     private:
         

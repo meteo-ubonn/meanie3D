@@ -205,19 +205,6 @@ namespace m3D {
         void clear_index();
 
 #pragma mark -
-#pragma mark Coverage
-        
-        /** Counts the number of points in cluster b, that are identical to points
-         * in the receiver. Then calculates the percentage of points of in the receiver
-         * that are 'covered' in this fashion. The comparison between points is only
-         * done using the <b>spatial</b> component.
-         *
-         * @param another cluster
-         * @return coverage in percentage
-         */
-        float percent_covered_by( const Cluster<T>::ptr b ) const;
-        
-#pragma mark -
 #pragma mark Derived Properties
         
         /** Calculate the cluster center. 
@@ -252,7 +239,7 @@ namespace m3D {
          * average distance vector.
          * @param coordinate system, required for figuring out the correct units.
          */
-        ::units::values::m radius(CoordinateSystem<T> *cs);
+        ::units::values::m radius(const CoordinateSystem<T> *cs);
 
 #pragma mark -
 #pragma mark DRF merging

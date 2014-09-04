@@ -90,8 +90,6 @@ namespace m3D { namespace weights {
             
             for (size_t var_index = 0; var_index < m_fs->value_rank(); var_index++)
             {
-                bool is_valid = false;
-                
                 T value = p->values.at(m_fs->spatial_rank()+var_index);
                 
                 // value scaled to [0..1]
@@ -140,7 +138,6 @@ namespace m3D { namespace weights {
         {
             return m_weight->get(gridpoint);
         }
-        
         
     };
 }}

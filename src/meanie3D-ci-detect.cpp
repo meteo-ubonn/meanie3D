@@ -861,7 +861,7 @@ int main(int argc, char** argv)
         cout << "\tweight-function:" << weight_function_name << endl;
         cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
         cout << "\t\tupper weight-function threshold: " << wwf_upper_threshold << endl;
-        
+
         if (ci_comparison_file != NULL)
         {
             cout << "\tCI comparison file for time trends:" << *ci_comparison_file << endl;
@@ -887,7 +887,7 @@ int main(int argc, char** argv)
         if (!vtk_variables.empty()) {
             cout << "\twriting out these variables as vtk after processing:" << vm["write-variables-as-vtk"].as<string>() << endl;
         }
-        
+
         cout << "\twriting weight function to vtk:" << (write_weight_function ? "yes" : "no") << endl;
         cout << "\twriting mean-shift vectors to vtk:" << (write_meanshift_vectors ? "yes" : "no") << endl;
         cout << "\tclusters written as vtk: " << (write_vtk ? "yes" : "no") << endl;
@@ -914,7 +914,7 @@ int main(int argc, char** argv)
         variable_names.push_back(variables.at(i).getName());
     
     NetCDFDataStore<FS_TYPE> *data_store
-    = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variable_names,time_index);
+        = new NetCDFDataStore<FS_TYPE>(filename,coord_system,variable_names,time_index);
     
     FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(coord_system,
                                                           data_store,
@@ -992,7 +992,7 @@ int main(int argc, char** argv)
         ::cfa::utils::VisitUtils<FS_TYPE>::write_featurespace_vtk( fn, fs );
 #endif
         
-        
+
         
         if (verbosity > VerbositySilent)
         {
@@ -1009,14 +1009,14 @@ int main(int argc, char** argv)
                                                                 ci_comparison_protocluster_file,
                                                                 ci_satellite_only);
             
-            //            FS_TYPE temp = 0.0;
-            //            FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
-            //
-            //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
-            //                                                              data_store,
-            //                                                              ranges,
-            //                                                              sf.get_filtered_min(),
-            //                                                              sf.get_filtered_max());
+//            FS_TYPE temp = 0.0;
+//            FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
+//
+//            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
+//                                                              data_store,
+//                                                              ranges,
+//                                                              sf.get_filtered_min(),
+//                                                              sf.get_filtered_max());
         }
         else if (weight_function_name == "inverse")
         {
@@ -1043,7 +1043,7 @@ int main(int argc, char** argv)
         {
             cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
         }
-        
+
     }
     else
     {
@@ -1065,7 +1065,7 @@ int main(int argc, char** argv)
                                                                 ci_comparison_protocluster_file,
                                                                 ci_satellite_only);
             
-            //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
+//            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         }
         else if (weight_function_name == "inverse")
         {
@@ -1112,7 +1112,7 @@ int main(int argc, char** argv)
         string dest_path = destination_path.generic_string();
         
         if (verbosity > VerbositySilent)
-            cout << "Writing featurespace-variables ...";
+        cout << "Writing featurespace-variables ...";
         
         vector<string> vtk_variable_names;
         for (size_t i=0; i<vtk_variables.size(); i++)
@@ -1123,11 +1123,11 @@ int main(int argc, char** argv)
                                                                           vtk_variable_names);
         
         if (verbosity > VerbositySilent)
-            cout << " done." << endl;
+        cout << " done." << endl;
     }
     
     if (verbosity == VerbosityAll)
-        fs->print();
+    fs->print();
     
 #if WRITE_MEANSHIFT_WEIGHTS
     vector<FS_TYPE> sample_point(2);
@@ -1169,7 +1169,7 @@ int main(int argc, char** argv)
     clusters.apply_size_threshold(min_cluster_size);
     
     if (verbosity >= VerbosityDetails)
-        clusters.print();
+    clusters.print();
     
     // Collate with previous clusters, if provided
     
@@ -1178,15 +1178,15 @@ int main(int argc, char** argv)
         cout << endl << "Collating with previous results:" << endl;
         
         if (verbosity >= VerbosityDetails)
-            clusters.print();
+        clusters.print();
         
         try
         {
             ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_file->c_str());
             
             if (verbosity >= VerbosityNormal)
-                cout << "Comparing " << clusters.clusters.size() << " new clusters to "
-                << previous->clusters.size() << " clusters" << endl;
+            cout << "Comparing " << clusters.clusters.size() << " new clusters to "
+            << previous->clusters.size() << " clusters" << endl;
             
             if (verbosity >= VerbosityDetails)
             {
@@ -1207,16 +1207,16 @@ int main(int argc, char** argv)
         cout << endl << "Done. Have " << clusters.clusters.size() << " clusters:" << endl;
         
         if (verbosity >= VerbosityDetails)
-            clusters.print();
+        clusters.print();
     }
     
     // Announce final results
     
     if (verbosity > VerbositySilent)
-        cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
+    cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
     
     if (verbosity >= VerbosityDetails)
-        clusters.print();
+    clusters.print();
     
     // Write out the cluster list
     
@@ -1247,7 +1247,7 @@ int main(int argc, char** argv)
     }
     
     if (verbosity > VerbositySilent)
-        cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;
+    cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;
     
     // Before writing, set the timestamp!!
     
@@ -1263,7 +1263,7 @@ int main(int argc, char** argv)
     }
     
     if (verbosity > VerbositySilent)
-        cout << "done." << endl;
+    cout << "done." << endl;
     
     // mop up
     
@@ -1277,3 +1277,7 @@ int main(int argc, char** argv)
     
     return 0;
 }
+
+
+
+

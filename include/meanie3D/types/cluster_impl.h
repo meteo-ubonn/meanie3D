@@ -252,33 +252,6 @@ namespace m3D {
 #pragma mark Coverage
     
     template <typename T>
-    float
-    Cluster<T>::percent_covered_by( const Cluster<T>::ptr b ) const
-    {
-        // TODO: this can be done a lot faster using an index
-        
-        size_t num_common_points = 0;
-        
-        typename Point<T>::list::const_iterator a_points;
-        
-        PointIndex<T> *b_index = b->index();
-        
-        for ( a_points = this->points.begin(); a_points != this->points.end(); a_points++ )
-        {
-            typename Point<T>::ptr pa = *a_points;
-            
-            vector<T> x = pa->coordinate;
-            
-            if ( b_index->has_value(x))
-            {
-                num_common_points++;
-            }
-        }
-        
-        return ((float)num_common_points) / ((float)this->points.size());
-    }
-    
-    template <typename T>
     vector<T>
     Cluster<T>::geometrical_center(size_t spatial_dimensions)
     {
@@ -376,7 +349,7 @@ namespace m3D {
     
     template <typename T>
     ::units::values::m
-    Cluster<T>::radius(CoordinateSystem<T> *cs)
+    Cluster<T>::radius(const CoordinateSystem<T> *cs)
     {
         if ( m_radius == ::units::values::m(-1) )
         {

@@ -171,7 +171,7 @@ def close_topography():
     CloseDatabase(TOPO_FILE);
     return
 
-# Add 2D/3D local topography, rivers and borders
+# Add 2D local topography, rivers and borders
 # @param "local" or "national"
 #
 def add_mapstuff(extent):
@@ -185,7 +185,7 @@ def add_mapstuff(extent):
     
     return
 
-# Add 2D/3D local topography
+# Add 2D local topography
 # @param "local" or "national"
 #
 def add_map_topography(extent):
@@ -217,8 +217,7 @@ def add_map_topography(extent):
 
     return
 
-
-# Add 2D/3D borders
+# Add 2D borders
 # @param "local" or "national"
 #
 def add_map_borders(extent):
@@ -244,7 +243,7 @@ def add_map_borders(extent):
     
     return
 
-# Add 2D/3D borders
+# Add 2D borders
 # @param "local" or "national"
 #
 def add_map_rivers(extent):
@@ -277,12 +276,14 @@ def set_annotations():
     
     a = GetAnnotationAttributes()
     a.axes2D.visible=1
-    a.axes2D.autoSetScaling=0
+    a.axesArray.autoSetScaling=0
+    a.axes2D.xAxis.title.visible=0
+    a.axes2D.yAxis.title.visible=0
+    a.legendInfoFlag=1
     a.userInfoFlag=0
     a.timeInfoFlag=0
-    a.legendInfoFlag=1
     a.databaseInfoFlag=1
-    
+
     a.axes2D.xAxis.title.visible=0
     a.axes2D.xAxis.title.userTitle = 1
     a.axes2D.xAxis.title.userUnits = 1

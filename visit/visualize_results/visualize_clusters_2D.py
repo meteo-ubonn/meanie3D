@@ -15,10 +15,6 @@ import visit2D
 import visitUtils
 from subprocess import call
 
-#print [key for key in locals().keys()
-#       if isinstance(locals()[key], type(sys)) and not key.startswith('__')]
-
-
 # General parameters
 VAR_NAME = "RX"
 VAR_MIN = 15;
@@ -36,20 +32,18 @@ CREATE_SOURCE_MOVIE=False
 CREATE_CLUSTERS_MOVIE=True
 
 # Conversion program params
+
 CONVERSION_PARAMS  = "-t cluster "
 CONVERSION_PARAMS += " -v "+VAR_NAME
 CONVERSION_PARAMS += " --write-as-xml=false"
 CONVERSION_PARAMS += " --extract-skin=false"
 CONVERSION_PARAMS += " --vtk-dimensions x,y"
 
-#-f herz-oase-20120805t1510utc-0500m-bonnjue-3d-v01a_clusters.nc "
-
 # binaries
+
 DYLD_LIBRARY_PATH="/usr/local/lib:/usr/lib"
 bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
 conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
-#conversion_bin = "/usr/local/bin/" + "meanie3D-cfm2vtk"
-print "Conversion Command:" + conversion_bin + " " + CONVERSION_PARAMS
 
 # Silent
 SuppressMessages(True)
@@ -57,20 +51,8 @@ SuppressQueryOutputOn()
 
 # Set view and annotation attributes
 
-a = GetAnnotationAttributes()
-a.axes2D.visible=1
-a.axesArray.autoSetScaling=0
-a.axes2D.xAxis.title.visible=0
-a.axes2D.yAxis.title.visible=0
-a.legendInfoFlag=1
-a.databaseInfoFlag=0
-a.userInfoFlag=0
-a.timeInfoFlag=0
-SetAnnotationAttributes(a)
-
-# Add gray/black background gradient
-if WITH_BACKGROUND_GRADIENT:
-    visitUtils.add_background_gradient();
+print "Setting annotation attributes:"
+visit2D.set_annotations()
 
 print "Cleaning up *.vt* tracking_*.png source_*.png"
 return_code=call("rm -f *.vt* tracking_*.png source_*.png", shell=True)
@@ -80,8 +62,12 @@ visit2D.set_view_to_radolan();
 
 print "-- Creating colortables ---"
 num_colors = visitUtils.create_cluster_colortable("cluster_colors")
-#visitUtils.create_topography_colortable()
-#print "    done."
+
+if WITH_TOPOGRAPHY:
+    visitUtils.create_topography_colortable()
+
+if WITH_BACKGROUND_GRADIENT:
+    visitUtils.add_background_gradient();
 
 # Glob the netcdf directory
 netcdf_files = sorted(glob.glob(NETCDF_DIR+"/*.nc"));
