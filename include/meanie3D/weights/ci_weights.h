@@ -432,7 +432,10 @@ namespace m3D { namespace weights {
                 
                 Tracking<T> proto_tracker;
                 
-                proto_tracker.set_max_deltaT(::units::values::s(900));
+                // Time difference calculation can be a second or so
+                // off. Allow some slack.
+                
+                proto_tracker.set_max_deltaT(::units::values::s(930));
                 
                 // TODO: tracking needs to be refactored to work on
                 // weight function histograms rather than variable
@@ -770,7 +773,11 @@ namespace m3D { namespace weights {
                 // for_each callback functor
                 
                 void
-                operator()(DataStore<T> *store, const size_t variable_index, vector<int> &gridpoint, T& value, bool &is_valid)
+                operator()(DataStore<T> *store,
+                           const size_t variable_index,
+                           vector<int> &gridpoint,
+                           T& value,
+                           bool &is_valid)
                 {
                     if (m_overlap == NULL || m_overlap->get(gridpoint) == true)
                     {
@@ -812,6 +819,12 @@ namespace m3D { namespace weights {
             
             for (size_t var_index=0; var_index < ds->rank(); var_index++)
             {
+                // excempt radar and lightning from this
+                
+                if (var_index == cband_radolan_rx || var_index == linet_oase_tl) continue;
+                
+                // Replace
+                
                 ReplaceFunctor *f = new ReplaceFunctor(ds, var_index, m_overlap, m_bandwidth, percentage);
                 
                 ds->for_each(var_index,f);
@@ -822,8 +835,6 @@ namespace m3D { namespace weights {
                 
                 delete f;
             }
-            
-
             
             boost::filesystem::path ppath(ds->filename());
             std::string fn = ppath.filename().stem().generic_string() + "-25perc.nc";
@@ -1084,14 +1095,16 @@ namespace m3D { namespace weights {
             
             if (!this->m_satellite_only)
             {
-                // Is radar signature > 35dBZ and/or lightning present in 5km radius?
+                // Is radar signature > 25dBZ and/or lightning present in 5km radius?
                 
                 bool has_lightning = false;
                 bool has_radar = false;
 
                 typename Point<T>::list *neighbors = m_index->search(p->coordinate,m_search_params);
                 
-                for (size_t pi = 0; pi < neighbors->size() && !(has_lightning && has_radar); pi++)
+                T cband_rx,linet_count;
+                
+                for (size_t pi = 0; pi < neighbors->size() && !(has_lightning || has_radar); pi++)
                 {
                     typename Point<T>::ptr n = neighbors->at(pi);
                     
@@ -1099,18 +1112,19 @@ namespace m3D { namespace weights {
 
                     if (!has_radar)
                     {
-                        T cband_rx = this->m_data_store->get(cband_radolan_rx,
+                        cband_rx = this->m_data_store->get(cband_radolan_rx,
                                                              n->gridpoint,
                                                              neighbour_is_valid);
                         
-                        has_radar = (neighbour_is_valid && cband_rx >= 35.0);
+                        // Start using radar at light rain (>= 25dBZ)
+                        has_radar = (neighbour_is_valid && cband_rx >= 25.0 && cband_rx <= 65);
                     }
                     
-                    if (!has_lightning)
+                    if (!has_radar)
                     {
                         neighbour_is_valid = false;
 
-                        T linet_count = this->m_data_store->get(linet_oase_tl,
+                        linet_count = this->m_data_store->get(linet_oase_tl,
                                                                 n->gridpoint,
                                                                 neighbour_is_valid);
                         
@@ -1128,13 +1142,12 @@ namespace m3D { namespace weights {
                     score++;
                 }
                 
-                // If radar >= 35dBZ is present in 5km radius:
-                // increase score
+                // If light rain or more is present in 5km radius:
+                // increase score to max
                 
                 if (has_radar)
                 {
-                    // score++;
-                    return max_score;
+                    score = max_score;
                 }
             
             }

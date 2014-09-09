@@ -21,10 +21,8 @@ except ImportError as e:
     sys.exit()
 
 CLUSTERING_PARAMS =  " -s "+PARAM_T
-#CLUSTERING_PARAMS += " -v msevi_l15_ir_108 --upper-thresholds msevi_l15_ir_108=71.9493"
-#CLUSTERING_PARAMS += " --weight-function oase --wwf-lower-threshold 5"
 CLUSTERING_PARAMS += " -v msevi_l15_ir_108 --upper-thresholds msevi_l15_ir_108=28.27"
-CLUSTERING_PARAMS += " --weight-function inverse --wwf-lower-threshold 0"
+CLUSTERING_PARAMS += " --weight-function oase --wwf-lower-threshold 4"
 
 CLUSTERING_PARAMS += " -d y,x --vtk-dimensions x,y"
 CLUSTERING_PARAMS += " -m 10"

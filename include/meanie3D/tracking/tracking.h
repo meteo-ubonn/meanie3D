@@ -61,12 +61,12 @@ namespace m3D {
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking(T wr=1.0, T wd=1.0, T wt=1.0, ::units::values::s max_delta_t = ::units::values::minute(15))
+        Tracking(T wr=1.0, T wd=1.0, T wt=1.0, ::units::values::s max_delta_t = ::units::values::s(930))
         : m_dist_weight(wr)
         , m_size_weight(wd)
         , m_corr_weight(wt)
         , m_deltaT(0)   
-        , m_max_deltaT(max_delta_t)             // 15 minutes
+        , m_max_deltaT(max_delta_t)             // 15 minutes )(plus 30 seconds slack)
         , m_useMeanVelocityConstraint(false)    // limit deviation from mean velocity (false)
         , m_meanVelocitySecurityPercentage(0.5) // to 50 %
         , m_maxVelocity(::units::values::meters_per_second(100.0))                  // limit max velocity to 30 m/s (~108 km/h)
