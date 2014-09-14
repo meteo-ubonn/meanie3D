@@ -14,7 +14,6 @@ SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_MACOSX_RPATH OFF)
 
 ENABLE_LANGUAGE(CXX)
-# SET(CMAKE_CXX_COMPILER /usr/local/bin/clang++)
 
 # ------------------------------------- 
 # Project configuration
@@ -68,6 +67,21 @@ ENDIF (WITH_BOOST_THREADS)
 SET(USE_CPP11 FALSE)
 
 #Compiler flags
+
+# this is a speciality on my mac where
+# clang was compiled and it has a bug
+# http://bisqwit.iki.fi/story/howto/openmp/
+
+IF (CMAKE_CXX_COMPILER MATCHES ".*clang")
+    MESSAGE(STATUS "Adding include dirs for LLVM/OpenMP on OSX 10.9")
+#    INCLUDE_DIRECTORIES(/usr/include/c++/4.2.1)
+#    INCLUDE_DIRECTORIES(/usr/include/c++/4.2.1/backward/)
+#   MESSAGE(STATUS "Setting -stdlib=libc++" linkflags="-stdlib=libc++")
+#   SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g")
+#   SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
+#   SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
+    ADD_DEFINITIONS(-DBOOST_HAS_INT128=1)
+ENDIF()
 
 MESSAGE("-- CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
 MESSAGE("-- CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")

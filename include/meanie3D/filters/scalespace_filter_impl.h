@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-#if OPENMP
+#if WITH_OPENMP
     #include <omp.h>
 #endif
 

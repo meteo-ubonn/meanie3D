@@ -9,7 +9,7 @@
 #include <map>
 #include <cf-algorithms/cf-algorithms.h>
 
-#if OPENMP
+#if WITH_OPENMP
     #include <omp.h>
 #endif
 
