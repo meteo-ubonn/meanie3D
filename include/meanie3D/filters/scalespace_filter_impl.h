@@ -8,9 +8,7 @@
 #include <map>
 #include <string>
 
-#if WITH_OPENMP
-    #include <omp.h>
-#endif
+#include <meanie3D/parallel.h>
 
 #include <boost/progress.hpp>
 
@@ -105,7 +103,7 @@ namespace m3D {
         NcDim dim = cs->dimensions()[realDimIndex];
 
         // iterate over dimensions
-
+        
         for ( int index = 0; index < dim.getSize(); index++ )
         {
             gridpoint[realDimIndex] = index;
@@ -118,8 +116,10 @@ namespace m3D {
             {
                 // we reached the fixed dimension
 
-                if (this->show_progress())
+                if (this->show_progress()) 
+                {
                     m_progress_bar->operator++();
+                }
 
                 // exclude points that were off limits
                 // in any of the original data sets

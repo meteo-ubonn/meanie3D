@@ -1,12 +1,23 @@
 #ifndef _M3D_Operation_Cluster_Impl_H_
 #define _M3D_Operation_Cluster_Impl_H_
 
-#include "cluster_task.h"
-
-#include <cf-algorithms/cf-algorithms.h>
+#include <meanie3D/defines.h>
+#include <meanie3D/namespaces.h>
 #include <meanie3D/utils/visit.h>
 
+#include <cf-algorithms/cf-algorithms.h>
+
 #include <vector>
+
+#include "cluster_task.h"
+
+#if WITH_TBB
+#include <tbb/tbb.h>
+#endif
+
+#if WITH_BOOST_THREADS
+#include <boost/thread.hpp>
+#endif
 
 namespace m3D {
 

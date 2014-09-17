@@ -32,7 +32,7 @@ CREATE_SOURCE_MOVIE=True
 CREATE_CLUSTERS_MOVIE=True
 
 # Stretching data and objects for better 3D impression
-SCALE_FACTOR_Z=3.0
+SCALE_FACTOR_Z=5.0
 
 # 'local'    covers cologne/bonn/juelich area.
 # 'national' covers Germany area

@@ -10,9 +10,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6.0)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
-
 SET(CMAKE_MACOSX_RPATH OFF)
-
 ENABLE_LANGUAGE(CXX)
 
 # ------------------------------------- 
@@ -25,7 +23,28 @@ SET(${PROJECT_NAME}_MAJOR_VERSION 0)
 SET(${PROJECT_NAME}_MINOR_VERSION 1)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
+# ------------------------------------- 
+# Paths and Build Configuration
+# -------------------------------------
+
+SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
+
+INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
+
+CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
+	${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h
+)
+
+#set default cmake build type to Debug
+
+# (None Debug Release RelWithDebInfo MinSizeRel)
+IF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "Debug")
+ENDIF()
+
+# ------------------------------------
 #setup OS
+# ------------------------------------
 
 IF(CMAKE_SYSTEM_NAME MATCHES Darwin)
     SET(${PROJECT_NAME}_OS_MACOSX TRUE)
@@ -37,20 +56,19 @@ ELSE(CMAKE_SYSTEM_NAME MATCHES Darwin)
   ENDIF(CMAKE_SYSTEM_NAME MATCHES Linux)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES Darwin)
 
-SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
-
-# ------------------------------------- 
-# Additional project configuration
+# -------------------------------------
+# Submodules
 # -------------------------------------
 
-# Work around the problem in gtest with tuple
-ADD_DEFINITIONS(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_HAVE_OWN_TR1_TUPLE=0)
+ADD_SUBDIRECTORY(cf-algorithms)
+ADD_SUBDIRECTORY(numericalrecipes)
 
-# Switch on to use TBB
-SET(WITH_TBB YES)
+INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/cf-algorithms/include)
+INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/numericalrecipes/include)
 
-# Switch on to use Boost Threads. Do not combine with TBB
-SET(WITH_BOOST_THREADS 0)
+# ------------------------------------- 
+# Multithreading / Parallelism Choices
+# -------------------------------------
 
 IF (WITH_TBB)
     ADD_DEFINITIONS(-DWITH_TBB=1)
@@ -60,28 +78,13 @@ IF (WITH_BOOST_THREADS)
     ADD_DEFINITIONS(-DWITH_BOOST_THREADS=1)
 ENDIF (WITH_BOOST_THREADS)
 
+IF (WITH_OPENMP)
+    ADD_DEFINITIONS(-DWITH_OPENMP=1)
+ENDIF()
+
 # -------------------------------------
 # Compiler Flags
 # -------------------------------------
-
-SET(USE_CPP11 FALSE)
-
-#Compiler flags
-
-# this is a speciality on my mac where
-# clang was compiled and it has a bug
-# http://bisqwit.iki.fi/story/howto/openmp/
-
-IF (CMAKE_CXX_COMPILER MATCHES ".*clang")
-    MESSAGE(STATUS "Adding include dirs for LLVM/OpenMP on OSX 10.9")
-#    INCLUDE_DIRECTORIES(/usr/include/c++/4.2.1)
-#    INCLUDE_DIRECTORIES(/usr/include/c++/4.2.1/backward/)
-#   MESSAGE(STATUS "Setting -stdlib=libc++" linkflags="-stdlib=libc++")
-#   SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g")
-#   SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
-#   SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
-    ADD_DEFINITIONS(-DBOOST_HAS_INT128=1)
-ENDIF()
 
 MESSAGE("-- CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
 MESSAGE("-- CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
@@ -131,22 +134,10 @@ ENDIF (USE_CPP11)
 # OpenMP 
 
 IF (WITH_OPENMP)
-    ADD_DEFINITIONS(-DOPENMP=1)
-    IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fopenmp")
-        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fopenmp")
-        SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fopenmp")
-        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fopenmp")
-    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
-        MESSAGE(ERROR "OpenMP not supported for this compiler type")
-    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        MESSAGE(ERROR "OpenMP not supported for this compiler type")
-    ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fopenmp")
-        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fopenmp")
-        SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -fopenmp")
-        SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fopenmp")
+    IF (CMAKE_CXX_COMPILER MATCHES ".*clang")
+        ADD_DEFINITIONS(-DBOOST_HAS_INT128=1)
     ENDIF()
+    ADD_DEFINITIONS(-DOPENMP=1)
 ENDIF (WITH_OPENMP)
 
 # ------------------------------------- 
@@ -157,47 +148,70 @@ MESSAGE(STATUS "Resolving dependencies for Meanie3D")
 
 # netcdf
 FIND_PACKAGE(NETCDF)
-IF (NOT NETCDF_FOUND)
-   MESSAGE(FATAL_ERROR "netcdf(cxx) not found (http://www.unidata.ucar.edu/software/netcdf/docs/netcdf-cxx/)")
-ENDIF()
+IF (NETCDF_FOUND)
+    INCLUDE_DIRECTORIES(${NETCDF_INCLUDE_DIR})
+ELSE(NETCDF_FOUND)
+   MESSAGE(FATAL_ERROR "netcdf not found INCLUDE_DIR=${NETCDF_INCLUDE_DIR} LIBRARIES=${NETCDF_LIBRARIES}")
+ENDIF(NETCDF_FOUND)
 
 # HDF5
 FIND_PACKAGE(HDF5)
-IF (NOT HDF5_FOUND)
-   MESSAGE(FATAL_ERROR "HDF5 not found (http://www.hdfgroup.org/HDF5/)")
-ENDIF()
+IF (HDF5_FOUND)
+    INCLUDE_DIRECTORIES(${HDF5_INCLUDE_DIR})
+ELSE(HDF5_FOUND)
+   MESSAGE(FATAL_ERROR "HDF5 not found INCLUDE_DIR=${HDF5_INCLUDE_DIR} LIBRARIES=${HDF5_LIBRARIES}")
+ENDIF(HDF5_FOUND)
 
 # Boost
-FIND_PACKAGE(Boost COMPONENTS system program_options thread filesystem)
-IF(NOT Boost_FOUND)
+FIND_PACKAGE(Boost COMPONENTS program_options thread filesystem system)
+IF(Boost_FOUND)
+    INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+ELSE(Boost_FOUND)
     MESSAGE(FATAL_ERROR ${Boost_ERROR_REASON})
 ENDIF()
 
 # GTest
 FIND_PACKAGE(GTest)
-IF (NOT GTEST_FOUND)
-   MESSAGE(FATAL_ERROR "libgtest not found (http://code.google.com/p/googletest/)")
-ENDIF()
+IF(GTEST_FOUND)
+    INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIR})
+    ADD_DEFINITIONS(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_HAVE_OWN_TR1_TUPLE=0)
+ELSE(GTEST_FOUND)
+    MESSAGE(FATAL_ERROR "libgtest not found INCLUDE_DIR=${GTEST_INCLUDE_DIR} LIBRARIES=${GTEST_LIBRARIES}")
+    MESSAGE(FATAL_ERROR "did you specify -D GTEST_INCLUDE_DIR and -D GTEST_LIBRARIES ?")
+ENDIF(GTEST_FOUND)
 
 # TBB
 IF (WITH_TBB)
-    MESSAGE(STATUS "Looking for TBB")
     FIND_PACKAGE(TBB)
-    IF (NOT TBB_FOUND)
+    IF (TBB_FOUND)
+        INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+    ELSE(TBB_FOUND)
         MESSAGE(FATAL_ERROR "TBB not found (http://threadingbuildingblocks.org)")
-    ENDIF (NOT TBB_FOUND)
+   ENDIF(TBB_FOUND)
 ENDIF(WITH_TBB)
 
+# OpenMP
 IF (WITH_OPENMP)
     FIND_PACKAGE(OpenMP REQUIRED)
     IF (OPENMP_FOUND)
-        MESSAGE("OPENMP FOUND")
+        MESSAGE(STATUS "Found OpenMP (C_FLAGS=${OpenMP_C_FLAGS}, CXX_FLAGS=${OpenMP_CXX_FLAGS})")
         SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
         SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
         SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+    ELSE(OPENMP_FOUND)
+        MESSAGE(ERROR "-- OpenMP is not enabled in your compiler")
     ENDIF (OPENMP_FOUND)
+
+    FIND_PACKAGE(OpenMP_RT REQUIRED)
+    IF (OpenMP_RT_FOUND)
+        INCLUDE_DIRECTORIES(${OpenMP_RT_INCLUDE_DIRS})
+    ELSE(OpenMP_RT_FOUND)
+        MESSAGE(FATAL_ERROR "OpenMP Runtime not found (https://www.openmprtl.org)")
+    ENDIF(OpenMP_RT_FOUND)
+
 ENDIF(WITH_OPENMP)
 
+# OpenCV
 FIND_PACKAGE(OpenCV)
 IF (OpenCV_FOUND)
     MESSAGE("-- OpenCV FOUND")
@@ -206,65 +220,21 @@ IF (OpenCV_FOUND)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenCV_EXE_LINKER_FLAGS}")
 ENDIF (OpenCV_FOUND)
 
-
 # VTK
 FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
-IF (NOT VTK_FOUND)
-   MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/VTK/resources/software.html)")
-ELSE(NOT VTK_FOUND)
+IF (VTK_FOUND)
     INCLUDE(${VTK_USE_FILE})
-ENDIF(NOT VTK_FOUND)
+    INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
+ELSE()
+    MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/VTK/resources/software.html)")
+ENDIF()
 
 # Shapefile
 FIND_PACKAGE(SHP)
-IF (NOT SHP_FOUND)
-   MESSAGE(FATAL_ERROR "Shapefile not found INCLUDE_DIR=${SHP_INCLUDE_DIR} LIBRARIES=${SHP_LIBRARIES}")
-ENDIF()
-
-# -------------------------------------
-# Submodules
-# -------------------------------------
-
-ADD_SUBDIRECTORY(cf-algorithms)
-ADD_SUBDIRECTORY(numericalrecipes)
-
-# ------------------------------------- 
-# Paths and Build Configuration
-# -------------------------------------
-
-IF(WITH_TBB)
-	INCLUDE_DIRECTORIES(
-		${PROJECT_SOURCE_DIR}/include
-		${cf-algorithms_SOURCE_DIR}/include
-		${cf-algorithms_SOURCE_DIR}/radolan/include
-		${numericalrecipes_SOURCE_DIR}/include
-		${NETCDF_INCLUDE_DIR}
-		${HDF5_INCLUDE_DIR}
-        ${SHP_INCLUDE_DIR}
-        ${VTK_INCLUDE_DIRS}
-        ${TBB_INCLUDE_DIRS}
-        )
+IF (SHP_FOUND)
+    INCLUDE_DIRECTORIES(${SHP_INCLUDE_DIRS})
 ELSE()
-	INCLUDE_DIRECTORIES(
-		${PROJECT_SOURCE_DIR}/include
-		${cf-algorithms_SOURCE_DIR}/include
-		${cf-algorithms_SOURCE_DIR}/radolan/include
-		${numericalrecipes_SOURCE_DIR}/include
-		${NETCDF_INCLUDE_DIR}
-		${HDF5_INCLUDE_DIR}
-        ${SHP_INCLUDE_DIR}
-        ${VTK_INCLUDE_DIRS})
-ENDIF()
-
-CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
-	${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h
-)
-
-#set default cmake build type to Debug
-
-# (None Debug Release RelWithDebInfo MinSizeRel)
-IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE "Debug")
+   MESSAGE(FATAL_ERROR "Shapefile not found INCLUDE_DIR=${SHP_INCLUDE_DIR} LIBRARIES=${SHP_LIBRARIES}")
 ENDIF()
 
 # ------------------------------------- 
@@ -407,24 +377,15 @@ ADD_EXECUTABLE(meanie3D-detect
     numericalrecipes
     src/meanie3D-detect.cpp)
 
-IF(WITH_TBB)
-    TARGET_LINK_LIBRARIES(meanie3D-detect
-        meanie3D
-    	cf-algorithms
-        ${NETCDF_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${TBB_LIBRARIES}
-        ${VTK_LIBRARIES})
-ELSE()
-    TARGET_LINK_LIBRARIES(meanie3D-detect
-        meanie3D
-    	cf-algorithms
-        ${NETCDF_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${VTK_LIBRARIES})
-ENDIF()
+TARGET_LINK_LIBRARIES(meanie3D-detect
+    meanie3D
+    cf-algorithms
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${TBB_LIBRARIES}
+    ${VTK_LIBRARIES}
+    ${OpenMP_RT_LIBRARIES})
 
 # CI Score based detection
 
@@ -433,26 +394,16 @@ ADD_EXECUTABLE(meanie3D-ci-detect
     numericalrecipes
     src/meanie3D-ci-detect.cpp)
 
-IF(WITH_TBB)
-    TARGET_LINK_LIBRARIES(meanie3D-ci-detect
-        meanie3D
-    	cf-algorithms
-        ${NETCDF_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${TBB_LIBRARIES}
-        ${VTK_LIBRARIES}
-        ${OpenCV_LIBS})
-ELSE()
-    TARGET_LINK_LIBRARIES(meanie3D-ci-detect
-        meanie3D
-    	cf-algorithms
-        ${NETCDF_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${VTK_LIBRARIES}
-        ${OpenCV_LIBS})
-ENDIF()
+TARGET_LINK_LIBRARIES(meanie3D-ci-detect
+    meanie3D
+    cf-algorithms
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${TBB_LIBRARIES}
+    ${VTK_LIBRARIES}
+    ${OpenMP_RT_LIBRARIES}
+    ${OpenCV_LIBS})
 
 # tracking tool
 
@@ -462,26 +413,16 @@ ADD_EXECUTABLE(meanie3D-track
     src/meanie3D-track.cpp
 )
 
-IF(WITH_TBB)
-    TARGET_LINK_LIBRARIES(meanie3D-track
-        meanie3D
-    	cf-algorithms
-        numericalrecipes
-        ${NETCDF_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${VTK_LIBRARIES}
-        ${TBB_LIBRARIES})
-ELSE()
-    TARGET_LINK_LIBRARIES(meanie3D-track
-        meanie3D
-    	cf-algorithms
-        numericalrecipes
-        ${NETCDF_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${VTK_LIBRARIES})
-ENDIF()
+TARGET_LINK_LIBRARIES(meanie3D-track
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${NETCDF_LIBRARIES}
+    ${Boost_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${VTK_LIBRARIES}
+    ${OpenMP_RT_LIBRARIES}
+    ${TBB_LIBRARIES})
 
 # trackstats
 
@@ -614,7 +555,6 @@ TARGET_LINK_LIBRARIES(meanie3D-minmax
 # detection
 
 ADD_EXECUTABLE(meanie3d-detection-test
-#	src/test/gaussian_cloud.cpp
     src/test/detection/detection_test.h
     src/test/detection/settings.h
     src/test/detection/settings.cpp
@@ -626,28 +566,17 @@ ADD_EXECUTABLE(meanie3d-detection-test
     src/test/detection/test.cpp
 )
 
-IF(WITH_TBB)
-    TARGET_LINK_LIBRARIES(meanie3d-detection-test
-        meanie3D
-    	cf-algorithms
-        numericalrecipes
-        ${Boost_LIBRARIES}
-        ${NETCDF_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${GTEST_LIBRARIES}
-        ${TBB_LIBRARIES}
-        ${VTK_LIBRARIES})
-ELSE()
-    TARGET_LINK_LIBRARIES(meanie3d-detection-test
-        meanie3D
-    	cf-algorithms
-        numericalrecipes
-        ${Boost_LIBRARIES}
-        ${NETCDF_LIBRARIES}
-        ${HDF5_LIBRARIES}
-        ${VTK_LIBRARIES}
-        ${GTEST_LIBRARIES})
-ENDIF()
+TARGET_LINK_LIBRARIES(meanie3d-detection-test
+    meanie3D
+    cf-algorithms
+    numericalrecipes
+    ${Boost_LIBRARIES}
+    ${NETCDF_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${GTEST_LIBRARIES}
+    ${TBB_LIBRARIES}
+    ${OpenMP_RT_LIBRARIES}
+    ${VTK_LIBRARIES})
 
 SET_TARGET_PROPERTIES(meanie3D PROPERTIES LINKER_LANGUAGE CXX)
 SET_TARGET_PROPERTIES(meanie3D-detect PROPERTIES LINKER_LANGUAGE CXX)

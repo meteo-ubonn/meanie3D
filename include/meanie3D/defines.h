@@ -3,17 +3,14 @@
 
 // Threading
 
-#define WITH_TBB 1
-#define WITH_BOOST_THREADS 0
-
 #define PROVIDE_THREADSAFETY 0
 
 #if WITH_BOOST_THREADS
-	#define PROVIDE_MUTEX 1
+#define PROVIDE_MUTEX 1
 #endif
 
 #if WITH_TBB
-	#define PROVIDE_MUTEX 1
+#define PROVIDE_MUTEX 1
 #endif
 
 // Featurespace debugging
