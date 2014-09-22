@@ -48,4 +48,9 @@
 // zero-shift cluster and add it to the cluster
 #define ADD_STRONGEST_NEIGHBOUR 0
 
+// If switched on, the scale-space filter
+// excludes all points that were marked as
+// 'off limits' in feature-space construction
+#define SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS 0
+
 #endif

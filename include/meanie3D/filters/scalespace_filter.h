@@ -60,6 +60,18 @@ namespace m3D {
         
         void
         applyWithArrayIndex(FeatureSpace<T> *fs);
+        
+#pragma mark -
+#pragma mark Paralellized versions
+        
+        void 
+        apply_parallellized_on_dimension(FeatureSpace<T> *fs,
+                                         ArrayIndex<T> *originalIndex,
+                                         ArrayIndex<T> *filteredPoints,
+                                         size_t fixedDimensionIndex);
+
+        void 
+        apply_parallellized(FeatureSpace<T> *fs);
 
     public:
         

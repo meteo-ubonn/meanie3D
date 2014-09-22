@@ -366,11 +366,304 @@ namespace m3D {
     
     template <typename T>
     void
+    ScaleSpaceFilter<T>::apply_parallellized_on_dimension(FeatureSpace<T> *fs,
+                                                        ArrayIndex<T> *originalIndex,
+                                                        ArrayIndex<T> *filteredPoints,
+                                                        size_t fixedDimension)
+    {
+        using namespace std;
+        
+        const CoordinateSystem<T> *cs = fs->coordinate_system;
+        const vector<size_t> dim_sizes = cs->get_dimension_sizes();
+        const size_t numDims = cs->rank();
+        const size_t value_rank = fs->value_rank();
+        
+        // Collate the dimension sizes for the linear mapping
+        // and the dimension indexes
+
+        std::vector<size_t> iter_dimensions;
+        
+        for (size_t i=0; i < dim_sizes.size(); i++)
+            if (i != fixedDimension)
+                iter_dimensions.push_back(dim_sizes[i]);
+
+        LinearIndexMapping mapping(iter_dimensions);
+        size_t N = mapping.size();
+        
+        #if WITH_OPENMP
+        #pragma omp parallel for schedule(dynamic)
+        #endif
+        for (size_t n=0; n < N; n++)
+        {
+            // re-assemble the starting point for the iteration from
+            // the mapping's components
+            
+            vector<int> truncatedGridPoint = mapping.linear_to_grid(n);
+            vector<int> startPoint(cs->rank());
+            
+            size_t runningIndex = 0;
+            for (size_t i=0; i<cs->rank(); i++)
+                if ( i != fixedDimension )
+                    startPoint[i] = truncatedGridPoint[runningIndex++];
+            
+            size_t fixedDimSize = dim_sizes[fixedDimension];
+            
+            // Now iterate over the remaining dimension
+            // TODO: consider to nest this depending on 
+            // problem size
+            
+            for (size_t k=0; k < dim_sizes[fixedDimension]; k++)
+            {
+                if (this->show_progress()) 
+                {
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
+                    m_progress_bar->operator++();
+                }
+
+                // construct position
+                
+                vector<int> gridpoint(startPoint);
+                gridpoint[fixedDimension] = k;
+
+                #if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
+                    if (fs->off_limits()->get(gridpoint))
+                        continue;
+                #endif  
+
+                ScaleSpaceKernel<T> g = this->m_kernels[fixedDimension];
+                
+                // Find the boundaries. Take care not to step
+                // outside the bounds of the array
+                
+                int width = g.values().size() - 1;
+                int gpIndex = (int)gridpoint[fixedDimension];
+                int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
+                int maxIndex = ((gpIndex + width) < (fixedDimSize-1)) ? (gpIndex + width) : (fixedDimSize-1);
+                
+                // Convolute in 1D around the given point with
+                // the mask size determined by the kernel
+                // Run the convolution for each feature variable
+                
+                typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
+            
+                vector<T> sum(value_rank,0.0);
+                
+                size_t sumCount = 0;
+                
+                for ( int i = minIndex; i < maxIndex; i++ )
+                {
+                    gridIter[fixedDimension] = i;
+                    
+                    // Again, make sure no points originally marked as
+                    // off limits are used
+                    
+                    #if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
+                        if (fs->off_limits()->get(gridpoint))
+                            continue;
+                    #endif  
+                    
+                    // get the point at the iterated position
+
+                    Point<T> *pIter = originalIndex->get(gridIter);
+
+                    if (pIter == NULL) 
+                        continue;
+                    
+                    // apply the pre-sampled gaussian and sum up
+                    // in each variable in the feature-space
+
+                    size_t d = (i <= k) ? (k-i) : (i-k);
+                    
+                    for (int varIndex=0; varIndex < value_rank; varIndex++)
+                    {
+                        T value = pIter->values[cs->rank()+varIndex];
+                        sum[varIndex] += g.value(d) * value;
+                    }
+                    
+                    sumCount++;
+                }
+                
+                // No muss, no fuss
+                
+                if (sumCount == 0)
+                    continue;
+                
+                // Fuss! Fetch the point from the array index
+                
+                Point<T> *p = filteredPoints->get(gridpoint);
+                
+                // If no point existed, decide if we need to create one
+                
+                if (p == NULL)
+                {
+                    // Create a new point with default values
+                    // and insert into array index
+                    
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
+                    {
+                        typename CoordinateSystem<T>::Coordinate coordinate = cs->newCoordinate();
+                        cs->lookup(gridpoint,coordinate);
+                        vector<T> values = coordinate;
+                        values.resize(fs->rank(),0.0);
+
+                        p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
+
+                        // Did this exist in the original index?
+
+                        Point<T> *op = originalIndex->get(gridpoint);
+                        p->isOriginalPoint = ((op == NULL) ? false : op->isOriginalPoint);
+
+                        // Since we just created this point, there
+                        // is no need to copy it again when adding
+                        // it to the array index
+
+                        filteredPoints->set(gridpoint,p,false);
+
+                        if (!p->isOriginalPoint)
+                            m_created_points++;
+                        else
+                            m_modified_points++;
+                    }
+                }
+                
+                // If we have a point after all that, update it with the
+                // filtered value
+                
+                if (p != NULL)
+                {
+                    // copy values and track limits
+                    
+                    for (int varIndex=0; varIndex < value_rank; varIndex++)
+                    {
+                        p->values[numDims+varIndex] = sum[varIndex];
+
+                        if (sum[varIndex] < m_min[varIndex])
+                        {
+                            #if WITH_OPENMP
+                            #pragma omp critical
+                            #endif
+                            m_min[varIndex] = sum[varIndex];
+                        }
+                        
+                        if (sum[varIndex] > m_max[varIndex])
+                        {
+                            #if WITH_OPENMP
+                            #pragma omp critical
+                            #endif
+                            m_max[varIndex] = sum[varIndex];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    template <typename T>
+    void
+    ScaleSpaceFilter<T>::apply_parallellized(FeatureSpace<T> *fs)
+    {
+        LinearIndexMapping mapping(fs->coordinate_system->get_dimension_sizes());
+        size_t N = mapping.size();
+        const size_t value_rank = fs->value_rank();
+        
+        using namespace std;
+        
+        const CoordinateSystem<T> *cs = fs->coordinate_system;
+        
+        // index the original
+        
+        if ( this->show_progress() )
+        {
+            cout << endl << "Constructing array indexes ...";
+            start_timer();
+        }
+
+        ArrayIndex<T> *originalIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), fs->points, true);
+        ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), false);
+        
+        if ( this->show_progress() )
+        {
+            cout << "done. (" << stop_timer() << "s)" << endl;
+        }
+
+        if ( this->show_progress() )
+        {
+            cout << endl << "Applying scale filter t=" << m_scale << " decay=" << m_decay << " ... " << endl;
+
+            long numPoints = 1;
+            for ( size_t i=0; i < fs->coordinate_system->rank(); i++)
+            {
+                numPoints *= fs->coordinate_system->dimensions()[i].getSize();
+            }
+            m_progress_bar = new boost::progress_display( fs->spatial_rank() * numPoints );
+            start_timer();
+        }
+        
+        // initialize min/max and re-set counts
+        for (size_t varIndex=0; varIndex < value_rank; varIndex++)
+        {
+            m_min[varIndex] = std::numeric_limits<T>::max();
+            m_max[varIndex] = std::numeric_limits<T>::min();
+        }
+        
+        m_modified_points = m_created_points = 0;
+        
+        //
+        // Apply dimension by dimension (exploiting separability)
+        //
+        
+        for (size_t dimIndex=0; dimIndex < fs->spatial_rank(); dimIndex++)
+        {
+            apply_parallellized_on_dimension(fs, originalIndex, filteredIndex, dimIndex);
+            
+            delete originalIndex;
+
+            if (dimIndex < (fs->spatial_rank()-1))
+            {
+                originalIndex = filteredIndex;
+                
+                filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(),false);
+            }
+        }
+        
+        // replace the points in the original with the filtered
+        // array index results
+        
+        filteredIndex->replace_points(fs->points);
+        
+        size_t originalPoints = 0;
+        for (size_t i=0; i < fs->points.size(); i++)
+        {
+            if (fs->points[i]->isOriginalPoint) originalPoints++;
+        }
+        
+        if ( this->show_progress() )
+        {
+            cout << "done. (" << stop_timer() << "s)" << endl;
+            cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
+                 << "(" << m_created_points << " new points))" << endl;
+            delete m_progress_bar;
+            m_progress_bar = NULL;
+        }
+        
+        // Clean up
+        
+        delete filteredIndex;
+    }
+    
+    template <typename T>
+    void
     ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
     {
         this->m_unfiltered_min = fs->min();
         this->m_unfiltered_max = fs->max();
-        this->applyWithArrayIndex(fs);
+        //this->applyWithArrayIndex(fs);
+        
+        this->apply_parallellized(fs);
     }
     
 #pragma mark -

@@ -155,20 +155,19 @@ namespace m3D {
             MeanshiftOperation<T> ms_op( m_fs, m_index );
             
                
-#if WITH_OPENMP
+            #if WITH_OPENMP
             // Prime the index
             ms_op.prime_index(m_search_params);
 
-#pragma omp parallel for \
-        schedule(dynamic) 
-#endif
+            #pragma omp parallel for schedule(dynamic) 
+            #endif
             for ( size_t index = m_start_index; index < m_end_index; index++ )
             {
                 if ( m_show_progress )
                 {
-#if WITH_OPENMP
-#pragma omp critical (progress_bar)
-#endif
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
                     m_op->increment_cluster_progress();
                 }
                 

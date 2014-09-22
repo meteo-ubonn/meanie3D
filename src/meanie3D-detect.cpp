@@ -1047,9 +1047,6 @@ int main(int argc, char** argv)
     }
     else
     {
-        cerr << "TODO: implement me!!" << endl;
-        exit(-1);
-        
         if (verbosity > VerbositySilent)
         {
             cout << endl << "Constructing " << weight_function_name << " weight function ...";

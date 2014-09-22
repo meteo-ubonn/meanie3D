@@ -913,6 +913,9 @@ namespace m3D {
         
         pset_t zeroshifts;
         
+        #if WITH_OPENMP
+        #pragma omp parallel for schedule(dynamic)
+        #endif
         for ( size_t i = 0; i < fs->points.size(); i++ )
         {
             M3DPoint<T> *current_point = (M3DPoint<T> *) fs->points[i];
@@ -954,6 +957,9 @@ namespace m3D {
             
             if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
             {
+                #if WITH_OPENMP
+                #pragma omp critical
+                #endif
                 zeroshifts.insert(current_point);
             }
         }
@@ -1188,6 +1194,9 @@ namespace m3D {
             progress = new boost::progress_display( fs->points.size() );
         }
         
+        #if WITH_OPENMP
+        #pragma omp parallel for schedule(dynamic)
+        #endif
         for ( size_t i = 0; i < fs->points.size(); i++ )
         {
             if (show_progress)
@@ -1238,16 +1247,21 @@ namespace m3D {
                 {
                     // Neither point has a cluster
                     // => create new one
-                    
-                    typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->rank());
-                    c->id = cluster_id++;
-                    c->add_point(current_point);
-                    c->add_point(predecessor);
-                    clusters.push_back(c);
-                    
-                    #if DEBUG_GRAPH_AGGREGATION
-                        cout << "created new cluster " << c << " (" << c->points.size() << " points)" << endl;
+
+                    #if WITH_OPENMP
+                    #pragma omp critical
                     #endif
+                    {
+                        typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->rank());
+                        c->id = cluster_id++;
+                        c->add_point(current_point);
+                        c->add_point(predecessor);
+                        clusters.push_back(c);
+
+                        #if DEBUG_GRAPH_AGGREGATION
+                            cout << "created new cluster " << c << " (" << c->points.size() << " points)" << endl;
+                        #endif
+                    }
                 }
                 else if (current_point->cluster == NULL && predecessor->cluster != NULL)
                 {
@@ -1265,6 +1279,9 @@ namespace m3D {
                     // current point has a cluster, but predecessor has none
                     // => add predecessor to current point's cluster
                     
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
                     current_point->cluster->add_point(predecessor);
 
                     #if DEBUG_GRAPH_AGGREGATION
@@ -1299,16 +1316,18 @@ namespace m3D {
                              << endl;
                     #endif
                     
-                    // absorb predecessor
-                    merged->add_points(mergee->points,false);
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
+                    {
+                        // absorb predecessor
+                        merged->add_points(mergee->points,false);
                     
-                    // remove it
-                    
-                    typename Cluster<T>::list::iterator fi = find(clusters.begin(),clusters.end(),mergee);
-                    
-                    clusters.erase(fi);
-                    
-                    delete mergee;
+                        // remove it
+                        typename Cluster<T>::list::iterator fi = find(clusters.begin(),clusters.end(),mergee);
+                        clusters.erase(fi);
+                        delete mergee;
+                    }
                 }
                 else
                 {
@@ -1327,6 +1346,8 @@ namespace m3D {
             cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
             delete progress;
         }
+
+        // TODO: parallelize
         
         if (coalesceWithStrongestNeighbour)
         {
