@@ -158,7 +158,7 @@ namespace m3D {
             #if WITH_OPENMP
             // Prime the index
             ms_op.prime_index(m_search_params);
-
+            // omp_set_nested(1);
             #pragma omp parallel for schedule(dynamic) 
             #endif
             for ( size_t index = m_start_index; index < m_end_index; index++ )

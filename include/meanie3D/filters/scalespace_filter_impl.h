@@ -501,32 +501,34 @@ namespace m3D {
                     // Create a new point with default values
                     // and insert into array index
                     
+                    typename CoordinateSystem<T>::Coordinate coordinate = cs->newCoordinate();
+                    cs->lookup(gridpoint,coordinate);
+                    vector<T> values = coordinate;
+                    values.resize(fs->rank(),0.0);
+
+                    p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
+
+                    // Did this exist in the original index?
+
+                    Point<T> *op = originalIndex->get(gridpoint);
+                    p->isOriginalPoint = ((op == NULL) ? false : op->isOriginalPoint);
+
+                    // Since we just created this point, there
+                    // is no need to copy it again when adding
+                    // it to the array index
+
                     #if WITH_OPENMP
                     #pragma omp critical
                     #endif
+                    filteredPoints->set(gridpoint,p,false);
+                    
+                    if (!p->isOriginalPoint)
                     {
-                        typename CoordinateSystem<T>::Coordinate coordinate = cs->newCoordinate();
-                        cs->lookup(gridpoint,coordinate);
-                        vector<T> values = coordinate;
-                        values.resize(fs->rank(),0.0);
-
-                        p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
-
-                        // Did this exist in the original index?
-
-                        Point<T> *op = originalIndex->get(gridpoint);
-                        p->isOriginalPoint = ((op == NULL) ? false : op->isOriginalPoint);
-
-                        // Since we just created this point, there
-                        // is no need to copy it again when adding
-                        // it to the array index
-
-                        filteredPoints->set(gridpoint,p,false);
-
-                        if (!p->isOriginalPoint)
-                            m_created_points++;
-                        else
-                            m_modified_points++;
+                        m_created_points++;
+                    }
+                    else
+                    {
+                        m_modified_points++;
                     }
                 }
                 
