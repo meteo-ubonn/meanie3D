@@ -3,7 +3,7 @@
 
 #include <meanie3D/meanie3D.h>
 #include <cf-algorithms/cf-algorithms.h>
-#include "variable_weighed.h"
+
 #include "variable_weighed_impl.h"
 
 template<class T>
