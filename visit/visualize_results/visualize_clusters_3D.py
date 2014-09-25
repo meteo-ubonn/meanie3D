@@ -17,7 +17,7 @@ from subprocess import call
 
 # General parameters
 VAR_NAME="cband_oase_zh"
-VAR_MIN=35
+VAR_MIN=20
 VAR_MAX=65
 
 # Control
@@ -32,7 +32,7 @@ CREATE_SOURCE_MOVIE=True
 CREATE_CLUSTERS_MOVIE=True
 
 # Stretching data and objects for better 3D impression
-SCALE_FACTOR_Z=5.0
+SCALE_FACTOR_Z=3.0
 
 # 'local'    covers cologne/bonn/juelich area.
 # 'national' covers Germany area

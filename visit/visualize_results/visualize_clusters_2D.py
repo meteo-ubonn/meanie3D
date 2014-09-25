@@ -16,8 +16,11 @@ import visitUtils
 from subprocess import call
 
 # General parameters
+#VAR_NAME = "cband_radolan_rx"
+#VAR_MIN = 20;
+#VAR_MAX = 65;
 VAR_NAME = "RX"
-VAR_MIN = 15;
+VAR_MIN = 35;
 VAR_MAX = 65;
 
 # Control
@@ -28,7 +31,7 @@ WITH_RIVERS_AND_BOUNDARIES=True
 WITH_SOURCE_BACKROUND=False
 WITH_DATETIME=True
 
-CREATE_SOURCE_MOVIE=False
+CREATE_SOURCE_MOVIE=True
 CREATE_CLUSTERS_MOVIE=True
 
 # Conversion program params
@@ -152,7 +155,7 @@ for netcdf_file in netcdf_files:
         return_code = call( command, shell=True)
 
         print "    done. (%.2f seconds)" % (time.time()-start_time)
-
+        
         if WITH_TOPOGRAPHY:
             print "-- Adding topography data --"
             visit2D.add_topography("national_topo_2D")
