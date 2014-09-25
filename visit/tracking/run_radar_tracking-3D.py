@@ -20,9 +20,9 @@ except ImportError as e:
 VAR_NAME="cband_oase_zh"
 
 DETECT_PARAMS      = " -s "+PARAM_T
-DETECT_PARAMS     += " --lower-thresholds "+VAR_NAME+"=35"
+DETECT_PARAMS     += " --lower-thresholds "+VAR_NAME+"=20"
 DETECT_PARAMS     += " --upper-thresholds "+VAR_NAME+"=75"
-DETECT_PARAMS     += " -m 10"
+DETECT_PARAMS     += " -m 64"
 
 CLUSTERING_PARAMS =  "-d z,y,x --vtk-dimensions x,y,z"
 CLUSTERING_PARAMS += " --verbosity 1"
