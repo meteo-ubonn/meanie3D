@@ -2,6 +2,9 @@
 #define _M3D_TEST_FS_CLUSTERING_IMPL_H_
 
 #include <meanie3D/meanie3D.h>
+#include <cf-algorithms/cf-algorithms.h>
+#include "variable_weighed.h"
+#include "variable_weighed_impl.h"
 
 template<class T>
 void FSClusteringTest2D<T>::write_cloud( const NcVar &var, vector<T> mean, vector<T> deviation )

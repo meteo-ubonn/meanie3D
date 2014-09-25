@@ -414,7 +414,7 @@ namespace m3D {
         {
             Point<T> *p = points[i];
             
-            result += w->operator()(p->coordinate);
+            result += w->operator()(p->gridpoint);
         }
         
         if (!points.empty())

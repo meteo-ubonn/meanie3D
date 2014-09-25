@@ -19,8 +19,6 @@
 #include "cluster.h"
 #include "cluster_list.h"
 
-#define DEBUG_GRAPH_AGGREGATION 1
-
 namespace m3D {
 
     using namespace std;
@@ -1109,10 +1107,7 @@ namespace m3D {
         
         if (show_progress)
         {
-#if DEBUG_ZEROSHIFT_CLUSTERS
-            cout << "Found " << clusters.size() << "zeroshift clusters" << endl;
-            cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
-#endif
+            cout << "done (found " << clusters.size() << " zero-shift clusters in " << stop_timer() << "s)." << endl;
             delete progress;
         }
     }
@@ -1194,13 +1189,16 @@ namespace m3D {
             progress = new boost::progress_display( fs->points.size() );
         }
         
-        #if WITH_OPENMP
-        #pragma omp parallel for schedule(dynamic)
-        #endif
+//        #if WITH_OPENMP
+//        #pragma omp parallel for schedule(dynamic)
+//        #endif
         for ( size_t i = 0; i < fs->points.size(); i++ )
         {
             if (show_progress)
             {
+//                #if WITH_OPENMP
+//                #pragma omp critical
+//                #endif
                 progress->operator++();
             }
             
@@ -1223,6 +1221,12 @@ namespace m3D {
             }
             catch (std::invalid_argument &e)
             {
+                #if DEBUG_GRAPH_AGGREGATION
+                        cout << "gridpoint=" << current_point->gridpoint 
+                                << " + gridded_shift = " << current_point->gridded_shift
+                                << " = " << gridpoint
+                                << " which caused exception " << e.what() << endl;
+                #endif
             }
 
             // Start testing
@@ -1248,9 +1252,9 @@ namespace m3D {
                     // Neither point has a cluster
                     // => create new one
 
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
+//                    #if WITH_OPENMP
+//                    #pragma omp critical
+//                    #endif
                     {
                         typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->rank());
                         c->id = cluster_id++;
@@ -1268,7 +1272,11 @@ namespace m3D {
                     // current point has no cluster, but predecessor has one
                     // => add current point to predecessor's cluster
                     
+//                    #if WITH_OPENMP
+//                    #pragma omp critical
+//                    #endif
                     predecessor->cluster->add_point(current_point);
+                    
                     #if DEBUG_GRAPH_AGGREGATION
                         cout << "added current point to cluster " << predecessor->cluster
                              << " (" << predecessor->cluster->points.size() << " points)" << endl;
@@ -1279,9 +1287,9 @@ namespace m3D {
                     // current point has a cluster, but predecessor has none
                     // => add predecessor to current point's cluster
                     
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
+//                    #if WITH_OPENMP
+//                    #pragma omp critical
+//                    #endif
                     current_point->cluster->add_point(predecessor);
 
                     #if DEBUG_GRAPH_AGGREGATION
@@ -1316,9 +1324,9 @@ namespace m3D {
                              << endl;
                     #endif
                     
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
+//                    #if WITH_OPENMP
+//                    #pragma omp critical
+//                    #endif
                     {
                         // absorb predecessor
                         merged->add_points(mergee->points,false);

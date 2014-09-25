@@ -13,7 +13,6 @@ sys.path.append(M3D_HOME+"/visit/modules")
 import glob
 import os
 import time
-#import visit2D
 import visit2D
 import visitUtils
 from subprocess import call

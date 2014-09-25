@@ -271,8 +271,6 @@ namespace m3D {
 #pragma mark -
 #pragma mark Coalescence Merging
         
-        
-        
         /** @return weight function response at the cluster mode
          */
         T modal_weight_response(const WeightFunction<T> *w) const;

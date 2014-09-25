@@ -79,7 +79,6 @@ void parse_commmandline(program_options::variables_map vm,
     if ( vm.count("variable") == 0 )
     {
         cerr << "Missing 'variable' argument" << endl;
-        
         exit( 1 );
     }
     else
@@ -318,10 +317,15 @@ int main(int argc, char** argv)
         program_options::store( program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
     }
+    catch (const netCDF::exceptions::NcException &e) 
+    {
+        cerr << "NetCDF exception:" << e.what() << endl;
+        exit(-1);
+    }
     catch (std::exception &e)
     {
         cerr << "Error parsing command line: " << e.what() << endl;
-        cerr << "Check meanshift_clustering --help for command line options" << endl;
+        cerr << "Check meanie3D-cfm2vtk --help for command line options" << endl;
         exit(-1);
     }
     
@@ -368,8 +372,14 @@ int main(int argc, char** argv)
                 break;
         }
     }
+    catch (const netCDF::exceptions::NcException &e) 
+    {
+        cerr << "NetCDF exception:" << e.what() << endl;
+        exit(-1);
+    }
     catch (const std::exception &e)
     {
+        cerr << "std::exception:" << e.what() << endl;
         cerr << e.what() << endl;
         exit(-1);
     }

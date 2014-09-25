@@ -177,7 +177,7 @@ namespace m3D {
                 
                 vector<T> spatial_shift = m_fs->spatial_component(x->shift);
                 
-                x->gridded_shift = m_fs->coordinate_system->rounded_gridpoint(spatial_shift);
+                x->gridded_shift = m_fs->coordinate_system->to_gridpoints(spatial_shift);
             }
             
             m_op->report_done();

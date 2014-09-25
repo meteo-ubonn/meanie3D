@@ -9,137 +9,134 @@
 #include <map>
 #include <cf-algorithms/cf-algorithms.h>
 
-namespace m3D { namespace weights {
-    
-    using namespace netCDF;
-    using namespace ::m3D;
-    using std::vector;
-    using std::map;
-    using cfa::array::MultiArray;
-    
-    template <class T>
-    class DefaultWeightFunction : public cfa::utils::WeightFunction<T>
-    {
-    protected:
-        
-        const FeatureSpace<T>       *m_fs;
-        
-        map<size_t,T>       m_min;
-        map<size_t,T>       m_max;
-        MultiArray<T>       *m_weight;
-        
-        void
-        calculate_weight_function(const FeatureSpace<T> *fs)
-        {
-            for (size_t i=0; i < fs->points.size(); i++)
-            {
-                Point<T> *p = fs->points[i];
-                
-                T saliency = compute_weight(p);
-                
-                m_weight->set(p->gridpoint, saliency);
+namespace m3D {
+    namespace weights {
+
+        using namespace netCDF;
+        using namespace ::m3D;
+        using std::vector;
+        using std::map;
+        using cfa::array::MultiArray;
+
+        /** This weight function scales from [0..1]. The weight is calculated
+         * by iterating over all variables. For each variable a weight is 
+         * generated that varies from [0..1] as the variable goes from it's
+         * valid_min to valid_max (linear). The values are summed up and 
+         * divided by the number of variables. 
+         */
+        template <class T>
+        class DefaultWeightFunction : public cfa::utils::WeightFunction<T> {
+        private:
+
+            const FeatureSpace<T> *m_fs;
+            map<size_t, T> m_min;
+            map<size_t, T> m_max;
+            MultiArray<T> *m_weight;
+
+        public:
+
+            /** Construct the weight function, using the default values
+             * for valid_min/valid_max
+             * @param featurespace
+             */
+            DefaultWeightFunction(const FeatureSpace<T> *fs)
+            : m_fs(fs)
+            , m_min(fs->min())
+            , m_max(fs->max())
+            , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0)) {
+                calculate_weight_function(fs);
             }
-        };
-        
-    public:
-        
-        /** Construct the weight function, using the default values
-         * for valid_min/valid_max
-         * @param featurespace
-         */
-        DefaultWeightFunction(const FeatureSpace<T> *fs)
-        : m_fs(fs)
-        , m_min(fs->min())
-        , m_max(fs->max())
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
-        {
-            calculate_weight_function(fs);
-        }
-        
-        /** Construct the weight function, using the given values
-         * for valid_min/valid_max
-         * @param featurespace
-         * @param map of lower bounds
-         * @param map of upper bounds
-         */
-        DefaultWeightFunction(FeatureSpace<T> *fs,
-                              const DataStore<T> *data_store,
-                              const map<size_t,T> &min,
-                              const map<size_t,T> &max)
-        : m_fs(fs)
-        , m_min(min)
-        , m_max(max)
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes()))
-        {
-            calculate_weight_function(fs);
-        }
-        
-        ~DefaultWeightFunction()
-        {
-            if (this->m_weight != NULL) {
-                delete m_weight;
-                m_weight=NULL;
+
+            /** Construct the weight function, using the given values
+             * for valid_min/valid_max
+             * @param featurespace
+             * @param map of lower bounds
+             * @param map of upper bounds
+             */
+            DefaultWeightFunction(FeatureSpace<T> *fs,
+                    const DataStore<T> *data_store,
+                    const map<size_t, T> &min,
+                    const map<size_t, T> &max)
+            : m_fs(fs)
+            , m_min(min)
+            , m_max(max)
+            , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0)) {
+                calculate_weight_function(fs);
             }
-        }
-        
-        /** Actual weight computation happens here
-         */
-        virtual T compute_weight(Point<T> *p)
-        {
-            T sum = 0.0;
+
+            ~DefaultWeightFunction() {
+                if (this->m_weight != NULL) {
+                    delete m_weight;
+                    m_weight = NULL;
+                }
+            }
             
-            for (size_t var_index = 0; var_index < m_fs->value_rank(); var_index++)
+        private:
+                
+            void
+            calculate_weight_function(const FeatureSpace<T> *fs)
             {
-                T value = p->values.at(m_fs->spatial_rank()+var_index);
-                
-                // value scaled to [0..1]
-                
-                T range = (m_max[var_index] - m_min[var_index]);
-                
-                T var_weight = (value - m_min[var_index]) / range;
-                
-                if (var_weight > 1)
+    //            #if WITH_OPENMP
+    //            #pragma omp parallel for 
+    //            #endif
+                for (size_t i=0; i < fs->points.size(); i++)
                 {
-                    cerr << "ERROR: weight function at " << p->coordinate << " returns " << var_weight << endl;
+                    Point<T> *p = fs->points[i];
+
+                    T saliency = (fs->off_limits()->get(p->gridpoint)) ? 0.0 : compute_weight(p->values);
+
+    //                #if WITH_OPENMP
+    //                #pragma omp critical 
+    //                #endif
+                    m_weight->set(p->gridpoint, saliency);
+                }
+            };
+
+            /** Actual weight computation happens here
+             */
+            
+            T compute_weight(const vector<T> &values) const
+            {
+                T sum = 0.0;
+
+                for (size_t var_index = 0; var_index < m_fs->value_rank(); var_index++) 
+                {
+                    T value = values.at(m_fs->spatial_rank() + var_index);
+
+                    // value scaled to [0..1]
+                    T max = m_max.find(var_index)->second;
+                    T min = m_min.find(var_index)->second;
+                    T var_weight = (value - min) / (max - min);
+                    sum += var_weight;
                 }
 
-                sum += var_weight; //pow(var_weight, 1.0);
+                return sum / ((T)m_fs->value_rank());
             }
             
-            return sum;
-        }
-        
-        /** unfavorable, since it performs a reverse lookup, which is a very
-         * time-consuming operation. Use grid points where possible.
-         */
-        T operator()( const vector<T> &values ) const
-        {
-            typename CoordinateSystem<T>::GridPoint gp
-                = m_fs->coordinate_system->newGridPoint();
+        public:
             
-            try
-            {
-                m_fs->coordinate_system->reverse_lookup(values,gp);
+            /** Unfavorable, because it calculates the value
+             * fresh at each point
+             * @return weight
+             */
+            T operator()(const vector<T> &values) const {
+                return this->compute_weight(values);
             }
-            catch (std::out_of_range& e)
-            {
-                cerr << "Reverse coordinate transformation failed for coordinate=" << values << endl;
-            }
-            
-            return m_weight->get(gp);
-        }
-        
-        T operator()(const typename Point<T>::ptr p) const
-        {
-            return m_weight->get(p->gridpoint);
-        }
 
-        T operator()(const vector<int> &gridpoint) const
-        {
-            return m_weight->get(gridpoint);
-        }
-        
-    };
-}}
+            /** @return pre-calculated weight
+             */
+            T operator()(const typename Point<T>::ptr p) const {
+                return m_weight->get(p->gridpoint);
+            }
+
+            /** @return pre-calculated weight
+             */
+            T operator()(const vector<int> &gridpoint) const {
+                return m_weight->get(gridpoint);
+            }
+            
+        };
+    }
+}
 
 #endif
