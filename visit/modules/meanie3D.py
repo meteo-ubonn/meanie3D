@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Filename: meanie3D.py
 
-version = 'v1.3'
+version = 'v1.4'
 
 # This module contains some core functionality that
 # is re-used all over

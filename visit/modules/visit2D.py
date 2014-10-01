@@ -1,11 +1,17 @@
 #!/usr/bin/python
 # Filename: visit2D.py
 
-version = 'v1.3'
+version = 'v1.4'
 
 from visit import *
+import sys
+sys.path.append(".")
 import glob
 import os
+import shutil
+import time
+import visitUtils
+from subprocess import call
 
 # This module bundles python routines for handling Visit3D
 # plotting more comfortably from the various visualization
@@ -298,4 +304,279 @@ def set_annotations():
     
     SetAnnotationAttributes(a)
 
-# End of visit2D.py
+# ------------------------------------------------------------------------------
+# Generic routine for visualizing 3D clusters in two perspectives
+#
+# TODO: control perspectives via configuration options
+#
+# The following configuration options exist:
+#
+# 'NETCDF_DIR' : directory with the source data files
+# 'CLUSTER_DIR' : directory with the cluster results
+# 'M3D_HOME' : home directory of meanie3D (for the mapstuff file and modules)
+# 'RESUME' : if true, the existing image files are not wiped and work is
+#            picked up where it left off. Otherwise all existing images
+#            are deleted and things are started from scratch
+# 'WITH_BACKGROUND_GRADIENT' : add a gray background gradient to the canvas?
+# 'WITH_TOPOGRAPHY' : use the topography data from the mapstuff file?
+# 'WITH_RIVERS_AND_BOUNDARIES' : add rivers and boundaries?
+# 'WITH_SOURCE_BACKROUND' : re-add the source data when plotting clusters?
+# 'WITH_DATETIME' : add a date/time label?
+# 'CREATE_SOURCE_MOVIE' : create a movie from the source images?
+# 'CREATE_CLUSTERS_MOVIE' : create a movie from the cluster images?
+# 'GRID_EXTENT' : "national" or "local"
+# 'CONVERSION_PARAMS' : parameters for meanie3D-cfm2vtk
+# 'VARIABLES' : list of variables for the source data
+# 'LOWER_TRESHOLDS' : bottom cutoff for each variable,
+# 'UPPER_TRESHOLDS' : top cutoff for each variable,
+# 'VAR_MIN' : lowest value on legend
+# 'VAR_MAX' : highest value on legend
+# 'COLORTABLES' : colortable to use for each variable
+# 'COLORTABLES_INVERT_FLAGS' : flag indicating inversion of colortable
+#                              for each variable
+# 'OPACITY' : opacity to use for each variable
+# ------------------------------------------------------------------------------
+def visualization(conf):
+
+    DYLD_LIBRARY_PATH="/usr/local/lib:/usr/lib"
+    bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
+    conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
+
+    # Silent
+    SuppressMessages(True)
+    SuppressQueryOutputOn()
+
+    # Set view and annotation attributes
+
+    print "Setting annotation attributes:"
+    set_annotations()
+
+    if conf['RESUME'] == False:
+        print "Removing results from previous runs"
+        shutil.rmtree('images')
+        shutil.rmtree('movies')
+        return_code=call("rm -f *.vtk *.vtr *.png", shell=True)
+    else:
+        print "Removing intermediary files from previous runs"
+        return_code=call("rm -f *.vtk *.vtr", shell=True)
+
+    # Set view to nationwide composite
+    set_view_to_radolan();
+
+    print "-- Creating colortables ---"
+    num_colors = visitUtils.create_cluster_colortable("cluster_colors")
+
+    if conf['WITH_TOPOGRAPHY']:
+        visitUtils.create_topography_colortable()
+
+    if conf['WITH_BACKGROUND_GRADIENT']:
+        visitUtils.add_background_gradient();
+
+    # Glob the netcdf directory
+    netcdf_files = sorted(glob.glob(conf['NETCDF_DIR']+"/*.nc"));
+
+    print "Processing files in directory " + conf['NETCDF_DIR']
+
+    # Keep track of number of images to allow
+    # forced re-set in time to circumvent the
+    # Visit memory leak
+    image_count=0
+
+    for netcdf_file in netcdf_files:
+        
+        # construct the cluster filename and find it
+        # in the cluster directory
+        
+        netcdf_path,filename    = os.path.split(netcdf_file);
+        basename                = os.path.splitext(filename)[0]
+        
+        cluster_file            = conf['CLUSTER_DIR']+"/"+basename+"-clusters.nc"
+        label_file              = basename+"-clusters_centers.vtk"
+        
+        # check if the files both exist
+        print "Visualzing file "+netcdf_file+" and cluster file "+cluster_file
+        if not os.path.exists(cluster_file):
+            print "Cluster file does not exist. Skipping."
+            continue
+        
+        # predict the filenames for checking on resume
+        number_postfix = str(image_count).rjust(4,'0') + ".png";
+        
+        source_open = False
+        skip_source = False
+        
+        if conf['RESUME'] == True:
+            fn = "source_" + number_postfix
+            if os.path.exists(fn):
+                print "Skipping existing file " + fn
+                skip_source = True
+        
+        if skip_source == False:
+
+            if conf['CREATE_SOURCE_MOVIE']:
+    
+                OpenDatabase(netcdf_file);
+                source_open = True
+
+                if conf['WITH_TOPOGRAPHY']:
+                    print "-- Adding topography data --"
+                    add_topography("national_topo_2D")
+                
+                if conf['WITH_RIVERS_AND_BOUNDARIES']:
+                    print "-- Adding map data --"
+                    add_map_rivers("national")
+                    add_map_borders("national")
+                
+                if conf['WITH_DATETIME']:
+                    print "-- Adding timestamp --"
+                    visitUtils.add_datetime(netcdf_file)
+                
+                print "-- Plotting source data --"
+                start_time = time.time()
+                
+                variables = conf['VARIABLES']
+                
+                for i in range(len(variables)):
+                    
+                    add_pseudocolor(netcdf_file,
+                                    conf['VARIABLES'][i],
+                                    conf['COLORTABLES'][i],
+                                    conf['OPACITY'][i],1)
+                    p = PseudocolorAttributes()
+                    p.minFlag,p.maxFlag=1,1
+                    p.min,p.max=conf['VAR_MIN'][i],conf['VAR_MAX'][i]
+                    p.invertColorTable = conf['COLORTABLES_INVERT_FLAGS'][i]
+                    SetPlotOptions(p)
+                    
+                    AddOperator("Threshold")
+                    t = ThresholdAttributes();
+                    t.lowerBounds=(conf['LOWER_TRESHOLDS'][i])
+                    t.upperBounds=(conf['UPPER_TRESHOLDS'][i])
+                    SetOperatorOptions(t)
+
+                DrawPlots();
+                visitUtils.save_window("source_",1)
+                DeleteAllPlots()
+                ClearWindow()
+                
+                print "    done. (%.2f seconds)" % (time.time()-start_time)
+        
+        if conf['CREATE_CLUSTERS_MOVIE']:
+            
+            skip = False
+                
+            if conf['RESUME'] == True:
+                fn = "tracking_" + number_postfix
+                
+                if os.path.exists(fn):
+                    print "Skipping existing files " + fn
+                    skip = True
+
+            if skip == False:
+
+                start_time = time.time()
+                print "-- Converting clusters to .vtr --"
+                
+                # build the clustering command
+                command=conversion_bin+" -f "+cluster_file+" "+conf['CONVERSION_PARAMS']
+                print command
+                return_code = call( command, shell=True)
+                
+                print "    done. (%.2f seconds)" % (time.time()-start_time)
+                
+                if conf['WITH_TOPOGRAPHY']:
+                    print "-- Adding topography data --"
+                    add_topography("national_topo_2D")
+                
+                if conf['WITH_RIVERS_AND_BOUNDARIES']:
+                    print "-- Adding map data --"
+                    add_map_rivers("national")
+                    add_map_borders("national")
+                
+                if conf['WITH_DATETIME']:
+                    print "-- Adding timestamp --"
+                    visitUtils.add_datetime(netcdf_file)
+                
+                print "-- Rendering cluster scene --"
+                start_time = time.time()
+                
+                if conf['WITH_SOURCE_BACKROUND']:
+                    
+                    if not source_open:
+                        OpenDatabase(netcdf_file);
+                        source_open = True
+                    
+                    for i in range(len(variables)):
+                        
+                        add_pseudocolor(netcdf_file,
+                                        conf['VARIABLES'][i],
+                                        conf['COLORTABLES'][i],
+                                        conf['OPACITY'][i],1)
+                                        
+                        p = PseudocolorAttributes()
+                        p.invertColorTable = conf['COLORTABLES_INVERT_FLAGS'][i]
+                        p.minFlag,p.maxFlag=1,1
+                        p.min,p.max=conf['VAR_MIN'][i],conf['VAR_MAX'][i]
+                        SetPlotOptions(p)
+                        
+                        AddOperator("Threshold")
+                        t = ThresholdAttributes();
+                        t.lowerBounds=(conf['LOWER_TRESHOLDS'][i])
+                        t.upperBounds=(conf['UPPER_TRESHOLDS'][i])
+                        SetOperatorOptions(t)
+
+                # Add the clusters
+                basename = conf['CLUSTER_DIR']+"/"
+                add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
+
+                # Add modes as labels
+                visitUtils.add_labels(label_file,"geometrical_center")
+                
+                # save as image
+                DrawPlots()
+                
+                visitUtils.save_window("tracking_",1)
+                image_count=image_count+1;
+                
+                print "    done. (%.2f seconds)" % (time.time()-start_time)
+        
+        # clean up
+        DeleteAllPlots();
+        ClearWindow()
+        
+        if source_open:
+            CloseDatabase(netcdf_file)
+        CloseDatabase(label_file)
+        visitUtils.close_pattern(basename+"*.vtr")
+        visitUtils.close_pattern(basename+"*.vtk")
+        return_code=call("rm -f *.vt*", shell=True)
+        
+        # periodically kill computing engine to
+        # work around the memory leak fix
+        image_count=image_count+1;
+        if image_count % 100 == 0:
+            CloseComputeEngine()
+
+    # Close mapstuff
+    close_topography()
+
+    # create loops
+    if conf['CREATE_SOURCE_MOVIE']:
+        visitUtils.create_movie("source_","source.gif")
+        visitUtils.create_movie("source_","source.m4v")
+
+    if conf['CREATE_CLUSTERS_MOVIE']:
+        visitUtils.create_movie("tracking_","tracking.gif")
+        visitUtils.create_movie("tracking_","tracking.m4v")
+
+    # clean up
+    print "Cleaning up ..."
+    return_code=call("mkdir images", shell=True)
+    return_code=call("mv *.png images", shell=True)
+    return_code=call("mkdir movies", shell=True)
+    return_code=call("mv *.gif *.m4v movies", shell=True)
+    return_code=call("rm -f *.vt* visitlog.py", shell=True)
+
+    return
+
+

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Filename: visitUtils.py
 
-version = 'v1.3'
+version = 'v1.4'
 
 from visit import *
 import glob
@@ -254,28 +254,5 @@ def create_dual_panel(basename_left,basename_right,basename_combined):
     call("rm dateblind.png",shell=True)
 
     return
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # End of visitUtils.py
