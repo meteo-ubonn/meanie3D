@@ -738,7 +738,8 @@ namespace m3D {
             cerr << e.what() << endl;
         }
         
-        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, source_file, false);
+        
+        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, path, false);
         
         cl->clusters  = list;
         cl->ncFile = file;
