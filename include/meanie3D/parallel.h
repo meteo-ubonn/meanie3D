@@ -1,24 +1,21 @@
-/* 
- * File:   parallel.h
- * Author: simon
- *
- * Created on September 15, 2014, 9:52 PM
- */
+#ifndef M3D_PARALL_H
+#define	M3D_PARALL_H
 
-#ifndef PARALL_H
-#define	PARALL_H
-
-#if WITH_TBB
-#include <tbb/tbb.h>
+#if WITH_OPENMP
+    #include <omp.h>
 #endif
 
 #if WITH_BOOST_THREADS
-#include <boost/thread.hpp>
+    #include <boost/thread.hpp>
+    #define PROVIDE_MUTEX 1
+    #define PROVIDE_THREADSAFETY 1
 #endif
 
-#if WITH_OPENMP
-#include <omp.h>
+#ifdef WITH_TBB
+    #include <tbb/tbb.h>
+    #define PROVIDE_MUTEX 1
+    #define PROVIDE_THREADSAFETY 1
 #endif
 
-#endif	/* PARALLEL_H */
+#endif	
 

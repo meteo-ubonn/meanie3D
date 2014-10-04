@@ -1,5 +1,5 @@
-#ifndef _VERBOSITY_H_
-#define _VERBOSITY_H_
+#ifndef M3D_VERBOSITY_H
+#define M3D_VERBOSITY_H
 
 namespace m3D { namespace utils {
 

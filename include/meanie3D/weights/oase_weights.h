@@ -1,73 +1,75 @@
-#ifndef _M3D_OASEWeightFunction_H_
-#define _M3D_OASEWeightFunction_H_
+#ifndef M3D_OASEWEIGHTFUNCTION_H
+#define M3D_OASEWEIGHTFUNCTION_H
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+#include <meanie3D/utils.h>
+#include <meanie3D/weights/weight_function.h>
+#include <meanie3D/index/search_parameters.h>
+#include <meanie3D/operations/kernels.h>
 
 #include <netcdf>
 #include <vector>
 #include <map>
-#include <cf-algorithms/cf-algorithms.h>
 
-namespace m3D { namespace weights {
-    
+namespace m3D {
+
     using namespace netCDF;
     using namespace ::m3D;
     using std::vector;
     using std::map;
-    using cfa::utils::CoordinateSystem;
-    
+
     template <class T>
-    class OASEWeightFunction : public cfa::utils::WeightFunction<T>
+    class OASEWeightFunction : public WeightFunction<T>
     {
     private:
-        
+
         vector<string>      m_vars;             // variables for weighting
         map<size_t,T>       m_min;              // [index,min]
         map<size_t,T>       m_max;              // [index,max]
         MultiArray<T>       *m_weight;
         const CoordinateSystem<T> *m_coordinate_system;
-        
+
         // Weight function with range weight
-        
+
         PointIndex<T>       *m_index;           // index for range search
         vector<T>           m_bandwidth;        // bandwidth for range weight
         SearchParameters    *m_search_params;   // search params for search
         Kernel<T>           *m_kernel;          // kernel for weighing 
-                
+
         void
         calculate_weight_function(FeatureSpace<T> *fs)
         {
             size_t spatial_dim = fs->coordinate_system->rank();
-            
+
             vector<size_t> indexes(spatial_dim);
-            
+
             for (size_t i=0; i<spatial_dim; i++) indexes[i]=i;
 
             m_index = PointIndex<T>::create( &fs->points, indexes );
-            
+
             m_kernel = new GaussianNormalKernel<T>(vector_norm(m_bandwidth));
-            
+
             m_search_params = new RangeSearchParams<T>(m_bandwidth);
-            
+
             for (size_t i=0; i < fs->points.size(); i++)
             {
                 Point<T> *p = fs->points[i];
-                
+
                 T saliency = this->compute_weight(p);
-                
+
                 m_weight->set(p->gridpoint, saliency);
             }
-            
+
             delete m_index;
-            
+
             delete m_kernel;
-            
+
             delete m_search_params;
         };
-        
+
     public:
-        
+
         /** Construct the weight function, using the default values
          * for valid_min/valid_max
          * @param featurespace
@@ -81,16 +83,16 @@ namespace m3D { namespace weights {
         , m_bandwidth(bandwidth)
         {
             // Get original limits
-            
+
             for ( size_t index = 0; index < m_vars.size(); index++ )
             {
                 m_min[index] = data_store->min(index);
                 m_max[index] = data_store->max(index);
             }
-            
+
             calculate_weight_function(fs);
         }
-        
+
         /** Construct the weight function, using the given values
          * for valid_min/valid_max
          * @param featurespace
@@ -111,7 +113,7 @@ namespace m3D { namespace weights {
         {
             calculate_weight_function(fs);
         }
-        
+
         ~OASEWeightFunction()
         {
             if (this->m_weight != NULL) {
@@ -120,7 +122,7 @@ namespace m3D { namespace weights {
             }
         }
 
-        
+
         /** Calculate the unweighed weight at point p from 
          * cloud type, 10.8um, cband_radolan, cloud optical 
          * thickness and lightning counts
@@ -247,56 +249,56 @@ namespace m3D { namespace weights {
 //                    sum += var_weight;
                 }
             }            
-            
+
             return sum;
         }
-        
-        
+
+
         T convective_initiation_weight(Point<T> *p)
         {
-            
+
         }
-       
-        
+
+
         /** Actual weight computation happens here
          */
         T compute_weight(Point<T> *p)
         {
-            
+
 
             typename Point<T>::list *neighbors = m_index->search(p->coordinate,m_search_params);
-            
+
             T weight = 0;
-            
+
             for (size_t pi = 0; pi < neighbors->size(); pi++)
             {
                 typename Point<T>::ptr n = neighbors->at(pi);
-                
+
                 // calculate weight at that point
-                
+
                 T point_weight = weight_version_one(n);
-                
+
                 // calculate distance between n and p
-                
+
                 T dist = vector_norm(p->coordinate - n->coordinate);
-                
+
                 // calculate gaussian weighed sum 
 
                 weight += m_kernel->apply(dist) * point_weight;
             }
-            
+
             delete neighbors;
-            
+
             return weight;
         }
-        
+
         /** unfavorable, since it performs a reverse lookup, which is a very
          * time-consuming operation. Use grid points where possible.
          */
         T operator()( const vector<T> &values ) const
         {
             typename CoordinateSystem<T>::GridPoint gp = this->m_coordinate_system->newGridPoint();
-            
+
             try
             {
                 this->m_coordinate_system->reverse_lookup(values,gp);
@@ -304,26 +306,23 @@ namespace m3D { namespace weights {
             catch (std::out_of_range& e)
             {
                 cerr << "Reverse coordinate transformation failed for coordinate=" << values << endl;
-                
+
                 return 0.0;
             }
-            
+
             return m_weight->get(gp);
         }
-        
+
         T operator()(const typename Point<T>::ptr p) const
         {
             return m_weight->get(p->gridpoint);
         }
-        
+
         T operator()(const vector<int> &gridpoint) const
         {
             return m_weight->get(gridpoint);
         }
-        
     };
-
-    
-}}
+}
 
 #endif

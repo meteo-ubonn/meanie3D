@@ -1,10 +1,8 @@
-#ifndef _M3D_FeatureSpaceFilter_H_
-#define _M3D_FeatureSpaceFilter_H_
+#ifndef M3D_FEATURESPACEFILTER_H
+#define M3D_FEATURESPACEFILTER_H
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-
-#include <cf-algorithms/cf-algorithms.h>
 
 namespace m3D {
 
@@ -13,27 +11,27 @@ namespace m3D {
     template <class T>
     class FeatureSpaceFilter
     {
-        
+
     private:
-        
+
         bool    m_show_progress;
-        
+
     public:
-        
+
 #pragma mark -
 #pragma mark Constructor/Destructor
-        
+
         /** Default constructor
          */
         FeatureSpaceFilter(bool show_progress) : m_show_progress(show_progress) {};
-        
+
         /** Destructor 
          */
         virtual ~FeatureSpaceFilter() {};
 
 #pragma mark -
 #pragma mark Accessors
-        
+
         bool show_progress() { return m_show_progress; };
 
 #pragma mark -
@@ -46,7 +44,6 @@ namespace m3D {
          */
         virtual void apply( FeatureSpace<T> *fs ) = 0;
     };
-    
 }
 
 #endif

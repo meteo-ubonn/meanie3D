@@ -1,8 +1,13 @@
-#ifndef _M3D_ScaleSpaceKernel_Impl_H_
-#define _M3D_ScaleSpaceKernel_Impl_H_
+#ifndef M3D_SCALESPACEKERNEL_IMPL_H
+#define M3D_SCALESPACEKERNEL_IMPL_H
+
+#include <meanie3D/defines.h>
+#include <meanie3D/namespaces.h>
+
+#include "scalespace_kernel.h"
 
 namespace m3D {
-    
+
     template <typename T>
     ScaleSpaceKernel<T>::ScaleSpaceKernel(const T& t)
         : m_t(t)
@@ -23,7 +28,7 @@ namespace m3D {
             m_values[i] = this->value(distances[i]);
         }
     }
-    
+
     template <typename T>
     ScaleSpaceKernel<T>::ScaleSpaceKernel(const ScaleSpaceKernel<T> &o)
         : m_t(o.m_t)
@@ -31,27 +36,27 @@ namespace m3D {
         , m_values(o.m_values)
     {
     }
-    
+
     template <typename T>
     ScaleSpaceKernel<T>::~ScaleSpaceKernel() {}
-    
+
     template <typename T>
     ScaleSpaceKernel<T>
     ScaleSpaceKernel<T>::operator = ( const ScaleSpaceKernel<T>& other )
     {
         return ScaleSpaceKernel<T>(other);
     }
-    
+
 #pragma mark -
 #pragma mark Accessors
-    
+
     template <typename T>
     const vector<T>&
     ScaleSpaceKernel<T>::values()
     {
         return m_values;
     }
-    
+
     template <typename T>
     bool
     ScaleSpaceKernel<T>::isPreSampled()
@@ -59,7 +64,7 @@ namespace m3D {
         return m_values.size() > 0;
     }
 
-    
+
 #pragma mark -
 #pragma mark Calculation
 
@@ -69,14 +74,14 @@ namespace m3D {
     {
         return m_values[index];
     }
-    
+
     template <typename T>
     const T
     ScaleSpaceKernel<T>::value(T r)
     {
         return m_gauging_factor * std::exp(-(r*r)/(2*m_t));
     }
-    
+
 }
 
 #endif
