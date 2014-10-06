@@ -123,8 +123,6 @@ namespace m3D {
         {
             NcFile *file = NULL;
 
-            NcFile sourcefile(this->source_file,NcFile::read);
-
             this->filename = std::string(path);
 
             bool file_existed = boost::filesystem::exists(path);
@@ -215,10 +213,14 @@ namespace m3D {
             netcdf::add_time(file,this->timestamp,true);
 
             // feature variables
+            
+            NcFile *sourcefile = file_existed 
+                    ? new NcFile(path.c_str(),NcFile::read) 
+                    : new NcFile(this->source_file.c_str(),NcFile::read); 
 
             for ( size_t i=0; i < this->feature_variables.size(); i++ )
             {
-                NcVar var = sourcefile.getVar(this->variable_names[i]);
+                NcVar var = sourcefile->getVar(this->variable_names[i]);
 
                 // cout << "Copying " << var.getName() << endl;
 
@@ -727,8 +729,7 @@ namespace m3D {
             cerr << e.what() << endl;
         }
 
-
-        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, path, false);
+        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, source_file, false);
 
         cl->clusters  = list;
         cl->ncFile = file;

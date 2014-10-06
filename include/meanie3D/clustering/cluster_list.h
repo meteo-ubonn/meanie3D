@@ -163,8 +163,13 @@ namespace m3D {
         , highest_id(0)
         , m_use_original_points_only(use_original_points_only)
         {
-            long timestamp = utils::netcdf::get_time<long>(sourcefile);
-            this->set_time_in_seconds(::units::values::s(timestamp));
+            try 
+            {
+                long timestamp = utils::netcdf::get_time<long>(sourcefile);
+                this->set_time_in_seconds(::units::values::s(timestamp));
+            }
+            catch (runtime_error &e)
+            {}
         };
 
         /** @constructor
@@ -188,8 +193,13 @@ namespace m3D {
         , highest_id(0)
         , m_use_original_points_only(true)
         {
-            long timestamp = utils::netcdf::get_time<long> (sourcefile);
-            this->set_time_in_seconds(::units::values::s(timestamp));
+            try 
+            {
+                long timestamp = utils::netcdf::get_time<long>(sourcefile);
+                this->set_time_in_seconds(::units::values::s(timestamp));
+            }
+            catch (netCDF::exceptions::NcException &e)
+            {}
         };
 
         /** Destructor
