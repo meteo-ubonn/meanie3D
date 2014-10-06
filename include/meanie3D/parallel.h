@@ -5,7 +5,7 @@
     #include <omp.h>
 #endif
 
-#ifdef WITH_TBB
+#if WITH_TBB
     #include <tbb/tbb.h>
     #define PROVIDE_MUTEX 1
     #define PROVIDE_THREADSAFETY 1
