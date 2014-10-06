@@ -141,42 +141,7 @@ namespace m3D {
             return cluster_list;
         }
 
-#if WITH_BOOST_THREADS
-
-        // TODO: find some dynamic way to this number
-        static const size_t NUMBER_OF_CLUSTERING_THREADS = 20;
-
-        m_cluster_threadcount = 0;
-        size_t num_threads = 0;
-        size_t points_per_thread = points.size() / NUMBER_OF_CLUSTERING_THREADS;
-
-        // create the threads
-
-        for ( size_t i = 0; i < NUMBER_OF_CLUSTERING_THREADS; i++ )
-        {
-            size_t start_index = i * points_per_thread;
-
-            size_t end_index = (( i < NUMBER_OF_CLUSTERING_THREADS - 1 ) ? ( i + 1 ) * points_per_thread - 1 : points.size());
-
-            boost::thread thread( ClusterTask<T>(this->feature_space,
-                                                 this->point_index,
-                                                 this, &cluster_list,
-                                                 weight_index,
-                                                 this->feature_space->size(),
-                                                 params,
-                                                 kernel,
-                                                 weight_function,
-                                                 drf_threshold,
-                                                 show_progress_bar) );
-            thread.detach();
-
-            num_threads++;
-        }
-
-        // Wait until cluster progress is 100%
-        while ( m_cluster_threadcount < num_threads ) {};
-
-#elif WITH_TBB
+#if WITH_TBB
 
         // perform one search operation on the index
         // in order to pre-empt the index building
@@ -203,7 +168,7 @@ namespace m3D {
                      tbb::auto_partitioner() );
 
 #else
-        // Single threaded execution
+        // Single threaded execution (or OpenMP)
 
         ClusterTask<T> ct(this->feature_space,
                           this->point_index,

@@ -23,7 +23,7 @@ namespace m3D {
         // kdtree.c
         struct kdtree       *m_index;
 
-#if WITH_BOOST_THREADS
+#if PROVIDE_MUTEX
         // mutex objects for accessing kd_tree methods
         boost::mutex        m_mutex;
 #endif
@@ -165,7 +165,7 @@ namespace m3D {
 
                 if ( this->white_range != p->bandwidth || m_index == NULL )
                 {
-#if WITH_BOOST_THREADS
+#if PROVIDE_MUTEX
                     boost::mutex::scoped_lock( m_mutex );
 #endif
                     build_index( p->bandwidth );
@@ -191,7 +191,7 @@ namespace m3D {
                 pos[index] = xt[index];
             }
 
-#if WITH_BOOST_THREADS
+#if PROVIDE_MUTEX
             m_mutex.lock();
 #endif            
 
@@ -251,7 +251,7 @@ namespace m3D {
                 }
             }
 
-#if WITH_BOOST_THREADS
+#if PROVIDE_MUTEX
             m_mutex.unlock();
 #endif            
 
