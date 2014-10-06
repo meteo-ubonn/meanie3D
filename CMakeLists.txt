@@ -63,9 +63,18 @@ ENDIF(CMAKE_SYSTEM_NAME MATCHES Darwin)
 ADD_SUBDIRECTORY(radolan)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/radolan/include)
 
+# -------------------------------------
+# gtest
+# -------------------------------------
+
+INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
+
 # ------------------------------------- 
 # Multithreading / Parallelism Choices
 # -------------------------------------
+
+# Choose OpenMP by default
+SET(WITH_OPENMP 1)
 
 IF (WITH_TBB)
     ADD_DEFINITIONS(-DWITH_TBB=1)
@@ -169,16 +178,6 @@ ELSE(Boost_FOUND)
     MESSAGE(FATAL_ERROR ${Boost_ERROR_REASON})
 ENDIF()
 
-# GTest
-FIND_PACKAGE(GTest)
-IF(GTEST_FOUND)
-    INCLUDE_DIRECTORIES(${GTEST_INCLUDE_DIR})
-    ADD_DEFINITIONS(-DGTEST_HAS_TR1_TUPLE=0 -DGTEST_HAVE_OWN_TR1_TUPLE=0)
-ELSE(GTEST_FOUND)
-    MESSAGE(FATAL_ERROR "libgtest not found INCLUDE_DIR=${GTEST_INCLUDE_DIR} LIBRARIES=${GTEST_LIBRARIES}")
-    MESSAGE(FATAL_ERROR "did you specify -D GTEST_INCLUDE_DIR and -D GTEST_LIBRARIES ?")
-ENDIF(GTEST_FOUND)
-
 # FLANN
 FIND_PACKAGE(FLANN)
 IF (FLANN_FOUND)
@@ -234,14 +233,6 @@ IF (VTK_FOUND)
     INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
 ELSE()
     MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/VTK/resources/software.html)")
-ENDIF()
-
-# Shapefile
-FIND_PACKAGE(SHP)
-IF (SHP_FOUND)
-    INCLUDE_DIRECTORIES(${SHP_INCLUDE_DIRS})
-ELSE()
-   MESSAGE(FATAL_ERROR "Shapefile not found INCLUDE_DIR=${SHP_INCLUDE_DIR} LIBRARIES=${SHP_LIBRARIES}")
 ENDIF()
 
 # Blitz++
@@ -634,8 +625,7 @@ TARGET_LINK_LIBRARIES(meanie3D-mapdata
     ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES}
-    ${SHP_LIBRARIES})
+    ${VTK_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-mapdata PROPERTIES LINKER_LANGUAGE CXX)
 
 # timestamp update
@@ -688,8 +678,7 @@ ADD_EXECUTABLE(m3D-test-kernel
 
 TARGET_LINK_LIBRARIES(m3D-test-kernel
     meanie3D
-    ${Boost_LIBRARIES}
-    ${GTEST_LIBRARIES})
+    ${Boost_LIBRARIES})
 SET_TARGET_PROPERTIES(m3D-test-kernel PROPERTIES LINKER_LANGUAGE CXX)
 
 # Unit tests for vector utils
@@ -704,8 +693,8 @@ ADD_EXECUTABLE(m3D-test-collections
 
 TARGET_LINK_LIBRARIES(m3D-test-collections
     meanie3D
-    ${Boost_LIBRARIES}
-    ${GTEST_LIBRARIES})
+    ${Boost_LIBRARIES})
+
 SET_TARGET_PROPERTIES(m3D-test-collections PROPERTIES LINKER_LANGUAGE CXX)
 
 # Unit tests for class FeatureSpace
@@ -730,7 +719,6 @@ TARGET_LINK_LIBRARIES(m3D-test-featurespace
     meanie3D
     ${Boost_LIBRARIES}
     ${NETCDF_LIBRARIES}
-    ${GTEST_LIBRARIES}
     ${FLANN_LIBRARIES}
     ${TBB_LIBRARIES}
     ${OpenMP_RT_LIBRARIES}
@@ -769,7 +757,6 @@ TARGET_LINK_LIBRARIES(m3D-test-detection
     ${Boost_LIBRARIES}
     ${NETCDF_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${GTEST_LIBRARIES}
     ${TBB_LIBRARIES}
     ${OpenMP_RT_LIBRARIES}
     ${VTK_LIBRARIES})
