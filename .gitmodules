@@ -2,9 +2,6 @@
 [submodule "numericalrecipes"]
 	path = numericalrecipes
 	url = http://simon:mutter20panir@git.meteo.uni-bonn.de/git/numericalrecipes
-[submodule "cf-algorithms"]
-	path = cf-algorithms
-	url = http://simon:mutter20panir@git.meteo.uni-bonn.de/git/cf-algorithms
 [submodule "radolan"]
 	path = radolan
 	url = http://simon:mutter20panir@git.meteo.uni-bonn.de/git/radolan
