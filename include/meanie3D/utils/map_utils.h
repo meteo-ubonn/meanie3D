@@ -1,0 +1,123 @@
+#ifndef M3D_MAPUTILS_H
+#define M3D_MAPUTILS_H
+
+#include <meanie3D/defines.h>
+#include <meanie3D/namespaces.h>
+#include <meanie3D/clustering/id.h>
+#include <meanie3D/utils/set_utils.h>
+
+#include <boost/cast.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <iostream>
+#include <math.h>
+#include <cmath>
+#include <assert.h>
+#include <vector>
+#include <map>
+
+namespace std {
+
+    // Convenience operator << for printing maps out to streams
+
+    template <typename K,typename T>
+    std::ostream& operator << (std::ostream& os, const map<K,T>& v)
+    {
+//        size_t count = 0;
+//        os << "(";
+//        for (typename vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii)
+//        {
+//            os << *ii;
+//            
+//            if ( count < (v.size()-1))
+//            {
+//                os << ",";
+//            }
+//            count++;
+//        }
+//        os << ")";
+
+        return os;
+    }
+}
+
+namespace m3D { namespace utils { namespace maps {
+
+    std::string
+    id_map_to_string(const id_map_t &m)
+    {
+        using namespace ::m3D::utils::sets;
+        stringstream str( stringstream::in | stringstream::out );
+
+        str << "[";
+
+        id_map_t::const_iterator mi;
+
+        for (mi = m.begin(); mi != m.end(); mi++)
+        {
+            str << mi->first;
+            str << ":";
+            str << mi->second;
+            str << ";";
+        }
+
+        str << "]";
+
+        return str.str();
+    }
+
+    id_map_t
+    id_map_from_string(const std::string &const_str)
+    {
+        id_map_t result;
+
+        string str = const_str;
+
+        // Decode mode
+
+        typedef boost::tokenizer<boost::char_separator<char> > tokenizer_t;
+
+        typedef boost::tokenizer<boost::char_separator<char> > kv_tokenizer_t;
+
+        boost::char_separator<char> sep(";");
+
+        boost::char_separator<char> kv_sep(":");
+
+        char chars[] = "[]";
+
+        for (unsigned int i = 0; i < strlen(chars); ++i)
+        {
+            str.erase (std::remove(str.begin(), str.end(), chars[i]), str.end());
+        }
+
+        tokenizer_t tokens(str, sep);
+
+        for ( tokenizer_t::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter )
+        {
+            string token = *tok_iter;
+
+            kv_tokenizer_t kvt(token,kv_sep);
+
+            for ( kv_tokenizer_t::iterator kv_tok_iter = kvt.begin(); kv_tok_iter != kvt.end(); ++kv_tok_iter )
+            {
+                std::string key_string = *kv_tok_iter;
+
+                id_t key = boost::lexical_cast<id_t>(key_string);
+
+                kv_tok_iter++;
+
+                std::string value_string = *kv_tok_iter;
+
+                id_set_t value = utils::sets::from_string<m3D::id_t>(value_string);
+
+                result.insert(std::pair<id_t,id_set_t>(key,value));
+            }
+        }
+
+        return result;
+    }
+}}}
+
+#endif

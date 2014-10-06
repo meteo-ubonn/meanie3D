@@ -1,10 +1,9 @@
-#ifndef _M3D_NAMESPACE_DEFINITIONS_H_
-#define _M3D_NAMESPACE_DEFINITIONS_H_
+#ifndef M3D_NAMESPACE_DEFINITIONS_H
+#define M3D_NAMESPACE_DEFINITIONS_H
 
-#include <iostream> // namespace std
-#include <netcdf>   // namespace netCDF
-#include <boost/locale.hpp>  // boost::locale
-#include <cf-algorithms/cf-algorithms.h>
+#include <iostream>             // namespace std
+#include <netcdf>               // namespace netCDF
+#include <boost/assert.hpp>     // namespace boost;
 
 // This file manages the imports of namespaces into the 
 // various namespaces defined in this software.
@@ -12,23 +11,16 @@
 // should the need arise. Also, this is a great way of 
 // actually seeing all namespaces and dependencies.
 
-// dependencies of cfa namespaces to other namespaces
-
-namespace m3D {
-
-	using namespace ::std;
-	using ::cfa::meanshift::FeatureSpace;
-	using ::cfa::meanshift::PointIndex;
-	using ::cfa::meanshift::SearchParameters;
-	using ::cfa::meanshift::Kernel;
-
-	namespace detection {
-	}
-
-	namespace utils { namespace visit {
-		using namespace ::std;
-		using namespace ::boost::locale;
-	}}
+extern "C"
+{
+    namespace m3D 
+    {
+        namespace utils {
+            namespace netcdf {}
+            namespace sets {}
+            namespace vectors {}
+        }
+    }
 }
 
 #endif

@@ -1,5 +1,5 @@
-#ifndef _M3D_TRACKING_H_
-#define _M3D_TRACKING_H_
+#ifndef M3D_TRACKING_INCLUDES_H
+#define M3D_TRACKING_INCLUDES_H
 
 #include <meanie3D/tracking/tracking.h>
 
