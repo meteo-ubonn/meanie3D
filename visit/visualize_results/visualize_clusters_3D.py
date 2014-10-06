@@ -16,16 +16,9 @@ import visit3D
 import visitUtils
 from subprocess import call
 
-<<<<<<< HEAD
 # Silent
 SuppressMessages(True)
 SuppressQueryOutputOn()
-=======
-# General parameters
-VAR_NAME="cband_oase_zh"
-VAR_MIN=20
-VAR_MAX=65
->>>>>>> be73d22ddb81adf3bdb267305032c2f07616c71e
 
 # Control
 
