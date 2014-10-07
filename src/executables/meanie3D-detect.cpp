@@ -598,11 +598,10 @@ int main(int argc, char** argv) {
     program_options::options_description desc("Options");
     desc.add_options()
             ("help,h", "produce help message")
-            ("version","print version information and exit")
+            ("version", "print version information and exit")
             ("file,f", program_options::value<string>(), "CF-Metadata compliant NetCDF-file")
             ("output,o", program_options::value<string>(), "Name of output file for clustering results")
             ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
-            ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
             ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
             ("time-index,t", program_options::value<int>()->default_value(-1), "Index of the point in time you wish to use in files with a time dimension. -1 means no time dimension in the variables.")
             ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
@@ -615,24 +614,25 @@ int main(int argc, char** argv) {
             ("ci-comparison-file", program_options::value<string>(), "File for calculating time trends for CI-score according to Walker et al. 2012.")
             ("ci-comparison-protocluster-file", program_options::value<string>(), "Protoclusters from the comparison file")
             ("ci-satellite-only", "If present, only satellite values are used (original score), otherwise ")
-            //            ("spatial-range-only","If this flag is present, the mean-shift only considers the spatial range")
             ("coalesce-with-strongest-neighbour", "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
-            //            ("convection-filter-variable,c", program_options::value<string>(), "Name the variable to eliminate all but the points marked as convective according to the classification scheme by Steiner,Houza & Yates (1995) in.")
             ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
             ("filter-size,l", program_options::value<double>()->default_value(0.0), "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
             ("ranges,r", program_options::value<string>(), "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
             ("min-cluster-size,m", program_options::value<unsigned int>()->default_value(1u), "Discard clusters smaller than this number of points.")
             ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
             ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66), "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
+            ("include-weight-function-in-results,i", "Add a netcdf variable 'weight' to the result file, containining the weight function response at each point in the feature-space")
+#if WITH_VTK
+            ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
             ("write-variables-as-vtk", program_options::value<string>(), "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
             ("write-weight-function", "write weight function out as .vtk file")
-            ("include-weight-function-in-results,i", "Add a netcdf variable 'weight' to the result file, containining the weight function response at each point in the feature-space")
             ("write-meanshift-vectors", "write out .vtk files containing the meanshift vectors")
             ("write-clusters-as-vtk", "write clusters out as .vtk files")
             ("write-cluster-modes", "write the final meanshift modes in .vtk file format")
             ("write-cluster-centers", "write cluster centers out in .vtk file format")
             ("write-cluster-weight-response", "write out the clusters with weight responses as value")
             ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
+#endif
             ;
 
     program_options::variables_map vm;
@@ -646,13 +646,12 @@ int main(int argc, char** argv) {
     }
 
     // Version
-    
-    if ( vm.count("version") != 0 )
-    {
+
+    if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
         exit(-1);
     }
-    
+
     if (vm.count("help") == 1 || argc < 2) {
         cout << desc << "\n";
         return 1;
@@ -746,7 +745,9 @@ int main(int argc, char** argv) {
 
         // Make the mapping known to the visualization routines
 
+#if WITH_VTK
         VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+#endif
 
         // Get timestamp
 
@@ -1031,6 +1032,8 @@ int main(int argc, char** argv) {
         }
     }
 
+#if WITH_VTK
+
     if (write_weight_function) {
         std::string wfname = path.filename().stem().string() + "-weights";
         VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
@@ -1060,6 +1063,8 @@ int main(int argc, char** argv) {
         if (verbosity > VerbositySilent)
             cout << " done." << endl;
     }
+
+#endif
 
     if (verbosity == VerbosityAll)
         fs->print();
@@ -1147,10 +1152,10 @@ int main(int argc, char** argv) {
 
     // Write out the cluster list
 
+#if WITH_VTK
     if (write_vtk && clusters.clusters.size() > 0) {
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(&clusters, coord_system, path.filename().string());
     }
-
     if (write_cluster_modes) {
         string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, clusters.clusters, true);
@@ -1170,6 +1175,7 @@ int main(int argc, char** argv) {
         string wr_path = path.filename().stem().string() + "-clusters_weight";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function, false);
     }
+#endif
 
     if (verbosity > VerbositySilent)
         cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;

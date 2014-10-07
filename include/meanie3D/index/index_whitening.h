@@ -13,7 +13,9 @@
 
 namespace m3D {
 
-    using utils::VisitUtils;
+    #if WITH_VTK
+        using utils::VisitUtils;
+    #endif
 
     /** Abstract base class for a feature space index, which
      * requires pre-whitening of data.

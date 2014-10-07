@@ -13,7 +13,9 @@
 
 namespace m3D { 
 
+#if WITH_VTK
     using utils::VisitUtils;
+#endif
 
     template <typename T>
     bool PointIndex<T>::write_index_searches = false;
@@ -94,19 +96,21 @@ namespace m3D {
 
         if ( dim == 3 )
         {
+#if WITH_VTK
             VisitUtils<T>::write_ellipsis_3d( fn, ranges, 250, &x );
+#endif
         }
         else if ( dim == 2 )
         {
+#if WITH_VTK
             VisitUtils<T>::write_ellipsis_2d( fn, ranges, 250, &x );
+#endif
         }
 
-        // Write result
-
+#if WITH_VTK
         fn = "search_result_" + boost::lexical_cast<string>(search_count) + ".vtk";
-
         VisitUtils<T>::write_pointlist_vtk( fn, result, dim, "search_result" );
-
+#endif
         search_count++;
     }
 

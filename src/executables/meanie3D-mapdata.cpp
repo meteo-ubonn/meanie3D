@@ -123,7 +123,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     try {
         root_directory = vm["root"].as<string>();
-    }    catch (const boost::exception& e) {
+    } catch (const boost::exception& e) {
         cerr << "Missing 'root' argument" << endl;
 
         exit(-1);
@@ -135,7 +135,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     try {
         file = new NcFile(source_filename, NcFile::read);
-    }    catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << "ERROR opening file '" << source_filename << "' : " << e.what() << endl;
         exit(-1);
     }
@@ -307,7 +307,7 @@ void add_local_dimensions(NcFile &topography_file, NcFile &mapfile) {
         x.putVar(&x_data[0]);
         y.putVar(&y_data[0]);
         z.putVar(&z_data[0]);
-    }    catch (std::exception &e) {
+    } catch (std::exception &e) {
         cerr << e.what() << endl;
     }
 
@@ -371,7 +371,7 @@ void add_national_dimensions(NcFile &topography_file, NcFile &mapfile) {
         x.putVar(&x_data[0]);
         y.putVar(&y_data[0]);
         z.putVar(&z_data[0]);
-    }    catch (std::exception &e) {
+    } catch (std::exception &e) {
         cerr << e.what() << endl;
     }
 
@@ -600,10 +600,9 @@ std::string shape_type(int shapeTypeID) {
 
 template<std::size_t N, std::size_t M>
 void
-draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var) 
-{
+draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var) {
     using namespace m3D::utils::vectors;
-    
+
 #if DEBUG_LINES
     cout << "\tdrawing line (" << line_points.size() << " vertices)" << endl;
 #endif
@@ -880,7 +879,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                     // if it's within bounds, add it
                     // line_points.insert(gp);
                     line_points.push_back(gp);
-                }                catch (std::out_of_range &e) {
+                } catch (std::out_of_range &e) {
                     // not within bounds.
 
                     if (!line_points.empty()) {
@@ -913,7 +912,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                     // if it's within bounds, add it
                     // line_points.insert(gp);
                     local_line_points.push_back(local_gp);
-                }                catch (std::out_of_range &e) {
+                } catch (std::out_of_range &e) {
                     // not within bounds.
 
                     if (!local_line_points.empty()) {
@@ -1044,7 +1043,7 @@ void do_it() {
 int main(int argc, char** argv) {
     try {
         do_it();
-    }    catch (std::exception &e) {
+    } catch (std::exception &e) {
         cerr << "ERROR:" << e.what() << endl;
     }
 

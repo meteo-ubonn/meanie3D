@@ -9,6 +9,7 @@
 #include <meanie3D/clustering/cluster_op.h>
 #include <meanie3D/weights/weight_function.h>
 #include <meanie3D/utils.h>
+#include <meanie3D/tracking.h>
 
 #include <netcdf>
 #include <vector>
@@ -137,6 +138,8 @@ namespace m3D {
         , m_previous_protoclusters(NULL)
         {
             // Obtain a data store with all the relevant variables
+            
+            using namespace utils;
 
             try
             {
@@ -558,9 +561,10 @@ namespace m3D {
 
                 std::string fn = ppath.filename().stem().generic_string() + "-shifted.nc";
                 m_ci_comparison_data_store->save_as(fn);
-
+#if WITH_VTK
                 fn = ppath.filename().stem().generic_string() + "-vectors.vtk";
                 VisitUtils<T>::write_vectors_vtk(fn,origins,vectors);
+#endif
             }
         }
 
@@ -868,7 +872,8 @@ namespace m3D {
             }
 
 #if DEBUG_CI_SCORE
-
+#if WITH_VTK
+        
             boost::filesystem::path ppath(m_data_store->filename());
             std::string basename = ppath.filename().stem().generic_string();
 
@@ -895,7 +900,7 @@ namespace m3D {
                 fn = basename + "-overlap.vtk";
                 VisitUtils<T>::write_multiarray_vtk(fn,"overlap",m_coordinate_system,m_overlap);
             }
-
+#endif
             delete m_score_108;
             delete m_score_108_trend;
             delete m_score_62_108;

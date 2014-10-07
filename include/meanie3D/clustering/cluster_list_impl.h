@@ -23,8 +23,10 @@ namespace m3D {
 
     using namespace std;
     using namespace netCDF;
-    using utils::VisitUtils;
     using namespace utils;
+    #if WITH_VTK
+    using utils::VisitUtils;
+    #endif
 
 #pragma mark -
 #pragma mark Macros
@@ -1726,6 +1728,7 @@ namespace m3D {
             }
         }
 
+        #if WITH_VTK
         for ( size_t index = 0; index < boundaries.size(); index++ )
         {
             typename Point<T>::list b = boundaries[index];
@@ -1734,6 +1737,7 @@ namespace m3D {
             boost::replace_all( fn, "..", "" );
             VisitUtils<T>::write_pointlist_vtk(fn, &b, fs->coordinate_system->rank());
         }
+        #endif
 
         std::string fn = fs->filename() + "_boundary_correlations.txt";
         std::ofstream f( fn.c_str() );

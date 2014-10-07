@@ -185,8 +185,10 @@ namespace m3D {
 
         if (write_meanshift_vectors)
         {
+#if WITH_VTK
             VisitUtils<T>::write_shift_vectors( "meanshift_vectors.vtk", this->feature_space, false );
             VisitUtils<T>::write_shift_vectors( "meanshift_vectors-spatial.vtk", this->feature_space, true );
+#endif
         }
 
         if ( show_progress_bar )
@@ -207,6 +209,7 @@ namespace m3D {
         #endif
 
         #if WRITE_MODES
+        #if WITH_VTK
             size_t min_size = std::numeric_limits<size_t>::max();
             size_t max_size =std::numeric_limits<size_t>::min();
             for (size_t i=0; i<cluster_list.size(); i++)
@@ -214,7 +217,6 @@ namespace m3D {
                 if ( cluster_list[i]->size() < min_size ) { min_size = cluster_list[i]->size(); }
                 if ( cluster_list[i]->size() > max_size ) { max_size = cluster_list[i]->size(); }
             }
-            cout << "Cluster sizes range: [" << min_size << "," << max_size << "]" << endl;
 
             NetCDFDataStore<T> *ds = (NetCDFDataStore<T> *) this->feature_space->data_store();
             std::string fn = ds->filename()+"-modes-"+boost::lexical_cast<string>(pass_counter())+".vtk";
@@ -224,7 +226,7 @@ namespace m3D {
             VisitUtils<T>::write_modes_vtk( fn, cluster_list.trajectory_endpoints(), cluster_list.trajectory_lengths() );
             VisitUtils<T>::write_cluster_modes_vtk( fn, cluster_list.clusters );
         #endif
-
+        #endif
         return cluster_list;
     }
 }

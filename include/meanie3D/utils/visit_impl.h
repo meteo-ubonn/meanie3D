@@ -1,6 +1,8 @@
 #ifndef M3D_VISUALIZATIONUTILS_IMPL_H
 #define M3D_VISUALIZATIONUTILS_IMPL_H
 
+#if WITH_VTK
+
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
@@ -2288,4 +2290,5 @@ namespace m3D { namespace utils {
     };
 }}
 
+#endif
 #endif

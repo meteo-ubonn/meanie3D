@@ -1,6 +1,8 @@
 #ifndef M3D_VISUALIZATIONUTILS_H
 #define M3D_VISUALIZATIONUTILS_H
 
+#if WITH_VTK
+
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
 #include <meanie3D/tracking.h>
@@ -356,5 +358,7 @@ namespace m3D {
 
     };
 }}
+
+#endif
 
 #endif

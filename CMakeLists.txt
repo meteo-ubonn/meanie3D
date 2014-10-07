@@ -24,26 +24,28 @@ SET(${PROJECT_NAME}_MINOR_VERSION 1)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # ------------------------------------- 
-# Paths and Build Configuration
+# Paths and build configuration
 # -------------------------------------
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 
-INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
-
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
-	${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h
-)
+    ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h)
 
-#set default cmake build type to Debug
 
-# (None Debug Release RelWithDebInfo MinSizeRel)
+# Set default cmake build type to Debug
+# (None, Debug, Release, RelWithDebInfo or MinSizeRel)
+
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE "Debug")
 ENDIF()
 
+# Project include directory
+
+INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
+
 # ------------------------------------
-#setup OS
+# Operating System
 # ------------------------------------
 
 IF(CMAKE_SYSTEM_NAME MATCHES Darwin)
@@ -154,6 +156,10 @@ IF (TBB_ENABLED)
     ADD_DEFINITIONS(-DWITH_TBB=1)
 ENDIF()
 
+IF (WITH_VTK)
+    ADD_DEFINITIONS(-DWITH_VTK=1)
+ENDIF()
+
 # ------------------------------------- 
 # Find dependencies
 # -------------------------------------
@@ -226,28 +232,31 @@ ENDIF(OPENMP_ENABLED)
 # OpenCV
 FIND_PACKAGE(OpenCV)
 IF (OpenCV_FOUND)
-    MESSAGE("-- OpenCV FOUND")
+    MESSAGE(STATUS "OpenCV FOUND")
     SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenCV_C_FLAGS}")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenCV_CXX_FLAGS}")
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenCV_EXE_LINKER_FLAGS}")
 ENDIF (OpenCV_FOUND)
 
 # VTK
-FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
-IF (VTK_FOUND)
-    INCLUDE(${VTK_USE_FILE})
-    INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
-ELSE()
-    MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/VTK/resources/software.html)")
+IF (WITH_VTK)
+    FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
+    IF (VTK_FOUND)
+        MESSAGE(STATUS "VTK found")
+        INCLUDE(${VTK_USE_FILE})
+        INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
+    ELSE()
+        MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/VTK/resources/software.html)")
+    ENDIF()
 ENDIF()
 
 # Blitz++
 FIND_PACKAGE(Blitz REQUIRED)
 IF (Blitz_FOUND)
     INCLUDE_DIRECTORIES(${Blitz_INCLUDE_DIR})
-ELSE(Blitz_FOUND)
+ELSE()
     MESSAGE(FATAL_ERROR "blitz++ not found")
-ENDIF(Blitz_FOUND)
+ENDIF()
 
 # ------------------------------------- 
 # Binaries
@@ -648,17 +657,19 @@ TARGET_LINK_LIBRARIES(meanie3D-timestamp
     ${VTK_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-timestamp PROPERTIES LINKER_LANGUAGE CXX)
 
+#
 # VTK-converter
+#
+IF (WITH_VTK)
+    ADD_EXECUTABLE(meanie3D-cfm2vtk
+        src/executables/meanie3D-cfm2vtk.cpp)
 
-ADD_EXECUTABLE(meanie3D-cfm2vtk
-    src/executables/meanie3D-cfm2vtk.cpp
-)
-
-TARGET_LINK_LIBRARIES(meanie3D-cfm2vtk
-    meanie3D
-    ${Boost_LIBRARIES}
-    ${VTK_LIBRARIES})
-SET_TARGET_PROPERTIES(meanie3D-cfm2vtk PROPERTIES LINKER_LANGUAGE CXX)
+    TARGET_LINK_LIBRARIES(meanie3D-cfm2vtk
+        meanie3D
+        ${Boost_LIBRARIES}
+        ${VTK_LIBRARIES})
+    SET_TARGET_PROPERTIES(meanie3D-cfm2vtk PROPERTIES LINKER_LANGUAGE CXX)
+ENDIF(WITH_VTK)
 
 # valid_min/valid_max checker
 
@@ -787,10 +798,12 @@ INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-trackstats RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-trackstats-conrad RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
-INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-parallax_correction RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-minmax RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-radolan2cfm RUNTIME DESTINATION "/usr/local/bin")
+IF (WITH_VTK)
+INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
+ENDIF(WITH_VTK)
 
 # ------------------------------------------------------------- #
 # Documentation

@@ -293,7 +293,9 @@ int main(int argc, char** argv)
     ("direction-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(direction_hist_default),"Direction histogram. Values in [deg]. Use with radolan grid only!!")
     ("create-cluster-statistics","Evaluate each cluster in each track in terms of size.")
     ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default),"List of cluster size values for histogram bins")
+#if WITH_VTK
     ("write-center-tracks-as-vtk", "Write tracks out as .vtk files")
+#endif
     ("write-track-dictionary","Write out a dictionary listing tracks with number of clusters etc.")
     ("write-gnuplot-files,g","write individual files for the statistics fit for use with gnuplot")
     ;
@@ -476,12 +478,12 @@ int main(int argc, char** argv)
         }
         
 //        // Write center tracks
-
+#if WITH_VTK
         if (write_center_tracks_as_vtk)
         {
             ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, exclude_degenerates);
         }
-        
+#endif
         // dictionary?
         
         if (write_track_dictionary)
@@ -689,7 +691,7 @@ int main(int argc, char** argv)
                         RDCartesianPoint p;
 
                         // Assuming --vtk-dimensions=x,y
-                        
+                        #if WITH_VTK
                         if (!::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.empty())
                         {
                             p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
@@ -697,10 +699,12 @@ int main(int argc, char** argv)
                         }
                         else
                         {
+#endif
                             p.x = 0;
                             p.y = 1;
+#if WITH_VTK
                         }
-                        
+#endif                        
                         // Obtain geographical coordinate
                         RDGeographicalPoint c = rcs->geographicalCoordinate(p);
                         
