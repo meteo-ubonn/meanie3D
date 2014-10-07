@@ -1,0 +1,19 @@
+{
+    "VARIABLES" : ["RX"],
+    "LOWER_TRESHOLDS" : [20],
+    "UPPER_TRESHOLDS" : [65],
+    "VAR_MIN" : [0],
+    "VAR_MAX" : [65],
+    "WITH_BACKGROUND_GRADIENT" : false,
+    "WITH_TOPOGRAPHY" : false,
+    "WITH_RIVERS_AND_BOUNDARIES" : true,
+    "WITH_SOURCE_BACKROUND" : false,
+    "WITH_DATETIME" : true,
+    "CREATE_SOURCE_MOVIE" : true,
+    "CREATE_CLUSTERS_MOVIE" : true,
+    "GRID_EXTENT" : "national",
+    "CONVERSION_PARAMS" : "-t cluster -v RX --write-as-xml=false --extract-skin=false --vtk-dimensions x,y",
+    "COLORTABLES" : ["hot_desaturated"],
+    "COLORTABLES_INVERT_FLAGS" : [0],
+    "OPACITY" : [1.0]
+}
