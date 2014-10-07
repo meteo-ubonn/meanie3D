@@ -269,6 +269,7 @@ int main(int argc, char** argv)
     program_options::options_description desc("Extracts a timestamp from filename(s) and adds it as a NetCDF-variable 'time' to the file(s).");
     desc.add_options()
     ("help", "Produces this help.")
+    ("version","print version information and exit")
     ("source", program_options::value<string>(), "A single file or a directory to be processed. Only files ending in .nc will be processed.")
     ("format", program_options::value<string>()->default_value("auto"), "Timestamp format specifier <oase-2d,oase-3d,radolan,auto(default)>");
     
@@ -283,6 +284,14 @@ int main(int argc, char** argv)
     {
         cerr << "ERROR:parsing command line caused exception: " << e.what() << endl;
         cerr << "Check meanie3D-trackplot --help for command line options" << endl;
+        exit(-1);
+    }
+    
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
         exit(-1);
     }
     

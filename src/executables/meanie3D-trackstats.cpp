@@ -68,6 +68,14 @@ void parse_commmandline(program_options::variables_map vm,
                         bool &write_gnuplot_files,
                         bool &write_track_dictionary)
 {
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
+        exit(-1);
+    }
+
     sourcepath = vm["sourcepath"].as<string>();
     
     if ( vm.count("basename") == 0 )
@@ -307,31 +315,23 @@ int main(int argc, char** argv)
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
+    ("version","print version information and exit")
     ("basename,b", program_options::value<string>()->implicit_value(""), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files (optional)")
     ("sourcepath,p", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
     ("exclude-degenerates", program_options::value<bool>()->default_value(true),"Exclude results of tracks of length one")
-    
     ("create-length-statistics","Create a statistic of track lengths.")
     ("length-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(length_hist_default),"List of track-length values for histogram bins")
-    
     ("create-speed-statistics","Evaluate speeds of clusters in tracks, based on geometric center point")
     ("speed-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(speed_hist_default),"Speed histogram. Values in [m/s]")
-
     ("create-direction-statistics","Evaluate directions of clusters in tracks, based on geometric center point")
     ("direction-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(direction_hist_default),"Direction histogram. Values in [deg]. Use with radolan grid only!!")
-
     ("create-cluster-statistics","Evaluate each cluster in each track in terms of size.")
     ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default),"List of cluster size values for histogram bins")
-    
     ("create-cumulated-size-statistics","Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
     ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default),"List of cumulated track size values for histogram bins")
-    
     ("write-center-tracks-as-vtk", "Write tracks out as .vtk files")
-    
     ("write-track-dictionary","Write out a dictionary listing tracks with number of clusters etc.")
-    
     ("write-cumulated-tracks-as-vtk", "Write cumulated tracks out as .vtk files. Only has effect if --create-cumulated-size-statistics is used")
-    
     ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
     ("write-gnuplot-files,g","write individual files for the statistics fit for use with gnuplot")
     ;

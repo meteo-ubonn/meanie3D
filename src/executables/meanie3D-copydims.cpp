@@ -44,6 +44,14 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<NcDim> &dimensions,
                         vector<NcVar> &dimension_variables)
 {
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
+        exit(-1);
+    }
+    
     if ( vm.count("source") == 0 )
     {
         cerr << "Missing 'source' argument" << endl;
@@ -116,6 +124,7 @@ int main(int argc, char** argv)
     program_options::options_description desc("Options");
     desc.add_options()
     ("help", "produce this help message")
+    ("version","print version information and exit")
     ("source", program_options::value<string>(), "File to use as a template")
     ("root", program_options::value<string>()->default_value("."), "Root directory to recursively iterate over files and replace the dimensions and vars in all \"*-clusters.nc\" files")
     ("dimensions", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")

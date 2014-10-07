@@ -598,6 +598,7 @@ int main(int argc, char** argv) {
     program_options::options_description desc("Options");
     desc.add_options()
             ("help,h", "produce help message")
+            ("version","print version information and exit")
             ("file,f", program_options::value<string>(), "CF-Metadata compliant NetCDF-file")
             ("output,o", program_options::value<string>(), "Name of output file for clustering results")
             ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
@@ -644,6 +645,14 @@ int main(int argc, char** argv) {
         exit(-1);
     }
 
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
+        exit(-1);
+    }
+    
     if (vm.count("help") == 1 || argc < 2) {
         cout << desc << "\n";
         return 1;

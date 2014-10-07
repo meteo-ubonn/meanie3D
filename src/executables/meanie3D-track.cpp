@@ -51,6 +51,14 @@ void parse_commmandline(program_options::variables_map vm,
                         vector<size_t> &vtk_dimension_indexes,
                         Verbosity &verbosity)
 {
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
+        exit(-1);
+    }
+    
     if ( vm.count("previous") == 0 )
     {
         cerr << "Missing previous cluster file argument --previous" << endl;
@@ -195,6 +203,7 @@ int main(int argc, char** argv)
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
+    ("version","print version information and exit")
     ("previous,p", program_options::value<string>(), "Previous cluster file (netCDF)")
     ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
     ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Defaults to the first variable that is not a dimension variable.")

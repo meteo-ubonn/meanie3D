@@ -609,6 +609,7 @@ int main ( int argc, char** argv )
 	program_options::options_description desc ( "Applies parallax correction to mseviri satellite data in OASE composite files." );
 	desc.add_options()
 	( "help", "Produces this help." )
+        ("version","print version information and exit")
 	( "file,f", program_options::value<string>(), "A single file or a directory to be processed. Only files ending in .nc will be processed." )
 	( "shifted,s", program_options::value<string>()->default_value("satellite"), "Which values are to be shifted? [satellite|other] (default:satellite)" );
 
@@ -623,6 +624,14 @@ int main ( int argc, char** argv )
 		exit ( -1 );
 	}
 
+        // Version
+    
+        if ( vm.count("version") != 0 )
+        {
+            cout << m3D::VERSION << endl;
+            exit(-1);
+        }
+        
 	if ( vm.count ( "help" ) ==1 || argc < 2 ) {
 		cout << desc << "\n";
 		return 1;

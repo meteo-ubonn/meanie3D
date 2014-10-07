@@ -19,6 +19,7 @@ int main(int argc, char** argv)
         program_options::options_description desc("Options");
         desc.add_options()
         ("help,h", "show this message")
+        ("version","print version information and exit")
         ("file,f", program_options::value<string>(), "Radolan filename or directory containing radolan scans")
         ("output-dir,o", program_options::value<string>()->default_value("."), "Path to write the results to. Defaults to current directory.")
         ("threshold,t", program_options::value<float>(), "Value threshold (depends of product)")
@@ -29,6 +30,14 @@ int main(int argc, char** argv)
         program_options::variables_map vm;
         program_options::store( program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
+        
+        // Version
+    
+        if ( vm.count("version") != 0 )
+        {
+            cout << m3D::VERSION << endl;
+            exit(-1);
+        }
         
         if ( vm.count("help")==1 || argc < 2 || vm.count("file") == 0 ) 
         {

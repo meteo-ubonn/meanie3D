@@ -49,6 +49,14 @@ void parse_commmandline(program_options::variables_map vm,
                         bool &extract_skin,
                         bool &write_as_xml)
 {
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
+        exit(-1);
+    }
+    
     // filename
     
     if ( vm.count("file") == 0 )
@@ -292,6 +300,7 @@ int main(int argc, char** argv)
     program_options::options_description desc("Options");
     desc.add_options()
     ("help,h", "produce help message")
+    ("version","print version information and exit")
     ("file,f", program_options::value<string>(), "CF-Metadata compliant NetCDF-file or a Meanie3D-cluster file")
     ("variable,v", program_options::value<string>(), "Name of the variable to be used")
     ("extract-skin,s", program_options::value<bool>()->default_value(false), "Use delaunay filter to extract skin file")
@@ -299,7 +308,6 @@ int main(int argc, char** argv)
     ("write-as-xml,x", program_options::value<bool>()->default_value(false), "Write files in xml instead of ascii")
     ("type,t", program_options::value<string>(), "'clusters' or 'composite'")
     ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
-
     ;
     
     program_options::variables_map vm;
@@ -317,6 +325,14 @@ int main(int argc, char** argv)
     {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-cfm2vtk --help for command line options" << endl;
+        exit(-1);
+    }
+    
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
         exit(-1);
     }
     

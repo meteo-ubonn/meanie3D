@@ -465,6 +465,7 @@ int main(int argc, char** argv)
     program_options::options_description desc("Checks all non-time variables for valid_min and valid_max and adds them if necessary.");
     desc.add_options()
     ("help", "Produces this help.")
+    ("version","print version information and exit")
     ("file,f", program_options::value<string>(), "A single file or a directory to be processed. Only files ending in .nc will be processed.")
     ("force", program_options::value<bool>()->default_value(false), "Force replacement of attributes.");
     
@@ -479,6 +480,14 @@ int main(int argc, char** argv)
     {
         cerr << "ERROR:parsing command line caused exception: " << e.what() << endl;
         cerr << "Check meanie3D-minmax --help for command line options" << endl;
+        exit(-1);
+    }
+    
+    // Version
+    
+    if ( vm.count("version") != 0 )
+    {
+        cout << m3D::VERSION << endl;
         exit(-1);
     }
     

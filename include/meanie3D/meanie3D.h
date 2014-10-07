@@ -3,6 +3,7 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+#include <meanie3D/version.h>
 
 #include <meanie3D/adaptors.h>
 #include <meanie3D/array.h>
