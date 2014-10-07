@@ -7,7 +7,7 @@ M3D_HOME = "P_M3D_HOME"
 
 # Import modules
 import sys
-sys.path.append(M3D_HOME+"/visit/modules")
+sys.path.append(M3D_HOME+"/scripts/python-modules")
 import glob
 import os
 import time

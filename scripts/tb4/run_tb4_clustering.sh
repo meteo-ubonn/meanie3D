@@ -57,10 +57,6 @@ do
         echo "meanie3D-detect $PARAMS"
         meanie3D-detect $PARAMS
 
-        #echo "Visualizing results ..."
-        #echo "$MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var"
-        #$MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.sh $file $outfile $var
-
     done
 
 done

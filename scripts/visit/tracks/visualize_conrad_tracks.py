@@ -6,13 +6,9 @@ MEANIE3D_HOME     = "P_M3D_HOME"
 SOURCE_DIR        = "P_SOURCE_DIR"
 BASENAME          = "P_BASENAME"
 
-# Appending the module path is crucial
-
-sys.path.append(MEANIE3D_HOME+"/visit/modules")
-
 # Import modules
 import sys
-sys.path.append(MEANIE3D_HOME+"/visit/modules")
+sys.path.append(MEANIE3D_HOME+"/scripts/python-modules")
 import glob
 import os
 import time

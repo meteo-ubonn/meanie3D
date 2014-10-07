@@ -9,7 +9,7 @@ CONFIG_FILE = "P_CONFIGURATION_FILE"
 
 # Import modules
 import sys
-sys.path.append(M3D_HOME+"/visit/modules")
+sys.path.append(M3D_HOME+"/scripts/python-modules")
 import visit3D
 import visitUtils
 import meanie3D

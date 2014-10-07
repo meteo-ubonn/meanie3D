@@ -9,7 +9,7 @@ RESUME_AT_FILE = "P_RESUME_AT_FILE"
 
 # Import modules
 import sys
-sys.path.append(M3D_HOME+"/visit/modules")
+sys.path.append(M3D_HOME+"/scripts/python-modules")
 import glob
 import os
 import time

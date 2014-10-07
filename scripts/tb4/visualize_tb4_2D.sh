@@ -39,7 +39,7 @@ ESCAPED_NETCDF_FILE=$(echo $1 | sed -e "s/\//\\\\\//g")
 ESCAPED_CLUSTER_FILE=$(echo $2 | sed -e "s/\//\\\\\//g")
 ESCAPED_MEANIE3D_HOME=$(echo $MEANIE3D_HOME | sed -e "s/\//\\\\\//g")
 
-cat $MEANIE3D_HOME/visit/tb4/visualize_tb4_2D.py | sed -e "s/P_NETCDF_FILE/$ESCAPED_NETCDF_FILE/g" | sed -e "s/P_CLUSTER_FILE/$ESCAPED_CLUSTER_FILE/g" | sed -e "s/P_VAR_NAME/$3/g" | sed -e "s/P_M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > ${SCRIPTFILE}
+cat $MEANIE3D_HOME/scripts/tb4/visualize_tb4_2D.py | sed -e "s/P_NETCDF_FILE/$ESCAPED_NETCDF_FILE/g" | sed -e "s/P_CLUSTER_FILE/$ESCAPED_CLUSTER_FILE/g" | sed -e "s/P_VAR_NAME/$3/g" | sed -e "s/P_M3D_HOME/$ESCAPED_MEANIE3D_HOME/g" > ${SCRIPTFILE}
 
 if [ "${RUN_VISIT_HEADLESS}" = "true" ]
 then
