@@ -32,7 +32,6 @@ SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
     ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h)
 
-
 # Set default cmake build type to Debug
 # (None, Debug, Release, RelWithDebInfo or MinSizeRel)
 
@@ -66,10 +65,20 @@ ADD_SUBDIRECTORY(radolan)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/radolan/include)
 
 # -------------------------------------
-# gtest
+# Automated tests
 # -------------------------------------
 
-INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
+IF (NOT WITH_TESTS)
+    SET(TESTS_ENABLED 0)
+ELSE()
+    SET(TESTS_ENABLED ${WITH_TESTS})
+ENDIF()
+
+IF (TESTS_ENABLED)
+    ADD_SUBDIRECTORY(gtest-1.7.0)
+    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
+    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
+ENDIF()
 
 # ------------------------------------- 
 # Multithreading / Parallelism Choices
@@ -689,95 +698,103 @@ SET_TARGET_PROPERTIES(meanie3D-minmax PROPERTIES LINKER_LANGUAGE CXX)
 # Tests
 # ------------------------------------------------------------- #
 
-ADD_EXECUTABLE(m3D-test-kernel
-    test/kernels/testcases.h
-    test/kernels/test.cpp)
+IF (TESTS_ENABLED)
 
-TARGET_LINK_LIBRARIES(m3D-test-kernel
-    meanie3D
-    ${Boost_LIBRARIES})
-SET_TARGET_PROPERTIES(m3D-test-kernel PROPERTIES LINKER_LANGUAGE CXX)
+    ADD_EXECUTABLE(m3D-test-kernel
+        test/kernels/testcases.h
+        test/kernels/test.cpp)
 
-# Unit tests for vector utils
+    TARGET_LINK_LIBRARIES(m3D-test-kernel
+        meanie3D
+        gtest
+        ${Boost_LIBRARIES})
+    SET_TARGET_PROPERTIES(m3D-test-kernel PROPERTIES LINKER_LANGUAGE CXX)
 
-ADD_EXECUTABLE(m3D-test-collections
-    test/collections/tests_arrayindex.h
-    test/collections/tests_map.h
-    test/collections/tests_multiarray.h
-    test/collections/tests_set.h
-    test/collections/tests_vector.h
-    test/collections/test.cpp)
+    # Unit tests for vector utils
 
-TARGET_LINK_LIBRARIES(m3D-test-collections
-    meanie3D
-    ${Boost_LIBRARIES})
+    ADD_EXECUTABLE(m3D-test-collections
+        test/collections/tests_arrayindex.h
+        test/collections/tests_map.h
+        test/collections/tests_multiarray.h
+        test/collections/tests_set.h
+        test/collections/tests_vector.h
+        test/collections/test.cpp)
 
-SET_TARGET_PROPERTIES(m3D-test-collections PROPERTIES LINKER_LANGUAGE CXX)
+    TARGET_LINK_LIBRARIES(m3D-test-collections
+        gtest
+        meanie3D
+        ${Boost_LIBRARIES})
 
-# Unit tests for class FeatureSpace
+    SET_TARGET_PROPERTIES(m3D-test-collections PROPERTIES LINKER_LANGUAGE CXX)
 
-ADD_EXECUTABLE(m3D-test-featurespace
-    test/featurespace/settings.h
-    test/featurespace/settings.cpp
-    test/featurespace/testcase_base.h
-    test/featurespace/testcase_base_impl.h
-    test/featurespace/circular_pattern.h
-    test/featurespace/circular_pattern_impl.h
-    test/featurespace/uniform.h
-    test/featurespace/uniform_impl.h
-    test/featurespace/weighed.h
-    test/featurespace/weighed_impl.h
-    test/featurespace/iteration.h
-    test/featurespace/iteration_impl.h
-    test/featurespace/testcases.h
-    test/featurespace/test.cpp)
+    # Unit tests for class FeatureSpace
 
-TARGET_LINK_LIBRARIES(m3D-test-featurespace
-    meanie3D
-    ${Boost_LIBRARIES}
-    ${NETCDF_LIBRARIES}
-    ${FLANN_LIBRARIES}
-    ${TBB_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES}
-    ${Blitz_LIBRARY})
-SET_TARGET_PROPERTIES(m3D-test-featurespace PROPERTIES LINKER_LANGUAGE CXX)
+    ADD_EXECUTABLE(m3D-test-featurespace
+        test/featurespace/settings.h
+        test/featurespace/settings.cpp
+        test/featurespace/testcase_base.h
+        test/featurespace/testcase_base_impl.h
+        test/featurespace/circular_pattern.h
+        test/featurespace/circular_pattern_impl.h
+        test/featurespace/uniform.h
+        test/featurespace/uniform_impl.h
+        test/featurespace/weighed.h
+        test/featurespace/weighed_impl.h
+        test/featurespace/iteration.h
+        test/featurespace/iteration_impl.h
+        test/featurespace/testcases.h
+        test/featurespace/test.cpp)
 
-# KDTree
+    TARGET_LINK_LIBRARIES(m3D-test-featurespace
+        gtest
+        meanie3D
+        ${Boost_LIBRARIES}
+        ${NETCDF_LIBRARIES}
+        ${FLANN_LIBRARIES}
+        ${TBB_LIBRARIES}
+        ${OpenMP_RT_LIBRARIES}
+        ${HDF5_LIBRARIES}
+        ${VTK_LIBRARIES}
+        ${Blitz_LIBRARY})
+    SET_TARGET_PROPERTIES(m3D-test-featurespace PROPERTIES LINKER_LANGUAGE CXX)
 
-ADD_EXECUTABLE(m3D-test-kdtree
-    test/kdtree/test.c)
+    # KDTree
 
-TARGET_LINK_LIBRARIES(m3D-test-kdtree
-    meanie3D
-    ${Boost_LIBRARIES})
-SET_TARGET_PROPERTIES(m3D-test-kdtree PROPERTIES LINKER_LANGUAGE CXX)
+    ADD_EXECUTABLE(m3D-test-kdtree
+        test/kdtree/test.c)
 
-# Detection tests
+    TARGET_LINK_LIBRARIES(m3D-test-kdtree
+        meanie3D
+        ${Boost_LIBRARIES})
+    SET_TARGET_PROPERTIES(m3D-test-kdtree PROPERTIES LINKER_LANGUAGE CXX)
 
-ADD_EXECUTABLE(m3D-test-detection
-    test/detection/clustering.h
-    test/detection/clustering_impl.h
-    test/detection/detection_test.h
-    test/detection/settings.cpp
-    test/detection/settings.h
-    test/detection/test.cpp
-    test/detection/testcase_base.h
-    test/detection/testcase_base_impl.h
-    test/detection/testcases.h
-    test/detection/variable_weighed.h
-    test/detection/variable_weighed_impl.h)
+    # Detection tests
 
-TARGET_LINK_LIBRARIES(m3D-test-detection
-    meanie3D
-    ${Boost_LIBRARIES}
-    ${NETCDF_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${TBB_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES}
-    ${VTK_LIBRARIES})
-SET_TARGET_PROPERTIES(m3D-test-detection PROPERTIES LINKER_LANGUAGE CXX)
+    ADD_EXECUTABLE(m3D-test-detection
+        test/detection/clustering.h
+        test/detection/clustering_impl.h
+        test/detection/detection_test.h
+        test/detection/settings.cpp
+        test/detection/settings.h
+        test/detection/test.cpp
+        test/detection/testcase_base.h
+        test/detection/testcase_base_impl.h
+        test/detection/testcases.h
+        test/detection/variable_weighed.h
+        test/detection/variable_weighed_impl.h)
+
+    TARGET_LINK_LIBRARIES(m3D-test-detection
+        gtest
+        meanie3D
+        ${Boost_LIBRARIES}
+        ${NETCDF_LIBRARIES}
+        ${HDF5_LIBRARIES}
+        ${TBB_LIBRARIES}
+        ${OpenMP_RT_LIBRARIES}
+        ${VTK_LIBRARIES})
+    SET_TARGET_PROPERTIES(m3D-test-detection PROPERTIES LINKER_LANGUAGE CXX)
+
+ENDIF(TESTS_ENABLED)
 
 # ------------------------------------------------------------- #
 # Installation
@@ -825,7 +842,7 @@ IF(DOXYGEN_EXECUTABLE)
 
     FILE(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/doc/html)
 
-    ADD_CUSTOM_TARGET(documentation 
+    ADD_CUSTOM_TARGET(docs 
         COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/doxyfile)
 
 ENDIF(DOXYGEN_EXECUTABLE)
