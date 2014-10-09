@@ -35,9 +35,6 @@ void FSWeighedTest2D<T>::create_uniform_distribution_recursive( const NcVar &var
             {
                 this->m_pointCount++;
                 
-                // get the variables together and construct the cartesian coordinate
-                // of the current point. If it's on the ellipse, put it in the variable
-                
                 typename CoordinateSystem<T>::Coordinate coordinate = this->coordinate_system()->newCoordinate();
                 
                 this->coordinate_system()->lookup( gridpoint, coordinate );

@@ -32,108 +32,102 @@ using namespace testing;
 using namespace netCDF;
 using namespace m3D;
 
-template <class T> 
-class FSTestBase : public Test
+template <class T>
+class FSTestBase : public Test 
 {
-    
 protected:
-    
-    //
-    // Protected member variables
-    //
-    
-    // Common settings, like grid resolution etc.
-    FSTestSettings  *m_settings;
-    
-    // NetCDF related
-    
-    std::string             m_filename;
-    
-    NcFile                  *m_file;
-    
-    CoordinateSystem<T>     *m_coordinate_system;
-    
-//    vector<NcDim *> m_dimensions;
-//
-//    vector<NcVar *> m_dimension_variables;
-//    
-//    // Stores dimension variable data
-//    map< NcVar* , float* > m_dimension_data;
 
-    vector<NcVar>           m_variables;
+    NcFile              *m_file;
+    std::string         m_filename;
+    vector<string>      m_variable_names;
 
-    size_t                  m_pointCount;            
+    DataStore<T>        *m_data_store;
+    CoordinateSystem<T> *m_coordinate_system;
+    FeatureSpace<T>     *m_featureSpace;
+    PointIndex<T>       *m_featureSpaceIndex;
     
-    size_t                  m_totalPointCount;       
-    
-    FeatureSpace<T>         *m_featureSpace;
-    
-    PointIndex<T>    *m_featureSpaceIndex;
-    
-    //
-    // Protected methods
-    //
-    
-    /** Returns variables names for dimension variables to be created as part of the test
+    FSTestSettings      *m_settings;
+
+    size_t              m_pointCount;
+    size_t              m_totalPointCount;
+
+    /** Returns variables names for dimension variables to be 
+     * created as part of the test
      * procedure. 0=x, 1=y, 2=z, 3=t.
+     * 
+     * @param dimensionIndex
+     * @return 
      */
-    const char *dimensionName( size_t dimensionIndex );
+    const char *dimensionName(size_t dimensionIndex);
 
-    /** Generates a number of dimensions in the given NetCDF file, using the values
-     * in the current settings object. Also creates the dimension variables and buffers
+    /** Generates a number of dimensions in the given NetCDF 
+     * file, using the values in the current settings object. 
+     * Also creates the dimension variables and buffers
      * their values for quick access in m_dimension_data
      */
     void generate_dimensions();
-    
-    /** Auto-generates a filename for the netcdf from the currently running 
-     * testcase info
+
+    /** Auto-generates a filename for the netcdf from the 
+     * currently running testcase info
+     * 
+     * @return 
      */
     string filename_from_current_testcase();
-    
-public:
 
-    FSTestBase();
+public:
     
-    ~FSTestBase();
-    
-    virtual void SetUp();
-    
-    virtual void TearDown();
-    
-    NcFile * file() { return m_file; };
-    
-    vector<NcVar *> variables() { return m_variables; };
-    
-    CoordinateSystem<T> *coordinate_system() { return m_coordinate_system; };
-    
-    /** Helper method. Adds a variable with the given name to the file. The variable
-     * has the given name. The valid_min and valid_max attributes can also be set (default 0..1)
+    static const T FILL_VALUE;
+
+    /**
+     * 
      */
-    NcVar add_variable( string name, T valid_min = 0.0, T valid_max = 1.0 )
-    {
-        // test case 1 : ellipsis for unweighed sample mean
-        
-        std::string type_name = typeid(T).name();
-        
-        if ( ! ( type_name == "f" || type_name == "d") )
-        {
-            cerr << "Only float and double are supported at this time." << endl;
-            exit(-1);
-        }
-        
-        NcType type = ( type_name == "f" ) ? ncFloat.getTypeClass() : ncDouble.getTypeClass();
-        
-        NcVar var = file()->addVar( name, type, this->coordinate_system()->dimensions() );
-        
-        var.putAtt( "valid_min", type, valid_min );
-        
-        var.putAtt( "valid_max", type, valid_max );
-        
-        this->m_variables.push_back( var );
-        
-        return var;
-    }
+    FSTestBase();
+
+    /**
+     * 
+     */
+    ~FSTestBase();
+
+    /**
+     * 
+     */
+    virtual void SetUp();
+
+    /**
+     * 
+     */
+    virtual void TearDown();
+
+    /**
+     * 
+     * @return 
+     */
+    NcFile *file();
     
+    /**
+     */
+    void reopen_file_for_reading();
+
+    /**
+     * 
+     * @return 
+     */
+    CoordinateSystem<T> *coordinate_system();
+    
+    /** Helper method. Adds a variable with the given name to the file. 
+     * The variable has the given name. The valid_min and valid_max 
+     * attributes can also be set (default 0..1)
+     * 
+     * @param name
+     * @param valid_min
+     * @param valid_max
+     * @return the created variable
+     */
+    NcVar add_variable(string name, T valid_min = 0.0, T valid_max = 1.0);
+    
+    /**
+     * 
+     */
     void generate_featurespace();
 };
 

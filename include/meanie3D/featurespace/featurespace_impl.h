@@ -136,7 +136,6 @@ namespace m3D {
             for (size_t di = 0; di < coordinate_system->rank(); di++)
             {
                 NcDim dim = coordinate_system->dimensions()[di];
-
                 number_of_points *= dim.getSize();
             }
 
@@ -175,13 +174,6 @@ namespace m3D {
     }
 
     template <typename T>
-    void
-    FeatureSpace<T>::build_recursive(size_t dimensionIndex,
-                                     vector<int> &gridpoint)
-    {
-    }
-
-    template <typename T>
     void FeatureSpace<T>::build()
     {
         m_off_limits = new MultiArrayBlitz<bool>(this->coordinate_system->get_dimension_sizes(),false);
@@ -195,7 +187,6 @@ namespace m3D {
         #endif
         for (size_t linear_index=0; linear_index < size; linear_index++)
         {
-
             // Get the variables together and construct the cartesian coordinate
             if ( m_progress_bar != NULL )
             {
@@ -223,14 +214,14 @@ namespace m3D {
 
             for (size_t var_index=0; var_index < this->m_data_store->rank() && isPointValid; var_index++)
             {
-                // NcVar var = this->m_variables[var_index];
-
                 typename std::map<int,double>::const_iterator replacement;
                 replacement = this->m_replacement_values.find(var_index);
 
                 // is this contribution valid?
 
                 T value = data_store()->get(var_index, gridpoint, isPointValid);
+                
+                // cout << "#" << var_index << "@" << gridpoint << " : " << value << " valid=" << isPointValid << endl;
 
                 if ( isPointValid )
                 {

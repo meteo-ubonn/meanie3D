@@ -14,7 +14,7 @@ FSUniformTest2D<T>::create_uniform_distribution_recursive( const NcVar &var,
 {
     NcDim dim = var.getDim(dimensionIndex);
     
-    if ( dimensionIndex < this->m_file->getDimCount() - 1 )
+    if ( dimensionIndex < this->file()->getDimCount() - 1 )
     {
         for ( int index = 0; index < dim.getSize(); index++ )
         {
@@ -36,13 +36,6 @@ FSUniformTest2D<T>::create_uniform_distribution_recursive( const NcVar &var,
             {
                 this->m_pointCount++;
                 
-                // get the variables together and construct the cartesian coordinate
-                // of the current point. If it's on the ellipse, put it in the variable
-                
-                vector<T> coordinate( this->m_file->getDimCount() );
-                
-                this->coordinate_system()->lookup( gridpoint, coordinate );
-                
                 T value = (T) FS_VALUE_MAX;
                 
                 vector<size_t> gp(gridpoint.begin(), gridpoint.end());
@@ -62,7 +55,7 @@ FSUniformTest2D<T>::create_uniform_distribution( const NcVar &var, size_t modulo
 {
     // homogenous point distribution in N-D, every modulo grid point is used
     
-    typename CoordinateSystem<T>::GridPoint gridpoint( this->m_file->getDimCount(), 0 );
+    typename CoordinateSystem<T>::GridPoint gridpoint( this->file()->getDimCount(), 0 );
     
     this->m_pointCount = 0;
     
@@ -165,12 +158,7 @@ FSUniformTest2D<T>::FSUniformTest2D() : FSTestBase<T>()
 template<class T> 
 FSUniformTest3D<T>::FSUniformTest3D() : FSUniformTest2D<T>()
 {
-    cout << "Setting up 3D test with typeid " << typeid(T).name() << endl;
-    
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
-    
-    cout << "Test filename = " << filename << endl;
-
     this->m_settings = new FSTestSettings( 3, 1, NUMBER_OF_GRIDPOINTS, filename );
 }
 

@@ -65,16 +65,6 @@ namespace m3D {
          */
         void build();
 
-        /** Recurses through the dimensions of a netcdf variable and reads the data.
-         * Constructs a new point in the feature space map for each valid point of
-         * data found. Validity is determined by using the valid_min and valid_max
-         * attributes of the variable itself (CF-Metadata convention).
-         * @param dimensionIndex    :   current variable dimension index
-         * @param gridpoint         :   current grid point in the recursion.
-         */
-        void build_recursive(size_t dimensionIndex,
-                             vector<int> &gridpoint);
-
 #pragma mark -
 #pragma mark Protected
 
@@ -144,6 +134,8 @@ namespace m3D {
         /** Construct a map of Point objects, representing the feature space.
          * The variables used to do so are the dimension variables plus the
          * additional variables handed in (at least one)
+         * 
+         * @param show_progress
          */
         void construct_featurespace( bool show_progress=true );
 
@@ -156,6 +148,16 @@ namespace m3D {
 #pragma mark -
 #pragma mark Consctructor/Destructor
 
+        /** Constructs a feature-space from the variables in the
+         * given data store.
+         * 
+         * @param coordinate_system
+         * @param dataStore
+         * @param lower_thresholds
+         * @param upper_thresholds
+         * @param replacement_values
+         * @param show_progress
+         */
         FeatureSpace(const CoordinateSystem<T> *coordinate_system,
                      const DataStore<T> *dataStore,
                      const map<int,double> &lower_thresholds,
@@ -169,19 +171,21 @@ namespace m3D {
          * @param other
          * @param without_points if true, the points are not copied
          */
-        FeatureSpace<T>( const FeatureSpace<T>& other, bool with_points=true );
+        FeatureSpace<T>(const FeatureSpace<T>& other, 
+                bool with_points=true );
 
         /** Copy constructor
          * @param pointer to other 
          * @param without_points if true, the points are not copied
          */
-        FeatureSpace<T>( const FeatureSpace<T>* other, bool with_points=true );
+        FeatureSpace<T>(const FeatureSpace<T>* other, 
+                bool with_points=true );
 
         /** Copy operator
          * @param other
          * @return pointer to a copy
          */
-        FeatureSpace<T> operator = ( const FeatureSpace<T>& other );
+        FeatureSpace<T> operator = (const FeatureSpace<T>& other);
 
         /** Destructor
          */
@@ -230,18 +234,27 @@ namespace m3D {
         /** Lower thresholds used in the construction of the featurespace. 
          * Only variables from the value range are used.
          */
-        const map <int,double> &lower_thresholds() const { return m_lower_thresholds; }
+        const map <int,double> &lower_thresholds() const 
+        { 
+            return m_lower_thresholds; 
+        }
 
         /** Upper thresholds used in the construction of the featurespace.
          * Only variables from the value range are used.
          */
-        const map <int,double> &upper_thresholds() const { return m_upper_thresholds; }
+        const map <int,double> &upper_thresholds() const 
+        { 
+            return m_upper_thresholds; 
+        }
 
         /** A map of bool values, which indicates where in the construction
          * points were encountered, that are 'off limits' in the sense of 
          * not valid.
          */
-        const MultiArray<bool> *off_limits() const { return m_off_limits; }
+        const MultiArray<bool> *off_limits() const 
+        { 
+            return m_off_limits; 
+        }
 
         /** Contains the inf of all points in the featurespace.
          */
@@ -301,14 +314,18 @@ namespace m3D {
         typename CoordinateSystem<T>::Coordinate
         spatial_component( const vector<T> &value ) const;
 
-        /** @return the value at the n-th component of the spatial
-         * range of the given point
+        /**  
+         * @param p
+         * @param index
+         * @return the value at the n-th component of the spatial
          */
         T
         get_spatial_component_at(typename Point<T>::ptr p, size_t index) const;
 
-        /** @return the value at the n-th component of the value
-         * range of the given point
+        /** 
+         * @param point
+         * @param resolution
+         * @return the value at the n-th component of the value
          */
         T
         get_value_component_at(typename Point<T>::ptr p, size_t index) const;

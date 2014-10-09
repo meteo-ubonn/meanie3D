@@ -11,7 +11,6 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE)
 SET(CMAKE_VERBOSE_MAKEFILE ON)
 SET(CMAKE_MACOSX_RPATH OFF)
-ENABLE_LANGUAGE(CXX)
 
 # ------------------------------------- 
 # Project configuration
@@ -22,6 +21,8 @@ PROJECT(meanie3D)
 SET(${PROJECT_NAME}_MAJOR_VERSION 0)
 SET(${PROJECT_NAME}_MINOR_VERSION 1)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
+
+ENABLE_LANGUAGE(CXX)
 
 # ------------------------------------- 
 # Paths and build configuration
@@ -64,41 +65,80 @@ ENDIF(CMAKE_SYSTEM_NAME MATCHES Darwin)
 ADD_SUBDIRECTORY(radolan)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/radolan/include)
 
-# -------------------------------------
-# Automated tests
-# -------------------------------------
-
-IF (NOT WITH_TESTS)
-    SET(TESTS_ENABLED 0)
-ELSE()
-    SET(TESTS_ENABLED ${WITH_TESTS})
-ENDIF()
-
-IF (TESTS_ENABLED)
-    ADD_SUBDIRECTORY(gtest-1.7.0)
-    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
-    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
-ENDIF()
-
 # ------------------------------------- 
 # Multithreading / Parallelism Choices
 # -------------------------------------
 
-# Choose OpenMP by default
-
-IF (NOT WITH_OPENMP)
+IF (NOT DEFINED WITH_OPENMP)
     SET(OPENMP_ENABLED 1)
-ELSE(NOT WITH_OPENMP)
+    MESSAGE(STATUS "OpenMP enabled by default. Use -DWITH_OPENMP=OFF to build without OpenMP support.")
+ELSE()
     SET(OPENMP_ENABLED ${WITH_OPENMP})
-ENDIF(NOT WITH_OPENMP)
+    IF (OPENMP_ENABLED)
+        MESSAGE(STATUS "OpenMP is enabled")
+        ADD_DEFINITIONS(-DWITH_OPENMP=1)
+    ELSE()
+        MESSAGE(STATUS "OpenMP is disabled")
+    ENDIF()
+ENDIF()
+
+IF (NOT DEFINED WITH_TBB)
+    SET(TBB_ENABLED 0)
+    MESSAGE(STATUS "TBB disabled by default. Use -DWITH_TBB=ON to build with TBB support.")
+ELSE()
+    SET(TBB_ENABLED ${WITH_TBB})
+    IF (TBB_ENABLED)
+        MESSAGE(STATUS "TBB is enabled")
+        ADD_DEFINITIONS(-DWITH_TBB=1)
+    ELSE()
+        MESSAGE(STATUS "TBB is disabled")
+    ENDIF()
+ENDIF()
 
 # Guard against flag error
 
 IF (OPENMP_ENABLED)
     IF (TBB_ENABLED)
-        MESSAGE(FATAL_ERROR "-DWITH_OPENMP=1 is mutually exclusive with -DTBB_ENABLED")
+        MESSAGE(FATAL_ERROR "-DWITH_OPENMP=ON is mutually exclusive with -DWITH_TBB=ON")
     ENDIF(TBB_ENABLED)
 ENDIF(OPENMP_ENABLED)
+
+# -------------------------------------
+# Visualization on/off
+# -------------------------------------
+
+IF (NOT DEFINED WITH_VTK)
+    SET(VTK_ENABLED 0)
+    MESSAGE(STATUS "VTK disabled by default. Use -DWITH_VTK=ON to build with VTK support.")
+ELSE()
+    SET(VTK_ENABLED ${WITH_VTK})
+    IF (VTK_ENABLED)
+        MESSAGE(STATUS "VTK is enabled")
+        ADD_DEFINITIONS(-DWITH_VTK=1)
+    ELSE()
+        MESSAGE(STATUS "VTK is disabled")
+    ENDIF()
+ENDIF()
+
+# -------------------------------------
+# Automated tests yes/no
+# -------------------------------------
+
+IF (NOT DEFINED WITH_TESTS)
+    SET(TESTS_ENABLED 0)
+    MESSAGE(STATUS "Tests are disabled by default. Use -DWITH_TESTS=ON to build tests.")
+ELSE()
+    SET(TESTS_ENABLED ${WITH_TESTS})
+ENDIF()
+
+IF (TESTS_ENABLED)
+    MESSAGE(STATUS "Tests are compiled.")
+    ADD_SUBDIRECTORY(gtest-1.7.0)
+    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
+    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
+ELSE()
+    MESSAGE(STATUS "Tests are disabled. Use -DWITH_TESTS=ON/OFF to switch tests on or off.")
+ENDIF()
 
 # -------------------------------------
 # Compiler Flags
@@ -112,7 +152,7 @@ IF(CMAKE_COMPILER_IS_GNUCXX)
 ENDIF()
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline")
+    SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -finline -ggdb")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ftree-vectorize -msse2 -finline")
     SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -ftree-vectorize -msse2 -finline")
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -ftree-vectorize -msse2 -finline")
@@ -152,21 +192,6 @@ ENDIF (USE_CPP11)
 IF (CMAKE_CXX_COMPILER MATCHES ".*clang")
     MESSAGE(STATUS "Adding flag -DBOOST_HAS_INT128=1")
     ADD_DEFINITIONS(-DBOOST_HAS_INT128=1)
-ENDIF()
-
-# OpenMP 
-
-IF (OPENMP_ENABLED)
-    ADD_DEFINITIONS(-DWITH_OPENMP=1)
-    ADD_DEFINITIONS(-DOPENMP=1)
-ENDIF (OPENMP_ENABLED)
-
-IF (TBB_ENABLED)
-    ADD_DEFINITIONS(-DWITH_TBB=1)
-ENDIF()
-
-IF (WITH_VTK)
-    ADD_DEFINITIONS(-DWITH_VTK=1)
 ENDIF()
 
 # ------------------------------------- 
@@ -248,7 +273,7 @@ IF (OpenCV_FOUND)
 ENDIF (OpenCV_FOUND)
 
 # VTK
-IF (WITH_VTK)
+IF (VTK_ENABLED)
     FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
     IF (VTK_FOUND)
         MESSAGE(STATUS "VTK found")
@@ -669,7 +694,7 @@ SET_TARGET_PROPERTIES(meanie3D-timestamp PROPERTIES LINKER_LANGUAGE CXX)
 #
 # VTK-converter
 #
-IF (WITH_VTK)
+IF (VTK_ENABLED)
     ADD_EXECUTABLE(meanie3D-cfm2vtk
         src/executables/meanie3D-cfm2vtk.cpp)
 
@@ -678,7 +703,7 @@ IF (WITH_VTK)
         ${Boost_LIBRARIES}
         ${VTK_LIBRARIES})
     SET_TARGET_PROPERTIES(meanie3D-cfm2vtk PROPERTIES LINKER_LANGUAGE CXX)
-ENDIF(WITH_VTK)
+ENDIF()
 
 # valid_min/valid_max checker
 

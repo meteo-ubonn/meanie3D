@@ -31,14 +31,9 @@ class FSTestBase : public Test
     
 protected:
     
-    //
-    // Protected member variables
-    //
     
-    // Common settings, like grid resolution etc.
     FSTestSettings  *m_settings;
     
-    // NetCDF related
     
     std::string             m_filename;
     
@@ -46,13 +41,6 @@ protected:
     
     CoordinateSystem<T>     *m_coordinate_system;
     
-//    vector<NcDim *> m_dimensions;
-//
-//    vector<NcVar *> m_dimension_variables;
-//    
-//    // Stores dimension variable data
-//    map< NcVar* , float* > m_dimension_data;
-
     vector<NcVar>           m_variables;
 
     size_t                  m_pointCount;            
@@ -63,7 +51,7 @@ protected:
     
     FeatureSpace<T>         *m_featureSpace;
     
-    PointIndex<T>    *m_featureSpaceIndex;
+    PointIndex<T>           *m_featureSpaceIndex;
     
     //
     // Protected methods

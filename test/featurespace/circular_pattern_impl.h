@@ -3,6 +3,8 @@
 
 #include <meanie3D/meanie3D.h>
 
+#include "testcase_base.h"
+
 using namespace m3D;
 using namespace m3D::utils::vectors;
 
@@ -36,7 +38,7 @@ template<class T>
 void FSCircularPatternTest2D<T>::create_ellipsoid_recursive( NcVar &var,
                                                              vector<T> &h,
                                                              size_t dimensionIndex,
-                                                             typename CoordinateSystem<T>::GridPoint &gridpoint )
+                                                             vector<int> &gridpoint )
 {
     NcDim dim = var.getDim( dimensionIndex );
     
@@ -62,23 +64,16 @@ void FSCircularPatternTest2D<T>::create_ellipsoid_recursive( NcVar &var,
             
             this->coordinate_system()->lookup( gridpoint, coordinate );
             
+            vector<size_t> gp(gridpoint.begin(), gridpoint.end());
+
             if ( isPointOnEllipse( coordinate, h ) )
             {
-                vector<size_t> gp(gridpoint.begin(), gridpoint.end());
+                T value = (T) FS_VALUE_MAX;
                 
-                var.putVar( gp, FS_VALUE_MAX );
-                
-                // read the value back and compare
-                
-                double read_value = 0.0;
-                
-                var.getVar( gp, &read_value );
-                
-                assert( read_value == FS_VALUE_MAX );
+                var.putVar( gp, value );
                 
                 this->m_pointCount = this->m_pointCount+1;
             }
-            
         }
     }
 }
@@ -86,15 +81,11 @@ void FSCircularPatternTest2D<T>::create_ellipsoid_recursive( NcVar &var,
 template<class T> 
 void FSCircularPatternTest2D<T>::create_ellipsoid( NcVar &var, vector<T> h )
 {
-    typename CoordinateSystem<T>::GridPoint gridpoint( this->coordinate_system()->rank(), 0 );
+    vector<int> gridpoint( this->coordinate_system()->rank(), 0 );
     
     this->m_pointCount = 0;
     
-//    cout << "Creating ellipsoid around 0 with half axis ";
-//    print_vector( &h );
-//    cout << " ... ";
     create_ellipsoid_recursive( var, h, 0, gridpoint );
-//    cout << "done. (" << this->m_pointCount << " points)" << endl;
     
     this->m_totalPointCount += this->m_pointCount;
 }
@@ -106,7 +97,7 @@ void FSCircularPatternTest2D<T>::SetUp()
     
     // Set the bandwidths
     
-    size_t bw_size = this->m_settings->fs_dim();
+    size_t bw_size = this->m_settings->num_dimensions();
     
     this->m_bandwidths.push_back( vector<T>( bw_size, 1.0 ) );
     this->m_bandwidths.push_back( vector<T>( bw_size, 2.0 ) );
@@ -164,7 +155,7 @@ void FSCircularPatternTest2D<T>::SetUp()
         
         cout << "done (" << this->m_pointCount << " points)." << endl;
     }
-    
+        
     // Calculate KNN
     
     for ( size_t i = 0; i < m_bandwidths.size(); i++ )
@@ -172,7 +163,7 @@ void FSCircularPatternTest2D<T>::SetUp()
         this->m_nearest_neighbours.push_back( (i+1) * (this->m_totalPointCount/m_bandwidths.size()) );
     }
     
-    FSTestBase<T>::generate_featurespace();
+    this->generate_featurespace();
 }
 
 template<class T> 

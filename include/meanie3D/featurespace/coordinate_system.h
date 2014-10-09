@@ -50,6 +50,13 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Util methods
+    
+        /** Calculates min/max and resolution, reads dimension variable
+         * data and gets dimension sizes. Requires the dimensions and
+         * dimension variables to be set up.
+         */
+        void construct();
+
 
         /** Reads the complete set of variables for the dimensions (like lat(x), x(x) etc.) and stores
          * it for future use in the given map. It's the caller's responsibility to free the map after
@@ -68,12 +75,22 @@ namespace m3D {
          * Afterwards, the map will be empty.
          */
         static void clear_dimension_data_map(DimensionData &data);
-
+        
     public:
 
 #pragma mark -
 #pragma mark Constructor/Destructor
 
+        /** Creates a coordinate system from the given netcdf file
+         * assuming that the dimensions are all of the format x(x),
+         * y(y) etc.
+         * 
+         * @param filename
+         * @param dimensions
+         */
+        CoordinateSystem(NcFile *file, 
+                         const vector<string> &dimensions);
+        
         /** Construct a coordinate system from the coordinate
          * variables in a NetCDF file.
          *

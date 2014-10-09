@@ -39,15 +39,33 @@ protected:
     // Calculates from the number of points created.
     vector<size_t> m_nearest_neighbours;
     
-    //
-    // Protected methods
-    //
-    
+    /**
+     * 
+     * @param coordinate
+     * @param axis
+     * @return 
+     */
     bool isPointOnEllipse( vector<T> coordinate, vector<T> axis );
     
-    void create_ellipsoid_recursive( NcVar &var, vector<T> &h, size_t dimensionIndex, typename CoordinateSystem<T>::GridPoint &gridpoint );
+    /**
+     * 
+     * @param var
+     * @param h
+     * @param dimensionIndex
+     * @param gridpoint
+     */
+    void create_ellipsoid_recursive( NcVar &var, 
+            vector<T> &h, 
+            size_t dimensionIndex, 
+            vector<int> &gridpoint );
     
-    void create_ellipsoid( NcVar &var, vector<T> h );
+    /**
+     * 
+     * @param var
+     * @param h
+     */
+    void create_ellipsoid( NcVar &var, 
+            vector<T> h );
 
 public:
     

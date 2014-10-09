@@ -12,6 +12,32 @@
 #include "coordinate_system.h"
 
 namespace m3D { 
+    
+    template <typename T>
+    CoordinateSystem<T>::CoordinateSystem(NcFile *file, const vector<string> &dimensions)
+    {
+        using namespace netCDF;
+        
+        try
+        {
+            m_dimensions.clear();
+            m_dimension_variables.clear();
+            
+            for (size_t i=0; i<dimensions.size(); i++)
+            {
+                m_dimensions.push_back(file->getDim(dimensions[i]));
+                m_dimension_variables.push_back(file->getVar(dimensions[i]));
+            }
+            
+            this->construct();
+        }
+        catch (const exceptions::NcException &e)
+        {
+            cerr << "ERROR:could not create coordinate system from file "
+                    << file->getName()<<" :"<<e.what()<<endl;
+            exit(-1);
+        }
+    }
 
     template <typename T>
     CoordinateSystem<T>::CoordinateSystem(const vector<NcDim> &dimensions,
@@ -19,76 +45,7 @@ namespace m3D {
     : m_dimensions(dimensions)
     , m_dimension_variables(dimension_variables) 
     {
-        using namespace netCDF;
-
-        m_dimension_sizes.resize(this->rank());
-        for (size_t i = 0; i<this->rank(); i++)
-            m_dimension_sizes[i] = this->m_dimensions[i].getSize();
-
-        read_dimension_data_map(m_dimension_data, m_dimensions, m_dimension_variables);
-
-        // resolution, calculated from the dimension variables
-
-        m_resolution = vector<T>(m_dimension_variables.size());
-
-        for (size_t i = 0; i < m_dimension_variables.size(); i++) {
-            NcVar var = dimension_variables[i];
-
-            // Figure out the unit
-
-            // TODO: expand for more units
-            // TODO: test this code!!
-
-            std::string unit_string;
-
-            NcVarAtt unit = var.getAtt("units");
-
-            if (unit.isNull()) {
-                cerr << "WARNING: Variable " << var.getName() << " has no 'units' attribute. It will be assumed to be in meters [m]" << endl;
-                m_dimension_units.push_back("m");
-            } else {
-                unit.getValues(unit_string);
-
-                if (strcmp(unit_string.c_str(), "m") == 0) {
-                    m_dimension_units.push_back("m");
-                } else if (strcmp(unit_string.c_str(), "km") == 0) {
-                    m_dimension_units.push_back("km");
-                } else {
-                    cerr << "WARNING: Variable " << var.getName() << " has units'" << unit_string << "' which is currently not handled. It will be assumed to be in meters [m]" << endl;
-                    m_dimension_units.push_back("m");
-                }
-            }
-
-            double min, max;
-
-            try {
-                netcdf::get_valid_range(var, min, max);
-            } catch (std::exception &e) {
-                cerr << "Variable " << var.getName() << " is missing valid_min+valid_max or valid_range attribute" << endl;
-                cerr << "Falling back on the variable values" << endl;
-
-                min = std::numeric_limits<T>::max();
-                max = std::numeric_limits<T>::min();
-
-                for (size_t vi = 0; vi < dimensions[i].getSize(); vi++) {
-                    T value = m_dimension_data[i][vi];
-
-                    if (value > max) {
-                        max = value;
-                    }
-
-                    if (value < min) {
-                        min = value;
-                    }
-                }
-
-                cerr << "Range found from data: [" << min << "," << max << "]" << endl;
-            }
-
-            m_resolution[i] = (max - min) / (m_dimension_sizes[i] - 1);
-        }
-
-        m_resolution_norm = utils::vectors::vector_norm<T>(m_resolution);
+        this->construct();
     }
 
     template <typename T>
@@ -114,6 +71,102 @@ namespace m3D {
     template <typename T>
     CoordinateSystem<T>::~CoordinateSystem() {
         clear_dimension_data_map(m_dimension_data);
+    }
+    
+    template <typename T>
+    void
+    CoordinateSystem<T>::construct()
+    {
+        try
+        {
+            // get dimension sizes
+
+            m_dimension_sizes.resize(this->rank());
+
+            for (size_t i = 0; i<this->rank(); i++)
+                m_dimension_sizes[i] = this->m_dimensions[i].getSize();
+
+            // Read the data for the dimensions from the dimension variables
+
+            read_dimension_data_map(m_dimension_data, m_dimensions, m_dimension_variables);
+
+            // resolution, calculated from the dimension variables
+
+            m_resolution = vector<T>(m_dimension_variables.size());
+
+            for (size_t i = 0; i < m_dimension_variables.size(); i++) 
+            {
+                NcVar var = m_dimension_variables[i];
+
+                // Figure out the unit
+
+                // TODO: expand for more units
+                // TODO: test this code!!
+
+                std::string unit_string;
+
+                NcVarAtt unit;
+
+                try 
+                {
+                    unit = var.getAtt("units");
+                    unit.getValues(unit_string);
+                    if (strcmp(unit_string.c_str(), "m") == 0) {
+                        m_dimension_units.push_back("m");
+                    } else if (strcmp(unit_string.c_str(), "km") == 0) {
+                        m_dimension_units.push_back("km");
+                    } else {
+                        cerr << "WARNING: Variable " << var.getName() << " has units'" << unit_string << "' which is currently not handled. It will be assumed to be in meters [m]" << endl;
+                        m_dimension_units.push_back("m");
+                    }
+                }
+                catch (netCDF::exceptions::NcException &e)
+                {
+                    cerr << "WARNING: Variable " << var.getName() << " has no 'units' attribute. It will be assumed to be in meters [m]" << endl;
+                    m_dimension_units.push_back("m");
+                }
+
+                double min, max;
+
+                try 
+                {
+                    netcdf::get_valid_range(var, min, max);
+                } 
+                catch (std::exception &e) 
+                {
+                    cerr << "Variable " << var.getName() << " is missing valid_min+valid_max or valid_range attribute" << endl;
+                    cerr << "Falling back on the variable values" << endl;
+
+                    min = std::numeric_limits<T>::max();
+                    max = std::numeric_limits<T>::min();
+
+                    for (size_t vi = 0; vi < m_dimension_sizes[i]; vi++) 
+                    {
+                        T value = m_dimension_data[i][vi];
+
+                        if (value > max) {
+                            max = value;
+                        }
+
+                        if (value < min) {
+                            min = value;
+                        }
+                    }
+
+                    cerr << "Range found from data: [" << min << "," << max << "]" << endl;
+                }
+
+                m_resolution[i] = (max - min) / (m_dimension_sizes[i] - 1);
+            }
+
+            m_resolution_norm = utils::vectors::vector_norm<T>(m_resolution);
+        }
+        catch (const exceptions::NcException &e)
+        {
+            cerr << "ERROR:could not construct coordinate system:"
+                    << e.what() << endl;
+            exit(-1);
+        }
     }
 
     template <typename T>
