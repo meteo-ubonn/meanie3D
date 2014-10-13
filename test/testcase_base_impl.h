@@ -252,13 +252,15 @@ void FSTestBase<T>::TearDown()
     
     delete m_file;
     m_file = NULL;
-    
+
+#if CLEAN_TESTFILES_UP    
     boost::filesystem::path path(this->m_filename);
     if (boost::filesystem::exists(path))
     {
         INFO << "removing test data file "<<this->m_filename<<endl;
         boost::filesystem::remove(path);
     }
+#endif
 }
 
 template<class T>

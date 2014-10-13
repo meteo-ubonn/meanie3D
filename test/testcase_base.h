@@ -27,6 +27,8 @@
 #pragma mark -
 #pragma mark Declarations
 
+#define CLEAN_TESTFILES_UP 0
+
 #define INFO_ENABLED false
 #define INFO if (INFO_ENABLED) cout << "INFO:" 
 

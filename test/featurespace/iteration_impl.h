@@ -15,7 +15,7 @@ void FSIterationTest2D<T>::write_cloud( const NcVar &variable )
     
     size_t numPoints = 0;
     
-    GaussianNormal<T> distribution;
+    INFO << "Writing a cloud:" << endl;
     
     do 
     {
@@ -28,15 +28,11 @@ void FSIterationTest2D<T>::write_cloud( const NcVar &variable )
             while ( !valid )
             {
                 NcDim dim = this->coordinate_system()->dimensions()[d];
-                
                 NcVar var = this->m_file->getVar( dim.getName() );
-                
                 float rand = box_muller( m_mean->at(d), m_deviation->at(d) );
                 
                 // re-transform to grid coordinates
-                
                 float min,max;
-                
                 var.getAtt("valid_min").getValues( &min );
                 var.getAtt("valid_max").getValues( &max );
                 
@@ -45,21 +41,25 @@ void FSIterationTest2D<T>::write_cloud( const NcVar &variable )
                 if ( n >=0 && n < dim.getSize() )
                 {
                     cursor[d] = n;
-                    
                     valid = true;
                 }
             }
         }
         
         // generate a random value
-        
+
         typename CoordinateSystem<T>::Coordinate coordinate;
         coordinate = this->coordinate_system()->newCoordinate();
         
-        vector<int> gridpoint;
-        for (size_t i=0; i<cursor.size(); i++) gridpoint[i]=(int)cursor[i];
-        this->coordinate_system()->lookup(gridpoint,coordinate);        
-        T value = (T) distribution( coordinate );
+        vector<int> gridpoint(coordinate.size(),0);
+        for (size_t i=0; i<coordinate.size(); i++) 
+            gridpoint[i]=(int)cursor[i];
+
+        this->coordinate_system()->lookup(gridpoint,coordinate);
+        
+        static float sigma_square = 0.5;
+        T norm = vectors::vector_norm(coordinate);  
+        T value = FS_VALUE_MAX * (1.0 / (sqrt(2 * M_PI * sigma_square))) * exp(-0.5 * norm * norm / sigma_square);        
         
         variable.putVar( cursor, value );
         
@@ -223,6 +223,7 @@ TYPED_TEST_CASE( FSIterationTest2D, DataTypes );
 
 TYPED_TEST( FSIterationTest2D, FS_Iteration_2D_Test ) 
 {
+    using namespace m3D::utils::vectors;
 
 #if WRITE_FEATURESPACE
     const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
@@ -257,10 +258,11 @@ TYPED_TEST( FSIterationTest2D, FS_Iteration_2D_Test )
                                        TERMCRIT_EPSILON,
                                        TERMCRIT_ITER);
         
-        vector<TypeParam> last = trajectory->back();
-        
         // Results should lie around 0 with tolerance termcrit_epsilon
-        EXPECT_NEAR( vector_norm(last), FS_VALUE_MAX, this->coordinate_system()->resolution_norm() );
+
+        vector<TypeParam> x2 = trajectory->at(trajectory->size()-1);
+        vector<TypeParam> x1 = trajectory->at(trajectory->size()-2);
+        EXPECT_NEAR( vector_norm(x2-x1), 0, TERMCRIT_EPSILON );
         
         // There should be no more than termcrit_iter points in the 
         // trajectory
@@ -305,7 +307,8 @@ TYPED_TEST_CASE( FSIterationTest3D, DataTypes );
 
 TYPED_TEST( FSIterationTest3D, FS_Iteration_3D_Test ) 
 {
-    
+    using namespace m3D::utils::vectors;
+        
 #if WRITE_FEATURESPACE
     const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
@@ -367,7 +370,10 @@ TYPED_TEST( FSIterationTest3D, FS_Iteration_3D_Test )
         cout << "done. (" << trajectory->size() << " points, ending at " << last << endl;
          
         // Results should lie around 0 with tolerance termcrit_epsilon
-        EXPECT_NEAR( vector_norm(last), FS_VALUE_MAX, this->coordinate_system()->resolution_norm() );
+
+        vector<TypeParam> x2 = trajectory->at(trajectory->size()-1);
+        vector<TypeParam> x1 = trajectory->at(trajectory->size()-2);
+        EXPECT_NEAR( vector_norm(x2-x1), 0, TERMCRIT_EPSILON );
         
         // There should be no more than termcrit_iter points in the 
         // trajectory
