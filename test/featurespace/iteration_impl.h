@@ -126,6 +126,7 @@ FSIterationTest2D<T>::FSIterationTest2D() : m_center(NULL), m_mean(NULL), m_devi
         // increasing bandwidth
         
         vector<T> h( bw_size, radius );
+        h[h.size()-1] = 2 * FS_VALUE_MAX;
         
         this->m_bandwidths.push_back( h );
         
@@ -145,7 +146,7 @@ FSIterationTest2D<T>::FSIterationTest2D() : m_center(NULL), m_mean(NULL), m_devi
         
         coord[1] = origin[1] = radius * sin( alpha );
         
-        origin[2] = FS_VALUE_MAX;
+        origin[2] = FS_VALUE_MAX * box_muller( 0, 1 );
         
         Point<T> point( coord, origin );
         
@@ -209,7 +210,7 @@ FSIterationTest3D<T>::FSIterationTest3D()
         
         coord[2] = origin[2] = radius * cos( phi );
         
-        origin[3] = FS_VALUE_MAX;
+        origin[3] = FS_VALUE_MAX * box_muller( 0, 1 );
         
         Point<T> point( coord, origin );
         
