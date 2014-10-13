@@ -11,7 +11,7 @@
 #include <vector>
 #include <map>
 
-namespace m3D { namespace weights {
+namespace m3D {
 
     /** Draft of a weight function designed to facilitate 
      * bright band detection
@@ -146,6 +146,6 @@ namespace m3D { namespace weights {
             return m_weight->get(p->gridpoint);
         }
     };
-}}
+}
 
 #endif
