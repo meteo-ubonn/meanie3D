@@ -6,7 +6,7 @@
 #define ASSERT_VECTOR_SIZES 0
 
 // ---------------------------------------------------- //
-// Debugging Flags(stdout)
+// Configuration
 // ---------------------------------------------------- //
 
 // Enable the replacement of zero-shift vectors
@@ -58,7 +58,7 @@
 #define WRITE_INDEX 0
 
 // Write the feature-space out in .vtk file format
-#define WRITE_FEATURESPACE 0
+#define WRITE_FEATURESPACE 1
 
 // Write out each mean-shift sample as vtk file
 // WARNING: this produces a LOT of data

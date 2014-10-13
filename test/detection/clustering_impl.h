@@ -157,6 +157,8 @@ void FSClusteringTest2D<T>::SetUp()
 {
     FSTestBase<T>::SetUp();
     
+    m_smoothing_scale = 0.01;
+    
     // Set the bandwidths
     
     size_t bw_size = this->m_settings->fs_dim();
@@ -201,6 +203,8 @@ FSClusteringTest2D<T>::FSClusteringTest2D() : FSTestBase<T>()
     this->m_divisions = 3;
     
     this->m_cloudSize = 50 * NUMBER_OF_GRIDPOINTS / m_divisions;
+    
+    this->m_smoothing_scale = 0.01;
 }
 
 template<class T>
@@ -210,7 +214,9 @@ FSClusteringTest3D<T>::FSClusteringTest3D() : FSClusteringTest2D<T>()
     
     this->m_divisions = 4;
     
-    this->m_cloudSize = 100 * NUMBER_OF_GRIDPOINTS / this->m_divisions;
+    this->m_cloudSize = 50 * NUMBER_OF_GRIDPOINTS / this->m_divisions;
+
+    this->m_smoothing_scale = 0.01;
 }
 
 
@@ -237,75 +243,50 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         
         Kernel<TypeParam> *kernel = new GaussianNormalKernel<TypeParam>( vector_norm(h) );
         
-        cout << "Clustering feature space with"
-        << " epsilon=" << this->coordinate_system()->resolution_norm()
-        << " max_iter=" << TERMCRIT_ITER << " ... "
-        << " with bandwidths " << h  << " ... " << endl;
-        
         typename Cluster<TypeParam>::list::iterator ci;
         
         start_timer();
         
-        WeightFunction<TypeParam> *weight = new VariableWeighed<TypeParam>(this->m_file,
-                                                                           this->coordinate_system(),
-                                                                           this->m_variables.front());
+        vector<netCDF::NcVar> excluded;
+                
+        vector<TypeParam> resolution = this->m_featureSpace->coordinate_system->resolution();
         
+        h.push_back( numeric_limits<TypeParam>::max());
         
-        // Create 'bandwidth' parameter from grid resolution and
-        // the maximum value in the value range
-        
-        vector<TypeParam> resolution = ((TypeParam)3.0) * this->coordinate_system()->resolution();
-        
-        resolution.push_back( numeric_limits<TypeParam>::max());
-        
-        // Search parameters for neighbourhood searches in clustering
-        // should be in the order of the grid resolution
-        
-        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( resolution );
-        
-        // KNNSearchParams *params = new KNNSearchParams( 200 );
+        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( h );
         
         ClusterOperation<TypeParam> op(this->m_featureSpace,
                                        this->m_dataStore,
                                        this->m_featureSpaceIndex);
         
-        ClusterList<TypeParam> clusters = op.cluster( params, kernel, weight );
+        ClusterList<TypeParam> clusters = op.cluster( params, kernel, NULL, false, true, true );
         
-        delete kernel;
-        
-        //        delete weight;
-        
-        //        // Create the cluster graph
-        //        this->m_featureSpace->create_cluster_graph( h, kernel, NULL );
-        
-        double time = stop_timer();
-        cout << "done. (" << time << " seconds, " << clusters.clusters.size() << " modes found:" << endl;
         size_t cluster_number = 1;
         for ( ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++ )
         {
             Cluster<TypeParam> *c = *ci;
-            
+            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+        }
+
+        clusters.apply_size_threshold(20);
+
+        EXPECT_EQ(clusters.clusters.size(),4);
+        
+        delete kernel;
+        
+        double time = stop_timer();
+        cout << "done. (" << time << " seconds, " << clusters.clusters.size() << " modes found:" << endl;
+        
+        cluster_number = 1;
+        for ( ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++ )
+        {
+            Cluster<TypeParam> *c = *ci;
             cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
         }
         
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
         
-#if WRITE_FEATURESPACE
-        string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
-        boost::replace_all( fs_filename, "/", "_" );
-        cout << "Writing Featurespace to " + fs_filename << " ... ";
-        VisitUtils<TypeParam>::write_featurespace_vtk( fs_filename, this->m_featureSpace );
-        cout << "done." << endl;
-#endif
-        
-#if WRITE_CLUSTERS
-        cout << "Writing clusters ... ";
-        m3D::utils::VisitUtils<TypeParam>::write_clusters_vtk( test_info->test_case_name(), clusters.clusters, h );
-        cout << "done." << endl;
-#endif
         ClusterList<TypeParam>::reset_clustering(this->m_featureSpace);
-        
-        EXPECT_GE( 4, clusters.clusters.size() );
     }
 }
 #endif
@@ -330,17 +311,13 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         vector<TypeParam> h = this->m_bandwidths.at(i);
         
         Kernel<TypeParam> *kernel = new GaussianNormalKernel<TypeParam>( vector_norm(h) );
-        
-        cout << "Clustering feature space with"
-        << " epsilon=" << this->coordinate_system()->resolution_norm()
-        << " max_iter=" << TERMCRIT_ITER << " ... "
-        << " with bandwidths " << h << " ... " << endl;
-        
+
+        vector<netCDF::NcVar> excluded;
+                
         typename Cluster<TypeParam>::list::iterator ci;
         
         start_timer();
         
-        //        VariableWeighed<TypeParam> *weight = new VariableWeighed<TypeParam>( this->m_file, this->coordinate_system, this->m_variables.front() );
         ClusterOperation<TypeParam> op(this->m_featureSpace,
                                        this->m_dataStore,
                                        this->m_featureSpaceIndex );
@@ -348,26 +325,32 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         // Create 'bandwidth' parameter from grid resolution and
         // the maximum value in the value range
         
-        vector<TypeParam> resolution = ((TypeParam)5.0) * this->coordinate_system()->resolution();
+        h.push_back( numeric_limits<TypeParam>::max());
         
-        resolution.push_back( numeric_limits<TypeParam>::max());
+        h *= ((TypeParam)0.25);
         
         // Search parameters for neighbourhood searches in clustering
         // should be in the order of the grid resolution
         
-        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( resolution );
+        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( h );
         
-        ClusterList<TypeParam> clusters = op.cluster( params, kernel, NULL, PostAggregationMethodNone );
+        ClusterList<TypeParam> clusters = op.cluster( params, kernel, NULL, PostAggregationMethodNone, true, true );
+        
+        size_t cluster_number = 1;
+        for ( ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++ )
+        {
+            Cluster<TypeParam> *c = *ci;
+            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+        }
+
+        clusters.apply_size_threshold(50);
         
         delete kernel;
-        //        delete weight;
-        
-        //        // Create the cluster graph
-        //        this->m_featureSpace->create_cluster_graph( h, kernel, NULL );
         
         double time = stop_timer();
         cout << "done. (" << time << " seconds, " << clusters.clusters.size() << " modes found:" << endl;
-        size_t cluster_number = 1;
+        
+        cluster_number = 1;
         for ( ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++ )
         {
             Cluster<TypeParam> *c = *ci;
@@ -375,20 +358,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
             cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
         }
         
-#if WRITE_FEATURESPACE
-        string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
-        boost::replace_all( fs_filename, "/", "_" );
-        cout << "Writing Featurespace to " + fs_filename << " ... ";
-        VisitUtils<TypeParam>::write_featurespace_vtk( fs_filename, this->m_featureSpace );
-        cout << "done." << endl;
-#endif
-        
-#if WRITE_CLUSTERS
-        cout << "Writing clusters ... ";
-        m3D::utils::VisitUtils<TypeParam>::write_clusters_vtk( test_info->test_case_name(), clusters.clusters, h );
-        cout << "done." << endl;
-#endif
-        EXPECT_GE( 27, clusters.clusters.size() );
+        EXPECT_EQ(clusters.clusters.size(),27);
     }
 }
 

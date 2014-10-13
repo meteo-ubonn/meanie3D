@@ -46,6 +46,8 @@ protected:
      */
     map< NcDim, size_t > m_division_increments;
     
+    T           m_smoothing_scale;
+    
     //
     // Protected methods
     //
