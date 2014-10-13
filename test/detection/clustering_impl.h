@@ -256,7 +256,7 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( h );
         
         ClusterOperation<TypeParam> op(this->m_featureSpace,
-                                       this->m_dataStore,
+                                       (NetCDFDataStore<TypeParam> *)this->m_data_store,
                                        this->m_featureSpaceIndex);
         
         ClusterList<TypeParam> clusters = op.cluster( params, kernel, NULL, false, true, true );
@@ -319,7 +319,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         start_timer();
         
         ClusterOperation<TypeParam> op(this->m_featureSpace,
-                                       this->m_dataStore,
+                                       (NetCDFDataStore<TypeParam> *)this->m_data_store,
                                        this->m_featureSpaceIndex );
         
         // Create 'bandwidth' parameter from grid resolution and

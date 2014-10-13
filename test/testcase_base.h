@@ -27,6 +27,9 @@
 #pragma mark -
 #pragma mark Declarations
 
+#define INFO_ENABLED false
+#define INFO if (INFO_ENABLED) cout << "INFO:" 
+
 using namespace std;
 using namespace testing;
 using namespace netCDF;

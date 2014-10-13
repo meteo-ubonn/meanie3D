@@ -37,6 +37,7 @@
 #define DEBUG_DIMENSION_DATA 0
 #define DEBUG_INDEX 0
 #define DEBUG_INDEX_SEARCHES 0
+#define DEBUG_NETCDF_DATASTORE 0
 #define DEBUG_FEATURESPACE 0
 #define DEBUG_ITERATION 0
 #define DEBUG_MEANSHIFT_GRAPH 0
@@ -58,7 +59,7 @@
 #define WRITE_INDEX 0
 
 // Write the feature-space out in .vtk file format
-#define WRITE_FEATURESPACE 1
+#define WRITE_FEATURESPACE 0
 
 // Write out each mean-shift sample as vtk file
 // WARNING: this produces a LOT of data
@@ -68,6 +69,10 @@
 // feature is enabled, set the sample points using the property
 // FeatureSpace::weight_sample_points
 #define WRITE_MEANSHIFT_WEIGHTS 0
+
+// In the iterative approach, writes out a file that shows iteration
+// origins only
+#define WRITE_ITERATION_ORIGINS 0
 
 // When using the iterative mean-shift, this feature allows
 // writing out the individual trajectories as .vtk files.
@@ -80,10 +85,6 @@
 // Writes out a vtk file that visualizes the selected bandwidth
 // parameters
 #define WRITE_BANDWIDTH 0
-
-// In the iterative approach, writes out a file that shows iteration
-// origins only
-#define WRITE_ITERATION_ORIGINS 0
 
 // Write out a VTK file that contains 1 and 0 for
 // all points. 1 means, that the point was marked

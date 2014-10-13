@@ -8,7 +8,6 @@
 
 #include "settings.h"
 
-
 FSTestSettings::FSTestSettings( size_t num_dims, 
                                 size_t num_vars, 
                                 vector<float> axis_bound_values,

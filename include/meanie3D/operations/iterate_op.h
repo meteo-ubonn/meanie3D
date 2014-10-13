@@ -18,24 +18,46 @@ namespace m3D {
 
         virtual ~IterationOperation() {}
 
-        /** Iterative mean-shift, starting at position x in feature-space. 
-         * @param x iteration origin
-         * @param bandwidth vector representing the diagonal of the bandwidth matrix
-         * @param kernel 
-         * @param weighing function : externally handed in weighing function, can be NULL
-         * @param termcrit_epsilon : if the distance between iterations gets lower or equal to this value,
-         *                           the iteration is stopped.
-         * @param termcrit_iterations : if more than this number of iterations have been done, it stops.
+        /** Performs a mean-shift iteration from the given starting
+         * point until one of the two termination criteria is met.
+         * 
+         * @param origin of the iteration (a point in feature-space)
+         * @param params 
+         * @param kernel
+         * @param weight weight function to use (or NULL)
+         * @param termcrit_epsilon smallest iteration step
+         * @param termcrit_iterations maximum number of iterations
+         */
+        void
+        iterate(Point<T> *origin, 
+                const SearchParameters *params, 
+                const Kernel<T> *kernel, 
+                const WeightFunction<T> *weight,
+                const T termcrit_epsilon,
+                const size_t termcrit_iterations);
+
+        /** Identical to 'iterate' with the difference that the iteration
+         * trajectory is recorded and returned.
+         * 
+         * @param origin of the iteration (a point in feature-space)
+         * @param params 
+         * @param kernel
+         * @param weight weight function to use (or NULL)
+         * @param termcrit_epsilon smallest iteration step
+         * @param termcrit_iterations maximum number of iterations
+         * 
          * @return The trajectory of the iteration
          */
         typename FeatureSpace<T>::Trajectory * 
-        iterate( Point<T> *origin, 
-                 const SearchParameters *params, 
-                 const Kernel<T> *kernel, 
-                 const int weight_index,
-                 const T termcrit_epsilon,
-                 const size_t termcrit_iterations );
+        get_trajectory(Point<T> *origin, 
+                       const SearchParameters *params, 
+                       const Kernel<T> *kernel, 
+                       const WeightFunction<T> *weight,
+                       const T termcrit_epsilon,
+                       const size_t termcrit_iterations);
 
+
+        
     };   
 }
 

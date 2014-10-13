@@ -5,8 +5,8 @@
  * Created on September 17, 2014, 12:55 PM
  */
 
-#ifndef TEST_LINEAR_MAPPING_H
-#define	TEST_LINEAR_MAPPING_H
+#ifndef M3D_TEST_LINEAR_MAPPING_H
+#define	M3D_TEST_LINEAR_MAPPING_H
 
 #include <meanie3D/array/linear_index_mapping.h>
 
@@ -45,8 +45,6 @@ TEST(LinearMappingTest, LinearMappingTest)
         for (size_t i=0; i < size; i++)
         {
             vector<int> p = mapping.linear_to_grid(i);
-            
-            // cout << "linear_index=" << i << " => " << p << endl;
             
             for (size_t j=0; j<N; j++)
             {

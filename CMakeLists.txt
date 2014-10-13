@@ -132,7 +132,8 @@ ELSE()
 ENDIF()
 
 IF (TESTS_ENABLED)
-    MESSAGE(STATUS "Tests are compiled.")
+    MESSAGE(STATUS "Tests are enabled.")
+    ENABLE_TESTING()
     ADD_SUBDIRECTORY(gtest-1.7.0)
     INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
     INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
@@ -755,10 +756,10 @@ IF (TESTS_ENABLED)
     # Unit tests for class FeatureSpace
 
     ADD_EXECUTABLE(m3D-test-featurespace
-        test/featurespace/settings.h
-        test/featurespace/settings.cpp
-        test/featurespace/testcase_base.h
-        test/featurespace/testcase_base_impl.h
+        test/settings.cpp
+        test/settings.h
+        test/testcase_base.h
+        test/testcase_base_impl.h
         test/featurespace/circular_pattern.h
         test/featurespace/circular_pattern_impl.h
         test/featurespace/uniform.h
@@ -781,6 +782,7 @@ IF (TESTS_ENABLED)
         ${HDF5_LIBRARIES}
         ${VTK_LIBRARIES}
         ${Blitz_LIBRARY})
+
     SET_TARGET_PROPERTIES(m3D-test-featurespace PROPERTIES LINKER_LANGUAGE CXX)
 
     # KDTree
@@ -796,14 +798,14 @@ IF (TESTS_ENABLED)
     # Detection tests
 
     ADD_EXECUTABLE(m3D-test-detection
+        test/settings.cpp
+        test/settings.h
+        test/testcase_base.h
+        test/testcase_base_impl.h
         test/detection/clustering.h
         test/detection/clustering_impl.h
         test/detection/detection_test.h
-        test/detection/settings.cpp
-        test/detection/settings.h
         test/detection/test.cpp
-        test/detection/testcase_base.h
-        test/detection/testcase_base_impl.h
         test/detection/testcases.h
         test/detection/variable_weighed.h
         test/detection/variable_weighed_impl.h)
@@ -818,6 +820,12 @@ IF (TESTS_ENABLED)
         ${OpenMP_RT_LIBRARIES}
         ${VTK_LIBRARIES})
     SET_TARGET_PROPERTIES(m3D-test-detection PROPERTIES LINKER_LANGUAGE CXX)
+
+    ADD_TEST(KernelTest m3D-test-kernel)
+    ADD_TEST(CollectionTest m3D-test-collections)
+    ADD_TEST(KDTreeTest m3D-test-kdtree)
+    ADD_TEST(MeanshiftTest m3D-test-featurespace)
+    ADD_TEST(ClusteringTest m3D-test-detection)
 
 ENDIF(TESTS_ENABLED)
 

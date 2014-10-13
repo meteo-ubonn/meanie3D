@@ -1,5 +1,5 @@
-#ifndef cf_algorithms_maps_testcases_h
-#define cf_algorithms_maps_testcases_h
+#ifndef M3D_MAP_TEST_H
+#define M3D_MAP_TEST_H
 
 //
 //  kernel_testcases_h

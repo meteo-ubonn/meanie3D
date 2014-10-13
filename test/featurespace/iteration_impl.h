@@ -1,27 +1,27 @@
 #ifndef M3D_TEST_FS_ITERATION_IMPL_H
 #define M3D_TEST_FS_ITERATION_IMPL_H
 
-#include <cf-algorithms/utils/rand_utils.h>
-#include <cf-algorithms/utils/array_utils.h>
-
 template<class T> 
 void FSIterationTest2D<T>::write_cloud( const NcVar &variable )
 {
-    using cfa::utils::random::box_muller;
+    using namespace m3D;
+    using m3D::utils::box_muller;
     
     // allocate a cursor
     
-    vector<size_t> cursor( this->coordinate_system()->size(), 0 );
+    vector<size_t> cursor( this->coordinate_system()->rank(), 0 );
     
     // start generating random points (with random values between 0 and 1)
     
     size_t numPoints = 0;
     
+    GaussianNormal<T> distribution;
+    
     do 
     {
         // genrate a random coordinate
         
-        for ( size_t d = 0; d < this->coordinate_system()->size(); d++ )
+        for ( size_t d = 0; d < this->coordinate_system()->rank(); d++ )
         {
             bool valid = false;
             
@@ -53,7 +53,13 @@ void FSIterationTest2D<T>::write_cloud( const NcVar &variable )
         
         // generate a random value
         
-        T value = (T) FS_VALUE_MAX;
+        typename CoordinateSystem<T>::Coordinate coordinate;
+        coordinate = this->coordinate_system()->newCoordinate();
+        
+        vector<int> gridpoint;
+        for (size_t i=0; i<cursor.size(); i++) gridpoint[i]=(int)cursor[i];
+        this->coordinate_system()->lookup(gridpoint,coordinate);        
+        T value = (T) distribution( coordinate );
         
         variable.putVar( cursor, value );
         
@@ -141,7 +147,7 @@ FSIterationTest2D<T>::FSIterationTest2D() : m_center(NULL), m_mean(NULL), m_devi
         
         origin[2] = FS_VALUE_MAX;
         
-        cfa::meanshift::Point<T> point( coord, origin );
+        Point<T> point( coord, origin );
         
         this->m_origins.push_back( point );
     }
@@ -205,7 +211,7 @@ FSIterationTest3D<T>::FSIterationTest3D()
         
         origin[3] = FS_VALUE_MAX;
         
-        cfa::meanshift::Point<T> point( coord, origin );
+        Point<T> point( coord, origin );
         
         this->m_origins.push_back( point );
     }
@@ -217,19 +223,15 @@ TYPED_TEST_CASE( FSIterationTest2D, DataTypes );
 
 TYPED_TEST( FSIterationTest2D, FS_Iteration_2D_Test ) 
 {
-    using cfa::meanshift::GaussianNormalKernel;
-    using cfa::meanshift::IterationOperation;
-    using cfa::meanshift::RangeSearchParams;
-    using cfa::meanshift::vector_norm;
-    using cfa::utils::VisitUtils;
-    
+
 #if WRITE_FEATURESPACE
     const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
     boost::replace_all( fs_filename, "/", "_" );
-    cout << "Writing Featurespace to " + fs_filename << " ... ";
+    INFO << "Writing Featurespace to " + fs_filename << " ... ";
     VisitUtils<TypeParam>::write_featurespace_vtk( fs_filename, this->m_featureSpace );
-    cout << "done." << endl;
+    if (INFO_ENABLED) 
+        cout << "done." << endl;
 #endif
     
     // G'is a kernel
@@ -240,24 +242,22 @@ TYPED_TEST( FSIterationTest2D, FS_Iteration_2D_Test )
     
     for ( size_t i = 0; i < this->m_origins.size(); i++ )
     {
-        //cout << "Entering iteration at " << this->m_origins[i].values << " with bandwidths " << this->m_bandwidths[i] << " ... " << endl;
-        
         typename FeatureSpace<TypeParam>::Trajectory *trajectory = NULL;
         
         IterationOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
         
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( this->m_bandwidths[i] );
         
-        trajectory = op.iterate( &this->m_origins[i],
-                                params,
-                                &kernel, 
-                                NULL,
-                                TERMCRIT_EPSILON,
-                                TERMCRIT_ITER);
+        WeightFunction<TypeParam> *weight = new DefaultWeightFunction<TypeParam>(this->m_featureSpace);
+        
+        trajectory = op.get_trajectory(&this->m_origins[i],
+                                       params,
+                                       &kernel, 
+                                       weight,
+                                       TERMCRIT_EPSILON,
+                                       TERMCRIT_ITER);
         
         vector<TypeParam> last = trajectory->back();
-        
-        //cout << "done. (" << trajectory->size() << " points, ending at " << last << endl;
         
         // Results should lie around 0 with tolerance termcrit_epsilon
         EXPECT_NEAR( vector_norm(last), FS_VALUE_MAX, this->coordinate_system()->resolution_norm() );
@@ -265,6 +265,8 @@ TYPED_TEST( FSIterationTest2D, FS_Iteration_2D_Test )
         // There should be no more than termcrit_iter points in the 
         // trajectory
         EXPECT_LT( trajectory->size(), TERMCRIT_ITER );
+        
+        delete weight;
         
 #if WRITE_TRAJECTORIES
         
@@ -303,19 +305,14 @@ TYPED_TEST_CASE( FSIterationTest3D, DataTypes );
 
 TYPED_TEST( FSIterationTest3D, FS_Iteration_3D_Test ) 
 {
-    using cfa::meanshift::IterationOperation;
-    using cfa::meanshift::GaussianNormalKernel;
-    using cfa::meanshift::RangeSearchParams;
-    using cfa::meanshift::vector_norm;
-    using cfa::utils::VisitUtils;
     
 #if WRITE_FEATURESPACE
     const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     string fs_filename = string(test_info->test_case_name()) + "_featurespace.vtk";
     boost::replace_all( fs_filename, "/", "_" );
-    cout << "Writing Featurespace to " + fs_filename << " ... ";
+    INFO << "Writing Featurespace to " + fs_filename << " ... ";
     VisitUtils<TypeParam>::write_featurespace_vtk( fs_filename, this->m_featureSpace );
-    cout << "done." << endl;
+    if (INFO_ENABLED) cout << "done." << endl;
 #endif
 
     // G'is a kernel
@@ -331,16 +328,16 @@ TYPED_TEST( FSIterationTest3D, FS_Iteration_3D_Test )
     f << "x\ty\tz\tv" << endl;
     f << fixed << setprecision(4);
     
-    cout << "Starting points:" << endl;
+    INFO << "Starting points:" << endl;
     for ( size_t i = 0; i < this->m_origins.size(); i++ )
     {
-        cout << this->m_origins[i].values << endl;
+        if (INFO_ENABLED) cout << this->m_origins[i].values << endl;
         for ( size_t j=0; j < this->m_origins[i].values.size(); j++ )
         {
             f << this->m_origins[i].values[j] << "\t";
         }
         f << endl;
-        cout << endl;
+        if (INFO_ENABLED) cout << endl;
     }
     f.close();
 #endif
@@ -349,22 +346,25 @@ TYPED_TEST( FSIterationTest3D, FS_Iteration_3D_Test )
     {
         typename FeatureSpace<TypeParam>::Trajectory *trajectory = NULL;
         
-        //cout << "Entering iteration at " << this->m_origins[i].values << " with bandwidths " << this->m_bandwidths[i] << " ... " << endl;
+        INFO << "Entering iteration at " << this->m_origins[i].values << " with bandwidths " << this->m_bandwidths[i] << " ... " << endl;
         
         IterationOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
         
+        WeightFunction<TypeParam> *weight = new DefaultWeightFunction<TypeParam>(this->m_featureSpace);
+        
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>( this->m_bandwidths[i] );
         
-        trajectory = op.iterate( &this->m_origins[i],
-                                params,
-                                &kernel, 
-                                NULL,
-                                TERMCRIT_EPSILON,
-                                TERMCRIT_ITER);
+        trajectory = op.get_trajectory(&this->m_origins[i],
+                                       params,
+                                       &kernel, 
+                                       weight,
+                                       TERMCRIT_EPSILON,
+                                       TERMCRIT_ITER);
         
         vector<TypeParam> last = trajectory->back();
 
-        //cout << "done. (" << trajectory->size() << " points, ending at " << last << endl;
+        if (INFO_ENABLED) 
+        cout << "done. (" << trajectory->size() << " points, ending at " << last << endl;
          
         // Results should lie around 0 with tolerance termcrit_epsilon
         EXPECT_NEAR( vector_norm(last), FS_VALUE_MAX, this->coordinate_system()->resolution_norm() );
@@ -373,6 +373,7 @@ TYPED_TEST( FSIterationTest3D, FS_Iteration_3D_Test )
         // trajectory
         EXPECT_LT( trajectory->size(), TERMCRIT_ITER );
         
+        delete weight;
         
 #if WRITE_TRAJECTORIES
         

@@ -9,7 +9,7 @@
 //  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
-#include "testcase_base.h"
+#include "../testcase_base.h"
 
 #pragma mark -
 #pragma mark Test Fixture

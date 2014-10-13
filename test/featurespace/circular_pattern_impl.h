@@ -1,14 +1,10 @@
 #ifndef M3D_TEST_FSCIRCULARPATTERN_IMPL_H
 #define M3D_TEST_FSCIRCULARPATTERN_IMPL_H
 
-#include <meanie3D/meanie3D.h>
-
-#include "testcase_base.h"
-
 using namespace m3D;
 using namespace m3D::utils::vectors;
 
-#define DEBUG 1
+#include "../testcase_base.h"
 
 #pragma mark -
 #pragma mark Test case 1 - ellipsoid sample means - data generation
@@ -149,12 +145,13 @@ void FSCircularPatternTest2D<T>::SetUp()
     
     for ( it = m_bandwidths.begin(); it != m_bandwidths.end(); it++ )
     {
-        cout << "Creating ellipsoid at origin with ranges " << (*it) << " ... ";
+        INFO << "Creating ellipsoid at origin with ranges " << (*it) << " ... ";
         
         create_ellipsoid( var, *it );
-        
-        cout << "done (" << this->m_pointCount << " points)." << endl;
-    }
+
+        if (INFO_ENABLED)
+            cout << " (" << this->m_pointCount << " points)." << endl;
+        }
         
     // Calculate KNN
     
@@ -178,11 +175,11 @@ void FSCircularPatternTest2D<T>::TearDown()
 template<class T> 
 FSCircularPatternTest2D<T>::FSCircularPatternTest2D() : FSTestBase<T>()
 {
-    cout << "Setting up 2D test with typeid " << typeid(T).name() << endl;
+    INFO << "Setting up 2D test with typeid " << typeid(T).name() << endl;
     
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
     
-    cout << "Test filename = " << filename << endl;
+    INFO << "Test filename = " << filename << endl;
 
     this->m_settings = new FSTestSettings( 2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase() );
 }
@@ -190,11 +187,11 @@ FSCircularPatternTest2D<T>::FSCircularPatternTest2D() : FSTestBase<T>()
 template<class T> 
 FSCircularPatternTest3D<T>::FSCircularPatternTest3D() : FSCircularPatternTest2D<T>()
 {
-    cout << "Setting up 3D test with typeid " << typeid(T).name() << endl;
+    INFO << "Setting up 3D test with typeid " << typeid(T).name() << endl;
     
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
     
-    cout << "Test filename = " << filename << endl;
+    INFO << "Test filename = " << filename << endl;
 
     this->m_settings = new FSTestSettings( 3, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase() );
 }
@@ -223,18 +220,11 @@ TYPED_TEST( FSCircularPatternTest2D, FS_CicrularPattern_2D_Test )
     {
         vector<TypeParam> h = this->m_bandwidths.at(i);
         
-#ifdef DEBUG
-        cout << "Calulcating sample meanshift at " << x << " with bandwidths " << h << " ... ";
-#endif
         MeanshiftOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
         
-        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(h);
+        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(((TypeParam)1.1)*h);
         
         vector<TypeParam> m = op.meanshift( x, params, &kernel );
-        
-#ifdef DEBUG
-        cout << "done. Mean-Shift - Vector: " << m << endl;
-#endif
         
         EXPECT_NEAR( vector_norm(m), 0.0, this->coordinate_system()->resolution_norm() );
     }
@@ -265,18 +255,11 @@ TYPED_TEST( FSCircularPatternTest3D, FS_CicrularPattern_3D_Test )
     {
         vector<TypeParam> h = this->m_bandwidths.at(i);
         
-#ifdef DEBUG
-        cout << "Calulcating sample meanshift at " << x << " with bandwidths " << h << " ... ";
-#endif
         MeanshiftOperation<TypeParam> op( this->m_featureSpace, this->m_featureSpaceIndex );
         
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(h);
         
         vector<TypeParam> m = op.meanshift( x, params, kernel );
-        
-#ifdef DEBUG
-        cout << "done. Mean-Shift - Vector: "<< m << endl;
-#endif
         
         EXPECT_NEAR( vector_norm(m), 0.0, this->coordinate_system()->resolution_norm() );
     }

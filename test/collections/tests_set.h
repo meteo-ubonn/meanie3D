@@ -1,5 +1,5 @@
-#ifndef cf_algorithms_set_testcases_h
-#define cf_algorithms_set_testcases_h
+#ifndef M3D_SET_TEST_H
+#define M3D_SET_TEST_H
 
 //
 //  kernel_testcases_h

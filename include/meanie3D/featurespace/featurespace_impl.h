@@ -221,7 +221,9 @@ namespace m3D {
 
                 T value = data_store()->get(var_index, gridpoint, isPointValid);
                 
-                // cout << "#" << var_index << "@" << gridpoint << " : " << value << " valid=" << isPointValid << endl;
+#if DEBUG_FEATURESPACE
+                cout << "#" << var_index << "@" << gridpoint << " ("<<coordinate<<") : " << value << " valid=" << isPointValid << endl;
+#endif
 
                 if ( isPointValid )
                 {

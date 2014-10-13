@@ -9,7 +9,7 @@
 //  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
-#include "testcase_base.h"
+#include "../testcase_base.h"
 
 #pragma mark -
 #pragma mark Test Fixture
@@ -34,7 +34,7 @@ protected:
     
     vector< vector<T> > m_bandwidths;
     
-    vector< Point<T> > m_origins;
+    vector< Point<T> >  m_origins;
 
     //
     // Protected methods
@@ -57,5 +57,7 @@ class FSIterationTest3D : public FSIterationTest2D<T>
 public:
     FSIterationTest3D();
 };
+
+#include "iteration_impl.h"
 
 #endif

@@ -77,6 +77,11 @@ namespace m3D {
         multiarray_map_t    m_buffered_data;
 
     public:
+        
+#pragma mark -
+#pragma mark Constants
+        
+        static const int NO_TIME;
 
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -90,7 +95,7 @@ namespace m3D {
         NetCDFDataStore(const std::string &filename,
                         const CoordinateSystem<T> *coordinate_system,
                         const vector<std::string> &variable_names,
-                        const int time_index)
+                        const int time_index = NO_TIME)
         : m_filename(filename)
         , m_variable_names(variable_names)
         , m_coordinate_system(coordinate_system)
@@ -245,6 +250,10 @@ namespace m3D {
 
                 if (time_is_an_issue) start[0] = this->m_time_index;
 
+#if DEBUG_NETCDF_DATASTORE
+                cout << "1D data set: N=" << N << endl;
+#endif
+
                 // how much to read?
 
                 vector<size_t> count(variable.getDimCount(),0);
@@ -289,7 +298,10 @@ namespace m3D {
                     N = variable.getDim(0).getSize();
                     M = variable.getDim(1).getSize();
                 }
-
+                
+#if DEBUG_NETCDF_DATASTORE
+                cout << "2D data set: N=" << N << " M=" << M << endl;
+#endif
                 // Create buffer to hold data
 
                 T *values = (T*) calloc(N*M,sizeof(T));
@@ -324,7 +336,7 @@ namespace m3D {
                 // read the chunk
 
                 variable.getVar(start, count, values);
-
+                
                 // re-package
 
                 for (int i = 0; i < N; i++)
@@ -333,8 +345,7 @@ namespace m3D {
                     {
                         gp[0] = i;
                         gp[1] = j;
-
-                        index->set(gp,values[ i*M + j ]);
+                        index->set(gp,values[i*M + j]);
                     }
                 }
 
@@ -361,6 +372,10 @@ namespace m3D {
                     M = variable.getDim(1).getSize();
                     K = variable.getDim(2).getSize();
                 }
+                
+#if DEBUG_NETCDF_DATASTORE
+                cout << "3D data set: N=" << N << " M=" << M << " K=" << K << endl;
+#endif
 
                 // Read this as a succession of 2D slices
                 // Allocate buffer for 2D slices
@@ -1044,6 +1059,9 @@ namespace m3D {
 
     template <typename T> 
     const T NetCDFDataStore<T>::NO_VALUE = -9999999999;
+    
+    template <typename T> 
+    const int NetCDFDataStore<T>::NO_TIME = -1;
 }
 
 #endif

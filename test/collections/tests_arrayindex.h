@@ -1,5 +1,5 @@
-#ifndef cf_algorithms_array_index_testcases_h
-#define cf_algorithms_array_index_testcases_h
+#ifndef M3D_ARRAY_INDEX_TEST_H
+#define M3D_ARRAY_INDEX_TEST_H
 
 #include <meanie3D/array/array_index.h>
 #include <meanie3D/featurespace.h>

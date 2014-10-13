@@ -1,5 +1,5 @@
-#ifndef cf_algorithms_featurespace_test_h
-#define cf_algorithms_featurespace_test_h
+#ifndef M3D_FEATURESPACE_TEST_H
+#define M3D_FEATURESPACE_TEST_H
 
 //
 //  featurespace_test.h

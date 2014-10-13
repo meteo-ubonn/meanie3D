@@ -13,13 +13,15 @@ namespace m3D {
 
     template <typename T> 
     typename FeatureSpace<T>::Trajectory * 
-    IterationOperation<T>::iterate( Point<T> *origin, 
-                                    const SearchParameters *params,                                     
-                                    const Kernel<T> *kernel, 
-                                    const int weight_index,
-                                    const T termcrit_epsilon,
-                                    const size_t termcrit_iterations )
+    IterationOperation<T>::get_trajectory(Point<T> *origin, 
+                                          const SearchParameters *params,                                     
+                                          const Kernel<T> *kernel, 
+                                          const WeightFunction<T> *weight,
+                                          const T termcrit_epsilon,
+                                          const size_t termcrit_iterations)
     {
+        using namespace m3D::vectors;
+        
         // Allocate a fresh trajectory
 
         typename FeatureSpace<T>::Trajectory *trajectory = new typename FeatureSpace<T>::Trajectory();
@@ -47,7 +49,7 @@ namespace m3D {
 
             MeanshiftOperation<T> op( this->feature_space, this->point_index );
 
-            vector<T> shift = op.meanshift( x, params, kernel, weight_index );
+            vector<T> shift = op.meanshift( x, params, kernel, weight );
 
             if ( iter == 0 )
             {
@@ -76,7 +78,7 @@ namespace m3D {
 #endif            
             // add to trajectory
 
-            trajectory->push_back( shift );
+            trajectory->push_back(shift);
 
 #if DEBUG_ITERATION
             std::cout << " (dx = " << dx << ")" << std::endl;
@@ -91,6 +93,70 @@ namespace m3D {
         iter--;
 
         return trajectory;
+    }
+    
+    template <typename T> 
+    void
+    IterationOperation<T>::iterate(Point<T> *origin, 
+                                   const SearchParameters *params,
+                                   const Kernel<T> *kernel,
+                                   const WeightFunction<T> *weight,
+                                   const T termcrit_epsilon,
+                                   const size_t termcrit_iterations)
+    {
+        using namespace m3D::vectors;
+
+        vector<T> x = origin->values;
+
+        T dx = std::numeric_limits<T>::max();
+
+        size_t iter = 0;
+
+        while ( iter < termcrit_iterations && dx >= termcrit_epsilon ) 
+        {
+#if DEBUG_ITERATION
+            std::cout << "Iteration " << iter << " from " << x;
+#endif
+            // get the mean-shift
+
+            MeanshiftOperation<T> op( this->feature_space, this->point_index );
+
+            vector<T> shift = op.meanshift( x, params, kernel, weight );
+
+            if ( iter == 0 )
+            {
+                origin->shift = shift;
+            }
+
+#if DEBUG_ITERATION
+            std::cout << " with mean-shift " << shift;
+#endif            
+            // calculate termination criteria
+            
+            dx = (T)vector_norm(shift);
+
+            // calculate iteration end point (re-use shift variable)
+            // Use a slightly optimized loop form 
+
+            size_t index = 0; 
+            typename vector<T>::iterator it;
+            for ( it=shift.begin(); it!= shift.end(); it++ )
+            {
+                *it += x[index++];
+            }
+
+#if DEBUG_ITERATION
+            std::cout << " to " << shift;
+            std::cout << " (dx = " << dx << ")" << std::endl;
+#endif            
+            iter++;
+
+            x = shift;
+        }
+
+        // substract one, since termination criterion is checked
+        // at beginning of the loop
+        iter--;
     }
 }
 

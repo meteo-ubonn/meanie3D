@@ -1,9 +1,6 @@
 #ifndef M3D_TEST_FS_CLUSTERING_IMPL_H
 #define M3D_TEST_FS_CLUSTERING_IMPL_H
 
-#include <cf-algorithms/operations/cluster_op.h>
-#include <cf-algorithms/utils/rand_utils.h>
-
 template<class T>
 void FSClusteringTest2D<T>::write_cloud( const NcVar &var, vector<T> mean, vector<T> deviation )
 {
@@ -65,8 +62,6 @@ void FSClusteringTest2D<T>::write_cloud( const NcVar &var, vector<T> mean, vecto
         
         T value = (T) (FS_VALUE_MAX * gauss( x-mean )) / gauss_zero;
         
-        // cout << "x=" << x << " mean=" << mean << " g(x-m)=" << value << endl;
-        
         var.putVar( gridpoint, value );
         
         numPoints++;
@@ -107,7 +102,7 @@ void FSClusteringTest2D<T>::create_clouds_recursive( const NcVar &var, size_t di
             
             this->coordinate_system()->lookup( gridpoint, coordinate );
             
-            cout << "\tWriting cloud at gridpoint=" <<  gridpoint << " coordinate=" << coordinate << " deviation=" << m_deviation << endl;
+            INFO << "\tWriting cloud at gridpoint=" <<  gridpoint << " coordinate=" << coordinate << " deviation=" << m_deviation << endl;
             
             write_cloud( var, coordinate, m_deviation );
         }
@@ -139,11 +134,12 @@ void FSClusteringTest2D<T>::create_clouds( const NcVar &var )
     
     this->m_pointCount = 0;
     
-    cout << "Creating clusters at the intersection of " << m_divisions << " lines per axis ..." << endl;
+    INFO << "Creating clusters at the intersection of " << m_divisions << " lines per axis ..." << endl;
     
     create_clouds_recursive( var, 0, gridpoint );
     
-    cout << "done. (" << this->m_pointCount << " points)" << endl;
+    if (INFO_ENABLED)
+        cout << "done. (" << this->m_pointCount << " points)" << endl;
     
     this->m_totalPointCount += this->m_pointCount;
 }

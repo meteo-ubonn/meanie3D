@@ -1,5 +1,5 @@
-#ifndef cf_algorithms_blitz_idx_testcases_h
-#define cf_algorithms_blitz_idx_testcases_h
+#ifndef M3D_BLITZ_IDX_TEST_H
+#define M3D_BLITZ_IDX_TEST_H
 
 #include <meanie3D/array/multiarray_blitz.h>
 

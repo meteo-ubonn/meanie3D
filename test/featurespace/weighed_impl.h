@@ -61,11 +61,11 @@ void FSWeighedTest2D<T>::create_uniform_distribution( const NcVar &var, size_t m
     
     this->m_pointCount = 0;
     
-    cout << "Creating uniform distribution with data every " << modulo << " nodes ...";
+    INFO << "Creating uniform distribution with data every " << modulo << " nodes ...";
     
     create_uniform_distribution_recursive( var, modulo, 0, gridpoint );
     
-    cout << "done. (" << this->m_pointCount << " points)" << endl;
+    if (INFO_ENABLED) cout << "done. (" << this->m_pointCount << " points)" << endl;
     
     this->m_totalPointCount += this->m_pointCount;
 }

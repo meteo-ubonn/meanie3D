@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 {
     
 #if WITH_TBB
-    cout << "Initializing TBB scheduler ... ";
+    cout << "INFO:Initializing TBB scheduler ... ";
     tbb::task_scheduler_init init;
     cout << "done.";
 #endif

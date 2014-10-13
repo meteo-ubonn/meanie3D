@@ -1,8 +1,6 @@
 #ifndef M3D_TEST_FS_UNIFORM_IMPL_H
 #define M3D_TEST_FS_UNIFORM_IMPL_H
 
-#include <meanie3D/meanie3D.h>
-
 #include <typeinfo>
 
 template <class T> 
@@ -59,11 +57,11 @@ FSUniformTest2D<T>::create_uniform_distribution( const NcVar &var, size_t modulo
     
     this->m_pointCount = 0;
     
-    cout << "Creating uniform distribution with data every " << modulo << " nodes ...";
+    INFO << "Creating uniform distribution with data every " << modulo << " nodes ...";
     
     create_uniform_distribution_recursive( var, modulo, 0, gridpoint );
     
-    cout << "done. (" << this->m_pointCount << " points)" << endl;
+    if (INFO_ENABLED) cout << "done. (" << this->m_pointCount << " points)" << endl;
     
     this->m_totalPointCount += this->m_pointCount;
 }
@@ -73,7 +71,7 @@ void FSUniformTest2D<T>::SetUp()
 {
     const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     
-    cout << "Setting up test " << test_info->test_case_name() << " with typeid " << typeid(T).name() << endl;
+    INFO << "Setting up test " << test_info->test_case_name() << " with typeid " << typeid(T).name() << endl;
     
     this->m_settings = new FSTestSettings( 2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase() );
     
