@@ -48,6 +48,7 @@ void parse_commmandline(program_options::variables_map vm,
         FS_TYPE &size_weight,
         FS_TYPE &correlation_weight,
         ::units::values::meters_per_second &max_speed,
+        ::units::values::s &max_time,
         vector<size_t> &vtk_dimension_indexes,
         Verbosity &verbosity) {
     // Version
@@ -87,10 +88,6 @@ void parse_commmandline(program_options::variables_map vm,
         exit(-1);
     }
 
-    if (vm.count("tracking-variable") > 0) {
-        tracking_variable_name = vm["tracking-variable"].as<string>();
-    }
-
     // Verbosity
 
     unsigned short vb = vm["verbosity"].as<unsigned short>();
@@ -103,9 +100,40 @@ void parse_commmandline(program_options::variables_map vm,
         verbosity = (Verbosity) vb;
     }
 
+    // max-speed
+
+    FS_TYPE speed = vm["max-speed"].as<FS_TYPE>();
+
+    max_speed = ::units::values::meters_per_second(speed);
+    
+    // max time
+    
+    FS_TYPE time = vm["max-time"].as<FS_TYPE>();
+
+    max_time = ::units::values::s(speed);
+    
+    // Weights
+    
+    range_weight = vm["wr"].as<FS_TYPE>();
+    size_weight = vm["ws"].as<FS_TYPE>();
+    correlation_weight = vm["wt"].as<FS_TYPE>();
+
+    // tracking variable
+    
+    if (vm.count("tracking-variable") > 0) {
+        tracking_variable_name = vm["tracking-variable"].as<string>();
+    }
+
+#if WITH_VTK
+    
+    // --write-vtk
+    
+    write_vtk = vm.count("write-vtk") > 0;
+
     // VTK dimension mapping
 
-    if (vm.count("vtk-dimensions") > 0) {
+    if (vm.count("vtk-dimensions") > 0) 
+    {
         // Open the file for reading once more
 
         NcFile *file = new NcFile(current_filename, NcFile::read);
@@ -153,25 +181,11 @@ void parse_commmandline(program_options::variables_map vm,
 
                 exit(-1);
             }
-
         }
-
         delete file;
     }
-
-    // max-speed
-
-    FS_TYPE speed = vm["max-speed"].as<FS_TYPE>();
-
-    max_speed = ::units::values::meters_per_second(speed);
-
-    // --write-vtk
-
-    write_vtk = vm.count("write-vtk") > 0;
-
-    range_weight = vm["wr"].as<FS_TYPE>();
-    size_weight = vm["ws"].as<FS_TYPE>();
-    correlation_weight = vm["wt"].as<FS_TYPE>();
+    
+#endif
 }
 
 /**
@@ -192,6 +206,7 @@ int main(int argc, char** argv) {
             ("ws", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for size correlation [0..1]")
             ("wt", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for histogram rank correlation [0..1]")
             ("max-speed", program_options::value<FS_TYPE>()->default_value(50.0), "Maximum allowed object speed (m/s)")
+            ("max-time", program_options::value<FS_TYPE>()->default_value(915.0), "Maximum allowed time difference between files (seconds)")
 #if WITH_VTK
             ("write-vtk,k", "Write out the clusters as .vtk files for visit")
             ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
@@ -224,7 +239,7 @@ int main(int argc, char** argv) {
 
     FS_TYPE range_weight, size_weight, correlation_weight;
     ::units::values::meters_per_second max_speed;
-
+    ::units::values::s max_time;
 
     try {
         parse_commmandline(vm,
@@ -236,18 +251,22 @@ int main(int argc, char** argv) {
                 size_weight,
                 correlation_weight,
                 max_speed,
+                max_time,
                 vtk_dimension_indexes,
                 verbosity);
-
-#if WITH_VTK
-        VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
-#endif        
-    }    catch (const std::exception &e) {
+    }    
+    catch (const std::exception &e) 
+    {
         cerr << e.what() << endl;
         exit(-1);
     }
+    
+    #if WITH_VTK
+        VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
+    #endif        
 
-    if (verbosity > VerbositySilent) {
+    if (verbosity > VerbositySilent) 
+    {
         cout << "----------------------------------------------------" << endl;
         cout << "meanie3D-track" << endl;
         cout << "----------------------------------------------------" << endl;
@@ -260,12 +279,12 @@ int main(int argc, char** argv) {
         cout << "\tvariable name for histogram comparison: " << tracking_variable_name << endl;
         cout << "\tcorrelation weights: wr=" << range_weight << " ws=" << size_weight << " wt=" << correlation_weight << endl;
         cout << "\tmaximum speed: " << max_speed << " [m/s]" << endl;
+        cout << "\tmaximum time difference: " << max_time << " [seconds]" << endl;
 #if WITH_VTK
         cout << "\twriting results out as vtk:" << (write_vtk ? "yes" : "no") << endl;
 #endif
         cout << endl;
     }
-
 
     // Read previous clusters
 
@@ -279,8 +298,9 @@ int main(int argc, char** argv) {
 
     // Check if the feature variables match
 
-    if (previous->feature_variables != current->feature_variables) {
-        cerr << "Incompatibe feature variables in the cluster files:" << endl;
+    if (previous->feature_variables != current->feature_variables) 
+    {
+        cerr << "Incompatible feature variables in the cluster files:" << endl;
         exit(-1);
     }
 
@@ -288,30 +308,36 @@ int main(int argc, char** argv) {
 
     NcVar tracking_var;
 
-    if (tracking_variable_name == "__default__") {
+    if (tracking_variable_name == "__default__") 
+    {
         tracking_var = current->feature_variables[current->dimensions.size()];
-    } else {
+    } 
+    else 
+    {
         bool found_tracking_var = false;
 
-        for (size_t i = 0; i < current->feature_variables.size(); i++) {
+        for (size_t i = 0; i < current->feature_variables.size(); i++) 
+        {
             NcVar v = current->feature_variables[i];
 
-            try {
+            try 
+            {
                 if (v.getName() == tracking_variable_name) {
                     found_tracking_var = true;
 
                     tracking_var = v;
                 }
-            }            catch (const std::exception &e) {
+            }            
+            catch (const std::exception &e) 
+            {
                 cerr << e.what() << endl;
-
                 exit(-1);
             }
         }
 
-        if (!found_tracking_var) {
+        if (!found_tracking_var) 
+        {
             cerr << "Tracking variable " << tracking_var.getName() << " is not part of the feature variables" << endl;
-
             exit(-1);
         }
     }
@@ -321,6 +347,8 @@ int main(int argc, char** argv) {
     Tracking<FS_TYPE> tracking(range_weight, size_weight, correlation_weight);
 
     tracking.setMaxTrackingSpeed(max_speed);
+    
+    tracking.set_max_deltaT(max_time);
 
     tracking.track(previous, current, cs, &tracking_variable_name, verbosity);
 

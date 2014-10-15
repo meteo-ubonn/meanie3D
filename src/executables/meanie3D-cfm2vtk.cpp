@@ -150,7 +150,7 @@ void parse_commmandline(program_options::variables_map vm,
             }
 
             delete file;
-        }        catch (const netCDF::exceptions::NcException &e) {
+        } catch (const netCDF::exceptions::NcException &e) {
             cerr << e.what() << endl;
 
             exit(-1);
@@ -160,7 +160,6 @@ void parse_commmandline(program_options::variables_map vm,
 }
 
 void convert_clusters(const string &filename,
-        const string& variable_name,
         const string &destination,
         bool extract_skin,
         bool write_as_xml) {
@@ -181,7 +180,9 @@ void convert_clusters(const string &filename,
     delete cs;
 }
 
-void convert_composite(const string &filename, const string& variable_name, const string &destination) {
+void convert_composite(const string &filename,
+        const string& variable_name,
+        const string &destination) {
     try {
         // construct the destination path
 
@@ -253,7 +254,7 @@ void convert_composite(const string &filename, const string& variable_name, cons
         delete file;
 
         delete dataStore;
-    }    catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << e.what() << endl;
 
         exit(-1);
@@ -286,10 +287,10 @@ int main(int argc, char** argv) {
     try {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    }    catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << "NetCDF exception:" << e.what() << endl;
         exit(-1);
-    }    catch (std::exception &e) {
+    } catch (std::exception &e) {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-cfm2vtk --help for command line options" << endl;
         exit(-1);
@@ -340,10 +341,10 @@ int main(int argc, char** argv) {
                 cerr << "Unknown file type" << endl;
                 break;
         }
-    }    catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << "NetCDF exception:" << e.what() << endl;
         exit(-1);
-    }    catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         cerr << "std::exception:" << e.what() << endl;
         cerr << e.what() << endl;
         exit(-1);
