@@ -4,6 +4,7 @@
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
 
+#if WITH_OPENCV
 #include <opencv2/opencv.hpp>
 
 namespace m3D { namespace utils { 
@@ -358,5 +359,5 @@ namespace m3D { namespace utils {
         image.release();
     }
 }}
-
+#endif
 #endif

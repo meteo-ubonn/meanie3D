@@ -218,6 +218,8 @@ namespace m3D {
 
             if (this->m_ci_comparison_file != NULL)
             {
+                
+#if WITH_OPENCV
                 //
                 // Attempt (b) : estimate dense motion vector field using opencv
                 // and shift values along the field
@@ -228,6 +230,7 @@ namespace m3D {
                 //                                                                    fs->coordinate_system,
                 //                                                                    this->m_variable_names,
                 //                                                                    msevi_l15_hrv, 7.0);
+#endif
 
                 m_ci_comparison_data_store
                     = new NetCDFDataStore<T>(*ci_comparison_file,

@@ -52,6 +52,7 @@ OPTION(WITH_OPENMP "Enable/Disable OpenMP" ON)
 OPTION(WITH_TBB "Enable/Disable Intel TBB" OFF)
 OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
 OPTION(WITH_VTK "Enable/Disable visualisation code (requires VTK)" OFF)
+OPTION(WITH_OPENCV "Legacy option. Leave at OFF" OFF)
 
 # ------------------------------------
 # Operating System
@@ -127,6 +128,16 @@ IF (TESTS_ENABLED)
     INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
 ELSE()
     MESSAGE(STATUS "Tests are disabled. Use -DWITH_TESTS=ON/OFF to switch tests on or off.")
+ENDIF()
+
+# -------------------------------------
+# OpenCV
+# -------------------------------------
+
+SET(OPENCV_ENABLED ${WITH_OPENCV})
+IF (OPENCV_ENABLED)
+    MESSAGE(STATUS "OpenCV is enabled.")
+    ADD_DEFINITIONS(-DWITH_OPENMP=1)
 ENDIF()
 
 # -------------------------------------
@@ -252,14 +263,15 @@ IF (OPENMP_ENABLED)
 
 ENDIF(OPENMP_ENABLED)
 
-# OpenCV
-FIND_PACKAGE(OpenCV)
-IF (OpenCV_FOUND)
-    MESSAGE(STATUS "OpenCV FOUND")
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenCV_C_FLAGS}")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenCV_CXX_FLAGS}")
-    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenCV_EXE_LINKER_FLAGS}")
-ENDIF (OpenCV_FOUND)
+IF (OPENCV_ENABLED)
+    FIND_PACKAGE(OpenCV)
+    IF (OpenCV_FOUND)
+        MESSAGE(STATUS "OpenCV FOUND")
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenCV_C_FLAGS}")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenCV_CXX_FLAGS}")
+        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenCV_EXE_LINKER_FLAGS}")
+    ENDIF (OpenCV_FOUND)
+ENDIF()
 
 # VTK
 IF (VTK_ENABLED)
