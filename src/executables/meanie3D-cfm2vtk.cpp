@@ -330,7 +330,7 @@ int main(int argc, char** argv) {
 
         switch (type) {
             case FileTypeClusters:
-                convert_clusters(filename, variable, destination, extract_skin, write_as_xml);
+                convert_clusters(filename, destination, extract_skin, write_as_xml);
                 break;
 
             case FileTypeComposite:

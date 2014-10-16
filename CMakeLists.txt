@@ -44,6 +44,15 @@ ENDIF()
 
 INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
 
+# ------------------------------------- 
+# Options
+# -------------------------------------
+
+OPTION(WITH_OPENMP "Enable/Disable OpenMP" ON)
+OPTION(WITH_TBB "Enable/Disable Intel TBB" OFF)
+OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
+OPTION(WITH_VTK "Enable/Disable visualisation code (requires VTK)" OFF)
+
 # ------------------------------------
 # Operating System
 # ------------------------------------
@@ -69,30 +78,20 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/radolan/include)
 # Multithreading / Parallelism Choices
 # -------------------------------------
 
-IF (NOT DEFINED WITH_OPENMP)
-    SET(OPENMP_ENABLED 1)
-    MESSAGE(STATUS "OpenMP enabled by default. Use -DWITH_OPENMP=OFF to build without OpenMP support.")
+SET(OPENMP_ENABLED ${WITH_OPENMP})
+IF (OPENMP_ENABLED)
+    MESSAGE(STATUS "OpenMP is enabled")
+    ADD_DEFINITIONS(-DWITH_OPENMP=1)
 ELSE()
-    SET(OPENMP_ENABLED ${WITH_OPENMP})
-    IF (OPENMP_ENABLED)
-        MESSAGE(STATUS "OpenMP is enabled")
-        ADD_DEFINITIONS(-DWITH_OPENMP=1)
-    ELSE()
-        MESSAGE(STATUS "OpenMP is disabled")
-    ENDIF()
+    MESSAGE(STATUS "OpenMP is disabled")
 ENDIF()
 
-IF (NOT DEFINED WITH_TBB)
-    SET(TBB_ENABLED 0)
-    MESSAGE(STATUS "TBB disabled by default. Use -DWITH_TBB=ON to build with TBB support.")
+SET(TBB_ENABLED ${WITH_TBB})
+IF (TBB_ENABLED)
+    MESSAGE(STATUS "TBB is enabled")
+    ADD_DEFINITIONS(-DWITH_TBB=1)
 ELSE()
-    SET(TBB_ENABLED ${WITH_TBB})
-    IF (TBB_ENABLED)
-        MESSAGE(STATUS "TBB is enabled")
-        ADD_DEFINITIONS(-DWITH_TBB=1)
-    ELSE()
-        MESSAGE(STATUS "TBB is disabled")
-    ENDIF()
+    MESSAGE(STATUS "TBB is disabled")
 ENDIF()
 
 # Guard against flag error
@@ -107,30 +106,19 @@ ENDIF(OPENMP_ENABLED)
 # Visualization on/off
 # -------------------------------------
 
-IF (NOT DEFINED WITH_VTK)
-    SET(VTK_ENABLED 0)
-    MESSAGE(STATUS "VTK disabled by default. Use -DWITH_VTK=ON to build with VTK support.")
+SET(VTK_ENABLED ${WITH_VTK})
+IF (VTK_ENABLED)
+    MESSAGE(STATUS "VTK is enabled")
+    ADD_DEFINITIONS(-DWITH_VTK=1)
 ELSE()
-    SET(VTK_ENABLED ${WITH_VTK})
-    IF (VTK_ENABLED)
-        MESSAGE(STATUS "VTK is enabled")
-        ADD_DEFINITIONS(-DWITH_VTK=1)
-    ELSE()
-        MESSAGE(STATUS "VTK is disabled")
-    ENDIF()
+    MESSAGE(STATUS "VTK is disabled")
 ENDIF()
 
 # -------------------------------------
 # Automated tests yes/no
 # -------------------------------------
 
-IF (NOT DEFINED WITH_TESTS)
-    SET(TESTS_ENABLED 0)
-    MESSAGE(STATUS "Tests are disabled by default. Use -DWITH_TESTS=ON to build tests.")
-ELSE()
-    SET(TESTS_ENABLED ${WITH_TESTS})
-ENDIF()
-
+SET(TESTS_ENABLED ${WITH_TESTS})
 IF (TESTS_ENABLED)
     MESSAGE(STATUS "Tests are enabled.")
     ENABLE_TESTING()
