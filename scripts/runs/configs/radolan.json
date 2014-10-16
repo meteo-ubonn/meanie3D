@@ -1,4 +1,6 @@
 {
+    "DESCRIPTION" : "Tracking RADOLAN RX product, threshold 20 dBZ",
     "CLUSTERING_PARAMS" : "-v RX --lower-thresholds 20 --verbosity 1 -d y,x --vtk-dimensions x,y --weight-function default --wwf-lower-threshold 0 -m 15",
-    "TRACKING_PARAMS" : "-t RX --vtk-dimensions x,y --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0"
+    "TRACKING_PARAMS" : "-t RX --vtk-dimensions x,y --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
+    "USE_PREVIOUS" : true,
 }

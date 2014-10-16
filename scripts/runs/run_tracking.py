@@ -35,7 +35,7 @@ def usage():
     print "-c : json config file specifying variables etc."
     print "-f : directory containing the files. It is assumed that"
     print "           the files are in the correct order when sorted alphabetically."
-    print "-s  : optional scale parameter overriding the scale in the configuration."
+    print "-s  : (optional) comma separated list of scale parameters. Overrides any scale values in the configuration."
     print "--resume,-r : if this flag is present, the algorithm assumes to resume"
     print "              operations where it last left off. If not present, previous"
     print "              results will be erased before starting"
@@ -73,7 +73,7 @@ def main(argv):
         usage()
         sys.exit(2)
 
-    scale = -1
+    scales = []
     resume = False
     config_file = ""
     output_dir = "."
@@ -95,7 +95,7 @@ def main(argv):
             num_params = num_params + 1
         
         elif o == "-s":
-            scale = a
+            scales = str(a).split(',')
 
         elif o == "-o":
             output_dir = a
@@ -124,11 +124,18 @@ def main(argv):
     configuration["OUTPUT_DIR"] = output_dir
     configuration["M3D_HOME"] = MEANIE3D_HOME
     configuration["RESUME"] = resume
-    if scale != -1:
-        configuration["SCALE"] = scale
 
-    # call the clustering/tracking script
-    meanie3D.run_tracking(configuration,-1)
+    #
+    # run the actual clustering/tracking script
+    #
+
+    if not scales:
+        meanie3D.run_tracking(configuration,-1)
+
+    else:
+        for scale in scales:
+            configuration["SCALE"] = scale
+            meanie3D.run_tracking(configuration,-1)
 
     return
 

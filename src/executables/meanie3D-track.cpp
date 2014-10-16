@@ -110,7 +110,7 @@ void parse_commmandline(program_options::variables_map vm,
     
     FS_TYPE time = vm["max-time"].as<FS_TYPE>();
 
-    max_time = ::units::values::s(speed);
+    max_time = ::units::values::s(time);
     
     // Weights
     
