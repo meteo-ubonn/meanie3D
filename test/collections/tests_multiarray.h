@@ -138,9 +138,9 @@ TYPED_TEST( MultiArrayBlitzTest, VectorDataTypes )
     // 3D
     
     dims.resize(3);
-    dims[0] = 1000;
-    dims[1] = 1000;
-    dims[2] = 100;
+    dims[0] = 100;
+    dims[1] = 100;
+    dims[2] = 10;
     
     MultiArrayBlitz<TypeParam> a31(dims);
     
@@ -230,8 +230,8 @@ TYPED_TEST( MultiArrayRecursiveTest, VectorDataTypes )
     // 2D
     
     dims.resize(2);
-    dims[0] = 1000;
-    dims[1] = 1000;
+    dims[0] = 100;
+    dims[1] = 100;
     
     MultiArrayRecursive<TypeParam> a21(dims);
     
@@ -248,9 +248,9 @@ TYPED_TEST( MultiArrayRecursiveTest, VectorDataTypes )
     // 3D
     
     dims.resize(3);
-    dims[0] = 1000;
-    dims[1] = 1000;
-    dims[2] = 100;
+    dims[0] = 100;
+    dims[1] = 100;
+    dims[2] = 10;
     
     MultiArrayRecursive<TypeParam> a31(dims);
     
@@ -346,8 +346,8 @@ TYPED_TEST( MultiArrayBoostTest, VectorDataTypes )
     // 2D
     
     dims.resize(2);
-    dims[0] = 1000;
-    dims[1] = 1000;
+    dims[0] = 100;
+    dims[1] = 100;
     
     MultiArrayBoost<TypeParam> a21(dims);
     
@@ -364,9 +364,9 @@ TYPED_TEST( MultiArrayBoostTest, VectorDataTypes )
     // 3D
     
     dims.resize(3);
-    dims[0] = 1000;
-    dims[1] = 1000;
-    dims[2] = 100;
+    dims[0] = 100;
+    dims[1] = 100;
+    dims[2] = 10;
     
     MultiArrayBoost<TypeParam> a31(dims);
     
