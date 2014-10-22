@@ -4,6 +4,7 @@
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
 #include <meanie3D/array.h>
+#include <meanie3D/array/linear_index_mapping.h>
 #include <meanie3D/clustering/cluster.h>
 #include <meanie3D/clustering/cluster_list.h>
 #include <meanie3D/clustering/cluster_op.h>
@@ -656,188 +657,66 @@ namespace m3D {
         replace_with_coldest_pixels(NetCDFDataStore<T> *ds, FeatureSpace<T> *fs)
         {
             float percentage = 0.25;
+            
+            // calculate bandwidth in pixels
+            
+            vector<int> bandwidth;
+            vector<T> resolution = ds->coordinate_system()->resolution();
+            for (size_t i=0; i < m_bandwidth.size(); i++)
+                bandwidth.push_back((int)round(m_bandwidth[i]/resolution[i]));
+            
+            // use linear mapping to parallelize the operation
 
-//#if USE_APPROXIMATE_INDEX
-//            
-//            vector< MultiArray<T> * > results;
-//            
-//            for (size_t vi=0; vi < ds->rank(); vi++)
-//            {
-//                MultiArray<T> *data = ds->get_data(vi);
-//                
-//                MultiArray<T> *result = new MultiArrayBlitz<T>(data->get_dimensions());
-//                
-//                // result->copy_from(data);
-//                
-//                results.push_back(result);
-//            }
-//            
-//            for (size_t i=0; i < fs->points.size(); i++)
-//            {
-//                Point<T> *p = fs->points[i];
-//                
-//                if (m_overlap == NULL || m_overlap->get(p->gridpoint))
-//                {
-//                    typename Point<T>::list *neighbors = m_index->search(p->coordinate,m_search_params);
-//                    
-//                    // compile a list of valid neighbouring points
-//                    // for each variable
-//                    
-//                    vector< vector<T> > values(ds->rank());
-//
-//                    for (size_t pi = 0; pi < neighbors->size(); pi++)
-//                    {
-//                        typename Point<T>::ptr n = neighbors->at(pi);
-//                        
-//                        if (m_overlap == NULL || m_overlap->get(n->gridpoint))
-//                        {
-//                            for (size_t var_index=0; var_index < ds->rank(); var_index++)
-//                            {
-//                                bool is_valid = false;
-//                                
-//                                T value = ds->get(var_index,n->gridpoint,is_valid);
-//                                
-//                                if (is_valid)
-//                                {
-//                                    values[var_index].push_back(value);
-//                                }
-//                            }
-//                        }
-//                    }
-//                    
-//                    for (size_t var_index=0; var_index < ds->rank(); var_index++)
-//                    {
-//                        // Sort each list and obtain the average of the
-//                        // coldest 25% of pixels
-//                        
-//                        // sort the data in ascending order
-//                        std::sort(values[var_index].begin(), values[var_index].end());
-//                        
-//                        // calculate the number of values that make up
-//                        // the required percentage
-//                        
-//                        int num_values = round(values[var_index].size() * percentage);
-//                        
-//                        // obtain the average of the last num_values values
-//                        T sum = 0.0;
-//                        
-//                        for (int i=0; i < num_values; i++)
-//                            sum += values[var_index][i];
-//                        
-//                        T average = sum / ((T)num_values);
-//                        
-//                        // replace the value in the result array
-//                        // with the average
-//                        
-//                        results[var_index]->set(p->gridpoint,average);
-//                    }
-//                }
-//            }
-//            
-//#else
-
-            class ReplaceFunctor : public DataStore<T>::ForEachFunctor
-            {
-            public:
-
-                NetCDFDataStore<T>  *m_ds;              // data store to modify
-                MultiArray<bool>    *m_overlap;         // masks data to protocluster overlap
-                MultiArray<T>       *m_result;
-                size_t              m_variable_index;   // which variable?
-                float               m_percentage;       // percentile of coldest pixels to use (default 25%)
-
-                vector<int>         m_bandwidth;        // bandwidth in number of gridoints
-
-                ReplaceFunctor(NetCDFDataStore<T> *ds,
-                               size_t variable_index,
-                               MultiArray<bool> *overlap,
-                               const vector<T> &bandwidth,
-                               float percentage = 0.25)
-                : m_ds(ds), m_overlap(overlap), m_variable_index(variable_index), m_percentage(percentage)
-                {
-                    // calculate bandwidth in number of gridoints
-
-                    vector<T> resolution = ds->coordinate_system()->resolution();
-
-                    for (size_t i=0; i < bandwidth.size(); i++)
-                        m_bandwidth.push_back((int)round(bandwidth[i]/resolution[i]));
-
-                    // Create a copy of the original data
-
-                    MultiArray<T> *data = ds->get_data(variable_index);
-
-                    m_result = new MultiArrayBlitz<T>(data->get_dimensions());
-
-                    m_result->copy_from(data);
-                };
-
-                virtual
-                ~ReplaceFunctor() {};
-
-                // for_each callback functor
-
-                void
-                operator()(DataStore<T> *store,
-                           const size_t variable_index,
-                           vector<int> &gridpoint,
-                           T& value,
-                           bool &is_valid)
-                {
-                    if (m_overlap == NULL || m_overlap->get(gridpoint) == true)
-                    {
-                        // Obtain all data around this point
-
-                        vector<T> values;
-
-                        NetCDFDataStore<T> *nds = (NetCDFDataStore<T> *)store;
-                        nds->get_data(variable_index)->values_around(gridpoint,m_bandwidth,values);
-
-                        // sort the data in ascending order
-                        std::sort(values.begin(), values.end());
-
-                        // calculate the number of values that make up
-                        // the required percentage
-
-                        int num_values = round(values.size() * m_percentage);
-
-                        // obtain the average of the last num_values values
-                        T sum = 0.0;
-
-                        for (int i=0; i < num_values; i++)
-                            sum += values[i];
-
-                        T average = sum / ((T)num_values);
-
-                        // replace the value in the result array
-                        // with the average
-
-                        m_result->set(gridpoint,average);
-                    }
-                }
-
-                MultiArray<T> *get_result()
-                {
-                    return m_result;
-                }
-            };
-
+            LinearIndexMapping mapping(ds->get_dimension_sizes());
+            
             for (size_t var_index=0; var_index < ds->rank(); var_index++)
             {
                 // excempt radar and lightning from this
 
                 if (var_index == cband_radolan_rx || var_index == linet_oase_tl) continue;
+                
+                MultiArray<T> *data = ds->get_data(var_index);
+                
+                MultiArray<T> *result = new MultiArrayBlitz<T>(data->get_dimensions());
+                
+                result->copy_from(data);
+                
+                #if WITH_OPENMP
+                #pragma omp parallel for schedule(dynamic)
+                #endif
+                for (size_t i=0; i < mapping.size(); i++)
+                {
+                    vector<int> gridpoint = mapping.linear_to_grid(i);
+                    
+                    vector<T> values;
 
-                // Replace
+                    data->values_around(gridpoint,bandwidth,values);
 
-                ReplaceFunctor *f = new ReplaceFunctor(ds, var_index, m_overlap, m_bandwidth, percentage);
+                    // sort the data in ascending order
+                    std::sort(values.begin(), values.end());
 
-                ds->for_each(var_index,f);
+                    // calculate the number of values that make up
+                    // the required percentage
 
-                MultiArray<T> *result = f->get_result();
+                    int num_values = round(values.size() * percentage);
 
+                    // obtain the average of the last num_values values
+                    T sum = 0.0;
+
+                    for (int i=0; i < num_values; i++)
+                        sum += values[i];
+
+                    T average = sum / ((T)num_values);
+
+                    // replace the value in the result array
+                    // with the average
+
+                    result->set(gridpoint,average);
+                }
+                
+                // Note: this frees the pointer to the old
+                // data, we do not have to take care of it
                 ds->set_data(var_index,result);
-
-                delete f;
             }
 
             boost::filesystem::path ppath(ds->filename());
