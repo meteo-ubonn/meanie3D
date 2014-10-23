@@ -162,15 +162,10 @@ namespace m3D {
         crs.putAtt( "grid_mapping_name", "polar_stereographic" );
         
         crs.putAtt( "longitude_of_projection_origin", NcType::nc_DOUBLE, origin_geo.longitude );
-        
         crs.putAtt( "latitude_of_projection_origin", NcType::nc_DOUBLE, origin_geo.latitude );
-        
         crs.putAtt( "false_easting", NcType::nc_DOUBLE, 0.0f );
-        
         crs.putAtt( "false_northing", NcType::nc_DOUBLE, 0.0f );
-        
         crs.putAtt( "scale_factor_at_projection_origin", NcType::nc_DOUBLE, rcs.polarStereographicScalingFactor( origin_geo.longitude, origin_geo.latitude) );
-        
         crs.putAtt( "units", "km" );
 
         // Data
@@ -179,24 +174,21 @@ namespace m3D {
         
         NcVar data = file->addVar( RDScanTypeToString(scan->header.scanType), NcType::nc_FLOAT, dims );
         
+        // Enable compression: no shuffle filter, compression rate 1
+        // (see http://www.unidata.ucar.edu/software/netcdf/papers/AMS_2008.pdf)
+        data.setCompression(false,true,1);
+
         data.putAtt("units", RDUnits( scan->header.scanType ) );
-        
         data.putAtt("grid_mapping", "polar_stereographic");
-        
         data.putAtt("radolan_product", RDScanTypeToString( scan->header.scanType ) );
-        
         data.putAtt("standard_name", CFRadolanDataStandardName( scan->header.scanType ) );
         
         // NOTE: this value is increased by 0.5 to make the lowest value (-32.5) 
         // drop out later. 
-        // TODO: define a threshold parameter to feature space constructor and
-        // clustering tool command line
-    
-        data.putAtt( "valid_min", NcType::nc_FLOAT, RDMinValue( scan->header.scanType ) );
-        
-        data.putAtt( "valid_max", NcType::nc_FLOAT, RDMaxValue( scan->header.scanType ) );
-        
-        data.putAtt( "_FillValue", NcType::nc_FLOAT, RDMissingValue(scan->header.scanType));
+
+        data.putAtt("valid_min", NcType::nc_FLOAT, RDMinValue( scan->header.scanType ));
+        data.putAtt("valid_max", NcType::nc_FLOAT, RDMaxValue( scan->header.scanType ));
+        data.putAtt("_FillValue", NcType::nc_FLOAT, RDMissingValue(scan->header.scanType));
         
         // TIME
         
