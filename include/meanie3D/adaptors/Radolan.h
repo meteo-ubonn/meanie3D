@@ -14,8 +14,11 @@ using namespace Radolan;
 namespace m3D { 
 
     /** Converts the radolan file at path into a CF-Metadata compliant NetCDF-File.
+     * 
      * @param radolanPath full path to the radolan file
      * @param netcdfPath full path to the netcdf file to be created
+     * @param write_one_bytes_as_byte if <code>true</code> one byte products
+     * such as RX are written out as BYTE instead of FLOAT
      * @param threshold minimum treshold for values to make it in the NetCDF file
      * @param mode NcFile::Mode for opening the netcdf file with
      * @param omitOutside @see RDReadScan
@@ -24,6 +27,7 @@ namespace m3D {
      */
     netCDF::NcFile * CFConvertRadolanFile( const char* radolanPath,
                                   const char* netcdfPath,
+                                  bool write_one_bytes_as_byte = false,
                                   const RDDataType *threshold = NULL,
                                   netCDF::NcFile::FileMode mode = netCDF::NcFile::replace, 
                                   bool omitOutside = true)
@@ -32,6 +36,8 @@ namespace m3D {
     /** Converts the radolan file at path into a CF-Metadata compliant NetCDF-File. 
      * @param radolanPath full path to the radolan file
      * @param netcdfPath full path to the netcdf file to be created
+     * @param write_one_bytes_as_byte if <code>true</code> one byte products
+     * such as RX are written out as BYTE instead of FLOAT
      * @param threshold minimum treshold for values to make it in the NetCDF file
      * @param mode NcFile::Mode for opening the netcdf file with
      * @return NCFile* NetCDF-Filehandler
@@ -39,6 +45,7 @@ namespace m3D {
      */
     netCDF::NcFile * CFConvertRadolanScan( RDScan *scan,
                                   const char* netcdfPath, 
+                                  bool write_one_bytes_as_byte,
                                   const RDDataType *threshold = NULL,
                                   netCDF::NcFile::FileMode mode = netCDF::NcFile::write)
         throw (CFFileConversionException);
