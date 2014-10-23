@@ -248,9 +248,9 @@ TYPED_TEST( MultiArrayRecursiveTest, VectorDataTypes )
     // 3D
     
     dims.resize(3);
-    dims[0] = 10;
-    dims[1] = 10;
-    dims[2] = 100;
+    dims[0] = 100;
+    dims[1] = 100;
+    dims[2] = 10;
     
     MultiArrayRecursive<TypeParam> a31(dims);
     

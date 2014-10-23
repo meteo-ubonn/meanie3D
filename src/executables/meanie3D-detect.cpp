@@ -7,10 +7,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/info.hpp>
 
-#include <opencv2/video/tracking.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-
 #include <map>
 #include <vector>
 #include <string>
