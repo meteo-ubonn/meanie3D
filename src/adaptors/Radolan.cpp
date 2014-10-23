@@ -20,8 +20,9 @@ namespace m3D {
      * @return NCFile* NetCDF-Filehandler
      * @throw CFFileConversionException
      */
-    netCDF::NcFile * CFConvertRadolanFile( const char* radolanPath,
+    netCDF::NcFile * CFConvertRadolanFile(const char* radolanPath,
                                           const char* netcdfPath,
+                                          bool write_one_bytes_as_byte,
                                           const RDDataType *threshold,
                                           netCDF::NcFile::FileMode mode,
                                           bool omitOutside)
@@ -74,6 +75,7 @@ namespace m3D {
      */
     netCDF::NcFile * CFConvertRadolanScan( RDScan *scan,
                                   const char* netcdfPath,
+                                  bool write_one_bytes_as_byte,
                                   const RDDataType *threshold,
                                   netCDF::NcFile::FileMode mode)
 
@@ -98,21 +100,15 @@ namespace m3D {
         // Global attributes
         
         file->putAtt( "Conventions", "CF 1.6" );
-        
         file->putAtt("title", "Radolan composite in NetCDF/CF-Metadata form." );
-        
         file->putAtt("institution", "HErZ-TB1 Workgroup");
-        
         file->putAtt("version", "1.0");
         
         // Dimensions
         
         vector<NcDim> dims;
-        
         NcDim dimT = file->addDim( "time", 1 );
-
         NcDim dimX = file->addDim( "x", scan->dimLon );
-        
         NcDim dimY = file->addDim( "y", scan->dimLat );
 
 #if ADD_DIMENSION_Z
@@ -131,30 +127,22 @@ namespace m3D {
         // Coordinates
         
         netCDF::NcVar x = file->addVar( "x", ncDouble, dimX );
-        
         x.putAtt( "standard_name", "projection_x_coordinate" );
-        
         x.putAtt( "units", "km" );
         
         NcVar y = file->addVar( "y", ncDouble, dimY );
-        
         y.putAtt( "standard_name", "projection_y_coordinate" );
-        
         y.putAtt( "units", "km" );
         
 #if ADD_DIMENSION_Z
-        
         NcVar z = file->addVar( "z", ncDouble, dimZ );
-        
         z.putAtt( "standard_name", "projection_z_coordinate" );
-        
         z.putAtt( "units", "km" );
 #endif
         
         // Grid Mapping
         
         RDGridPoint origin = rdGridPoint( 0, 0 );
-       
         RDGeographicalPoint origin_geo = rcs.geographicalCoordinate( origin );
         
         NcVar crs = file->addVar( "crs", NcType::nc_BYTE, dims ); // note: type is of no consequence
@@ -162,54 +150,59 @@ namespace m3D {
         crs.putAtt( "grid_mapping_name", "polar_stereographic" );
         
         crs.putAtt( "longitude_of_projection_origin", NcType::nc_DOUBLE, origin_geo.longitude );
-        
         crs.putAtt( "latitude_of_projection_origin", NcType::nc_DOUBLE, origin_geo.latitude );
-        
         crs.putAtt( "false_easting", NcType::nc_DOUBLE, 0.0f );
-        
         crs.putAtt( "false_northing", NcType::nc_DOUBLE, 0.0f );
-        
         crs.putAtt( "scale_factor_at_projection_origin", NcType::nc_DOUBLE, rcs.polarStereographicScalingFactor( origin_geo.longitude, origin_geo.latitude) );
-        
         crs.putAtt( "units", "km" );
 
         // Data
         
 //        NcVar *data = file->add_var( "reflectivity", ncFloat, dimX, dimY, dimZ );
         
-        NcVar data = file->addVar( RDScanTypeToString(scan->header.scanType), NcType::nc_FLOAT, dims );
+        NcType type;
+        switch (scan->header.scanType)
+        {
+            case RD_EX:
+            case RD_RX:
+                type = NcType::nc_BYTE;
+                break;
+            default:
+                type = NcType::nc_FLOAT;
+                break;
+        }
+
+        NcVar data = file->addVar( RDScanTypeToString(scan->header.scanType), type, dims );
         
-        data.putAtt("units", RDUnits( scan->header.scanType ) );
-        
+        // Enable compression: no shuffle filter, compression rate 1
+        // (see http://www.unidata.ucar.edu/software/netcdf/papers/AMS_2008.pdf)
+        data.setCompression(false,true,1);
+
         data.putAtt("grid_mapping", "polar_stereographic");
+        data.putAtt("radolan_product", RDScanTypeToString( scan->header.scanType ));
+        data.putAtt("standard_name", CFRadolanDataStandardName( scan->header.scanType ));
         
-        data.putAtt("radolan_product", RDScanTypeToString( scan->header.scanType ) );
-        
-        data.putAtt("standard_name", CFRadolanDataStandardName( scan->header.scanType ) );
-        
+        if (scan->header.scanType == RD_EX || scan->header.scanType == RD_RX)
+        {
+            data.putAtt("offset",-32.5 );
+            data.putAtt("scale_factor", 0.5);
+        }
+
         // NOTE: this value is increased by 0.5 to make the lowest value (-32.5) 
         // drop out later. 
-        // TODO: define a threshold parameter to feature space constructor and
-        // clustering tool command line
-    
-        data.putAtt( "valid_min", NcType::nc_FLOAT, RDMinValue( scan->header.scanType ) + 0.5 );
-        
-        data.putAtt( "valid_max", NcType::nc_FLOAT, RDMaxValue( scan->header.scanType ) );
-        
-        data.putAtt( "_FillValue", NcType::nc_FLOAT, RDMissingValue(scan->header.scanType));
+
+        data.putAtt("valid_min", NcType::nc_FLOAT, RDMinValue( scan->header.scanType ));
+        data.putAtt("valid_max", NcType::nc_FLOAT, RDMaxValue( scan->header.scanType ));
+        data.putAtt("_FillValue", NcType::nc_FLOAT, RDMissingValue(scan->header.scanType));
         
         // TIME
         
         double timestamp = (double) RDScanTimeInSecondsSinceEpoch( scan );
         
         NcVar time = file->addVar( "time", NcType::nc_DOUBLE, dimT );
-        
         time.putVar( &timestamp );
-        
         time.putAtt("units", "seconds since 1970-01-01 00:00:00.0" );
-        
         time.putAtt("calendar", "gregorian" );
-
         time.putAtt("standard_name", "time" );
         
         // Re-package data
@@ -222,7 +215,6 @@ namespace m3D {
 #else
         RDDataType *converted = (RDDataType *) malloc(scan->dimLon * scan->dimLat * sizeof(RDDataType));
 #endif
-
 
         // vector<size_t> index( dims.size() );
         
