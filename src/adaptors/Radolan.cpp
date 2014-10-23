@@ -192,7 +192,7 @@ namespace m3D {
         // TODO: define a threshold parameter to feature space constructor and
         // clustering tool command line
     
-        data.putAtt( "valid_min", NcType::nc_FLOAT, RDMinValue( scan->header.scanType ) + 0.5 );
+        data.putAtt( "valid_min", NcType::nc_FLOAT, RDMinValue( scan->header.scanType ) );
         
         data.putAtt( "valid_max", NcType::nc_FLOAT, RDMaxValue( scan->header.scanType ) );
         
