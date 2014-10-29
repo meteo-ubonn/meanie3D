@@ -157,8 +157,6 @@ namespace m3D {
 
         // Data
         
-//        NcVar *data = file->add_var( "reflectivity", ncFloat, dimX, dimY, dimZ );
-        
         bool is_one_byte = scan->header.scanType == RD_EX || scan->header.scanType == RD_RX;
         
         NcVar data;
@@ -168,16 +166,17 @@ namespace m3D {
             data = file->addVar( RDScanTypeToString(scan->header.scanType), ncUbyte, dims );
 
             RDByteType valid_min = RDRVP6ToByteValue(RDMinValue(scan->header.scanType));
-            data.putAtt("valid_min", ncUbyte, valid_min );
+            data.putAtt("valid_min", ncInt, valid_min );
 
             RDByteType valid_max = RDRVP6ToByteValue(RDMaxValue(scan->header.scanType));
-            data.putAtt("valid_max", ncUbyte, valid_max);
+            data.putAtt("valid_max", ncInt, valid_max);
 
-            data.putAtt("_FillValue", ncUbyte, RX_ERROR_VALUE);
+            RDByteType fill_value = RDRVP6ToByteValue(RDMissingValue(scan->header.scanType));
+            data.putAtt("_FillValue", ncUbyte, fill_value);
 
             // RVP6 conversion via offset and scale_factor
-            data.putAtt("offset",ncFloat,-32.5 );
-            data.putAtt("scale_factor", ncFloat,0.5);
+            data.putAtt("offset",ncFloat,-32.5f);
+            data.putAtt("scale_factor", ncFloat,0.5f);
         }                
         else
         {
@@ -227,12 +226,9 @@ namespace m3D {
         
         // x and y are switched around in the data (following
         // the cf-metadata convention)
-        
+
         if (is_one_byte && write_one_bytes_as_byte)
         {
-            // bytes
-            typedef unsigned char byte_t;
-            
             size_t memSize = scan->dimLon*scan->dimLat*sizeof(RDByteType);
             RDByteType *buffer = (RDByteType *) malloc(memSize);
 

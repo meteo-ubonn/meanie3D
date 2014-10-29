@@ -133,8 +133,15 @@ int main(int argc, char** argv)
 
                 netCDF::NcFile *file = NULL;
 
-                try {
-                    file = CFConvertRadolanFile(fn.c_str(), path.generic_string().c_str(), write_as_rvp6, threshold);
+                try 
+                {
+                    file = CFConvertRadolanFile(fn.c_str(), 
+                            path.generic_string().c_str(), 
+                            write_as_rvp6, 
+                            threshold,
+                            netCDF::NcFile::replace,
+                            false);
+                    
                     cout << " done." << endl;
                 }                catch (CFFileConversionException e) {
                     cerr << endl << "Exception:" << e.what() << endl;
