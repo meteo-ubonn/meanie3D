@@ -57,7 +57,7 @@ namespace m3D {
         
         // Radolan::RDPrintScan( scan, 10, 10 );
         
-        netCDF::NcFile *file = CFConvertRadolanScan( scan, netcdfPath, threshold, mode );
+        netCDF::NcFile *file = CFConvertRadolanScan( scan, netcdfPath, write_one_bytes_as_byte, threshold, mode );
         
         // CFPrintConvertedRadolanScan( file, 10, 10 );
         
@@ -93,8 +93,7 @@ namespace m3D {
         catch (const netCDF::exceptions::NcException &e)
         {
             cerr << "Exception while creating file " << netcdfPath << " : " << e.what() << endl;
-            
-            throw CFFileConversionException( e.what() );
+            throw CFFileConversionException(e.what());
         }
 
         // Global attributes
@@ -160,19 +159,33 @@ namespace m3D {
         
 //        NcVar *data = file->add_var( "reflectivity", ncFloat, dimX, dimY, dimZ );
         
-        NcType type;
-        switch (scan->header.scanType)
-        {
-            case RD_EX:
-            case RD_RX:
-                type = NcType::nc_BYTE;
-                break;
-            default:
-                type = NcType::nc_FLOAT;
-                break;
-        }
+        bool is_one_byte = scan->header.scanType == RD_EX || scan->header.scanType == RD_RX;
+        
+        NcVar data;
+        
+        if (is_one_byte && write_one_bytes_as_byte)
+        {        
+            data = file->addVar( RDScanTypeToString(scan->header.scanType), ncUbyte, dims );
 
-        NcVar data = file->addVar( RDScanTypeToString(scan->header.scanType), type, dims );
+            RDByteType valid_min = RDRVP6ToByteValue(RDMinValue(scan->header.scanType));
+            data.putAtt("valid_min", ncUbyte, valid_min );
+
+            RDByteType valid_max = RDRVP6ToByteValue(RDMaxValue(scan->header.scanType));
+            data.putAtt("valid_max", ncUbyte, valid_max);
+
+            data.putAtt("_FillValue", ncUbyte, RX_ERROR_VALUE);
+
+            // RVP6 conversion via offset and scale_factor
+            data.putAtt("offset",ncFloat,-32.5 );
+            data.putAtt("scale_factor", ncFloat,0.5);
+        }                
+        else
+        {
+            data = file->addVar( RDScanTypeToString(scan->header.scanType), ncFloat, dims );
+            data.putAtt("valid_min", ncFloat, RDMinValue( scan->header.scanType ));
+            data.putAtt("valid_max", ncFloat, RDMaxValue( scan->header.scanType ));
+            data.putAtt("_FillValue", ncFloat, RDMissingValue(scan->header.scanType));
+        }
         
         // Enable compression: no shuffle filter, compression rate 1
         // (see http://www.unidata.ucar.edu/software/netcdf/papers/AMS_2008.pdf)
@@ -182,102 +195,137 @@ namespace m3D {
         data.putAtt("radolan_product", RDScanTypeToString( scan->header.scanType ));
         data.putAtt("standard_name", CFRadolanDataStandardName( scan->header.scanType ));
         
-        if (scan->header.scanType == RD_EX || scan->header.scanType == RD_RX)
-        {
-            data.putAtt("offset",-32.5 );
-            data.putAtt("scale_factor", 0.5);
-        }
-
-        // NOTE: this value is increased by 0.5 to make the lowest value (-32.5) 
-        // drop out later. 
-
-        data.putAtt("valid_min", NcType::nc_FLOAT, RDMinValue( scan->header.scanType ));
-        data.putAtt("valid_max", NcType::nc_FLOAT, RDMaxValue( scan->header.scanType ));
-        data.putAtt("_FillValue", NcType::nc_FLOAT, RDMissingValue(scan->header.scanType));
-        
         // TIME
         
         double timestamp = (double) RDScanTimeInSecondsSinceEpoch( scan );
         
-        NcVar time = file->addVar( "time", NcType::nc_DOUBLE, dimT );
+        NcVar time = file->addVar( "time", ncDouble, dimT );
         time.putVar( &timestamp );
         time.putAtt("units", "seconds since 1970-01-01 00:00:00.0" );
         time.putAtt("calendar", "gregorian" );
         time.putAtt("standard_name", "time" );
+
+        // start point and counters for writing
+        // the buffer to netcdf
+        
+#if ADD_DIMENSION_Z
+        // z,y,x
+        vector<size_t> startp(3,0);
+        vector<size_t> countp(3,0);
+        countp[0] = 1;
+        countp[1] = scan->dimLat;
+        countp[2] = scan->dimLon;
+#else
+        // y,x
+        vector<size_t> startp(2,0);
+        vector<size_t> countp(2,0);
+        countp[0] = scan->dimLat;
+        countp[1] = scan->dimLon;
+#endif
         
         // Re-package data
         
         // x and y are switched around in the data (following
         // the cf-metadata convention)
         
-#if ADD_DIMENSION_Z
-        RDDataType *converted = (RDDataType *) malloc(scan->dimLon * scan->dimLat * sizeof(RDDataType)) ;
-#else
-        RDDataType *converted = (RDDataType *) malloc(scan->dimLon * scan->dimLat * sizeof(RDDataType));
-#endif
-
-        // vector<size_t> index( dims.size() );
-        
-        for (int iy = 0; iy < scan->dimLon; iy++ )
+        if (is_one_byte && write_one_bytes_as_byte)
         {
-            for ( int ix = 0; ix < scan->dimLat; ix++ )
-            {
-                RDDataType val = scan->data[ iy * scan->dimLat + ix ];
-                
-                size_t converted_index = iy * scan->dimLat + ix;
+            // bytes
+            typedef unsigned char byte_t;
+            
+            size_t memSize = scan->dimLon*scan->dimLat*sizeof(RDByteType);
+            RDByteType *buffer = (RDByteType *) malloc(memSize);
 
-                if (val == RDMissingValue(scan->header.scanType))
+            for (int iy = 0; iy < scan->dimLon; iy++ )
+            {
+                for ( int ix = 0; ix < scan->dimLat; ix++ )
                 {
-                    converted[converted_index] = RDMissingValue(scan->header.scanType);
-                }
-                else
-                {
-                    bool should_write = (threshold==NULL) ? true : (val >= (*threshold));
+                    size_t index = iy * scan->dimLat + ix;
+                    RDDataType val = scan->data[index];
+                    RDByteType byteValue = RDRVP6ToByteValue(val);
                     
-                    converted[converted_index] = should_write ? val : RDMinValue(scan->header.scanType);
+                    if (val == RDMissingValue(scan->header.scanType))
+                    {
+                        buffer[index] = RX_ERROR_VALUE;
+                    }
+                    else
+                    {
+                        // if a threshold is enabled, check the
+                        // threshold first. This is checked on
+                        // the converted value, not the byte value
+                        
+                        bool should_write = (threshold==NULL) 
+                                ? true 
+                                : (val >= (*threshold));
+                        
+                        buffer[index] = should_write 
+                                ? byteValue : 0x00;
+                    }
                 }
             }
+
+            // write out
+
+            try
+            {
+                data.putVar(startp,countp,buffer);
+            }
+            catch (const std::exception &e)
+            {
+                throw CFFileConversionException(e.what());
+            }
+            
+            delete buffer;
         }
-        
-#if ADD_DIMENSION_Z
-        vector<size_t> startp(3,0);
-        vector<size_t> countp(3,0);
-
-        // z
-        countp[0] = 1;
-
-        // y
-        countp[1] = scan->dimLat;
-        
-        // x
-        countp[2] = scan->dimLon;
-#else
-        vector<size_t> startp(2,0);
-        
-        vector<size_t> countp(2,0);
-
-        // y
-        countp[0] = scan->dimLat;
-        
-        // x
-        countp[1] = scan->dimLon;
-#endif
-        
-        // write out
-        
-        try
+        else
         {
-            data.putVar(startp,countp,converted);
+            size_t memSize = scan->dimLon * scan->dimLat * sizeof(RDDataType);
+            RDDataType *converted = (RDDataType *) malloc(memSize);
+
+            // vector<size_t> index( dims.size() );
+
+            for (int iy = 0; iy < scan->dimLon; iy++ )
+            {
+                for ( int ix = 0; ix < scan->dimLat; ix++ )
+                {
+                    size_t index = iy * scan->dimLat + ix;
+                    RDDataType val = scan->data[index];
+
+                    if (val == RDMissingValue(scan->header.scanType))
+                    {
+                        // If the value is marked missing, use
+                        // it as it is
+                        converted[index] = RDMissingValue(scan->header.scanType);
+                    }
+                    else
+                    {
+                        // if a threshold is enabled, check the
+                        // threshold first
+                        
+                        bool should_write = (threshold==NULL) 
+                                ? true 
+                                : (val >= (*threshold));
+                        
+                        converted[index] = should_write 
+                                ? val 
+                                : RDMinValue(scan->header.scanType);
+                    }
+                }
+            }
+            
+            // write out
+
+            try
+            {
+                data.putVar(startp,countp,converted);
+            }
+            catch (const std::exception &e)
+            {
+                throw CFFileConversionException(e.what());
+            }
+            
+            delete converted;
         }
-        catch (const std::exception &e)
-        {
-            cerr << e.what() << endl;
-            exit(-1);
-        }
-        
-        // clean up
-        
-        delete converted;
         
         // write x-axis information
         
@@ -286,16 +334,12 @@ namespace m3D {
         for ( int i=0; i < scan->dimLon; i++ )
         {
             RDCartesianPoint cp = rcs.cartesianCoordinate(rdGridPoint(i, 0));
-            
             xData[i] = cp.x;
         }
         
         x.putVar(xData );
-        
-        x.putAtt( "valid_min", NcType::nc_FLOAT, xData[0] );
-
-        x.putAtt( "valid_max", NcType::nc_FLOAT, xData[ scan->dimLon-1 ] );
-        
+        x.putAtt( "valid_min", ncFloat, xData[0] );
+        x.putAtt( "valid_max", ncFloat, xData[ scan->dimLon-1 ] );
         free(xData);
         
         
@@ -306,16 +350,12 @@ namespace m3D {
         for ( int i=0; i < scan->dimLat; i++ )
         {
             RDCartesianPoint cp = rcs.cartesianCoordinate(rdGridPoint(0, i));
-            
             yData[i] = cp.y;
         }
         
         y.putVar( yData );
-        
-        y.putAtt( "valid_min", NcType::nc_FLOAT, yData[0] );
-        
-        y.putAtt( "valid_max", NcType::nc_FLOAT, yData[ scan->dimLon-1 ] );
-        
+        y.putAtt( "valid_min", ncFloat, yData[0] );
+        y.putAtt( "valid_max", ncFloat, yData[ scan->dimLon-1 ] );
         free(yData);
         
         // write z-Axis information
@@ -324,8 +364,8 @@ namespace m3D {
         float *zData = (float *) malloc( sizeof(float) * 1 );
         zData[0] = 0.0;
         z.putVar( zData );
-        z.putAtt( "valid_min", NcType::nc_FLOAT, zData[0] );
-        z.putAtt( "valid_max", NcType::nc_FLOAT, zData[0] );
+        z.putAtt( "valid_min", ncFloat, zData[0] );
+        z.putAtt( "valid_max", ncFloat, zData[0] );
         free( zData );
 #endif
         
@@ -368,9 +408,7 @@ namespace m3D {
     void CFPrintConvertedRadolanScan( netCDF::NcFile *file, int latVertices, int lonVertices )
     {
         using namespace netCDF;
-        
         int dimLon = file->getDim( "x" ).getSize();
-
         int dimLat = file->getDim( "y" ).getSize();
         
 #if ADD_DIMENSION_Z
@@ -380,13 +418,9 @@ namespace m3D {
         // int dimT = file->get_dim(NcToken("time"))->size();
         
         NcVar data = file->getVar("reflectivity");
-        
         NcVarAtt product = data.getAtt("radolan_product");
-        
         std::string typeIdentifier;
-        
         product.getValues( typeIdentifier );
-        
         RDScanType scanType = RDScanTypeFromString( typeIdentifier.c_str() );
         
 #if ADD_DIMENSION_Z

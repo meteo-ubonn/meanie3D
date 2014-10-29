@@ -12,12 +12,16 @@ using namespace boost;
 using namespace Radolan;
 using namespace m3D;
 
-int main(int argc, char** argv) {
-    try {
+int main(int argc, char** argv) 
+{
+    try 
+    {
         program_options::options_description desc("Options");
         desc.add_options()
                 ("help,h", "show this message")
                 ("version", "print version information and exit")
+                ("endianess", "print out the system's endianess")
+                ("rvp6","Write out one-byte formats like RX as BYTE with rvp6 conversion, not as converted FLOAT")
                 ("file,f", program_options::value<string>(), "Radolan filename or directory containing radolan scans")
                 ("output-dir,o", program_options::value<string>()->default_value("."), "Path to write the results to. Defaults to current directory.")
                 ("threshold,t", program_options::value<float>(), "Value threshold (depends of product)")
@@ -28,28 +32,39 @@ int main(int argc, char** argv) {
                 ;
 
         program_options::variables_map vm;
-        program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
-        program_options::notify(vm);
-
-        // Version
+        try {
+            program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
+            program_options::notify(vm);
+        }
+        catch (std::exception &e)
+        {
+            cerr << "ERROR:could not parse command line:" << e.what() << endl;
+            exit(EXIT_FAILURE);
+        }
 
         if (vm.count("version") != 0) {
             cout << m3D::VERSION << endl;
-            exit(-1);
+            exit(EXIT_SUCCESS);
         }
 
-        if (vm.count("help") == 1 || argc < 2 || vm.count("file") == 0) {
+        if (vm.count("endianess") != 0)
+        {
+             cout << "Endianess: " << (isLittleEndian() ? "little" : "big") << endl;
+             exit(EXIT_SUCCESS);
+        }
+        
+        if (vm.count("help") != 0 || argc < 2 || vm.count("file") == 0) {
             cout << desc << "\n";
-            return 1;
+            exit(EXIT_SUCCESS);
         }
-
-        cout << "Endianess: " << (isLittleEndian() ? "Little" : "Big") << endl;
 
         // check parameters
 
-        bool convert_to_netcdf = (vm.count("netcdf") == 0 && vm.count("vtk") == 0) || (vm.count("netcdf") > 0);
-
+        bool convert_to_netcdf = (vm.count("netcdf") == 0  && vm.count("vtk") == 0) 
+                                        || (vm.count("netcdf") > 0);
+        
         bool convert_to_vtk = (vm.count("vtk") > 0);
+        bool write_as_rvp6 = (vm.count("rvp6") > 0);
 
         if (vm.count("file") == 0) {
             cerr << "No input" << endl;
@@ -86,15 +101,15 @@ int main(int argc, char** argv) {
                 file_paths.push_back(fn);
             }
         } else {
-            cerr << "File or path does not exist: " << infile << endl;
-            exit(-1);
+            cerr << "ERROR:File or path does not exist: " << infile << endl;
+            exit(EXIT_FAILURE);
         }
 
         boost::filesystem::path outpath(vm["output-dir"].as<std::string>());
 
         if (!boost::filesystem::exists(outpath) || !boost::filesystem::is_directory(outpath)) {
-            cerr << "Can't write to path " << outpath << endl;
-            exit(-1);
+            cerr << "ERROR:Can't write to path " << outpath << endl;
+            exit(EXIT_FAILURE);
         }
 
         RDDataType *threshold = NULL;
@@ -119,7 +134,7 @@ int main(int argc, char** argv) {
                 netCDF::NcFile *file = NULL;
 
                 try {
-                    file = CFConvertRadolanFile(fn.c_str(), path.generic_string().c_str(), threshold);
+                    file = CFConvertRadolanFile(fn.c_str(), path.generic_string().c_str(), write_as_rvp6, threshold);
                     cout << " done." << endl;
                 }                catch (CFFileConversionException e) {
                     cerr << endl << "Exception:" << e.what() << endl;
@@ -146,11 +161,15 @@ int main(int argc, char** argv) {
                 cout << "done." << endl;
             }
         }
-
 #endif
 
-    }    catch (const std::exception& e) {
-        cerr << "Exception: " << e.what() << endl;
+    }    
+    catch (const std::exception& e) 
+    {
+        cerr << "ERROR:Exception: " << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
+    
+    exit(EXIT_SUCCESS);
 
 }
