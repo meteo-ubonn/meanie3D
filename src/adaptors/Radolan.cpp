@@ -175,7 +175,7 @@ namespace m3D {
             data.putAtt("_FillValue", ncUbyte, fill_value);
 
             // RVP6 conversion via offset and scale_factor
-            data.putAtt("offset",ncFloat,-32.5f);
+            data.putAtt("add_offset",ncFloat,-32.5f);
             data.putAtt("scale_factor", ncFloat,0.5f);
         }                
         else
