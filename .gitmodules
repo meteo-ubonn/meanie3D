@@ -5,3 +5,6 @@
 [submodule "radolan"]
 	path = radolan
 	url = http://simon:mutter20panir@git.meteo.uni-bonn.de/git/radolan
+[submodule "oase-mapdata"]
+	path = oase-mapdata
+	url = http://git.meteo.uni-bonn.de/git/oase-mapdata
