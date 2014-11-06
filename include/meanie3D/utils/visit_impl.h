@@ -2010,56 +2010,18 @@ namespace m3D { namespace utils {
         variable->SetNumberOfComponents(1); // scalar
         variable->SetNumberOfValues(nx*ny*nz);
 
-        size_t index = 0;
-
-        for (int iz=0; iz<nz; iz++)
+        for (size_t i = 0; i < fs->points.size(); ++i)
         {
-            for (int iy=0; iy<ny; iy++)
-            {
-                for (int ix=0; ix<nx; ix++)
-                {
-                    vector<int> gridpoint;
-
-                    if (cs->rank() >= 3)
-                    {
-                        gridpoint.push_back(iz);
-                    }
-                    if (cs->rank() >= 2)
-                    {
-                        gridpoint.push_back(iy);
-                    }
-                    if (cs->rank() >= 1)
-                    {
-                        gridpoint.push_back(ix);
-                    }
-
-                    T value = weight_function->operator()(gridpoint);
-
-                    if (value < 0 || value > 1)
-                    {
-                        cerr << "ERROR weight function at " << gridpoint << " returned " << value << endl;
-                    }
-
-                    variable->SetValue(index,value);
-
-                    index++;
-
-                }
-            }
+            typename Point<T>::ptr p = fs->points.at(i);
+            T value = weight_function->operator()(p);
+            
+            int gx,gy,gz;
+            VisitUtils<T>::get_vtk_gridpoint(p->gridpoint, gx, gy, gz);
+            
+            int gridIndex = to_single_index(cs, nx, ny, nz, gx, gy, gz);
+            
+            variable->SetValue(gridIndex,value);
         }
-
-//        for (size_t i = 0; i < fs->points.size(); ++i)
-//        {
-//            typename Point<T>::ptr p = fs->points.at(i);
-//            T value = weight_function->operator()(p);
-//            
-//            int gx,gy,gz;
-//            VisitUtils<T>::get_vtk_gridpoint(p->gridpoint, gx, gy, gz);
-//            
-//            int gridIndex = to_single_index(cs, nx, ny, nz, gx, gy, gz);
-//            
-//            variable->SetValue(gridIndex,value);
-//        }
 
         rgrid->GetPointData()->AddArray(variable);
 

@@ -64,7 +64,7 @@ namespace m3D {
 
         /** Center of this cluster
          */
-        vector<T>   	           	mode;
+        vector<T>                   mode;
 
         /** List of feature-space points comprising this cluster
          */

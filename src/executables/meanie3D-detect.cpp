@@ -475,7 +475,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     // Verbosity
 
-    unsigned short vb = vm["verbosity"].as<unsigned short>();
+    unsigned int vb = vm["verbosity"].as<unsigned int>();
 
     if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
@@ -621,9 +621,8 @@ int main(int argc, char** argv) {
             ("write-cluster-modes", "write the final meanshift modes in .vtk file format")
             ("write-cluster-centers", "write cluster centers out in .vtk file format")
             ("write-cluster-weight-response", "write out the clusters with weight responses as value")
-            ("verbosity", program_options::value<unsigned short>()->default_value(1), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.")
 #endif
-            ;
+            ("verbosity", program_options::value<unsigned int>()->default_value(1u), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.");
 
     program_options::variables_map vm;
     try {

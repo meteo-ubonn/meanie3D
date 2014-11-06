@@ -390,13 +390,23 @@ namespace m3D {
 
         if (!points.empty() && w!=NULL)
         {
-            Point<T> *p = points[0];
+            const CoordinateSystem<T> *cs = this->m_index->feature_space()->coordinate_system;
+            
+            // extract coordinate of the mode and do a reverse 
+            // lookup on the grid point
+            
+            vector<T> coordinate(&mode[0], &mode[cs->rank()]);
+            vector<int> gridpoint;
+            cs->reverse_lookup(coordinate,gridpoint);
+            
+            // Construct a point object for the weight function
+            
+            Point<T> point;
+            point.values = mode;
+            point.coordinate = coordinate;
+            point.gridpoint = gridpoint;
 
-            size_t spatial_dim = p->coordinate.size();
-
-            vector<T> mode_spatial_coord( &mode[0], &mode[ spatial_dim ] );
-
-            result = w->operator()(mode_spatial_coord);
+            result = w->operator()(&point);
         }
 
         return result;
@@ -415,7 +425,7 @@ namespace m3D {
         {
             Point<T> *p = points[i];
 
-            result += w->operator()(p->gridpoint);
+            result += w->operator()(p);
         }
 
         if (!points.empty())
