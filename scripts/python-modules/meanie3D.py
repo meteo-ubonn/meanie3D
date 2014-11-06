@@ -146,6 +146,10 @@ def run_tracking(config,time_index):
 
     # Get a list of the files we need to process
 
+    use_ci_score = False
+    if "USE_CI_SCORE" in config.keys():
+        use_ci_score = config["USE_CI_SCORE"]
+
     netcdf_pattern = config['NETCDF_DIR'] + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
     last_cluster_file=""
@@ -204,7 +208,7 @@ def run_tracking(config,time_index):
 
         # add ci-comparison-file if applicable
 
-        if run_count >= 3 and config['USE_CI_SCORE']:
+        if run_count >= 3 and use_ci_score:
             command += " --ci-comparison-file " + netcdf_list[run_count-3]
             proto_file = os.path.splitext(os.path.basename(netcdf_list[run_count-3]))[0] + "-protoclusters.nc"
             command += " --ci-comparison-protocluster-file " + proto_file;

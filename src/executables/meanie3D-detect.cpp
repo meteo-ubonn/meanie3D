@@ -549,12 +549,6 @@ void print_compile_time_options() {
     cout << "\tWRITE_MEANSHIFT_SAMPLES=0" << endl;
 #endif
 
-#if WRITE_MEANSHIFT_VECTORS
-    cout << "\tWRITE_MEANSHIFT_VECTORS=1" << endl;
-#else
-    cout << "\tWRITE_MEANSHIFT_VECTORS=0" << endl;
-#endif
-
 #if WRITE_MEANSHIFT_WEIGHTS
     cout << "\tWRITE_MEANSHIFT_WEIGHTS=1" << endl;
 #else
