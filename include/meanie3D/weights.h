@@ -7,5 +7,6 @@
 #include <meanie3D/weights/exp10_weight.h>
 #include <meanie3D/weights/brightband_evidence.h>
 #include <meanie3D/weights/ci_weights.h>
+#include <meanie3D/weights/example_wf.h>
 
 #endif
