@@ -16,23 +16,11 @@ namespace m3D {
     class WeightFunction {
     public:
 
-        /** Weight at given point in feature-space
-         * @param point in feature-space (spatial+value range)
-         * @return weight
-         */
-        virtual T operator()(const vector<T> &values) const = 0;
-
         /** Weight at given point in feature-space 
          * @param point object
          * @return weight
          */
         virtual T operator()(const typename Point<T>::ptr p) const = 0;
-
-        /** Weight at given gridpoint 
-         * @param gridpoint
-         * @return weight
-         */
-        virtual T operator()(const vector<int> &gridpoint) const = 0;
 
         virtual ~WeightFunction() {}
     };

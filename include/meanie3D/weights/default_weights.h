@@ -109,24 +109,10 @@ namespace m3D
 
     public:
 
-        /** Unfavorable, because it calculates the value
-         * fresh at each point
-         * @return weight
-         */
-        T operator()(const vector<T> &values) const {
-            return this->compute_weight(values);
-        }
-
         /** @return pre-calculated weight
          */
         T operator()(const typename Point<T>::ptr p) const {
             return m_weight->get(p->gridpoint);
-        }
-
-        /** @return pre-calculated weight
-         */
-        T operator()(const vector<int> &gridpoint) const {
-            return m_weight->get(gridpoint);
         }
     };
 }

@@ -253,13 +253,6 @@ namespace m3D {
             return sum;
         }
 
-
-        T convective_initiation_weight(Point<T> *p)
-        {
-
-        }
-
-
         /** Actual weight computation happens here
          */
         T compute_weight(Point<T> *p)
@@ -292,35 +285,9 @@ namespace m3D {
             return weight;
         }
 
-        /** unfavorable, since it performs a reverse lookup, which is a very
-         * time-consuming operation. Use grid points where possible.
-         */
-        T operator()( const vector<T> &values ) const
-        {
-            typename CoordinateSystem<T>::GridPoint gp = this->m_coordinate_system->newGridPoint();
-
-            try
-            {
-                this->m_coordinate_system->reverse_lookup(values,gp);
-            }
-            catch (std::out_of_range& e)
-            {
-                cerr << "Reverse coordinate transformation failed for coordinate=" << values << endl;
-
-                return 0.0;
-            }
-
-            return m_weight->get(gp);
-        }
-
         T operator()(const typename Point<T>::ptr p) const
         {
             return m_weight->get(p->gridpoint);
-        }
-
-        T operator()(const vector<int> &gridpoint) const
-        {
-            return m_weight->get(gridpoint);
         }
     };
 }
