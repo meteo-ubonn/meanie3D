@@ -6,11 +6,12 @@
 #include <iostream>
 #include <radolan/radolan.h>
 
-using namespace Radolan;
-
 #define ADD_DIMENSION_Z 0
 
 namespace m3D { 
+    
+    using namespace Radolan;
+    using namespace netCDF;
 
     /** Converts the radolan file at path into a CF-Metadata compliant NetCDF-File.
      * @param radolanPath full path to the radolan file
@@ -73,11 +74,11 @@ namespace m3D {
      * @return NCFile* NetCDF-Filehandler
      * @throw CFFileConversionException
      */
-    netCDF::NcFile * CFConvertRadolanScan( RDScan *scan,
+    NcFile * CFConvertRadolanScan(RDScan *scan,
                                   const char* netcdfPath,
                                   bool write_one_bytes_as_byte,
                                   const RDDataType *threshold,
-                                  netCDF::NcFile::FileMode mode)
+                                  NcFile::FileMode mode)
 
     throw (CFFileConversionException)
     {
@@ -401,7 +402,7 @@ namespace m3D {
         return result;
     }
     
-    void CFPrintConvertedRadolanScan( netCDF::NcFile *file, int latVertices, int lonVertices )
+    void CFPrintConvertedRadolanScan( NcFile *file, int latVertices, int lonVertices )
     {
         using namespace netCDF;
         int dimLon = file->getDim( "x" ).getSize();

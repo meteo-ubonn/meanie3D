@@ -54,20 +54,6 @@ OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
 OPTION(WITH_VTK "Enable/Disable visualisation code (requires VTK)" OFF)
 OPTION(WITH_OPENCV "Legacy option. Leave at OFF" OFF)
 
-# ------------------------------------
-# Operating System
-# ------------------------------------
-
-IF(CMAKE_SYSTEM_NAME MATCHES Darwin)
-    SET(${PROJECT_NAME}_OS_MACOSX TRUE)
-ELSE(CMAKE_SYSTEM_NAME MATCHES Darwin)
-  IF(CMAKE_SYSTEM_NAME MATCHES Linux)
-    SET(${PROJECT_NAME}_OS_LINUX TRUE)
-  ELSE(CMAKE_SYSTEM_NAME MATCHES Linux)
-    MESSAGE(FATAL_ERROR "unknown target OS")
-  ENDIF(CMAKE_SYSTEM_NAME MATCHES Linux)
-ENDIF(CMAKE_SYSTEM_NAME MATCHES Darwin)
-
 # -------------------------------------
 # Submodules
 # -------------------------------------
@@ -144,11 +130,18 @@ ENDIF()
 # Compiler Flags
 # -------------------------------------
 
-MESSAGE("-- CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
-MESSAGE("-- CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
-MESSAGE("-- Compiler ID = ${CMAKE_CXX_COMPILER_ID}")
+MESSAGE(STATUS "CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
+MESSAGE(STATUS "CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
+MESSAGE(STATUS "Compiler ID = ${CMAKE_CXX_COMPILER_ID}")
 IF(CMAKE_COMPILER_IS_GNUCXX)
-    MESSAGE("-- Compiler is G++")
+    MESSAGE(STATUS "Compiler is GNU")
+ENDIF()
+
+IF (APPLE)
+    IF (CMAKE_CXX_COMPILER MATCHES ".*clang")
+        # Boost storage type problem
+        ADD_DEFINITIONS(-DBOOST_HAS_INT128=1)
+    ENDIF()
 ENDIF()
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -156,42 +149,14 @@ IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ftree-vectorize -msse2 -finline")
     SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -ftree-vectorize -msse2 -finline")
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -ftree-vectorize -msse2 -finline")
+    IF(WITH_LTO)
+        MESSAGE(STATUS "Link-Time Optimization switched on")
+        SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
+        SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto")
+    ENDIF()
 ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb")
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -ggdb")
-ENDIF()
-
-IF(WITH_LTO)
-    MESSAGE(STATUS "Link-Time Optimization switched on")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -flto")
-ELSE()
-    
-ENDIF()
-
-# C++11
-IF (USE_CPP11)
-   IF (APPLE)
-      SET(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++11")
-      SET(CMAKE_XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++")
-   ELSE (APPLE)
-      #TODO
-   ENDIF (APPLE)
-   SET(CMAKE_CXX_FLAGS "${CMAKE_C_FLAGS} -std=c++0x -stdlib=libc++ -g")
-   SET(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
-   SET(CMAKE_SHARED_LINKER_FLAGS "-stdlib=libc++")
-ELSE(USE_CPP11)
-   IF (APPLE)
-      SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wc++11-extensions ")
-   ELSE (APPLE)
-   ENDIF (APPLE)
-ENDIF (USE_CPP11)
-
-# Boost storage_type problem
-
-IF (CMAKE_CXX_COMPILER MATCHES ".*clang")
-    MESSAGE(STATUS "Adding flag -DBOOST_HAS_INT128=1")
-    ADD_DEFINITIONS(-DBOOST_HAS_INT128=1)
 ENDIF()
 
 # ------------------------------------- 
@@ -549,16 +514,13 @@ SOURCE_GROUP("meanie3d/weights" FILES
 
 TARGET_LINK_LIBRARIES(meanie3D
     radolan
-    ${HDF5_LIBRARIES}
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
     ${VTK_LIBRARIES}
     ${TBB_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES}
     ${Blitz_LIBRARY}
     ${OpenCV_LIBRARIES}
-)
-SET_TARGET_PROPERTIES(meanie3D PROPERTIES LINKER_LANGUAGE CXX)
+    ${OpenMP_RT_LIBRARIES})
+#SET_TARGET_PROPERTIES(meanie3D PROPERTIES LINKER_LANGUAGE CXX)
 
 # Conversion tool
 
@@ -567,12 +529,12 @@ ADD_EXECUTABLE(meanie3D-radolan2cfm
 )
 
 TARGET_LINK_LIBRARIES(meanie3D-radolan2cfm
-    radolan
     meanie3D
-    ${RADOLAN_LIBRARIES}
-    ${NETCDF_LIBRARIES}
+    radolan
     ${Boost_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${VTK_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${NETCDF_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-radolan2cfm PROPERTIES LINKER_LANGUAGE CXX)
 
 # detection tool
@@ -582,11 +544,11 @@ ADD_EXECUTABLE(meanie3D-detect
 
 TARGET_LINK_LIBRARIES(meanie3D-detect
     meanie3D
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${TBB_LIBRARIES}
     ${VTK_LIBRARIES}
+    ${TBB_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${NETCDF_LIBRARIES}
     ${OpenMP_RT_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-detect PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -599,12 +561,12 @@ ADD_EXECUTABLE(meanie3D-track
 
 TARGET_LINK_LIBRARIES(meanie3D-track
     meanie3D
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES}
     ${VTK_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES}
-    ${TBB_LIBRARIES})
+    ${TBB_LIBRARIES}
+    ${HDF5_LIBRARIES}
+    ${NETCDF_LIBRARIES}
+    ${OpenMP_RT_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-track PROPERTIES LINKER_LANGUAGE CXX)
 
 # trackstats
@@ -616,10 +578,11 @@ ADD_EXECUTABLE(meanie3D-trackstats
 
 TARGET_LINK_LIBRARIES(meanie3D-trackstats
     meanie3D
-    ${NETCDF_LIBRARIES}
+    ${VTK_LIBRARIES}
     ${Boost_LIBRARIES}
+    ${NETCDF_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${OpenMP_RT_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-trackstats PROPERTIES LINKER_LANGUAGE CXX)
 
 # trackstats CONRAD
@@ -631,10 +594,11 @@ ADD_EXECUTABLE(meanie3D-trackstats-conrad
 
 TARGET_LINK_LIBRARIES(meanie3D-trackstats-conrad
     meanie3D
-    ${NETCDF_LIBRARIES}
+    ${VTK_LIBRARIES}
     ${Boost_LIBRARIES}
+    ${NETCDF_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${OpenMP_RT_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-trackstats-conrad PROPERTIES LINKER_LANGUAGE CXX)
 
 # copydims
@@ -646,10 +610,9 @@ ADD_EXECUTABLE(meanie3D-copydims
 
 TARGET_LINK_LIBRARIES(meanie3D-copydims
     meanie3D
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${NETCDF_LIBRARIES}
+    ${HDF5_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-copydims PROPERTIES LINKER_LANGUAGE CXX)
 
 # Parallax correction for satellite 
@@ -660,8 +623,8 @@ ADD_EXECUTABLE(meanie3D-parallax_correction
 
 TARGET_LINK_LIBRARIES(meanie3D-parallax_correction
     meanie3D
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
+    ${NETCDF_LIBRARIES}
     ${HDF5_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-parallax_correction PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -674,10 +637,10 @@ ADD_EXECUTABLE(meanie3D-mapdata
 
 TARGET_LINK_LIBRARIES(meanie3D-mapdata
     meanie3D
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
+    ${VTK_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${NETCDF_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-mapdata PROPERTIES LINKER_LANGUAGE CXX)
 
 # timestamp update
@@ -688,10 +651,9 @@ ADD_EXECUTABLE(meanie3D-timestamp
 
 TARGET_LINK_LIBRARIES(meanie3D-timestamp
     meanie3D
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${NETCDF_LIBRARIES}
+    ${HDF5_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-timestamp PROPERTIES LINKER_LANGUAGE CXX)
 
 #
@@ -704,7 +666,9 @@ IF (VTK_ENABLED)
     TARGET_LINK_LIBRARIES(meanie3D-cfm2vtk
         meanie3D
         ${Boost_LIBRARIES}
-        ${VTK_LIBRARIES})
+        ${VTK_LIBRARIES}
+        ${NETCDF_LIBRARIES}
+        ${HDF5_LIBRARIES})
     SET_TARGET_PROPERTIES(meanie3D-cfm2vtk PROPERTIES LINKER_LANGUAGE CXX)
 ENDIF()
 
@@ -716,10 +680,9 @@ ADD_EXECUTABLE(meanie3D-minmax
 
 TARGET_LINK_LIBRARIES(meanie3D-minmax
     meanie3D
-    ${NETCDF_LIBRARIES}
     ${Boost_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${NETCDF_LIBRARIES}
+    ${HDF5_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-minmax PROPERTIES LINKER_LANGUAGE CXX)
 
 # ------------------------------------------------------------- #
@@ -828,6 +791,8 @@ IF (TESTS_ENABLED)
     ADD_TEST(KDTreeTest m3D-test-kdtree)
     ADD_TEST(MeanshiftTest m3D-test-featurespace)
     ADD_TEST(ClusteringTest m3D-test-detection)
+
+    ADD_CUSTOM_TARGET(check COMMAND make test)
 
 ENDIF(TESTS_ENABLED)
 
