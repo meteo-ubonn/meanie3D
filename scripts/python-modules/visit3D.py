@@ -311,22 +311,22 @@ def set_perspective(perspective,scale_factor_z):
     # set the values from the json perspective
     # dictionary
     
-    v.viewNormal = perspective["viewNormal"]
-    v.focus = perspective["focus"]
-    v.viewUp = perspective["viewUp"]
+    v.viewNormal = tuple(perspective["viewNormal"])
+    v.focus = tuple(perspective["focus"])
+    v.viewUp = tuple(perspective["viewUp"])
     v.viewAngle = perspective["viewAngle"]
     v.parallelScale = perspective["parallelScale"]
     v.nearPlane = perspective["nearPlane"]
     v.farPlane = perspective["farPlane"]
-    v.imagePan = perspective["imagePan"]
+    v.imagePan = tuple(perspective["imagePan"])
     v.imageZoom = perspective["imageZoom"]
     v.perspective = perspective["perspective"]
     v.eyeAngle = perspective["eyeAngle"]
     v.centerOfRotationSet = perspective["centerOfRotationSet"]
-    v.centerOfRotation = perspective["centerOfRotation"]
+    v.centerOfRotation = tuple(perspective["centerOfRotation"])
     v.axis3DScaleFlag = perspective["axis3DScaleFlag"]
-    v.axis3DScales = perspective["axis3DScales"]
-    v.shear = perspective["shear"]
+    v.axis3DScales = tuple(perspective["axis3DScales"])
+    v.shear = tuple(perspective["shear"])
 
     # scale z axis
     
@@ -482,12 +482,9 @@ def visualization(conf):
         print "Removing intermediary files from previous runs"
         return_code=call("rm -f *.vtk *.vtr", shell=True)
 
-    # Setting 3D view parameters
-    print "Setting 3D view parameters"
-    set_view_to_radolan(conf['GRID_EXTENT'],conf['SCALE_FACTOR_Z']);
-
-    print "Creating colortables"
-    num_colors = visitUtils.create_cluster_colortable("cluster_colors")
+    if conf['CREATE_CLUSTERS_MOVIE']:
+        print "Creating colortables"
+        num_colors = visitUtils.create_cluster_colortable("cluster_colors")
 
     if conf['WITH_TOPOGRAPHY']:
         visitUtils.create_topography_colortable()
@@ -495,6 +492,10 @@ def visualization(conf):
     if conf['WITH_BACKGROUND_GRADIENT']:
         print "Setting background gradient"
         visitUtils.add_background_gradient();
+
+    scaleFactorZ = 1.0
+    if "SCALE_FACTOR_Z" in conf.keys():
+        scaleFactorZ = conf['SCALE_FACTOR_Z']
 
     # Glob the netcdf directory
     print "Processing files in directory " + conf['NETCDF_DIR']
@@ -540,20 +541,16 @@ def visualization(conf):
             OpenDatabase(netcdf_file);
             source_open = True
 
-            if conf['WITH_TOPOGRAPHY']:
-                # add 3D topograpy
-                add_mapstuff("local")
-
             if conf['CREATE_SOURCE_MOVIE']:
                 
                 if conf['WITH_TOPOGRAPHY']:
                     print "-- Adding topography data --"
-                    add_topography("national_topo_3D")
+                    add_map_topography(conf['GRID_EXTENT'])
                 
                 if conf['WITH_RIVERS_AND_BOUNDARIES']:
                     print "-- Adding map data --"
-                    add_map_rivers("national")
-                    add_map_borders("national")
+                    add_map_rivers(conf['GRID_EXTENT'])
+                    add_map_borders(conf['GRID_EXTENT'])
                 
                 if conf['WITH_DATETIME']:
                     print "-- Adding timestamp --"
@@ -583,11 +580,20 @@ def visualization(conf):
                     t.lowerBounds=(conf['LOWER_TRESHOLDS'][i])
                     t.upperBounds=(conf['UPPER_TRESHOLDS'][i])
                     SetOperatorOptions(t)
-                
+
                 DrawPlots();
                 
-                visitUtils.save_window("source_",1)
-
+                if 'PERSPECTIVES' in conf.keys():
+                    perspective_nr = 1
+                    for perspective in conf['PERSPECTIVES']:
+                        set_perspective(perspective,scaleFactorZ)
+                        filename = "p" + str(perspective_nr) + "_source_"
+                        visitUtils.save_window(filename,1)
+                        perspective_nr = perspective_nr + 1
+                else:
+                    set_view_to_radolan(conf['GRID_EXTENT'],conf['SCALE_FACTOR_Z'])
+                    visitUtils.save_window("source_",1)
+                
                 DeleteAllPlots()
                 ClearWindow()
                 
@@ -626,12 +632,12 @@ def visualization(conf):
                 
                 if conf['WITH_TOPOGRAPHY']:
                     print "-- Adding topography data --"
-                    add_topography("national_topo_2D")
+                    add_map_topography(conf['GRID_EXTENT'])
                 
                 if conf['WITH_RIVERS_AND_BOUNDARIES']:
                     print "-- Adding map data --"
-                    add_map_rivers("national")
-                    add_map_borders("national")
+                    add_map_rivers(conf['GRID_EXTENT'])
+                    add_map_borders(conf['GRID_EXTENT'])
                 
                 if conf['WITH_DATETIME']:
                     print "-- Adding timestamp --"
@@ -671,10 +677,10 @@ def visualization(conf):
                 
                 DrawPlots()
                 
-                if 'PERSPECTIVES' in conf:
+                if 'PERSPECTIVES' in conf.keys():
                     perspective_nr = 1
                     for perspective in conf['PERSPECTIVES']:
-                        set_perspective(perspective)
+                        set_perspective(perspective,scaleFactorZ)
                         filename = "p" + str(perspective_nr) + "_tracking_"
                         visitUtils.save_window(filename,1)
                         perspective_nr = perspective_nr + 1
@@ -686,7 +692,7 @@ def visualization(conf):
                 set_view_to_radolan(conf['GRID_EXTENT'],conf['SCALE_FACTOR_Z']);
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
-                    
+
         # clean up
         
         DeleteAllPlots();
@@ -710,15 +716,34 @@ def visualization(conf):
 
     # create loops
 
-    if conf['CREATE_SOURCE_MOVIE']:
-        visitUtils.create_movie("source_","source.gif")
-        visitUtils.create_movie("source_","source.m4v")
+    if 'PERSPECTIVES' in conf.keys():
 
-    if  conf['CREATE_CLUSTERS_MOVIE']:
-        visitUtils.create_movie("p1_tracking_","p1_tracking.gif")
-        visitUtils.create_movie("p1_tracking_","p1_tracking.m4v")
-        visitUtils.create_movie("p2_tracking_","p2_tracking.gif")
-        visitUtils.create_movie("p2_tracking_","p2_tracking.m4v")
+        perspective_nr = 1
+
+        for perspective in conf['PERSPECTIVES']:
+
+            if conf['CREATE_SOURCE_MOVIE']:
+                movie_fn = "p" + str(perspective_nr) + "_source"
+                image_fn = movie_fn + "_"
+                visitUtils.create_movie(image_fn,movie_fn+".gif")
+                visitUtils.create_movie(image_fn,movie_fn+".m4v")
+
+            if  conf['CREATE_CLUSTERS_MOVIE']:
+                movie_fn = "p" + str(perspective_nr) + "_tracking"
+                image_fn = movie_fn + "_"
+                visitUtils.create_movie(image_fn,movie_fn+".gif")
+                visitUtils.create_movie(image_fn,movie_fn+".m4v")
+
+            perspective_nr = perspective_nr + 1
+    else:
+
+        if conf['CREATE_SOURCE_MOVIE']:
+            visitUtils.create_movie("source_","source.gif")
+            visitUtils.create_movie("source_","source.m4v")
+
+        if  conf['CREATE_CLUSTERS_MOVIE']:
+            visitUtils.create_movie("tracking_","tracking.gif")
+            visitUtils.create_movie("tracking_","tracking.m4v")
 
     # clean up
 

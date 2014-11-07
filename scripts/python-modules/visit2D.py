@@ -155,9 +155,19 @@ def add_pseudocolor(vtk_file,variable,color_table_name,opacity,legendFlag):
 # ------------------------------------------------------------------------------
 def set_view_to_radolan():
     v = GetView2D()
-    # v.windowCoords = (-418.462, 292.538, -4446.64, -3759.64)
     v.windowCoords = (-523.962, 376.038, -4659.15, -3759.15)
     v.viewportCoords = (0.2, 0.95, 0.15, 0.95)
+    SetView2D(v)
+    return
+
+# ------------------------------------------------------------------------------
+# Sets 2D view params 
+# @param dictionary with 'windowCoords' and 'viewportCoords' keys
+# ------------------------------------------------------------------------------
+def set_view(params):
+    v = GetView2D()
+    v.viewportCoords = tuple(params["viewportCoords"])
+    v.windowCoords = tuple(params["windowCoords"])
     SetView2D(v)
     return
 
@@ -403,6 +413,10 @@ def visualization(conf):
     # Visit memory leak
     image_count=0
 
+    # optional method of setting window for 2D
+    if 'VIEW' in conf.keys():
+        set_view(conf['VIEW'])
+    
     for netcdf_file in netcdf_files:
         
         # construct the cluster filename and find it
@@ -456,14 +470,15 @@ def visualization(conf):
                 start_time = time.time()
                 
                 variables = conf['VARIABLES']
+                colortables = conf['COLORTABLES']
+                opacities = conf['OPACITY']
                 
                 for i in range(len(variables)):
-                    
-                    add_pseudocolor(netcdf_file,
-                                    conf['VARIABLES'][i],
-                                    conf['COLORTABLES'][i],
-                                    conf['OPACITY'][i],1)
+
+                    add_pseudocolor(netcdf_file, variables[i], colortables[i], opacities[i],1)
+
                     p = PseudocolorAttributes()
+                    p.colorTableName = str(colortables[i])
                     p.minFlag,p.maxFlag=1,1
                     p.min,p.max=conf['VAR_MIN'][i],conf['VAR_MAX'][i]
                     p.invertColorTable = conf['COLORTABLES_INVERT_FLAGS'][i]
@@ -477,6 +492,7 @@ def visualization(conf):
 
                 DrawPlots();
                 visitUtils.save_window("source_",1)
+
                 DeleteAllPlots()
                 ClearWindow()
                 
