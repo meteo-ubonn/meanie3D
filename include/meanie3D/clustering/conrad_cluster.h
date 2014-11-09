@@ -18,7 +18,7 @@ namespace m3D {
     public:
 
         typedef std::vector< ConradCluster<T> > track_t;
-        typedef std::map<m3D::id_t, track_t* >  trackmap_t;
+        typedef std::map<m3D::id_t, track_t* > trackmap_t;
 
         int year, month, day, hour, minute;
         m3D::id_t id;

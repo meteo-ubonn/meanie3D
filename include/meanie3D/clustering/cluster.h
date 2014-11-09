@@ -50,14 +50,12 @@ namespace m3D {
         T                           m_min_weight;
         T                           m_max_weight;
 
-
-
 #pragma mark -
 #pragma mark Type definitions / Constants
 
-        typedef Cluster<T> *        ptr;
+        typedef Cluster<T> *    ptr;
 
-        typedef vector<ptr>    		list;
+        typedef vector<ptr>     list;
 
 #pragma mark -
 #pragma mark Public properties
@@ -236,6 +234,23 @@ namespace m3D {
          */
         ::units::values::m radius(const CoordinateSystem<T> *cs);
 
+#pragma mark -
+#pragma mark Value range
+
+        /** Iterates over all points in the cluster and finds
+         * the lower and upper bounds of the values inside. 
+         * 
+         * @param a vector which will contain the minimum values found
+         * after the call. One entry per variable in the value range in
+         * the same order. 
+         * @param a vector which will contain the maximum values found
+         * @param a vector which will contain the median values found
+         */        
+        void 
+        variable_ranges(std::vector<T> &min,
+                        std::vector<T> &max,
+                        std::vector<T> &median);
+        
 #pragma mark -
 #pragma mark DRF merging
 

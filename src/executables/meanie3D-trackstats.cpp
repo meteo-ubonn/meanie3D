@@ -66,13 +66,9 @@ void parse_commmandline(program_options::variables_map vm,
         bool &write_center_tracks_as_vtk,
         bool &write_cumulated_tracks_as_vtk,
         bool &write_gnuplot_files,
-        bool &write_track_dictionary) {
+        bool &write_track_dictionary)
+{
     // Version
-
-    if (vm.count("version") != 0) {
-        cout << m3D::VERSION << endl;
-        exit(-1);
-    }
 
     sourcepath = vm["sourcepath"].as<string>();
 
@@ -125,7 +121,11 @@ void parse_commmandline(program_options::variables_map vm,
  *        value was added to the 'over' bucket. <code>false</code> else
  */
 template <typename T>
-void add_value_to_histogram(const vector<T> &classes, bin_t &counts, T value, bool &exceeded_max_class) {
+void add_value_to_histogram(const vector<T> &classes, 
+                            bin_t &counts, 
+                            T value, 
+                            bool &exceeded_max_class) 
+{
     bool found_bin = false;
 
     exceeded_max_class = false;
@@ -165,7 +165,10 @@ void add_value_to_histogram(const vector<T> &classes, bin_t &counts, T value, bo
 /** Histogram output */
 
 template <typename T>
-void print_histogram(const vector<T> &classes, const bin_t &values, ofstream &file) {
+void print_histogram(const vector<T> &classes, 
+                     const bin_t &values, 
+                     ofstream &file) 
+{
     for (size_t i = 0; i < classes.size(); i++) {
         file << classes[i] << "," << values[i] << endl;
         cout << classes[i] << "," << values[i] << endl;
@@ -184,7 +187,8 @@ void write_histogram(const std::string &filename,
         const std::string &x,
         const std::string &y,
         const vector<T> &classes,
-        const bin_t &values) {
+        const bin_t &values) 
+{
     ofstream file(filename.c_str());
 
     file << "#" << x << "\t" << y << endl;
@@ -200,7 +204,8 @@ template <typename T>
 void write_values(const std::string &filename,
         const std::string &x,
         const std::string &y,
-        const map<T, size_t> &values) {
+        const map<T, size_t> &values) 
+{
     ofstream file(filename.c_str());
 
     file << "track length\tnumber of tracks" << endl;
@@ -215,7 +220,8 @@ void write_values(const std::string &filename,
 }
 
 template <typename T>
-double average(const vector<FS_TYPE> &v) {
+double average(const vector<FS_TYPE> &v) 
+{
     // calculate the mean value
     double sum = 0.0;
     for (size_t i = 0; i < v.size(); i++) {
@@ -230,7 +236,8 @@ double average(const vector<FS_TYPE> &v) {
  *        If <code>false</code> it counts normally.
  */
 template <typename T>
-double average(const map<T, size_t> &m, bool ignore_one = true) {
+double average(const map<T, size_t> &m, bool ignore_one = true) 
+{
     // calculate the mean value
     double sum = 0.0;
 
@@ -262,9 +269,11 @@ double average(const map<T, size_t> &m, bool ignore_one = true) {
  *
  *
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv) 
+{
     using namespace m3D;
     using namespace m3D::utils::vectors;
+    using m3D::utils::VisitUtils;
 
     size_t length_hist_default_values[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110};
     bin_t length_hist_default(length_hist_default_values, length_hist_default_values + 22);
@@ -311,18 +320,28 @@ int main(int argc, char** argv) {
 
     program_options::variables_map vm;
 
-    try {
+    try 
+    {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    }    catch (std::exception &e) {
+    }    
+    catch (std::exception &e) 
+    {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-trackplot --help for command line options" << endl;
-        exit(-1);
+        return EXIT_FAILURE;
     }
 
-    if (vm.count("help") == 1 || argc < 2) {
+    if (vm.count("help") == 1 || argc < 2) 
+    {
         cout << desc << "\n";
-        return 1;
+        return EXIT_SUCCESS;
+    }
+    
+    if (vm.count("version") != 0) 
+    {
+        cout << m3D::VERSION << endl;
+        return EXIT_SUCCESS;
     }
 
     // Evaluate user input
@@ -353,7 +372,8 @@ int main(int argc, char** argv) {
 
     bool write_track_dictionary = false;
 
-    try {
+    try 
+    {
         parse_commmandline(vm,
                 basename,
                 sourcepath,
@@ -374,9 +394,11 @@ int main(int argc, char** argv) {
                 write_gnuplot_files,
                 write_track_dictionary);
 
-    }    catch (const std::exception &e) {
+    }    
+    catch (const std::exception &e) 
+    {
         cerr << e.what() << endl;
-        exit(-1);
+        return EXIT_FAILURE;
     }
 
     // initialize values
@@ -390,7 +412,7 @@ int main(int argc, char** argv) {
 
     // This map contains a mapping from the id type to lists of clusters.
 
-    Tracking<FS_TYPE>::trackmap_t track_map;
+    Track<FS_TYPE>::trackmap track_map;
 
     // Collect all files at sourcepath that start with basename and
     // end with -clusters.nc
@@ -405,13 +427,15 @@ int main(int argc, char** argv) {
 
     cout << "Collecting track data from NetCDF files: " << endl;
 
-    if (fs::is_directory(source_path)) {
+    if (fs::is_directory(source_path)) 
+    {
         fs::directory_iterator dir_iter(source_path);
         fs::directory_iterator end;
 
         // Iterate over the "-clusters.nc" - files in sourcepath
 
-        while (dir_iter != end) {
+        while (dir_iter != end) 
+        {
             fs::path f = dir_iter->path();
 
             if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc")) {
@@ -425,36 +449,47 @@ int main(int argc, char** argv) {
                     coords_filename = f.generic_string();
                 }
 
-                try {
+                try 
+                {
+                    // Read the cluster list from file
+                    
                     ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read(f.generic_string());
 
-                    if (spatial_dimensions == 0) {
+                    if (spatial_dimensions == 0) 
+                    {
                         spatial_dimensions = cluster_list->dimensions.size();
-                    } else if (spatial_dimensions != cluster_list->dimensions.size()) {
+                    } 
+                    else if (spatial_dimensions != cluster_list->dimensions.size()) 
+                    {
                         cerr << "Spatial dimensions must remain identical across the track" << endl;
-                        exit(-1);
+                        return EXIT_FAILURE;
                     }
 
                     // Iterate over the clusters in the list we just read
 
                     Cluster<FS_TYPE>::list::iterator ci;
 
-                    for (ci = cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci) {
+                    for (ci = cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci) 
+                    {
                         Cluster<FS_TYPE>::ptr cluster = (*ci);
 
                         m3D::id_t id = cluster->id;
-
-                        Tracking<FS_TYPE>::trackmap_t::const_iterator ti = track_map.find(id);
-
-                        Tracking<FS_TYPE>::track_t * tm = NULL;
-
-                        if (ti == track_map.end()) {
+                        
+                        Track<FS_TYPE>::ptr tm = NULL;
+                        
+                        Track<FS_TYPE>::trackmap::const_iterator ti;
+                        
+                        ti = track_map.find(id);
+                        
+                        if (ti == track_map.end()) 
+                        {
                             // new entry
-
-                            tm = new Tracking<FS_TYPE>::track_t();
-
+                            tm = new Track<FS_TYPE>();
+                            tm->id = id;
                             track_map[id] = tm;
-                        } else {
+                        } 
+                        else 
+                        {
                             tm = ti->second;
                         }
 
@@ -462,13 +497,17 @@ int main(int argc, char** argv) {
                         // is a copy operation. It's expensive, but it saves us from
                         // having to keep track of open files and stuff.
 
-                        tm->push_back(*cluster);
+                        tm->sourcefiles.push_back(cluster_list->source_file);
+                        tm->clusters.push_back(cluster);
                     }
-
                     delete cluster_list;
-                }                catch (netCDF::exceptions::NcException &e) {
+                }                
+                catch (netCDF::exceptions::NcException &e) 
+                {
                     cerr << "ERROR:" << e.what() << endl;
-                }                catch (std::exception &e) {
+                }                
+                catch (std::exception &e) 
+                {
                     cerr << "ERROR:" << e.what() << endl;
                 }
 
@@ -522,14 +561,14 @@ int main(int argc, char** argv) {
 
             if (dim.isNull()) {
                 cerr << "ERROR: dimension " << dim_names[di] << " does not exist " << endl;
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
 
             NcVar var = coords_file->getVar(dim_names[di]);
 
             if (var.isNull()) {
                 cerr << "ERROR: variable " << dim_names[di] << " does not exist " << endl;
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
 
             dimensions.push_back(dim);
@@ -542,41 +581,91 @@ int main(int argc, char** argv) {
 
         cout << "Keying up tracks: " << endl;
 
-        for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++) {
-            Tracking<FS_TYPE>::track_t *track = tmi->second;
+        Track<T>::trackmap::iterator tmi;       
+        
+        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
+        {
+            typename Track<FS_TYPE>::ptr track = tmi->second;
 
-            cout << "Track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
+            cout << "Track #" << tmi->first 
+                    << " (" << track->clusters->size() << " clusters)" 
+                    << endl;
 
             size_t i = 0;
+            
+            vector<typename Cluster<FS_TYPE>::ptr>::const_iterator ti;
 
-            for (Tracking<FS_TYPE>::track_t::iterator ti = track->begin(); ti != track->end(); ti++) {
+            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti++) 
+            {
                 cout << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
             }
         }
 
-        // Write center tracks
 #if WITH_VTK
-        if (write_center_tracks_as_vtk) {
-            ::m3D::utils::VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map, basename, spatial_dimensions, exclude_degenerates);
+        if (write_center_tracks_as_vtk) 
+        {
+            // Write center tracks
+            VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map,
+                    basename, 
+                    spatial_dimensions, 
+                    exclude_degenerates);
         }
 #endif        
         // dictionary?
 
-        if (write_track_dictionary) {
-            ofstream dict("track-dictionary.txt");
+        if (write_track_dictionary) 
+        {
+            ofstream dict("track-dictionary.json");
+            
+            dict << "{" << endl;
+            dict << "\t" << "'tracks':[" << endl;
 
-            for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++) {
-                Tracking<FS_TYPE>::track_t *track = tmi->second;
+            Track<T>::trackmap::iterator tmi;
 
-                dict << "Track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
+            size_t track_index = 0;
+                    
+            for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
+            {
+                typename Track<FS_TYPE>::ptr track = tmi->second;
+                
+                dict << "\t\t{" << endl;
+                
+                // Identifier
+                dict << "\t\t\t\"id\":" << track->id << "," << endl;
+                
+                // Length
+                dict << "\t\t\t\"length\":" << track->clusters.size() << "," << endl;
+                
+                // Limits / Median
+                dict << "\t\t\t\"min\":" << << "," << endl;
+                dict << "\t\t\t\"max\":" << << "," << endl;
+                dict << "\t\t\t\"median\":" << << "," << endl;
+                        
+                // Clusters
+                dict << "\t\t\t\"clusters\":[" << endl;
 
-                size_t i = 0;
-
-                for (Tracking<FS_TYPE>::track_t::iterator ti = track->begin(); ti != track->end(); ti++) {
-                    dict << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
+                for (size_t i=0; i < track->clusters.size(); i++)
+                {
+                    typename Cluster<T>::ptr c = track->clusters[i];
+                    
+                    dict << "\t\t\t\t{" << endl;
+                    dict << "\t\t\t\t\t\"size\":"
+                    dict << "\t\t\t\t\t\"sourcefile\":"
+                    dict << "\t\t\t\t\t\"geometrical_center\":"
+                    dict << "\t\t\t\t}" << endl;
                 }
+                dict << "\t\t\t]" 
+                
+                if (track_index < (track_map.size()-1)) 
+                {
+                    dict << ",";
+                }
+                
+                dict << endl;
             }
 
+            dict << "\t]" << 
+            dict << "}" << endl;
             dict.close();
         }
 
@@ -1209,11 +1298,12 @@ int main(int argc, char** argv) {
         // system data
 
         delete coords_file;
-    } else {
+    } 
+    else 
+    {
         cerr << "Argument --sourcepath does not point to a directory (sourcepath=" + sourcepath + ")" << endl;
-        exit(-1);
+        return EXIT_FAILURE;
     }
 
-
-    return 0;
+    return EXIT_SUCCESS;
 };

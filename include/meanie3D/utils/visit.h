@@ -329,7 +329,7 @@ namespace m3D {
          */
         static
         void
-        write_center_tracks_vtk(typename Tracking<T>::trackmap_t &trackmap,
+        write_center_tracks_vtk(typename Track<T>::trackmap &trackmap,
                                 const std::string &basename,
                                 size_t spatial_dimensions,
                                 bool exclude_degenerates = true);

@@ -855,7 +855,7 @@ namespace m3D { namespace utils {
 
     template <class T>
     void
-    VisitUtils<T>::write_center_tracks_vtk(typename Tracking<T>::trackmap_t &track_map,
+    VisitUtils<T>::write_center_tracks_vtk(typename Track<T>::trackmap &track_map,
                                            const std::string &basename,
                                            size_t spatial_dimensions,
                                            bool exclude_degenerates)

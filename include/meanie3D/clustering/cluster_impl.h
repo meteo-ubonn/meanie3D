@@ -485,6 +485,81 @@ namespace m3D {
         lower_bound = m_min_weight;
         upper_bound = m_max_weight;
     }
+    
+    template <typename T>
+    void 
+    Cluster<T>::variable_ranges(std::vector<T> &min,
+                                std::vector<T> &max,
+                                std::vector<T> &median)
+    {
+        size_t var_rank = m_dimension - m_spatial_dimension;
+        
+        min.clear();
+        min.resize(var_rank,std::numeric_limits<T>::max());
+        
+        max.clear();
+        max.resize(var_rank,std::numeric_limits<T>::min());
+        
+        median.clear();
+        median.resize(var_rank,0);
+       
+        // For median calculation
+        vector< vector<T> > median_values;
+        median_values.resize(var_rank, vector<T>());
+        
+        typename Point<T>::list::const_iterator pi;
+        
+        for (pi = points.begin(); pi != points.end(); ++pi)
+        {
+            vector<T> values = (*pi)->values;
+            
+            for (size_t i=0; i < var_rank; i++)
+            {
+                T value = values.at(m_spatial_dimension + i);
+                
+                // record values for median
+                median_values.at(i).push_back(value);
+
+                // min/max checks
+                if (value < min.at(i)) min.at(i) = value;
+                if (value > max.at(i)) max.at(i) = value;
+            }
+        }
+        
+        // finish median calculation
+        
+        for (size_t i=0; i < var_rank; i++)
+        {
+            vector<T> values = median_values.at(i);
+            
+            if (!values.empty())
+            {
+            
+                if (values.size() == 1)
+                {
+                    // special case: only one element
+                    median.at(i) = values.at(0).at(i);
+                }
+                else
+                {
+                    // two or more elements
+                    
+                    std::sort(values.begin(), values.end());
+            
+                    if (values.size() % 2 == 0)
+                    {
+                        size_t index = values.size()/2 - 1;
+                        median.at(i) = (values.at(index) + values.at(index+1))/2.0;
+                    }
+                    else
+                    {
+                        size_t index = (values.size()-1) / 2;
+                        median.at(i) = values.at(index).at(i);
+                    }
+                }
+            }
+        }
+    }
 }
 
 #endif

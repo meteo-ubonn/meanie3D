@@ -13,10 +13,61 @@
 namespace m3D {
 
     using namespace utils;
+    
+    /** This simple class constitutes one track. It only consists
+     * of public properties.
+     */        
+    template<typename T>
+    class Track
+    {
+        public:
+            
+#pragma mark -
+#pragma mark Type definitions / Constants
+            
+            typedef Track* ptr;
+            typedef std::map< m3D::id_t, ptr> trackmap;
 
+#pragma mark -
+#pragma mark Constructor/Destructor
+
+            /** Default constructor.
+             */
+            Track() {};
+
+#pragma mark -
+#pragma mark Public properties
+
+            /** the cluster's identifier
+             */
+            m3D::id_t id; 
+
+            /** A list of pointers to cluster objects constituting the
+             * actual track.
+             */
+            std::vector< typename Cluster<T>::ptr > clusters; 
+
+            /** list of source files, one per cluster in the list.
+             */
+            std::vector< std::string > sourcefiles; 
+
+            /** A list of minimum values found for each variable
+             * in the cluster's value range.
+             */
+            std::vector<T> min;
+
+            /** A list of maximum values found for each variable
+             * in the cluster's value range.
+             */
+            std::vector<T> max;
+    };
+
+    /** This class contains the tracking code.
+     */
     template <typename T>
     class Tracking
     {
+        
     private:
 
         // Member Variables
@@ -51,11 +102,7 @@ namespace m3D {
         // Tracking() {};
 
     public:
-
-        typedef std::vector< Cluster<T> >   track_t;
-
-        typedef std::map<id_t, track_t* >   trackmap_t;
-
+        
         /** Constructor
          * @param weight for distance correlation
          * @param weight for size correlation

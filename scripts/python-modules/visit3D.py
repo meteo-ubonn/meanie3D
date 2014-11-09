@@ -301,10 +301,6 @@ def close_mapstuff():
 # ------------------------------------------------------------------------------
 
 def set_perspective(perspective,scale_factor_z):
-    
-    print "Setting perspective: "
-    pprint(perspective)
-    
     # get a view config obect
     v = GetView3D();
     
@@ -427,6 +423,62 @@ def set_annotations():
     return
 
 # ------------------------------------------------------------------------------
+# Checks if the file with the given number exists. Takes
+# perspectives into account. If any perspective exists,
+# all images from this number are deleted
+# @param configuration
+# @param basename ('source_','tracking_' etc.)
+# @param number number of file
+# ------------------------------------------------------------------------------
+def delete_images(conf,basename,image_count):
+    number_postfix = str(image_count).rjust(4,'0') + ".png";
+    result = False
+    if 'PERSPECTIVES' in conf.keys():
+        perspective_nr = 1
+        for perspective in conf['PERSPECTIVES']:
+            fn = "p"+str(perspective_nr)+"_"+basename+"_"+number_postfix
+            if (os.path.exists(fn)):
+                os.remove(fn)
+            perspective_nr = perspective_nr + 1
+    else:
+        fn = basename+"_"+number_postfix
+        if (os.path.exists(fn)):
+            os.remove(fn)
+
+# ------------------------------------------------------------------------------
+# Checks if the file with the given number exists. Takes
+# perspectives into account
+# @param configuration
+# @param basename ('source_','tracking_' etc.)
+# @param number number of file
+# @return "all","none" or "partial"
+# ------------------------------------------------------------------------------
+def images_exist(conf,basename,image_count):
+    number_postfix = str(image_count).rjust(4,'0') + ".png";
+    result = False
+    if 'PERSPECTIVES' in conf.keys():
+        num_perspectives = len(conf['PERSPECTIVES'])
+        num_found = 0
+        perspective_nr = 1
+        for perspective in conf['PERSPECTIVES']:
+            fn = "p"+str(perspective_nr)+"_"+basename+"_"+number_postfix
+            if (os.path.exists(fn)):
+                num_found = num_found + 1
+            perspective_nr = perspective_nr + 1
+        if num_found == 0: 
+            return "none"
+        elif num_found == num_perspectives:
+            return "all"
+        else:
+            return "partial"
+    else:
+        fn = basename+"_"+number_postfix
+        if os.path.exists(fn):
+            return "all"
+        else:
+            return "none"
+
+# ------------------------------------------------------------------------------
 # Generic routine for visualizing 3D clusters in two perspectives
 #
 # The following configuration options exist:
@@ -525,16 +577,18 @@ def visualization(conf):
             continue
 
         # predict the filenames for checking on resume
-        number_postfix = str(image_count).rjust(4,'0') + ".png";
+        number_postfix = str(image_count).rjust(4,'0')
 
         source_open = False
-        skip_source = False
         
         if conf['RESUME'] == True:
-            fn = "source_" + number_postfix
-            if os.path.exists(fn):
-                print "Skipping existing file " + fn
+            exists = images_exist(conf,"source",image_count)
+            if exists == "all":
+                print "Source visualization "+number_postfix+" exists. Skipping."
                 skip_source = True
+            elif exists == "partial":
+                print "Deleting partial visualization " + number_postfix
+                delete_images(conf,"source",image_count)
 
         if skip_source == False:
             
@@ -604,16 +658,14 @@ def visualization(conf):
             skip = False
             
             if conf['RESUME'] == True:
-                f1 = "p1_tracking_" + number_postfix
-                f2 = "p2_tracking_" + number_postfix
-                                 
-                if os.path.exists(f1) and os.path.exists(f2):
-                    print "Skipping existing files " + f1 + "," + f2
+
+                exists = images_exist(conf,"tracking",image_count)
+                if exists == "all":
+                    print "Cluster visualization "+number_postfix+" exists. Skipping."
                     skip = True
-                elif (os.path.exists(f1) and not os.path.exists(f2)):
-                    os.remove(f1)
-                elif (os.path.exists(f2) and not os.path.exists(f1)):
-                    os.remove(f2)
+                elif exists == "partial":
+                    print "Deleting partial cluster visualization " + number_postfix
+                    delete_images(conf,"tracking",image_count)
                                  
             if skip == False:
  
