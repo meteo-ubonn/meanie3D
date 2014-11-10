@@ -191,10 +191,10 @@ void write_histogram(const std::string &filename,
 {
     ofstream file(filename.c_str());
 
-    file << "#" << x << "\t" << y << endl;
+    file << "#" << x << "  " << y << endl;
 
     for (size_t i = 0; i < classes.size(); i++) {
-        file << classes[i] << "\t" << values[i] << endl;
+        file << classes[i] << "  " << values[i] << endl;
     }
 
     file.close();
@@ -208,12 +208,12 @@ void write_values(const std::string &filename,
 {
     ofstream file(filename.c_str());
 
-    file << "track length\tnumber of tracks" << endl;
+    file << "track length  number of tracks" << endl;
 
     typename map<T, size_t>::const_iterator si;
 
     for (si = values.begin(); si != values.end(); si++) {
-        file << si->first << "\t" << si->second << endl;
+        file << si->first << "  " << si->second << endl;
     }
 
     file.close();
@@ -421,7 +421,8 @@ int main(int argc, char** argv)
 
     fs::path source_path(sourcepath);
 
-    size_t spatial_dimensions = 0;
+    size_t spatial_rank = 0;
+    size_t value_rank = 0;
 
     std::string coords_filename;
 
@@ -453,15 +454,33 @@ int main(int argc, char** argv)
                 {
                     // Read the cluster list from file
                     
+                    // TODO: check if the actual dimensions and their 
+                    // order remain constant
+                    
                     ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read(f.generic_string());
 
-                    if (spatial_dimensions == 0) 
+                    if (spatial_rank == 0) 
                     {
-                        spatial_dimensions = cluster_list->dimensions.size();
+                        spatial_rank = cluster_list->dimensions.size();
                     } 
-                    else if (spatial_dimensions != cluster_list->dimensions.size()) 
+                    else if (spatial_rank != cluster_list->dimensions.size()) 
                     {
-                        cerr << "Spatial dimensions must remain identical across the track" << endl;
+                        cerr << "Spatial range must remain identical across the track" << endl;
+                        return EXIT_FAILURE;
+                    }
+                    
+                    // TODO: check if the actual variables and their order
+                    // remain constant
+                    
+                    size_t v_rank = cluster_list->feature_variables.size() - spatial_rank;
+                    
+                    if (value_rank == 0)
+                    {
+                        value_rank = v_rank;
+                    }
+                    else if (v_rank != value_rank)
+                    {
+                        cerr << "Value range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
 
@@ -487,6 +506,7 @@ int main(int argc, char** argv)
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
                             track_map[id] = tm;
+                            
                         } 
                         else 
                         {
@@ -497,7 +517,8 @@ int main(int argc, char** argv)
                         // is a copy operation. It's expensive, but it saves us from
                         // having to keep track of open files and stuff.
 
-                        tm->sourcefiles.push_back(cluster_list->source_file);
+                        boost::filesystem::path sf(cluster_list->source_file);
+                        tm->sourcefiles.push_back(sf.filename().generic_string());
                         tm->clusters.push_back(cluster);
                     }
                     delete cluster_list;
@@ -543,8 +564,19 @@ int main(int argc, char** argv)
         string fs_dimensions;
         coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
         vector<string> dim_names = vectors::from_string<string>(fs_dimensions);
-
-        cout << "Attribute 'featurespace_dimensions' = " << dim_names << endl;
+        
+        string fs_vars;
+        coords_file->getAtt("featurespace_variables").getValues(fs_vars);
+        
+        vector<string> all_var_names = vectors::from_string<string>(fs_vars);
+        vector<string> var_names;
+        for (size_t i=spatial_rank; i < all_var_names.size(); i++)
+        {
+            var_names.push_back(all_var_names[i]);
+        }
+        
+        cout << "Spatial range variables (dimensions): " << dim_names << endl;
+        cout << "Value range variables: " << var_names << endl;
 
 #if WITH_VTK
         VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
@@ -581,23 +613,23 @@ int main(int argc, char** argv)
 
         cout << "Keying up tracks: " << endl;
 
-        Track<T>::trackmap::iterator tmi;       
+        Track<FS_TYPE>::trackmap::iterator tmi;       
         
         for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
         {
-            typename Track<FS_TYPE>::ptr track = tmi->second;
+            Track<FS_TYPE>::ptr track = tmi->second;
 
             cout << "Track #" << tmi->first 
-                    << " (" << track->clusters->size() << " clusters)" 
+                    << " (" << track->clusters.size() << " clusters)" 
                     << endl;
 
             size_t i = 0;
             
-            vector<typename Cluster<FS_TYPE>::ptr>::const_iterator ti;
+            vector<Cluster<FS_TYPE>::ptr>::const_iterator ti;
 
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti++) 
             {
-                cout << "\t[" << i++ << "] x=" << ti->geometrical_center(spatial_dimensions) << endl;
+                cout << "  [" << i++ << "] x=" << (*ti)->geometrical_center(spatial_rank) << endl;
             }
         }
 
@@ -607,7 +639,7 @@ int main(int argc, char** argv)
             // Write center tracks
             VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map,
                     basename, 
-                    spatial_dimensions, 
+                    spatial_rank, 
                     exclude_degenerates);
         }
 #endif        
@@ -618,53 +650,77 @@ int main(int argc, char** argv)
             ofstream dict("track-dictionary.json");
             
             dict << "{" << endl;
-            dict << "\t" << "'tracks':[" << endl;
+            dict << "  \"spatial_range\":" << to_json(dim_names) << "," << endl;
+            dict << "  \"value_range\":" << to_json(var_names) << "," << endl;
+            dict << "  \"number_of_tracks\":" << track_map.size() << "," << endl;
+                   
+            dict << "  " << "\"tracks\":[" << endl;
 
-            Track<T>::trackmap::iterator tmi;
+            Track<FS_TYPE>::trackmap::iterator tmi;
 
             size_t track_index = 0;
                     
             for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
             {
-                typename Track<FS_TYPE>::ptr track = tmi->second;
+                Track<FS_TYPE>::ptr track = tmi->second;
                 
-                dict << "\t\t{" << endl;
+                dict << "    {" << endl;
                 
                 // Identifier
-                dict << "\t\t\t\"id\":" << track->id << "," << endl;
+                dict << "      \"id\":" << track->id << "," << endl;
                 
                 // Length
-                dict << "\t\t\t\"length\":" << track->clusters.size() << "," << endl;
+                dict << "      \"length\":" << track->clusters.size() << "," << endl;
                 
-                // Limits / Median
-                dict << "\t\t\t\"min\":" << << "," << endl;
-                dict << "\t\t\t\"max\":" << << "," << endl;
-                dict << "\t\t\t\"median\":" << << "," << endl;
-                        
                 // Clusters
-                dict << "\t\t\t\"clusters\":[" << endl;
+                dict << "      \"clusters\":[" << endl;
+                
+                track->min.resize(value_rank,std::numeric_limits<FS_TYPE>::max());
+                track->max.resize(value_rank,std::numeric_limits<FS_TYPE>::min());
 
                 for (size_t i=0; i < track->clusters.size(); i++)
                 {
-                    typename Cluster<T>::ptr c = track->clusters[i];
-                    
-                    dict << "\t\t\t\t{" << endl;
-                    dict << "\t\t\t\t\t\"size\":"
-                    dict << "\t\t\t\t\t\"sourcefile\":"
-                    dict << "\t\t\t\t\t\"geometrical_center\":"
-                    dict << "\t\t\t\t}" << endl;
-                }
-                dict << "\t\t\t]" 
-                
-                if (track_index < (track_map.size()-1)) 
-                {
-                    dict << ",";
-                }
-                
-                dict << endl;
-            }
+                    Cluster<FS_TYPE>::ptr c = track->clusters[i];
 
-            dict << "\t]" << 
+                    vector<FS_TYPE> min,max,median;
+                    c->variable_ranges(min,max,median);
+                    
+                    dict << "        {" << endl;
+                    dict << "          \"size\":" << c->size() << "," << endl;
+                    dict << "          \"sourcefile\":\"" << track->sourcefiles[i] << "\"," << endl;
+                    dict << "          \"geometrical_center\":" << to_json(c->geometrical_center(spatial_rank)) << "," << endl;
+                    dict << "          \"min\":" << to_json(min) << "," << endl;
+                    dict << "          \"max\":" << to_json(max) << "," << endl;
+                    dict << "          \"median\":" << to_json(median) << endl;
+                    dict << "        }";
+                    
+                    // min/max
+                    for (size_t i=0; i<value_rank; i++)
+                    {
+                        if (min[i] < track->min[i]) track->min[i] = min[i];
+                        if (max[i] > track->max[i]) track->max[i] = max[i];
+                    }
+                    
+                    if (i < (track->clusters.size()-1))
+                        dict << "," << endl;
+                }
+                
+                dict << "      ]," << endl;
+                
+                // Limits / Median
+                dict << "      \"min\":" << to_json(track->min) << "," << endl;
+                dict << "      \"max\":" << to_json(track->max) << endl;
+                dict << "    }";
+                
+                if (track_index < (track_map.size()-1))
+                {
+                    dict << "," << endl;
+                }
+                
+                track_index++;
+            }
+            
+            dict << "  ]";
             dict << "}" << endl;
             dict.close();
         }
@@ -687,13 +743,14 @@ int main(int argc, char** argv)
         map<float, size_t> directions;
 
         // Iterate over the collated tracks
-
-        for (Tracking<FS_TYPE>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++) {
+        
+        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
+        {
             size_t points_processed = 0;
 
-            Tracking<FS_TYPE>::track_t *track = tmi->second;
+            Track<FS_TYPE>::ptr track = tmi->second;
 
-            size_t track_length = track->size();
+            size_t track_length = track->clusters.size();
 
             if (track_length == 1) {
                 number_of_degenerates++;
@@ -703,7 +760,7 @@ int main(int argc, char** argv)
                 continue;
             }
 
-            cout << "Processing track #" << tmi->first << " (" << track->size() << " clusters)" << endl;
+            cout << "Processing track #" << tmi->first << " (" << track->clusters.size() << " clusters)" << endl;
 
             // count up histogram
 
@@ -736,12 +793,13 @@ int main(int argc, char** argv)
 
             // Iterate over the clusters in the track and sum up
 
-            Tracking<FS_TYPE>::track_t::iterator ti;
+            Cluster<FS_TYPE>::list::iterator ti;
 
             Cluster<FS_TYPE>::ptr previous_cluster = NULL;
 
-            for (ti = track->begin(); ti != track->end(); ++ti) {
-                Cluster<FS_TYPE>::ptr cluster = &(*ti);
+            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) 
+            {
+                Cluster<FS_TYPE>::ptr cluster = *ti;
 
                 if (create_cluster_statistics) {
                     size_t cluster_size = cluster->points.size();
@@ -995,7 +1053,7 @@ int main(int argc, char** argv)
 
             // NETCDF
 
-            cout << "\t(processed " << points_processed << " points)" << endl;
+            cout << "  (processed " << points_processed << " points)" << endl;
         }
 
         cout << "done." << endl;

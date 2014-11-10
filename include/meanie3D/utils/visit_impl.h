@@ -860,11 +860,13 @@ namespace m3D { namespace utils {
                                            size_t spatial_dimensions,
                                            bool exclude_degenerates)
     {
-        for (typename Tracking<T>::trackmap_t::iterator tmi = track_map.begin(); tmi != track_map.end(); tmi++)
+        typename Track<T>::trackmap::iterator tmi;
+        
+        for (tmi = track_map.begin(); tmi != track_map.end(); tmi++)
         {
-            typename Tracking<T>::track_t *track = tmi->second;
+            typename Track<T>::ptr track = tmi->second;
 
-            if (exclude_degenerates && track->size()==1)
+            if (exclude_degenerates && track->clusters.size()==1)
             {
                 continue;
             }
@@ -883,9 +885,13 @@ namespace m3D { namespace utils {
 
             // Write point coordinates out as unstructured grid
 
-            for ( typename Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+            typename Cluster<T>::list::iterator ti;
+            
+            for ( ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
-                vector<T> center = ti->geometrical_center(spatial_dimensions);
+                typename Cluster<T>::ptr c = (*ti);
+                
+                vector<T> center = c->geometrical_center(spatial_dimensions);
 
                 for ( size_t vi = 0; vi < center.size(); vi++)
                 {
@@ -911,7 +917,7 @@ namespace m3D { namespace utils {
 
             size_t step = 0;
 
-            for ( typename Tracking<T>::track_t::iterator ti=track->begin(); ti!=track->end(); ti++ )
+            for ( ti=track->clusters.begin(); ti!=track->clusters.end(); ti++ )
             {
                 //f << ti->points.size() << endl;
                 f << step++ << endl;

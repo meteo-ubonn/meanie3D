@@ -60,6 +60,16 @@ namespace m3D {
              * in the cluster's value range.
              */
             std::vector<T> max;
+            
+#pragma mark -
+#pragma mark Public methods
+            
+            /** Shortcut for clusters.size()
+             * 
+             * @return number of clusters in this track.
+             */
+            size_t size() { return clusters.size(); };
+            
     };
 
     /** This class contains the tracking code.

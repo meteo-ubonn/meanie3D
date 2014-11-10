@@ -13,6 +13,7 @@
 #include <cmath>
 #include <assert.h>
 #include <vector>
+#include <sstream>
 
 namespace std {
 
@@ -360,17 +361,16 @@ namespace m3D { namespace utils { namespace vectors {
                 break;
             }
         }
-//        
-//        int pos = std::find(myvec.begin(), myvec.end(), elem) - myvec.begin();
-//        
-//        if( pos == myvec.size() )
-//        {
-//            pos = -1;
-//        }
 
         return pos;
     }
 
+    /** Converts the given vector to a string of the form
+     * (v1,v2,...,vn)
+     * 
+     * @param v
+     * @return 
+     */
     template <typename T>
     std::string
     to_string(const std::vector<T> &v)
@@ -394,6 +394,12 @@ namespace m3D { namespace utils { namespace vectors {
         return str.str();
     }
 
+    /** Converts the given string in the form 
+     * (v1,v2,...,vn) into a vector. 
+     * 
+     * @param const_str
+     * @return 
+     */
     template <typename T>
     std::vector<T>
     from_string(const std::string &const_str)
@@ -429,6 +435,64 @@ namespace m3D { namespace utils { namespace vectors {
 
         return result;
     }
+    
+    /** JSON encodes the given vector
+     * 
+     * @param v
+     * @return 
+     */
+    template < class T >
+    std::string to_json(const vector<T>& v)
+    {
+        std::ostringstream out;
+        
+        out << "[";
+        
+        size_t count = 0;
+        
+        for (typename vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii)
+        {
+            out << *ii;
+            
+            if ( count < (v.size()-1)) out << ",";
+            
+            count++;
+        }
+        
+        out << "]";
+        
+        return out.str();
+    }
+    
+    /** JSON encodes the given vector of strings
+     * 
+     * @param v
+     * @return 
+     */
+    std::string to_json(const std::vector<std::string>& v)
+    {
+        std::ostringstream out;
+        
+        out << "[";
+        
+        size_t count = 0;
+        
+        std::vector<std::string>::const_iterator ii;
+        
+        for (ii = v.begin(); ii != v.end(); ++ii)
+        {
+            out << "\"" << *ii << "\"";
+            
+            if ( count < (v.size()-1)) out << ",";
+            
+            count++;
+        }
+        
+        out << "]";
+        
+        return out.str();
+    }
+    
 }}}
     
 #endif

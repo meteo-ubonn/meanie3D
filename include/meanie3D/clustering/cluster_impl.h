@@ -534,11 +534,10 @@ namespace m3D {
             
             if (!values.empty())
             {
-            
                 if (values.size() == 1)
                 {
                     // special case: only one element
-                    median.at(i) = values.at(0).at(i);
+                    median.at(i) = values.at(0);
                 }
                 else
                 {
@@ -554,7 +553,7 @@ namespace m3D {
                     else
                     {
                         size_t index = (values.size()-1) / 2;
-                        median.at(i) = values.at(index).at(i);
+                        median.at(i) = values.at(index);
                     }
                 }
             }
