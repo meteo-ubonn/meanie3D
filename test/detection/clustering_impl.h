@@ -265,7 +265,7 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         for ( ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++ )
         {
             Cluster<TypeParam> *c = *ci;
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
         }
 
         clusters.apply_size_threshold(20);
@@ -281,7 +281,7 @@ TYPED_TEST( FSClusteringTest2D, FS_Clustering_2D_Range_Test )
         for ( ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++ )
         {
             Cluster<TypeParam> *c = *ci;
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
         }
         
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
@@ -340,7 +340,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         for ( ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++ )
         {
             Cluster<TypeParam> *c = *ci;
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
         }
 
         clusters.apply_size_threshold(50);
@@ -355,7 +355,7 @@ TYPED_TEST( FSClusteringTest3D, FS_Clustering_3D_Test )
         {
             Cluster<TypeParam> *c = *ci;
             
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
         }
         
         EXPECT_EQ(clusters.clusters.size(),27);

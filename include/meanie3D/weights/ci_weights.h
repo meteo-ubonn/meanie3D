@@ -506,7 +506,7 @@ namespace m3D {
 
                             typename Point<T>::list::iterator point_iter;
 
-                            for (point_iter=pc->points.begin(); point_iter != pc->points.end(); point_iter++)
+                            for (point_iter=pc->get_points().begin(); point_iter != pc->get_points().end(); point_iter++)
                             {
                                 typename Point<T>::ptr p = *point_iter;
 
@@ -591,7 +591,7 @@ namespace m3D {
 
                 typename Point<T>::list::iterator point_iter;
 
-                for (point_iter=c->points.begin(); point_iter != c->points.end(); point_iter++)
+                for (point_iter=c->get_points().begin(); point_iter != c->get_points().end(); point_iter++)
                 {
                     typename Point<T>::ptr p = *point_iter;
 
@@ -607,7 +607,7 @@ namespace m3D {
 
                 typename Point<T>::list::iterator point_iter;
 
-                for (point_iter=c->points.begin(); point_iter != c->points.end(); point_iter++)
+                for (point_iter=c->get_points().begin(); point_iter != c->get_points().end(); point_iter++)
                 {
                     typename Point<T>::ptr p = *point_iter;
 

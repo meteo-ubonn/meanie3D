@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string>
 #include <netcdf>
+#include <unistd.h>
 
 #include <meanie3D/meanie3D.h>
 #include <radolan/radolan.h>
@@ -72,9 +73,11 @@ void parse_commmandline(program_options::variables_map vm,
 
     sourcepath = vm["sourcepath"].as<string>();
 
-    if (vm.count("basename") == 0) {
+    if (vm.count("basename") == 0)
+    {
         basename = ::m3D::utils::common_component(sourcepath, ".nc");
-    } else {
+    } else
+    {
         basename = vm["basename"].as<string>();
     }
 
@@ -90,7 +93,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     // Default is the dimensions
 
-    if (vm.count("vtk-dimensions") > 0) {
+    if (vm.count("vtk-dimensions") > 0)
+    {
         vtk_dim_names = vm["vtk-dimensions"].as<svec_t>();
     }
 
@@ -121,23 +125,28 @@ void parse_commmandline(program_options::variables_map vm,
  *        value was added to the 'over' bucket. <code>false</code> else
  */
 template <typename T>
-void add_value_to_histogram(const vector<T> &classes, 
-                            bin_t &counts, 
-                            T value, 
-                            bool &exceeded_max_class) 
+void add_value_to_histogram(const vector<T> &classes,
+        bin_t &counts,
+        T value,
+        bool &exceeded_max_class)
 {
     bool found_bin = false;
 
     exceeded_max_class = false;
 
-    for (size_t i = 0; i < classes.size() && !found_bin; i++) {
-        if (i > 0) {
-            if (value <= classes[i] && value > classes[i - 1]) {
+    for (size_t i = 0; i < classes.size() && !found_bin; i++)
+    {
+        if (i > 0)
+        {
+            if (value <= classes[i] && value > classes[i - 1])
+            {
                 counts[i] = counts[i] + 1;
                 found_bin = true;
             }
-        } else {
-            if (value <= classes[0]) {
+        } else
+        {
+            if (value <= classes[0])
+            {
                 counts[i] = counts[i] + 1;
                 found_bin = true;
             }
@@ -146,10 +155,12 @@ void add_value_to_histogram(const vector<T> &classes,
 
     // not found? add to the last one
 
-    if (!found_bin) {
+    if (!found_bin)
+    {
         // add the last class with value 0 if required
 
-        if (counts.size() == classes.size()) {
+        if (counts.size() == classes.size())
+        {
             counts.push_back(0);
             cerr << "WARNING: value bigger than highest histogram class. Adding an 'over' bucket for values higher than " << classes[classes.size() - 1] << endl;
         }
@@ -165,18 +176,20 @@ void add_value_to_histogram(const vector<T> &classes,
 /** Histogram output */
 
 template <typename T>
-void print_histogram(const vector<T> &classes, 
-                     const bin_t &values, 
-                     ofstream &file) 
+void print_histogram(const vector<T> &classes,
+        const bin_t &values,
+        ofstream &file)
 {
-    for (size_t i = 0; i < classes.size(); i++) {
+    for (size_t i = 0; i < classes.size(); i++)
+    {
         file << classes[i] << "," << values[i] << endl;
         cout << classes[i] << "," << values[i] << endl;
     }
 
     // 'Over' bucket?
 
-    if (values.size() > classes.size()) {
+    if (values.size() > classes.size())
+    {
         file << " > " << classes[classes.size() - 1] << "," << values.back() << endl;
         cout << " > " << classes[classes.size() - 1] << "," << values.back() << endl;
     }
@@ -187,13 +200,14 @@ void write_histogram(const std::string &filename,
         const std::string &x,
         const std::string &y,
         const vector<T> &classes,
-        const bin_t &values) 
+        const bin_t &values)
 {
     ofstream file(filename.c_str());
 
     file << "#" << x << "  " << y << endl;
 
-    for (size_t i = 0; i < classes.size(); i++) {
+    for (size_t i = 0; i < classes.size(); i++)
+    {
         file << classes[i] << "  " << values[i] << endl;
     }
 
@@ -204,7 +218,7 @@ template <typename T>
 void write_values(const std::string &filename,
         const std::string &x,
         const std::string &y,
-        const map<T, size_t> &values) 
+        const map<T, size_t> &values)
 {
     ofstream file(filename.c_str());
 
@@ -212,7 +226,8 @@ void write_values(const std::string &filename,
 
     typename map<T, size_t>::const_iterator si;
 
-    for (si = values.begin(); si != values.end(); si++) {
+    for (si = values.begin(); si != values.end(); si++)
+    {
         file << si->first << "  " << si->second << endl;
     }
 
@@ -220,11 +235,12 @@ void write_values(const std::string &filename,
 }
 
 template <typename T>
-double average(const vector<FS_TYPE> &v) 
+double average(const vector<FS_TYPE> &v)
 {
     // calculate the mean value
     double sum = 0.0;
-    for (size_t i = 0; i < v.size(); i++) {
+    for (size_t i = 0; i < v.size(); i++)
+    {
         sum += boost::numeric_cast<double>(v[i]);
     }
     return sum / boost::numeric_cast<double>(v.size());
@@ -236,7 +252,7 @@ double average(const vector<FS_TYPE> &v)
  *        If <code>false</code> it counts normally.
  */
 template <typename T>
-double average(const map<T, size_t> &m, bool ignore_one = true) 
+double average(const map<T, size_t> &m, bool ignore_one = true)
 {
     // calculate the mean value
     double sum = 0.0;
@@ -245,12 +261,14 @@ double average(const map<T, size_t> &m, bool ignore_one = true)
 
     typename std::map<T, size_t>::const_iterator mi;
 
-    for (mi = m.begin(); mi != m.end(); mi++) {
+    for (mi = m.begin(); mi != m.end(); mi++)
+    {
         T key = mi->first;
 
         size_t val = mi->second;
 
-        if (key == 1 && ignore_one) {
+        if (key == 1 && ignore_one)
+        {
             continue;
         }
 
@@ -263,17 +281,56 @@ double average(const map<T, size_t> &m, bool ignore_one = true)
 }
 
 #pragma mark -
+#pragma mark Memory management
+
+#include <mach/vm_statistics.h>
+#include <mach/mach_types.h> 
+#include <mach/mach_init.h>
+#include <mach/mach_host.h>
+
+/** Calculates available and used memory in megabytes
+ * 
+ * @param free_memory
+ * @param used_memory
+ */
+void get_memory(double &free_memory, double &used_memory)
+{
+    const double MB = 1024.0 * 1024.0;
+    
+    vm_size_t page_size;
+    mach_port_t mach_port;
+    mach_msg_type_number_t count;
+    vm_statistics_data_t vm_stats;
+
+    mach_port = mach_host_self();
+    
+    count = sizeof(vm_stats) / sizeof(natural_t);
+    
+    if (KERN_SUCCESS == host_page_size(mach_port, &page_size) &&
+        KERN_SUCCESS == host_statistics(mach_port, HOST_VM_INFO, 
+                                        (host_info_t)&vm_stats, &count))
+    {
+        free_memory = ((double)vm_stats.free_count * (int64_t)page_size) / MB;
+        
+        
+
+        used_memory = (((double)vm_stats.active_count + 
+                       (double)vm_stats.inactive_count + 
+                       (double)vm_stats.wire_count) *  (double)page_size) / MB;
+    }
+}
+
+#pragma mark -
 #pragma mark main
 
 /**
  *
  *
  */
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
     using namespace m3D;
     using namespace m3D::utils::vectors;
-    using m3D::utils::VisitUtils;
 
     size_t length_hist_default_values[] = {5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110};
     bin_t length_hist_default(length_hist_default_values, length_hist_default_values + 22);
@@ -320,25 +377,24 @@ int main(int argc, char** argv)
 
     program_options::variables_map vm;
 
-    try 
+    try
     {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    }    
-    catch (std::exception &e) 
+    } catch (std::exception &e)
     {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-trackplot --help for command line options" << endl;
         return EXIT_FAILURE;
     }
 
-    if (vm.count("help") == 1 || argc < 2) 
+    if (vm.count("help") == 1 || argc < 2)
     {
         cout << desc << "\n";
         return EXIT_SUCCESS;
     }
-    
-    if (vm.count("version") != 0) 
+
+    if (vm.count("version") != 0)
     {
         cout << m3D::VERSION << endl;
         return EXIT_SUCCESS;
@@ -372,7 +428,7 @@ int main(int argc, char** argv)
 
     bool write_track_dictionary = false;
 
-    try 
+    try
     {
         parse_commmandline(vm,
                 basename,
@@ -394,8 +450,7 @@ int main(int argc, char** argv)
                 write_gnuplot_files,
                 write_track_dictionary);
 
-    }    
-    catch (const std::exception &e) 
+    } catch (const std::exception &e)
     {
         cerr << e.what() << endl;
         return EXIT_FAILURE;
@@ -427,58 +482,66 @@ int main(int argc, char** argv)
     std::string coords_filename;
 
     cout << "Collecting track data from NetCDF files: " << endl;
+    
+    size_t c_id = 0;
 
-    if (fs::is_directory(source_path)) 
+    if (fs::is_directory(source_path))
     {
         fs::directory_iterator dir_iter(source_path);
         fs::directory_iterator end;
 
         // Iterate over the "-clusters.nc" - files in sourcepath
 
-        while (dir_iter != end) 
+        while (dir_iter != end)
         {
             fs::path f = dir_iter->path();
 
-            if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc")) {
+            if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc"))
+            {
                 // read the ClusterList from the file
+                
+                double free_mem, used_mem;
+                get_memory(free_mem,used_mem);
 
-                cout << "Processing " << f.filename().generic_string() << " ... ";
+                cout << "Processing " << f.filename().generic_string() 
+                        << " ( used " << used_mem << " mb, " 
+                        << free_mem<< " mb available) ... ";
 
                 // Remember the first one
 
-                if (coords_filename.empty()) {
+                if (coords_filename.empty())
+                {
                     coords_filename = f.generic_string();
                 }
 
-                try 
+                try
                 {
                     // Read the cluster list from file
-                    
+
                     // TODO: check if the actual dimensions and their 
                     // order remain constant
-                    
+
                     ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read(f.generic_string());
 
-                    if (spatial_rank == 0) 
+                    if (spatial_rank == 0)
                     {
                         spatial_rank = cluster_list->dimensions.size();
-                    } 
-                    else if (spatial_rank != cluster_list->dimensions.size()) 
+                    }
+                    else if (spatial_rank != cluster_list->dimensions.size())
                     {
                         cerr << "Spatial range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
-                    
+
                     // TODO: check if the actual variables and their order
                     // remain constant
-                    
+
                     size_t v_rank = cluster_list->feature_variables.size() - spatial_rank;
-                    
+
                     if (value_rank == 0)
                     {
                         value_rank = v_rank;
-                    }
-                    else if (v_rank != value_rank)
+                    } else if (v_rank != value_rank)
                     {
                         cerr << "Value range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
@@ -488,27 +551,27 @@ int main(int argc, char** argv)
 
                     Cluster<FS_TYPE>::list::iterator ci;
 
-                    for (ci = cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci) 
+                    for (ci = cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
                     {
                         Cluster<FS_TYPE>::ptr cluster = (*ci);
 
                         m3D::id_t id = cluster->id;
-                        
+
                         Track<FS_TYPE>::ptr tm = NULL;
-                        
+
                         Track<FS_TYPE>::trackmap::const_iterator ti;
-                        
+
                         ti = track_map.find(id);
-                        
-                        if (ti == track_map.end()) 
+
+                        if (ti == track_map.end())
                         {
                             // new entry
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
                             track_map[id] = tm;
-                            
-                        } 
-                        else 
+
+                        }
+                        else
                         {
                             tm = ti->second;
                         }
@@ -519,15 +582,18 @@ int main(int argc, char** argv)
 
                         boost::filesystem::path sf(cluster_list->source_file);
                         tm->sourcefiles.push_back(sf.filename().generic_string());
-                        tm->clusters.push_back(cluster);
+                        
+                        TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster);
+                        tm->clusters.push_back(tc);
                     }
+                    
                     delete cluster_list;
-                }                
-                catch (netCDF::exceptions::NcException &e) 
+                    
+                } 
+                catch (netCDF::exceptions::NcException &e)
                 {
                     cerr << "ERROR:" << e.what() << endl;
-                }                
-                catch (std::exception &e) 
+                } catch (std::exception &e)
                 {
                     cerr << "ERROR:" << e.what() << endl;
                 }
@@ -564,17 +630,17 @@ int main(int argc, char** argv)
         string fs_dimensions;
         coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
         vector<string> dim_names = vectors::from_string<string>(fs_dimensions);
-        
+
         string fs_vars;
         coords_file->getAtt("featurespace_variables").getValues(fs_vars);
-        
+
         vector<string> all_var_names = vectors::from_string<string>(fs_vars);
         vector<string> var_names;
-        for (size_t i=spatial_rank; i < all_var_names.size(); i++)
+        for (size_t i = spatial_rank; i < all_var_names.size(); i++)
         {
             var_names.push_back(all_var_names[i]);
         }
-        
+
         cout << "Spatial range variables (dimensions): " << dim_names << endl;
         cout << "Value range variables: " << var_names << endl;
 
@@ -588,17 +654,20 @@ int main(int argc, char** argv)
         // Only use dimensions, that have a variable of the
         // exact same name
 
-        for (size_t di = 0; di < dim_names.size(); di++) {
+        for (size_t di = 0; di < dim_names.size(); di++)
+        {
             NcDim dim = coords_file->getDim(dim_names[di]);
 
-            if (dim.isNull()) {
+            if (dim.isNull())
+            {
                 cerr << "ERROR: dimension " << dim_names[di] << " does not exist " << endl;
                 exit(EXIT_FAILURE);
             }
 
             NcVar var = coords_file->getVar(dim_names[di]);
 
-            if (var.isNull()) {
+            if (var.isNull())
+            {
                 cerr << "ERROR: variable " << dim_names[di] << " does not exist " << endl;
                 exit(EXIT_FAILURE);
             }
@@ -613,78 +682,78 @@ int main(int argc, char** argv)
 
         cout << "Keying up tracks: " << endl;
 
-        Track<FS_TYPE>::trackmap::iterator tmi;       
-        
-        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
+        Track<FS_TYPE>::trackmap::iterator tmi;
+
+        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi)
         {
             Track<FS_TYPE>::ptr track = tmi->second;
 
-            cout << "Track #" << tmi->first 
-                    << " (" << track->clusters.size() << " clusters)" 
+            cout << "Track #" << tmi->first
+                    << " (" << track->clusters.size() << " clusters)"
                     << endl;
 
             size_t i = 0;
-            
+
             vector<Cluster<FS_TYPE>::ptr>::const_iterator ti;
 
-            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti++) 
+            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti++)
             {
                 cout << "  [" << i++ << "] x=" << (*ti)->geometrical_center(spatial_rank) << endl;
             }
         }
 
 #if WITH_VTK
-        if (write_center_tracks_as_vtk) 
+        if (write_center_tracks_as_vtk)
         {
             // Write center tracks
             VisitUtils<FS_TYPE>::write_center_tracks_vtk(track_map,
-                    basename, 
-                    spatial_rank, 
+                    basename,
+                    spatial_rank,
                     exclude_degenerates);
         }
 #endif        
         // dictionary?
 
-        if (write_track_dictionary) 
+        if (write_track_dictionary)
         {
             ofstream dict("track-dictionary.json");
-            
+
             dict << "{" << endl;
             dict << "  \"spatial_range\":" << to_json(dim_names) << "," << endl;
             dict << "  \"value_range\":" << to_json(var_names) << "," << endl;
             dict << "  \"number_of_tracks\":" << track_map.size() << "," << endl;
-                   
+
             dict << "  " << "\"tracks\":[" << endl;
 
             Track<FS_TYPE>::trackmap::iterator tmi;
 
             size_t track_index = 0;
-                    
-            for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
+
+            for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi)
             {
                 Track<FS_TYPE>::ptr track = tmi->second;
-                
+
                 dict << "    {" << endl;
-                
+
                 // Identifier
                 dict << "      \"id\":" << track->id << "," << endl;
-                
+
                 // Length
                 dict << "      \"length\":" << track->clusters.size() << "," << endl;
-                
+
                 // Clusters
                 dict << "      \"clusters\":[" << endl;
-                
-                track->min.resize(value_rank,std::numeric_limits<FS_TYPE>::max());
-                track->max.resize(value_rank,std::numeric_limits<FS_TYPE>::min());
 
-                for (size_t i=0; i < track->clusters.size(); i++)
+                track->min.resize(value_rank, std::numeric_limits<FS_TYPE>::max());
+                track->max.resize(value_rank, std::numeric_limits<FS_TYPE>::min());
+
+                for (size_t i = 0; i < track->clusters.size(); i++)
                 {
                     Cluster<FS_TYPE>::ptr c = track->clusters[i];
 
-                    vector<FS_TYPE> min,max,median;
-                    c->variable_ranges(min,max,median);
-                    
+                    vector<FS_TYPE> min, max, median;
+                    c->variable_ranges(min, max, median);
+
                     dict << "        {" << endl;
                     dict << "          \"size\":" << c->size() << "," << endl;
                     dict << "          \"sourcefile\":\"" << track->sourcefiles[i] << "\"," << endl;
@@ -693,33 +762,33 @@ int main(int argc, char** argv)
                     dict << "          \"max\":" << to_json(max) << "," << endl;
                     dict << "          \"median\":" << to_json(median) << endl;
                     dict << "        }";
-                    
+
                     // min/max
-                    for (size_t i=0; i<value_rank; i++)
+                    for (size_t i = 0; i < value_rank; i++)
                     {
                         if (min[i] < track->min[i]) track->min[i] = min[i];
                         if (max[i] > track->max[i]) track->max[i] = max[i];
                     }
-                    
-                    if (i < (track->clusters.size()-1))
+
+                    if (i < (track->clusters.size() - 1))
                         dict << "," << endl;
                 }
-                
+
                 dict << "      ]," << endl;
-                
+
                 // Limits / Median
                 dict << "      \"min\":" << to_json(track->min) << "," << endl;
                 dict << "      \"max\":" << to_json(track->max) << endl;
                 dict << "    }";
-                
-                if (track_index < (track_map.size()-1))
+
+                if (track_index < (track_map.size() - 1))
                 {
                     dict << "," << endl;
                 }
-                
+
                 track_index++;
             }
-            
+
             dict << "  ]";
             dict << "}" << endl;
             dict.close();
@@ -743,8 +812,8 @@ int main(int argc, char** argv)
         map<float, size_t> directions;
 
         // Iterate over the collated tracks
-        
-        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) 
+
+        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi)
         {
             size_t points_processed = 0;
 
@@ -752,11 +821,13 @@ int main(int argc, char** argv)
 
             size_t track_length = track->clusters.size();
 
-            if (track_length == 1) {
+            if (track_length == 1)
+            {
                 number_of_degenerates++;
             }
 
-            if (exclude_degenerates && track_length == 1) {
+            if (exclude_degenerates && track_length == 1)
+            {
                 continue;
             }
 
@@ -764,7 +835,8 @@ int main(int argc, char** argv)
 
             // count up histogram
 
-            if (create_length_statistics) {
+            if (create_length_statistics)
+            {
                 bool exceeded_max_class = false;
 
                 add_value_to_histogram(length_histogram_classes, length_histogram, track_length, exceeded_max_class);
@@ -773,9 +845,11 @@ int main(int argc, char** argv)
 
                 map<size_t, size_t>::iterator tlfi = track_lengths.find(track_length);
 
-                if (tlfi == track_lengths.end()) {
+                if (tlfi == track_lengths.end())
+                {
                     track_lengths[track_length] = 1;
-                } else {
+                } else
+                {
                     track_lengths[track_length] = (tlfi->second + 1);
                 }
             }
@@ -783,7 +857,8 @@ int main(int argc, char** argv)
             // Skip the rest if cumulative size statistics and cluster / speed
             // stats are all off
 
-            if (!create_cumulated_size_statistics && !create_cluster_statistics && !create_speed_statistics && !create_direction_statistics) {
+            if (!create_cumulated_size_statistics && !create_cluster_statistics && !create_speed_statistics && !create_direction_statistics)
+            {
                 continue;
             }
 
@@ -797,12 +872,13 @@ int main(int argc, char** argv)
 
             Cluster<FS_TYPE>::ptr previous_cluster = NULL;
 
-            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) 
+            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
                 Cluster<FS_TYPE>::ptr cluster = *ti;
 
-                if (create_cluster_statistics) {
-                    size_t cluster_size = cluster->points.size();
+                if (create_cluster_statistics)
+                {
+                    size_t cluster_size = cluster->size();
 
                     // add to histogram
 
@@ -810,9 +886,10 @@ int main(int argc, char** argv)
 
                     add_value_to_histogram(cluster_histogram_classes, cluster_histogram, cluster_size, exceeded_max_class);
 
-                    if (exceeded_max_class) {
+                    if (exceeded_max_class)
+                    {
                         cout << "Cluster #" << cluster->id
-                                << " (size " << cluster->points.size() << ")"
+                                << " (size " << cluster->size() << ")"
                                 << " exceeded max cluster size"
                                 << cluster_histogram_classes.back() << endl;
                     }
@@ -821,15 +898,19 @@ int main(int argc, char** argv)
 
                     map<size_t, size_t>::iterator csfi = cluster_sizes.find(cluster_size);
 
-                    if (csfi == cluster_sizes.end()) {
+                    if (csfi == cluster_sizes.end())
+                    {
                         cluster_sizes[cluster_size] = 1;
-                    } else {
+                    } else
+                    {
                         cluster_sizes[cluster_size] = (csfi->second + 1);
                     }
                 }
 
-                if (create_speed_statistics) {
-                    if (previous_cluster != NULL) {
+                if (create_speed_statistics)
+                {
+                    if (previous_cluster != NULL)
+                    {
                         // calculate speed in m/s. All vectors 2D at this time
 
                         vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
@@ -850,7 +931,8 @@ int main(int argc, char** argv)
 
                         add_value_to_histogram<float>(speed_histogram_classes, speed_histogram, speed, exceeded_max_class);
 
-                        if (exceeded_max_class) {
+                        if (exceeded_max_class)
+                        {
                             cout << "Cluster #" << cluster->id
                                     << " (speed " << speed << " m/s)"
                                     << " exceeded max speed "
@@ -860,16 +942,19 @@ int main(int argc, char** argv)
 
                         map<float, size_t>::iterator si = speeds.find(track_length);
 
-                        if (si == speeds.end()) {
+                        if (si == speeds.end())
+                        {
                             speeds[speed] = 1;
-                        } else {
+                        } else
+                        {
                             speeds[speed] = (si->second + 1);
                         }
                     }
                 }
 
                 // Directional Statistics
-                if (create_direction_statistics) {
+                if (create_direction_statistics)
+                {
                     // Using the standard nationwide composite here
                     // NOTE: by doing this, the code is made dependant of the
                     // radolan code and fixed to the radolan coordinate system
@@ -880,7 +965,8 @@ int main(int argc, char** argv)
 
                     RDCoordinateSystem *rcs = new RDCoordinateSystem(RD_RX);
 
-                    if (previous_cluster != NULL) {
+                    if (previous_cluster != NULL)
+                    {
                         // calculate speed in m/s. All vectors 2D at this time
 
                         vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
@@ -893,10 +979,12 @@ int main(int argc, char** argv)
                         // Assuming --vtk-dimensions=x,y
 
 #if WITH_VTK
-                        if (!::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.empty()) {
+                        if (!::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.empty())
+                        {
                             p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
                             p.y = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(1));
-                        } else {
+                        } else
+                        {
 #endif
                             // traditionally the coordinates in NetCDF files
                             // come in the z,y,x order. Thus pick the default
@@ -945,7 +1033,8 @@ int main(int argc, char** argv)
 
                         float direction = 180.0 * (alpha + beta) / M_PI_2;
 
-                        if (direction > 360.0) {
+                        if (direction > 360.0)
+                        {
                             direction -= 360.0;
                         }
 
@@ -955,9 +1044,11 @@ int main(int argc, char** argv)
 
                         map<float, size_t>::iterator si = directions.find(direction);
 
-                        if (si == directions.end()) {
+                        if (si == directions.end())
+                        {
                             directions[direction] = 1;
-                        } else {
+                        } else
+                        {
                             directions[direction] = (si->second + 1);
                         }
                     }
@@ -967,7 +1058,8 @@ int main(int argc, char** argv)
 
                 // Skip the rest if cumulative size statistics are off
 
-                if (!create_cumulated_size_statistics) {
+                if (!create_cumulated_size_statistics)
+                {
                     continue;
                 }
 
@@ -975,16 +1067,20 @@ int main(int argc, char** argv)
 
                 Point<FS_TYPE>::list::iterator pi;
 
-                for (pi = cluster->points.begin(); pi != cluster->points.end(); ++pi) {
+                for (pi = cluster->get_points().begin(); pi != cluster->get_points().end(); ++pi)
+                {
                     Point<FS_TYPE>::ptr p = *pi;
 
-                    if (p->gridpoint.empty()) {
+                    if (p->gridpoint.empty())
+                    {
                         CoordinateSystem<FS_TYPE>::GridPoint gp = coord_system->newGridPoint();
 
-                        try {
+                        try
+                        {
                             coord_system->reverse_lookup(p->coordinate, gp);
                             p->gridpoint = gp;
-                        }                        catch (std::out_of_range& e) {
+                        } catch (std::out_of_range& e)
+                        {
                             cerr << "Reverse coordinate transformation failed for coordinate=" << p->coordinate << endl;
 
                             // TODO: perhaps remove this point?
@@ -994,7 +1090,8 @@ int main(int argc, char** argv)
 
                     Point<FS_TYPE>::ptr indexed = index.get(p->gridpoint);
 
-                    if (indexed == NULL) {
+                    if (indexed == NULL)
+                    {
                         index.set(p->gridpoint, p);
 
                         indexed = index.get(p->gridpoint);
@@ -1002,7 +1099,8 @@ int main(int argc, char** argv)
 
                     // only add up the value range
 
-                    for (size_t k = p->gridpoint.size(); k < indexed->values.size(); k++) {
+                    for (size_t k = p->gridpoint.size(); k < indexed->values.size(); k++)
+                    {
                         indexed->values[k] += p->values[k];
                     }
 
@@ -1023,9 +1121,11 @@ int main(int argc, char** argv)
 
             map<size_t, size_t>::iterator tlfi = track_sizes.find(track_size);
 
-            if (tlfi == track_sizes.end()) {
+            if (tlfi == track_sizes.end())
+            {
                 track_sizes[track_size] = 1;
-            } else {
+            } else
+            {
                 track_sizes[track_size] = (tlfi->second + 1);
             }
 
@@ -1039,7 +1139,8 @@ int main(int argc, char** argv)
 
             // VTK
 #if WITH_VTK
-            if (write_cumulated_tracks_as_vtk) {
+            if (write_cumulated_tracks_as_vtk)
+            {
                 string vtk_path = basename + "_cumulated_track_" + boost::lexical_cast<string>(tmi->first) + ".vtk";
 
                 VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>());
@@ -1088,7 +1189,8 @@ int main(int argc, char** argv)
         // length of tracks (in time steps)
         //
 
-        if (create_length_statistics) {
+        if (create_length_statistics)
+        {
             file << "------------------------------------------------" << endl;
             cout << "------------------------------------------------" << endl;
 
@@ -1111,7 +1213,8 @@ int main(int argc, char** argv)
 
             map<size_t, size_t>::iterator si;
 
-            for (si = track_lengths.begin(); si != track_lengths.end(); si++) {
+            for (si = track_lengths.begin(); si != track_lengths.end(); si++)
+            {
                 file << si->first << "," << si->second << endl;
                 cout << si->first << "," << si->second << endl;
             }
@@ -1131,7 +1234,8 @@ int main(int argc, char** argv)
 
             print_histogram(length_histogram_classes, length_histogram, file);
 
-            if (write_gnuplot_files) {
+            if (write_gnuplot_files)
+            {
                 write_histogram("lengths-hist.txt", "number of tracks", "track length", length_histogram_classes, length_histogram);
                 write_values<size_t>("lengths.txt", "number of tracks", "track length", track_lengths);
             }
@@ -1141,7 +1245,8 @@ int main(int argc, char** argv)
         // speed
         //
 
-        if (create_speed_statistics) {
+        if (create_speed_statistics)
+        {
             file << "------------------------------------------------" << endl;
             cout << "------------------------------------------------" << endl;
 
@@ -1164,7 +1269,8 @@ int main(int argc, char** argv)
 
             map<float, size_t>::iterator spi;
 
-            for (spi = speeds.begin(); spi != speeds.end(); spi++) {
+            for (spi = speeds.begin(); spi != speeds.end(); spi++)
+            {
                 file << spi->first << "," << spi->second << endl;
                 cout << spi->first << "," << spi->second << endl;
             }
@@ -1184,7 +1290,8 @@ int main(int argc, char** argv)
 
             print_histogram<float>(speed_histogram_classes, speed_histogram, file);
 
-            if (write_gnuplot_files) {
+            if (write_gnuplot_files)
+            {
                 write_histogram("speeds-hist.txt", "number of clusters", "speed [m/s]", speed_histogram_classes, speed_histogram);
                 write_values<float>("speeds.txt", "number of clusters", "speed in [m/s]", speeds);
             }
@@ -1195,7 +1302,8 @@ int main(int argc, char** argv)
         // directions
         //
 
-        if (create_direction_statistics) {
+        if (create_direction_statistics)
+        {
             file << "------------------------------------------------" << endl;
             cout << "------------------------------------------------" << endl;
 
@@ -1214,7 +1322,8 @@ int main(int argc, char** argv)
 
             map<float, size_t>::iterator spi;
 
-            for (spi = directions.begin(); spi != directions.end(); spi++) {
+            for (spi = directions.begin(); spi != directions.end(); spi++)
+            {
                 file << spi->first << "," << spi->second << endl;
                 cout << spi->first << "," << spi->second << endl;
             }
@@ -1234,7 +1343,8 @@ int main(int argc, char** argv)
 
             print_histogram<float>(direction_histogram_classes, direction_histogram, file);
 
-            if (write_gnuplot_files) {
+            if (write_gnuplot_files)
+            {
                 write_histogram("directions-hist.txt", "number of clusters", "direction in [deg]", direction_histogram_classes, direction_histogram);
                 write_values<float>("directions.txt", "number of clusters", "direction in [deg]", directions);
             }
@@ -1246,7 +1356,8 @@ int main(int argc, char** argv)
         // Cluster sizes
         //
 
-        if (create_cluster_statistics) {
+        if (create_cluster_statistics)
+        {
             file << endl;
             cout << endl;
 
@@ -1272,7 +1383,8 @@ int main(int argc, char** argv)
 
             map<size_t, size_t>::iterator si;
 
-            for (si = cluster_sizes.begin(); si != cluster_sizes.end(); si++) {
+            for (si = cluster_sizes.begin(); si != cluster_sizes.end(); si++)
+            {
                 file << si->first << "," << si->second << endl;
                 cout << si->first << "," << si->second << endl;
             }
@@ -1290,7 +1402,8 @@ int main(int argc, char** argv)
 
             print_histogram(cluster_histogram_classes, cluster_histogram, file);
 
-            if (write_gnuplot_files) {
+            if (write_gnuplot_files)
+            {
                 write_histogram("sizes-hist.txt", "number of clusters", "size [#gridpoints]", cluster_histogram_classes, cluster_histogram);
                 write_values("sizes.txt", "number of clusters", "size [#gridpoints]", cluster_sizes);
             }
@@ -1301,7 +1414,8 @@ int main(int argc, char** argv)
         // Cumulative track stats
         //
 
-        if (create_cumulated_size_statistics) {
+        if (create_cumulated_size_statistics)
+        {
             // size of tracks (in terms of cumulative pixels)
 
             file << endl;
@@ -1329,7 +1443,8 @@ int main(int argc, char** argv)
 
             map<size_t, size_t>::iterator si;
 
-            for (si = track_sizes.begin(); si != track_sizes.end(); si++) {
+            for (si = track_sizes.begin(); si != track_sizes.end(); si++)
+            {
                 file << si->first << "," << si->second << endl;
                 cout << si->first << "," << si->second << endl;
             }
@@ -1345,7 +1460,8 @@ int main(int argc, char** argv)
 
             print_histogram(size_histogram_classes, size_histogram, file);
 
-            if (write_gnuplot_files) {
+            if (write_gnuplot_files)
+            {
                 write_histogram("cumulative-sizes-hist.txt", "number of tracks", "size [#gridpoints]", size_histogram_classes, size_histogram);
                 write_values<size_t>("cumulative-sizes.txt", "number of tracks", "size [#gridpoints]", track_sizes);
             }
@@ -1356,8 +1472,8 @@ int main(int argc, char** argv)
         // system data
 
         delete coords_file;
-    } 
-    else 
+    }
+    else
     {
         cerr << "Argument --sourcepath does not point to a directory (sourcepath=" + sourcepath + ")" << endl;
         return EXIT_FAILURE;

@@ -51,7 +51,7 @@ namespace m3D {
         {
             typename Cluster<T>::ptr c = previous->clusters[i];
 
-            if (c->points.size()==0)
+            if (c->size()==0)
             {
                 cerr << "ERROR: previous cluster " << c->id << " has no points!" << endl;
             }
@@ -61,7 +61,7 @@ namespace m3D {
         {
             typename Cluster<T>::ptr c = current->clusters[i];
 
-            if (c->points.size()==0)
+            if (c->size()==0)
             {
                 cerr << "ERROR: current cluster " << c->id << " has no points!" << endl;
             }

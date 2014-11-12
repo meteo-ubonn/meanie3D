@@ -206,11 +206,6 @@ namespace m3D {
          */
         ~ClusterList()
         {
-            close_ncFile();
-        };
-
-        void close_ncFile()
-        {
             if (ncFile!=NULL)
             {
                 delete ncFile;
@@ -223,12 +218,20 @@ namespace m3D {
 
         /** @return number of clusters in the list
          */
-        size_t size();
+        size_t size() const;
 
         /** @param index
          * @return cluster at index
          */
         typename Cluster<T>::ptr operator[] (size_t index);
+        
+        /** Clears the cluster list. 
+         * 
+         * @param deletion_flag if <code>true</code>, the clusters will be
+         * properly deleted. That includes their points. Defaults to
+         * <code>false</code>
+         */
+        void clear(bool deletion_flag=false);
 
 #pragma mark -
 #pragma mark Timestamp

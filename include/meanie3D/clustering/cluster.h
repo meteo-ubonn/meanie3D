@@ -25,6 +25,9 @@ namespace m3D {
     {
 
     private:
+        
+        typename Point<T>::list     m_points;
+
 
         typedef map< size_t, typename Histogram<T>::ptr > histogram_map_t;
 
@@ -63,10 +66,6 @@ namespace m3D {
         /** Center of this cluster
          */
         vector<T>                   mode;
-
-        /** List of feature-space points comprising this cluster
-         */
-        typename Point<T>::list     points;
 
         /** Unique cluster ID. Used for tracking.
          */
@@ -143,9 +142,58 @@ namespace m3D {
 #pragma mark -
 #pragma mark Accessors
 
-        size_t size() { return points.size(); };
+        /** Returns a reference to the point list.
+         * 
+         * @return reference to point list
+         */
+        typename Point<T>::list &get_points();
+        
+        /** Sets the points given. The existing points
+         * are not deleted from memory by default.
+         * 
+         * @param points
+         * @param deletion flag if <code>true</code> the existing points
+         * are deleted from memory. If <code>false</code> they are left
+         * alone. Make sure you have control over this, as this presents
+         * a potentially very large memory leak!
+         */
+        void set_points(const typename Point<T>::list &points,
+                bool delete_existing = false);
+        
+        /** Returns the number of points in this cluster
+         * 
+         * @return 
+         */
+        size_t size() const;
 
-        Point<T> * operator[](size_t index) { return points[index]; };
+        /** Checks if the cluster has any points 
+         * 
+         * @return <code>true</code> points list is empty, <code>false</code>
+         * otherwise. 
+         */
+        bool empty() const;
+
+        
+        /** Returns the point at the given index.
+         * 
+         * @param index
+         * @return 
+         */
+        typename Point<T>::ptr operator[](const size_t &index);
+        
+        /** Returns the point at the given index.
+         * 
+         * @param index
+         * @return 
+         */
+        typename Point<T>::ptr at(const size_t& index) const;
+        
+        /** Clears the point list. 
+         * 
+         * @param deletion_flag if <code>true</code>, the points will be
+         * freed from memory. Defaults to <code>false</code> 
+         */
+        void clear(bool deletion_flag =false);
 
 #pragma mark -
 #pragma mark Operators

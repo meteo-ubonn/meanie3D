@@ -24,9 +24,9 @@ namespace m3D { namespace utils {
             {
                 typename Cluster<T>::ptr c = list.at(ci);
 
-                for (size_t pi=0; pi < c->points.size(); pi++)
+                for (size_t pi=0; pi < c->size(); pi++)
                 {
-                    typename Point<T>::ptr p = c->points.at(pi);
+                    typename Point<T>::ptr p = c->at(pi);
 
                     this->m_index->set(p->gridpoint,c->id);
                 }
@@ -102,9 +102,9 @@ namespace m3D { namespace utils {
     {
         int common_points = 0;
 
-        for (int i=0; i<cluster_a->points.size(); i++)
+        for (int i=0; i < cluster_a->size(); i++)
         {
-            typename Point<T>::ptr p = cluster_a->points.at(i);
+            typename Point<T>::ptr p = cluster_a->at(i);
 
             if (m_index->get(p->gridpoint) == cluster_b->id)
             {
@@ -112,7 +112,7 @@ namespace m3D { namespace utils {
             }
         }
 
-        double ratio = ((double)common_points)/((double)cluster_a->points.size());
+        double ratio = ((double)common_points)/((double)cluster_a->size());
 
         return ratio;
     }

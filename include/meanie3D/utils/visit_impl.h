@@ -396,16 +396,16 @@ namespace m3D { namespace utils {
 
             // obtain the geometrical center
 
-            size_t spatial_dims = c->points.at(0)->coordinate.size();
+            size_t spatial_dims = c->get_points().at(0)->coordinate.size();
 
             vector<T> mode = c->geometrical_center(spatial_dims);
 
             if (spatial_dims==3 && at_max_height)
             {
                 T max = 0;
-                for (size_t pi=0; pi<c->points.size(); pi++)
+                for (size_t pi=0; pi < c->size(); pi++)
                 {
-                    Point<T> *p = c->points.at(pi);
+                    Point<T> *p = c->get_points().at(pi);
                     if (p->coordinate[0] > max)
                     {
                         max = p->coordinate[0];
@@ -507,13 +507,13 @@ namespace m3D { namespace utils {
         for ( size_t ci = 0; ci < list->clusters.size(); ci++ )
         {
             m3D::id_t id = use_ids ? list->clusters[ci]->id : ci;
-            size_t num_points = list->clusters[ci]->points.size();
+            size_t num_points = list->clusters[ci]->size();
             int color = id % 6;
 
             string mesh_filename = basename + "_cluster_" + boost::lexical_cast<string>(id) + (write_xml?".vtu":".vtk");
             string poly_filename = basename + "_boundary_" + boost::lexical_cast<string>(id) + (write_xml?".vtu":".vtk");
 
-            size_t point_dim = list->clusters[ci]->points[0]->coordinate.size();
+            size_t point_dim = list->clusters[ci]->get_points()[0]->coordinate.size();
 
             // Only process 2D/3D for now
             assert(point_dim == 2 || point_dim == 3);
@@ -537,7 +537,7 @@ namespace m3D { namespace utils {
 
             for ( vtkIdType pi = 0; pi < num_points; pi++ )
             {
-                Point<T> *p = list->clusters[ci]->points[pi];
+                Point<T> *p = list->clusters[ci]->get_points()[pi];
 
                 double scalarValue = p->values[point_dim];
                 cellData->InsertNextValue(scalarValue);
@@ -767,7 +767,7 @@ namespace m3D { namespace utils {
 
             string filename = path.stem().string() + "_cluster_" + boost::lexical_cast<string>( cluster_id );
 
-            typename Point<T>::ptr point = list->clusters[ci]->points[0];
+            typename Point<T>::ptr point = list->clusters[ci]->at(0);
 
             vector<T> coordinate = point->coordinate;
 
@@ -790,7 +790,7 @@ namespace m3D { namespace utils {
 
             //boost::numeric_cast<int>(use_ids ? list->clusters[ci]->id : ci);
 
-            for ( size_t pi = 0; pi < list->clusters[ci]->points.size(); pi++ )
+            for ( size_t pi = 0; pi < list->clusters[ci]->size(); pi++ )
             {
                 Point<T> *p = list->clusters[ci]->points[pi];
 
@@ -1026,7 +1026,7 @@ namespace m3D { namespace utils {
             f << "Cluster weight function response" << endl;
             f << "ASCII" << endl;
             f << "DATASET UNSTRUCTURED_GRID" << endl;
-            f << "POINTS " << cluster->points.size() << " FLOAT" << endl;
+            f << "POINTS " << cluster->size() << " FLOAT" << endl;
 
             // Write point coordinates out as unstructured grid
 

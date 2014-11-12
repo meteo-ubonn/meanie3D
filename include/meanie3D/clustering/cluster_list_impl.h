@@ -39,7 +39,7 @@ namespace m3D {
 
     template <typename T>
     size_t
-    ClusterList<T>::size()
+    ClusterList<T>::size() const
     {
         return clusters.size();
     }
@@ -50,7 +50,20 @@ namespace m3D {
     {
         return clusters[index];
     }
-
+    
+    template <typename T>
+    void 
+    ClusterList<T>::clear(bool deletion_flag)
+    {
+        typename Cluster<T>::list::const_iterator ci;
+        for (ci = clusters.begin(); ci != clusters.end(); ++ci)
+        {
+            typename Cluster<T>::ptr c = *ci;
+            c->clear(deletion_flag);
+            delete c;
+        }
+        clusters.clear();
+    }
 
 #pragma mark -
 #pragma mark Adding / Removing points
@@ -82,7 +95,7 @@ namespace m3D {
 
                 typename Cluster<T>::ptr sc = *it;
 
-                if ( sc->points.size() < min_cluster_size )
+                if ( sc->size() < min_cluster_size )
                 {
                     it = clusters.erase( it );
 
@@ -329,7 +342,7 @@ namespace m3D {
 
                 NcDim cluster_dim;
 
-                cluster_dim = file->addDim( dim_name.str(), clusters[ci]->points.size() );
+                cluster_dim = file->addDim( dim_name.str(), clusters[ci]->size() );
 
                 // Create variable
 
@@ -347,7 +360,7 @@ namespace m3D {
 
                 // size
 
-                var.putAtt( "size", ncInt, (int) clusters[ci]->points.size() );
+                var.putAtt( "size", ncInt, (int) clusters[ci]->size() );
 
                 // check if there's any merge
 
@@ -399,9 +412,9 @@ namespace m3D {
                 // exit define mode
                 nc_enddef(file->getId());
 
-                for ( size_t pi = 0; pi < clusters[ci]->points.size(); pi++ )
+                for ( size_t pi = 0; pi < clusters[ci]->size(); pi++ )
                 {
-                    Point<T> *p = clusters[ci]->points[pi];
+                    typename Point<T>::ptr p = clusters[ci]->at(pi);
 
                     double data[ dim.getSize() ];
 
@@ -759,7 +772,7 @@ namespace m3D {
         {
             typename Cluster<T>::ptr c = clusters[ci];
 
-            cout << "Cluster #" << ci << " (id=" << c->id << ") at " << c->mode << " (" << c->points.size() << " points.)" << endl;
+            cout << "Cluster #" << ci << " (id=" << c->id << ") at " << c->mode << " (" << c->size() << " points.)" << endl;
         }
 
     }
@@ -1029,7 +1042,7 @@ namespace m3D {
                         // => merge current point's cluster into neighbour's cluster
                         typename Cluster<T>::ptr c = current_point->cluster;
 
-                        n->cluster->add_points(c->points,false);
+                        n->cluster->add_points(c->get_points(),false);
 
                         clusters.erase(find(clusters.begin(),clusters.end(),c));
 
@@ -1307,7 +1320,7 @@ namespace m3D {
                     typename Cluster<T>::ptr merged;
                     typename Cluster<T>::ptr mergee;
 
-                    if ( current_point->cluster->points.size() >= predecessor->cluster->points.size())
+                    if ( current_point->cluster->size() >= predecessor->cluster->size())
                     {
                         merged = current_point->cluster;
                         mergee = predecessor->cluster;
@@ -1329,7 +1342,7 @@ namespace m3D {
 //                    #endif
                     {
                         // absorb predecessor
-                        merged->add_points(mergee->points,false);
+                        merged->add_points(mergee->get_points(),false);
 
                         // remove it
                         typename Cluster<T>::list::iterator fi = find(clusters.begin(),clusters.end(),mergee);
@@ -1377,7 +1390,7 @@ namespace m3D {
 
                 typename Point<T>::list::iterator pi;
 
-                for (pi = c->points.begin(); pi != c->points.end(); pi++)
+                for (pi = c->get_points().begin(); pi != c->get_points().end(); pi++)
                 {
                     typename Point<T>::ptr p = *pi;
 
@@ -1422,7 +1435,7 @@ namespace m3D {
                     // found a higher ranking cluster in the direct
                     // vicinity. Merge!
 
-                    c->add_points(strongest_cluster->points,false);
+                    c->add_points(strongest_cluster->get_points(),false);
 
                     typename Cluster<T>::list::iterator cfi = find(clusters.begin(),clusters.end(),strongest_cluster);
 
@@ -1482,7 +1495,7 @@ namespace m3D {
             typedef std::set< typename Point<T>::ptr > point_set_t;
 
             point_set_t point_set;
-            point_set.insert(c->points.begin(), c->points.end());
+            point_set.insert(c->get_points().begin(), c->get_points().end());
 
             // Iterate over the unique set
 
@@ -1510,7 +1523,7 @@ namespace m3D {
             else
             {
                 mode /= ((T) keepers.size());
-                c->points = keepers;
+                c->set_points(keepers);
                 c->mode = mode;
                 c->id = running_id;
                 running_id++;

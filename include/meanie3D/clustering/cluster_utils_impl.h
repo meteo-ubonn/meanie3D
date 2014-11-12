@@ -153,7 +153,7 @@ namespace m3D {
                     {
                         typename Cluster<T>::ptr c = current->clusters[ candidates[i] ];
                         
-                        merged_cluster->add_points(c->points);
+                        merged_cluster->add_points(c->get_points());
                         
                         mode += c->mode;
                         

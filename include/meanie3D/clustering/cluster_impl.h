@@ -54,7 +54,7 @@ namespace m3D {
     , m_min_weight(o.m_min_weight)
     , m_max_weight(o.m_max_weight)
     , mode(o.mode)
-    , points(o.points)
+    , m_points(o.get_points())
     , id(o.id)
     {
     }
@@ -74,7 +74,7 @@ namespace m3D {
     void
     Cluster<T>::add_point( Point<T> *point )
     {
-        points.push_back( point );
+        get_points().push_back( point );
 
 #if PROVIDE_THREADSAFETY
         point.mutex.lock();
@@ -90,7 +90,7 @@ namespace m3D {
     void
     Cluster<T>::add_points( const vector< Point<T> * > &list, bool addOriginalPointsOnly )
     {
-        // cout << "Cluster::add_points() " << this->mode << " -> #points = " << this->points.size() << endl;
+        // cout << "Cluster::add_points() " << this->mode << " -> #points = " << this->get_points().size() << endl;
 
         typename Point<T>::list::const_iterator li;
 
@@ -118,11 +118,11 @@ namespace m3D {
     void
     Cluster<T>::remove_point( Point<T> *point )
     {
-        typename vector< Point<T> * >::iterator it = points.find( *point );
+        typename vector< Point<T> * >::iterator it = get_points().find( *point );
 
-        if ( it != points.end() )
+        if ( it != get_points().end() )
         {
-            points.erase( it );
+            get_points().erase( it );
 
 #if PROVIDE_THREADSAFETY
             point->mutex.lock();
@@ -140,9 +140,70 @@ namespace m3D {
     bool
     Cluster<T>::has_point( typename Point<T>::ptr point )
     {
-        typename Point<T>::list::iterator fi = find( points.begin(), points.end(), point );
+        typename Point<T>::list::iterator fi = find( get_points().begin(), get_points().end(), point );
 
-        return fi != points.end();
+        return fi != get_points().end();
+    }
+
+    
+    template <typename T>
+    typename Point<T>::list & 
+    Cluster<T>::get_points()
+    {
+        return m_points;
+    }
+    
+    template <typename T>
+    void 
+    Cluster<T>::set_points(const typename Point<T>::list &points, bool delete_flag)
+    {
+        this->clear(delete_flag);
+        
+        m_points = points;
+    }
+    
+    template <typename T>
+    bool 
+    Cluster<T>::empty() const
+    {
+        return m_points.empty();
+    }
+        
+    template <typename T>
+    size_t 
+    Cluster<T>::size() const
+    { 
+        return m_points.size(); 
+    };
+
+    template <typename T>
+    typename Point<T>::ptr
+    Cluster<T>::operator[](const size_t &index) 
+    { 
+        return m_points.at(index);
+    };
+    
+    template <typename T>
+    typename Point<T>::ptr 
+    Cluster<T>::at(const size_t& index) const
+    {
+        return m_points.at(index);
+    }
+    
+    template <typename T>
+    void 
+    Cluster<T>::clear(bool deletion_flag)
+    {
+        if (deletion_flag)
+        {
+            typename Point<T>::list::const_iterator pi;
+            for (pi=m_points.begin(); pi!=m_points.end(); ++pi)
+            {
+                typename Point<T>::ptr p = *pi;
+                delete p;
+            }
+        }
+        m_points.clear();
     }
 
 #pragma mark -
@@ -190,7 +251,7 @@ namespace m3D {
         }
         catch (const std::exception& e)
         {
-            h = Histogram<T>::create( this->points, variable_index, valid_min, valid_max, number_of_bins );
+            h = Histogram<T>::create( m_points, variable_index, valid_min, valid_max, number_of_bins );
 
             this->m_histograms.insert( std::pair< size_t, typename Histogram<T>::ptr >( variable_index, h ) );
         }
@@ -260,7 +321,7 @@ namespace m3D {
 
             typename Point<T>::list::iterator pi;
 
-            for ( pi = this->points.begin(); pi != this->points.end(); ++pi )
+            for ( pi = get_points().begin(); pi != get_points().end(); ++pi )
             {
                 vector<T> tmp = center;
 
@@ -272,7 +333,7 @@ namespace m3D {
                 }
             }
 
-            m_geometrical_center = center/((T)this->points.size());
+            m_geometrical_center = center/((T)get_points().size());
         }
 
         return m_geometrical_center;
@@ -296,7 +357,7 @@ namespace m3D {
 
             T min = std::numeric_limits<T>::max();
             T max = std::numeric_limits<T>::min();
-            for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
+            for ( pi = this->get_points().begin(); pi != this->get_points().end(); pi++ )
             {
                 T val = (*pi)->values[variable_index];
                 if (val < min) {
@@ -316,7 +377,7 @@ namespace m3D {
 
             T overall_mass_percent = 0.0;
 
-            for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
+            for ( pi = this->get_points().begin(); pi != this->get_points().end(); pi++ )
             {
                 T mass = (*pi)->values[variable_index];
 
@@ -362,7 +423,7 @@ namespace m3D {
 
             ::units::values::m sum;
 
-            for ( pi = this->points.begin(); pi != this->points.end(); pi++ )
+            for ( pi = this->get_points().begin(); pi != this->get_points().end(); pi++ )
             {
                 typename Point<T>::ptr p = *pi;
 
@@ -373,7 +434,7 @@ namespace m3D {
                 sum += dist;
             }
 
-            m_radius = sum / ((T)this->points.size());
+            m_radius = sum / ((T)this->get_points().size());
         }
 
         return m_radius;
@@ -388,7 +449,7 @@ namespace m3D {
         // pick the first point of this cluster to figure out the
         // spatial and value dimensions
 
-        if (!points.empty() && w!=NULL)
+        if (!m_points.empty() && w!=NULL)
         {
             const CoordinateSystem<T> *cs = this->m_index->feature_space()->coordinate_system;
             
@@ -421,16 +482,16 @@ namespace m3D {
         // pick the first point of this cluster to figure out the
         // spatial and value dimensions
 
-        for (size_t i = 0; i < points.size(); i++)
+        for (size_t i = 0; i < this->size(); i++)
         {
-            Point<T> *p = points[i];
+            Point<T> *p = this->at(i);
 
             result += w->operator()(p);
         }
 
-        if (!points.empty())
+        if (m_points.empty())
         {
-            result /= ((T)points.size());
+            result /= ((T)this->size());
         }
 
         return result;
@@ -509,7 +570,7 @@ namespace m3D {
         
         typename Point<T>::list::const_iterator pi;
         
-        for (pi = points.begin(); pi != points.end(); ++pi)
+        for (pi = get_points().begin(); pi != get_points().end(); ++pi)
         {
             vector<T> values = (*pi)->values;
             

@@ -66,7 +66,7 @@ namespace m3D {
         /** Flag indicating if this point is on the cluster's
          * boundary or not.
          */
-        bool                        isBoundary;
+        bool            isBoundary;
 
 #if PROVIDE_MUTEX
         boost::mutex mutex;

@@ -14,6 +14,7 @@
 #include <meanie3D/index.h>
 #include <meanie3D/operations.h>
 #include <meanie3D/tracking.h>
+#include <meanie3D/utils.h>
 #include <meanie3D/weights.h>
 
 #include <meanie3D/implementations.h>
