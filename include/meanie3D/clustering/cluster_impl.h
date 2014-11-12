@@ -321,7 +321,7 @@ namespace m3D {
 
             typename Point<T>::list::iterator pi;
 
-            for ( pi = get_points().begin(); pi != get_points().end(); ++pi )
+            for ( pi = this->get_points().begin(); pi != this->get_points().end(); ++pi )
             {
                 vector<T> tmp = center;
 

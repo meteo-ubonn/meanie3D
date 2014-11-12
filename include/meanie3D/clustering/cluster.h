@@ -146,7 +146,7 @@ namespace m3D {
          * 
          * @return reference to point list
          */
-        typename Point<T>::list &get_points();
+        virtual typename Point<T>::list &get_points();
         
         /** Sets the points given. The existing points
          * are not deleted from memory by default.

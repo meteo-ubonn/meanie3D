@@ -6,6 +6,7 @@
 #include <meanie3D/utils.h>
 #include <meanie3D/clustering.h>
 
+#include <fstream>
 #include <exception>
 #include <boost/lexical_cast.hpp>
 
@@ -47,7 +48,7 @@ namespace m3D {
              */
             void write_points(typename Point<T>::list points)
             {
-                ofstream f(m_filename,ios::out);
+                std::ofstream f(m_filename.c_str(),ios::out);
                 if (!f.is_open())
                 {
                     cerr << "ERROR:failed to open file " << m_filename << " for writing." << endl;
@@ -57,7 +58,7 @@ namespace m3D {
                 // three lines per point: values, gridpoint, coordinate
                 
                 typename Point<T>::list::iterator pi;
-                for (pi=get_points().begin(); pi!=get_points().end(); pi++)
+                for (pi=points.begin(); pi!=points.end(); pi++)
                 {
                     typename Point<T>::ptr p = *pi;
                     f << p->values << endl;
@@ -77,7 +78,7 @@ namespace m3D {
 
                 this->clear(true);
                 
-                ifstream f(m_filename,ios::in);
+                ifstream f(m_filename.c_str(),ios::in);
                 if (!f.is_open())
                 {
                     cerr << "ERROR:failed to open file " << m_filename << " for reading." << endl;

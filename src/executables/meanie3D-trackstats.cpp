@@ -283,6 +283,7 @@ double average(const map<T, size_t> &m, bool ignore_one = true)
 #pragma mark -
 #pragma mark Memory management
 
+#if APPLE 
 #include <mach/vm_statistics.h>
 #include <mach/mach_types.h> 
 #include <mach/mach_init.h>
@@ -319,6 +320,7 @@ void get_memory(double &free_memory, double &used_memory)
                        (double)vm_stats.wire_count) *  (double)page_size) / MB;
     }
 }
+#endif
 
 #pragma mark -
 #pragma mark main
@@ -500,13 +502,17 @@ int main(int argc, char** argv)
             {
                 // read the ClusterList from the file
                 
+#if APPLE
                 double free_mem, used_mem;
                 get_memory(free_mem,used_mem);
-
                 cout << "Processing " << f.filename().generic_string() 
                         << " ( used " << used_mem << " mb, " 
                         << free_mem<< " mb available) ... ";
-
+#else 
+                cout << "Processing " << f.filename().generic_string() 
+                        << " ... ";
+#endif
+                
                 // Remember the first one
 
                 if (coords_filename.empty())
@@ -569,7 +575,6 @@ int main(int argc, char** argv)
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
                             track_map[id] = tm;
-
                         }
                         else
                         {
@@ -680,6 +685,7 @@ int main(int argc, char** argv)
 
         // Now we have a cluster map. Let's print it for debug purposes
 
+        cout << endl;
         cout << "Keying up tracks: " << endl;
 
         Track<FS_TYPE>::trackmap::iterator tmi;

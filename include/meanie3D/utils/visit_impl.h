@@ -792,7 +792,7 @@ namespace m3D { namespace utils {
 
             for ( size_t pi = 0; pi < list->clusters[ci]->size(); pi++ )
             {
-                Point<T> *p = list->clusters[ci]->points[pi];
+                Point<T> *p = list->clusters[ci]->at(pi);
 
                 if (only_boundary && !p->isBoundary) continue;
 
@@ -1030,11 +1030,11 @@ namespace m3D { namespace utils {
 
             // Write point coordinates out as unstructured grid
 
-            size_t point_dim = cluster->points[0]->coordinate.size();
+            size_t point_dim = cluster->at(0)->coordinate.size();
 
-            for ( size_t pi = 0; pi < cluster->points.size(); pi++ )
+            for ( size_t pi = 0; pi < cluster->size(); pi++ )
             {
-                Point<T> *p = cluster->points[pi];
+                Point<T> *p = cluster->at(pi);
 
                 for ( size_t vi = 0; vi < point_dim; vi++)
                 {
@@ -1057,11 +1057,11 @@ namespace m3D { namespace utils {
             T wr = useMode ? cluster->modal_weight_response(w) : cluster->average_weight_response(w);
 
             f << endl;
-            f << "POINT_DATA " << cluster->points.size() << endl;
+            f << "POINT_DATA " << cluster->size() << endl;
             f << "SCALARS weight FLOAT" << endl;
             f << "LOOKUP_TABLE default" << endl;
 
-            for ( size_t pi = 0; pi < cluster->points.size() - 1 ; pi++ )
+            for ( size_t pi = 0; pi < cluster->size() - 1 ; pi++ )
             {
                 f << wr << endl;
             }
