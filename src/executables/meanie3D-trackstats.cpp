@@ -590,6 +590,7 @@ int main(int argc, char** argv)
                         
                         TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster);
                         tm->clusters.push_back(tc);
+                        
                     }
                     
                     delete cluster_list;
@@ -704,7 +705,9 @@ int main(int argc, char** argv)
 
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti++)
             {
-                cout << "  [" << i++ << "] x=" << (*ti)->geometrical_center(spatial_rank) << endl;
+                Cluster<FS_TYPE>::ptr c = *ti;
+                cout << "  [" << i++ << "] x=" << c->geometrical_center(spatial_rank) << endl;
+                c->clear(true);
             }
         }
 
@@ -778,6 +781,9 @@ int main(int argc, char** argv)
 
                     if (i < (track->clusters.size() - 1))
                         dict << "," << endl;
+                    
+                    // Dispose of the points again to free up memory.
+                    c->clear(true);
                 }
 
                 dict << "      ]," << endl;
@@ -805,16 +811,10 @@ int main(int argc, char** argv)
 
         cout << "Cumulating track data: " << endl;
 
-        // track length
-
         map<size_t, size_t> track_lengths;
-
         map<size_t, size_t> track_sizes;
-
         map<size_t, size_t> cluster_sizes;
-
         map<float, size_t> speeds;
-
         map<float, size_t> directions;
 
         // Iterate over the collated tracks
@@ -850,23 +850,20 @@ int main(int argc, char** argv)
                 // add to distribution
 
                 map<size_t, size_t>::iterator tlfi = track_lengths.find(track_length);
-
                 if (tlfi == track_lengths.end())
-                {
                     track_lengths[track_length] = 1;
-                } else
-                {
+                else
                     track_lengths[track_length] = (tlfi->second + 1);
-                }
             }
 
             // Skip the rest if cumulative size statistics and cluster / speed
             // stats are all off
 
-            if (!create_cumulated_size_statistics && !create_cluster_statistics && !create_speed_statistics && !create_direction_statistics)
-            {
+            if (!create_cumulated_size_statistics 
+                    && !create_cluster_statistics 
+                    && !create_speed_statistics 
+                    && !create_direction_statistics)
                 continue;
-            }
 
             // For each track, create an array index. Start with empty index.
 
@@ -875,13 +872,12 @@ int main(int argc, char** argv)
             // Iterate over the clusters in the track and sum up
 
             Cluster<FS_TYPE>::list::iterator ti;
-
             Cluster<FS_TYPE>::ptr previous_cluster = NULL;
-
+            
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
                 Cluster<FS_TYPE>::ptr cluster = *ti;
-
+                
                 if (create_cluster_statistics)
                 {
                     size_t cluster_size = cluster->size();
@@ -1077,41 +1073,29 @@ int main(int argc, char** argv)
                 {
                     Point<FS_TYPE>::ptr p = *pi;
 
-                    if (p->gridpoint.empty())
-                    {
-                        CoordinateSystem<FS_TYPE>::GridPoint gp = coord_system->newGridPoint();
-
-                        try
-                        {
-                            coord_system->reverse_lookup(p->coordinate, gp);
-                            p->gridpoint = gp;
-                        } catch (std::out_of_range& e)
-                        {
-                            cerr << "Reverse coordinate transformation failed for coordinate=" << p->coordinate << endl;
-
-                            // TODO: perhaps remove this point?
-                            continue;
-                        }
-                    }
-
                     Point<FS_TYPE>::ptr indexed = index.get(p->gridpoint);
 
                     if (indexed == NULL)
                     {
+                        // this makes a copy of the point in the index
                         index.set(p->gridpoint, p);
-
+                        
+                        // get the copied point
                         indexed = index.get(p->gridpoint);
                     }
 
                     // only add up the value range
 
-                    for (size_t k = p->gridpoint.size(); k < indexed->values.size(); k++)
+                    for (size_t k=0; k<value_rank; k++)
                     {
-                        indexed->values[k] += p->values[k];
+                        indexed->values[spatial_rank+k] += p->values[spatial_rank+k];
                     }
 
                     points_processed++;
                 }
+                
+                // Free the cluster's memory again
+                cluster->clear(true);
             }
 
             // Extract the point list

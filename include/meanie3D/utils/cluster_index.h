@@ -8,8 +8,6 @@
 
 namespace m3D { namespace utils {
 
-    // Matrix
-
     template <typename T>
     struct ClusterIndex
     {

@@ -316,7 +316,7 @@ namespace m3D { namespace utils {
         {
             typename Cluster<T>::ptr c = list[ci];
 
-            size_t dim_count = spatial_only ? c->spatial_dimension() : c->dimension();
+            size_t dim_count = spatial_only ? c->spatial_rank() : c->rank();
 
             vector<T> mode = c->mode;
 
@@ -354,7 +354,7 @@ namespace m3D { namespace utils {
         {
             typename Cluster<T>::ptr c = list[pi];
 
-            size_t dim_count = spatial_only ? c->spatial_dimension() : c->dimension();
+            size_t dim_count = spatial_only ? c->spatial_rank() : c->rank();
 
             if ( spatial_only )
             {
@@ -1091,9 +1091,9 @@ namespace m3D { namespace utils {
 
             vvector_t shifts;
 
-            for (size_t pi=0; pi < cluster->points.size(); pi++)
+            for (size_t pi=0; pi < cluster->size(); pi++)
             {
-                typename Point<T>::ptr p = cluster->points[pi];
+                typename Point<T>::ptr p = cluster->at(pi);
 
                 if (spatial_only)
                 {

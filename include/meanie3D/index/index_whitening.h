@@ -14,7 +14,7 @@
 namespace m3D {
 
     #if WITH_VTK
-        using utils::VisitUtils;
+        using m3D::VisitUtils;
     #endif
 
     /** Abstract base class for a feature space index, which
@@ -127,7 +127,8 @@ namespace m3D {
         void transform_featurespace( vector<T> ranges )
         {
             using namespace std;
-
+            using namespace ::m3D::utils;
+            
             // test_lapack();
 
             // Lazy transform
@@ -178,12 +179,12 @@ namespace m3D {
                  << " for ranges " << ranges
                  << " omega = " << omega << " ... ";
 
-            utils::start_timer();
+            start_timer();
 #endif 
             white_point_matrix = boost::numeric::ublas::prod( point_matrix, omega );
 
 #if DEBUG_INDEX
-            cout << " ... done. (" << utils::stop_timer() << "s" << endl;
+            cout << " ... done. (" << stop_timer() << "s" << endl;
 #if WRITE_INDEX
             static size_t index_number = 0;
 

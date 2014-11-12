@@ -76,8 +76,6 @@ namespace m3D {
             {
                 using m3D::utils::vectors::from_string;
 
-                this->clear(true);
-                
                 ifstream f(m_filename.c_str(),ios::in);
                 if (!f.is_open())
                 {
@@ -124,6 +122,8 @@ namespace m3D {
             {
                 this->id = cluster->id;
                 this->mode = cluster->mode;
+                this->m_rank = cluster->rank();
+                this->m_spatial_rank = cluster->spatial_rank();
                 
                 std::string num_postfix = boost::lexical_cast<string>(c_id);
                 
@@ -134,10 +134,15 @@ namespace m3D {
                 this->write_points(cluster->get_points());
             }
             
+            ~TrackCluster()
+            {
+                this->clear(true);
+            }
+            
 #pragma mark -
 #pragma mark Public member functions
 
-            void clear(bool deletion_flag=false)
+            virtual void clear(bool deletion_flag=false)
             {
                 Cluster<T>::clear(deletion_flag);
                 this->m_needs_reading = true;
@@ -150,7 +155,7 @@ namespace m3D {
                     this->read_points();
                     this->m_needs_reading = false;
                 }
-                
+                        
                 return Cluster<T>::get_points();
             }
     };

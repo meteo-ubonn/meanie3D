@@ -21,8 +21,8 @@ namespace m3D {
     Cluster<T>::Cluster()
     : m_radius(-1)
     , m_index(NULL)
-    , m_dimension(0)
-    , m_spatial_dimension(0)
+    , m_rank(0)
+    , m_spatial_rank(0)
     , m_weight_range_calculated(false)
     , m_min_weight(0)
     , m_max_weight(0)
@@ -33,23 +33,24 @@ namespace m3D {
     Cluster<T>::Cluster(const vector<T> &mode, size_t spatial_dimension)
     : m_radius(-1)
     , m_index(NULL)
-    , m_dimension(mode.size())
-    , m_spatial_dimension(spatial_dimension)
+    , m_rank(mode.size())
+    , m_spatial_rank(spatial_dimension)
     , m_weight_range_calculated(false)
     , m_min_weight(0)
     , m_max_weight(0)
     , mode(mode)
     , id(NO_ID)
     {
-        assert( m_dimension > m_spatial_dimension ); // TODO: change on refac #146
+        // TODO: change on refac #146
+        assert( m_rank > m_spatial_rank ); 
     }
 
     template <typename T>
     Cluster<T>::Cluster( const Cluster<T> &o )
     : m_radius(-1)
     , m_index(NULL)
-    , m_dimension(o.m_dimension)
-    , m_spatial_dimension( o.m_spatial_dimension )
+    , m_rank(o.m_rank)
+    , m_spatial_rank( o.m_spatial_rank )
     , m_weight_range_calculated(o.m_weight_range_calculated)
     , m_min_weight(o.m_min_weight)
     , m_max_weight(o.m_max_weight)
@@ -74,7 +75,7 @@ namespace m3D {
     void
     Cluster<T>::add_point( Point<T> *point )
     {
-        get_points().push_back( point );
+        m_points.push_back( point );
 
 #if PROVIDE_THREADSAFETY
         point.mutex.lock();
@@ -90,8 +91,6 @@ namespace m3D {
     void
     Cluster<T>::add_points( const vector< Point<T> * > &list, bool addOriginalPointsOnly )
     {
-        // cout << "Cluster::add_points() " << this->mode << " -> #points = " << this->get_points().size() << endl;
-
         typename Point<T>::list::const_iterator li;
 
         for ( li = list.begin(); li != list.end(); li++ )
@@ -118,11 +117,11 @@ namespace m3D {
     void
     Cluster<T>::remove_point( Point<T> *point )
     {
-        typename vector< Point<T> * >::iterator it = get_points().find( *point );
+        typename vector< Point<T> * >::iterator it = this->get_points().find(*point);
 
-        if ( it != get_points().end() )
+        if ( it != this->get_points().end() )
         {
-            get_points().erase( it );
+            this->get_points().erase( it );
 
 #if PROVIDE_THREADSAFETY
             point->mutex.lock();
@@ -140,9 +139,10 @@ namespace m3D {
     bool
     Cluster<T>::has_point( typename Point<T>::ptr point )
     {
-        typename Point<T>::list::iterator fi = find( get_points().begin(), get_points().end(), point );
+        typename Point<T>::list::iterator fi = find( this->get_points().begin(), 
+                this->get_points().end(), point );
 
-        return fi != get_points().end();
+        return fi != this->get_points().end();
     }
 
     
@@ -284,9 +284,9 @@ namespace m3D {
         {
             // index is constructed using the spatial components only
 
-            vector<size_t> indexes(m_spatial_dimension);
+            vector<size_t> indexes(m_spatial_rank);
 
-            for (size_t i=0; i<m_spatial_dimension; i++) indexes[i]=i;
+            for (size_t i=0; i<m_spatial_rank; i++) indexes[i]=i;
 
             this->m_index = PointIndex<T>::create( &this->points, indexes );
         }
@@ -333,7 +333,7 @@ namespace m3D {
                 }
             }
 
-            m_geometrical_center = center/((T)get_points().size());
+            m_geometrical_center = center/((T)this->get_points().size());
         }
 
         return m_geometrical_center;
@@ -415,7 +415,7 @@ namespace m3D {
         
         if ( m_radius == ::units::values::m(-1) )
         {
-            vector<T> mode_spatial( &mode[0], &mode[m_spatial_dimension] );
+            vector<T> mode_spatial( &mode[0], &mode[m_spatial_rank] );
 
             vector<T> mode_in_meters = cs->to_meters(mode_spatial);
 
@@ -553,7 +553,7 @@ namespace m3D {
                                 std::vector<T> &max,
                                 std::vector<T> &median)
     {
-        size_t var_rank = m_dimension - m_spatial_dimension;
+        size_t var_rank = m_rank - m_spatial_rank;
         
         min.clear();
         min.resize(var_rank,std::numeric_limits<T>::max());
@@ -570,13 +570,13 @@ namespace m3D {
         
         typename Point<T>::list::const_iterator pi;
         
-        for (pi = get_points().begin(); pi != get_points().end(); ++pi)
+        for (pi = this->get_points().begin(); pi != this->get_points().end(); ++pi)
         {
             vector<T> values = (*pi)->values;
             
             for (size_t i=0; i < var_rank; i++)
             {
-                T value = values.at(m_spatial_dimension + i);
+                T value = values.at(m_spatial_rank + i);
                 
                 // record values for median
                 median_values.at(i).push_back(value);

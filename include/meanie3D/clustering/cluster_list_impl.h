@@ -1276,7 +1276,9 @@ namespace m3D {
                         clusters.push_back(c);
 
                         #if DEBUG_GRAPH_AGGREGATION
-                            cout << "created new cluster " << c << " (" << c->points.size() << " points)" << endl;
+                            cout << "created new cluster " << c 
+                                    << " (" << c->size() 
+                                    << " points)" << endl;
                         #endif
                     }
                 }
@@ -1291,8 +1293,10 @@ namespace m3D {
                     predecessor->cluster->add_point(current_point);
 
                     #if DEBUG_GRAPH_AGGREGATION
-                        cout << "added current point to cluster " << predecessor->cluster
-                             << " (" << predecessor->cluster->points.size() << " points)" << endl;
+                        cout << "added current point to cluster " 
+                                << predecessor->cluster << " (" 
+                                << predecessor->cluster->size() 
+                                << " points)" << endl;
                     #endif
                 }
                 else if (current_point->cluster != NULL && predecessor->cluster == NULL)
@@ -1306,7 +1310,10 @@ namespace m3D {
                     current_point->cluster->add_point(predecessor);
 
                     #if DEBUG_GRAPH_AGGREGATION
-                        cout << "added predecessor to cluster " << current_point->cluster << " (" << current_point->cluster->points.size() << " points)" << endl;
+                        cout << "added predecessor to cluster " 
+                                << current_point->cluster 
+                                << " (" << current_point->cluster->size() 
+                                << " points)" << endl;
                     #endif
                 }
                 else if (current_point->cluster != predecessor->cluster)
@@ -1332,8 +1339,8 @@ namespace m3D {
                     }
 
                     #if DEBUG_GRAPH_AGGREGATION
-                        cout << "merging cluster " << mergee << " (" << mergee->points.size() << " points)"
-                             << "into " << merged << " (" << merged->points.size() << " points)"
+                        cout << "merging cluster " << mergee << " (" << mergee->size() << " points)"
+                             << "into " << merged << " (" << merged->size() << " points)"
                              << endl;
                     #endif
 

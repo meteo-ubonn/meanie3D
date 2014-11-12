@@ -28,7 +28,6 @@ namespace m3D {
         
         typename Point<T>::list     m_points;
 
-
         typedef map< size_t, typename Histogram<T>::ptr > histogram_map_t;
 
         histogram_map_t             m_histograms;
@@ -41,9 +40,11 @@ namespace m3D {
 
         PointIndex<T>               *m_index;
 
-        size_t                      m_dimension;                // dimension of the points
+    protected:
+        
+        size_t                      m_rank;                // dimension of the points
 
-        size_t                      m_spatial_dimension;        // number of spatial dimensions (always first)
+        size_t                      m_spatial_rank;        // number of spatial dimensions (always first)
 
         // Dynamic Range
 
@@ -71,11 +72,14 @@ namespace m3D {
          */
         m3D::id_t                   id;
 
+        size_t 
+        value_rank() { return m_rank - m_spatial_rank; }
+        
         size_t
-        spatial_dimension() { return m_spatial_dimension; };
+        spatial_rank() { return m_spatial_rank; };
 
         size_t
-        dimension() { return m_dimension; };
+        rank() { return m_rank; };
 
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -193,7 +197,7 @@ namespace m3D {
          * @param deletion_flag if <code>true</code>, the points will be
          * freed from memory. Defaults to <code>false</code> 
          */
-        void clear(bool deletion_flag =false);
+        virtual void clear(bool deletion_flag =false);
 
 #pragma mark -
 #pragma mark Operators

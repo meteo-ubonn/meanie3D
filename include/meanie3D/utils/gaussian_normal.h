@@ -1,5 +1,5 @@
-#ifndef M3D_GAUSSIAN_NORMAL
-#define M3D_GAUSSIAN_NORMAL
+#ifndef M3D_GAUSSIAN_NORMAL_H
+#define M3D_GAUSSIAN_NORMAL_H
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
