@@ -272,7 +272,7 @@ namespace m3D {
                 throw CFFileConversionException(e.what());
             }
             
-            delete buffer;
+            free(buffer);
         }
         else
         {
@@ -321,7 +321,7 @@ namespace m3D {
                 throw CFFileConversionException(e.what());
             }
             
-            delete converted;
+            free(converted);
         }
         
         // write x-axis information
