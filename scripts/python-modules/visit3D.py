@@ -580,6 +580,7 @@ def visualization(conf):
         number_postfix = str(image_count).rjust(4,'0')
 
         source_open = False
+        skip_source = False
         
         if conf['RESUME'] == True:
             exists = images_exist(conf,"source",image_count)
