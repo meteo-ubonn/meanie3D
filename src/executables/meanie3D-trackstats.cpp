@@ -581,16 +581,19 @@ int main(int argc, char** argv)
                             tm = ti->second;
                         }
 
-                        // append the cluster to the end of the track. Note that this
-                        // is a copy operation. It's expensive, but it saves us from
-                        // having to keep track of open files and stuff.
-
                         boost::filesystem::path sf(cluster_list->source_file);
                         tm->sourcefiles.push_back(sf.filename().generic_string());
+                        
+                        // Instead of the original cluster, use a TrackCluster, which
+                        // has facilities of writing it's point list to disk and read
+                        // it back on demand, saving memory.
                         
                         TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster);
                         tm->clusters.push_back(tc);
                         
+                        // dispose of the points in the original cluster
+                        
+                        cluster->clear(true);
                     }
                     
                     delete cluster_list;
@@ -903,7 +906,8 @@ int main(int argc, char** argv)
                     if (csfi == cluster_sizes.end())
                     {
                         cluster_sizes[cluster_size] = 1;
-                    } else
+                    }
+                    else
                     {
                         cluster_sizes[cluster_size] = (csfi->second + 1);
                     }
@@ -947,7 +951,8 @@ int main(int argc, char** argv)
                         if (si == speeds.end())
                         {
                             speeds[speed] = 1;
-                        } else
+                        }
+                        else
                         {
                             speeds[speed] = (si->second + 1);
                         }
@@ -963,7 +968,6 @@ int main(int argc, char** argv)
                     // (which is BAD).
 
                     // TODO: find a more generic way to deal with this problem
-                    // (see #
 
                     RDCoordinateSystem *rcs = new RDCoordinateSystem(RD_RX);
 
@@ -985,7 +989,8 @@ int main(int argc, char** argv)
                         {
                             p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
                             p.y = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(1));
-                        } else
+                        }
+                        else
                         {
 #endif
                             // traditionally the coordinates in NetCDF files
@@ -1049,7 +1054,8 @@ int main(int argc, char** argv)
                         if (si == directions.end())
                         {
                             directions[direction] = 1;
-                        } else
+                        }
+                        else
                         {
                             directions[direction] = (si->second + 1);
                         }
@@ -1061,11 +1067,13 @@ int main(int argc, char** argv)
                 // Skip the rest if cumulative size statistics are off
 
                 if (!create_cumulated_size_statistics)
-                {
                     continue;
-                }
 
-                // Iterate over the points of the cluster
+                // Iterate over the points of the cluster and add points
+                // to the array index. If the point exists, add it's values
+                // to the existing one. If not, add a new point. In the end
+                // the index contains all points that all clusters in the
+                // track occupied at any time
 
                 Point<FS_TYPE>::list::iterator pi;
 
@@ -1094,27 +1102,36 @@ int main(int argc, char** argv)
                     points_processed++;
                 }
                 
-                // Free the cluster's memory again
+                // Purge points in memory
                 cluster->clear(true);
             }
 
-            // Extract the point list
+            // A track's size is the number of non-null points in
+            // the index
+            
+            size_t track_size = index.count();
+            
+#if WITH_VTK
+            if (write_cumulated_tracks_as_vtk)
+            {
+                Point<FS_TYPE>::list cumulatedList;
+                index.replace_points(cumulatedList);
+                string vtk_path = basename + "_cumulated_track_" + boost::lexical_cast<string>(tmi->first) + ".vtk";
+                VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>());
+            }
+#endif
+            // Delete the index to save memory
+            index.clear(true);
 
-            Point<FS_TYPE>::list cumulatedList;
-
-            index.replace_points(cumulatedList);
-
-            // Count the number of tracks with the given size, where
-            // size is the number of points in it's cumulative list
-
-            size_t track_size = cumulatedList.size();
-
+            // time to delete the map
+            
             map<size_t, size_t>::iterator tlfi = track_sizes.find(track_size);
 
             if (tlfi == track_sizes.end())
             {
                 track_sizes[track_size] = 1;
-            } else
+            }
+            else
             {
                 track_sizes[track_size] = (tlfi->second + 1);
             }
@@ -1127,20 +1144,9 @@ int main(int argc, char** argv)
 
             // Write out the cumulative file as netcdf and vtk
 
-            // VTK
-#if WITH_VTK
-            if (write_cumulated_tracks_as_vtk)
-            {
-                string vtk_path = basename + "_cumulated_track_" + boost::lexical_cast<string>(tmi->first) + ".vtk";
-
-                VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>());
-            }
-#endif
             // Don't need it anymore
-
+            
             delete track;
-
-            index.clear(true);
 
             // NETCDF
 
@@ -1341,7 +1347,6 @@ int main(int argc, char** argv)
 
         }
 
-
         //
         // Cluster sizes
         //
@@ -1455,7 +1460,6 @@ int main(int argc, char** argv)
                 write_histogram("cumulative-sizes-hist.txt", "number of tracks", "size [#gridpoints]", size_histogram_classes, size_histogram);
                 write_values<size_t>("cumulative-sizes.txt", "number of tracks", "size [#gridpoints]", track_sizes);
             }
-
         }
 
         // close the cluster file we used to get the coordinate

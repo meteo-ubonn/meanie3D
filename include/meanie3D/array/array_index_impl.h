@@ -202,7 +202,7 @@ namespace m3D {
         }
 
         points.clear();
-
+        
         vector<int> gp = vector<int>(m_dimensions.size(),0);
 
         // Add copies of points from this index
