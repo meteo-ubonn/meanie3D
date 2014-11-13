@@ -749,6 +749,7 @@ namespace m3D {
         cl->clusters  = list;
         cl->ncFile = file;
         cl->timestamp = timestamp;
+        cl->highest_id = highest_id;
 
         if (tracking_performed)
         {
