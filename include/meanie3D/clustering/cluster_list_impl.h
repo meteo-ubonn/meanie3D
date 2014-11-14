@@ -48,7 +48,7 @@ namespace m3D {
     typename Cluster<T>::ptr
     ClusterList<T>::operator[] (size_t index)
     {
-        return clusters[index];
+        return clusters.at(index);
     }
     
     template <typename T>
@@ -331,10 +331,12 @@ namespace m3D {
 
             for ( size_t ci = 0; ci < clusters.size(); ci++ )
             {
+                typename Cluster<T>::ptr cluster = clusters.at(ci);
+                
                 // NOTE: some problem exists with the normal id_t used
                 // everywhere else and NetCDF. Using unsigned long long
                 // produces a compiler warning but also correct results.
-                unsigned long long cid = (unsigned long long) clusters[ci]->id;
+                unsigned long long cid = (unsigned long long) cluster->id;
 
                 // Create a dimension
 
@@ -344,7 +346,7 @@ namespace m3D {
 
                 NcDim cluster_dim;
 
-                cluster_dim = file->addDim( dim_name.str(), clusters[ci]->size() );
+                cluster_dim = file->addDim( dim_name.str(), cluster->size() );
 
                 // Create variable
 
@@ -363,11 +365,11 @@ namespace m3D {
 
                 // size
 
-                var.putAtt( "size", ncInt, (int) clusters[ci]->size() );
+                var.putAtt( "size", ncInt, (int) cluster->size() );
 
                 // check if there's any merge
 
-                id_map_t::iterator mi = this->merges.find(clusters[ci]->id);
+                id_map_t::iterator mi = this->merges.find(cluster->id);
 
                 if (mi != this->merges.end())
                 {
@@ -382,7 +384,7 @@ namespace m3D {
                 {
                     id_set_t csplits = mi->second;
 
-                    if (csplits.find(clusters[ci]->id) != csplits.end())
+                    if (csplits.find(cluster->id) != csplits.end())
                     {
                         std::string split_from = boost::lexical_cast<string>(mi->first);
 
@@ -398,7 +400,7 @@ namespace m3D {
 
                 // mode
 
-                string mode = to_string( clusters[ci]->mode );
+                string mode = to_string( cluster->mode );
 
                 var.putAtt( "mode", mode );
 
@@ -415,9 +417,9 @@ namespace m3D {
                 // exit define mode
                 nc_enddef(file->getId());
 
-                for ( size_t pi = 0; pi < clusters[ci]->size(); pi++ )
+                for ( size_t pi = 0; pi < cluster->size(); pi++ )
                 {
-                    typename Point<T>::ptr p = clusters[ci]->at(pi);
+                    typename Point<T>::ptr p = cluster->at(pi);
 
                     double data[ dim.getSize() ];
 

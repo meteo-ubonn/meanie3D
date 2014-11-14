@@ -51,7 +51,7 @@ namespace m3D {
 
         ClusterOperation(FeatureSpace<T> *fs,
                          NetCDFDataStore<T> *data_store,
-                                         PointIndex<T> *index)
+                         PointIndex<T> *index)
         : Operation<T>( fs, index )
         , m_progress_bar(NULL)
         , m_data_store(data_store) {};

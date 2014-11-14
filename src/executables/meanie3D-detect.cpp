@@ -1081,7 +1081,7 @@ int main(int argc, char** argv) {
 
     PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
     ClusterOperation<FS_TYPE> cop(fs, data_store, index);
-    ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, show_progress);
+    ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, write_meanshift_vectors, show_progress);
 
     // Number the result sequentially to make it easier to follow
     // previous results in comparison
@@ -1120,6 +1120,7 @@ int main(int argc, char** argv) {
             ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
 
             cluster_filter.filter_with_previous_clusters(previous, &clusters, coord_system, weight_function, verbosity);
+            
         } catch (const std::exception &e) {
             cerr << "ERROR reading previous cluster file: " << e.what() << endl;
             exit(-1);

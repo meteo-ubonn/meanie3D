@@ -205,6 +205,40 @@ namespace m3D {
             delete progress;
         }
     }
+    
+    template <typename T>
+    void 
+    ClusterUtils<T>::replace_points_from_datastore(ClusterList<T> &list,
+                                              typename DataStore<T>::ptr dataStore)
+    {
+//        #if WITH_OPENMP
+//        #pragma omp parallel for
+//        #endif
+        for (size_t ci = 0; ci < list.size(); ci++)
+        {
+            typename Cluster<T>::ptr c = list[ci];
+            
+            typename Point<T>::list::iterator pi;
+            
+            for (pi=c->get_points().begin(); pi!=c->get_points().end(); ++pi)
+            {
+                typename Point<T>::ptr p = *pi;
+                
+                for (int vi=0; vi<dataStore->rank(); vi++)
+                {
+                    bool isValid; 
+                    
+                    T value = dataStore->get(vi,p->gridpoint,isValid);
+                    
+//                    #if WITH_OPENMP
+//                    #pragma omp critical
+//                    #endif
+                    p->values[c->spatial_rank()+vi] = value;
+                }
+            }
+        }
+    }
+    
 }
 
 #endif

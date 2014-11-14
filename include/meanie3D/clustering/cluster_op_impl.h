@@ -203,7 +203,11 @@ namespace m3D {
         // Analyse the graph and create clusters
 
         cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,coalesceWithStrongestNeighbour,show_progress_bar);
+        
+        // Replace points with original data
 
+        ClusterUtils<T>::replace_points_from_datastore(cluster_list,m_data_store);
+        
         #if WRITE_BOUNDARIES
             cluster_list.write_boundaries( weight_function, this->feature_space, this->point_index, resolution );
         #endif
@@ -227,6 +231,7 @@ namespace m3D {
             VisitUtils<T>::write_cluster_modes_vtk( fn, cluster_list.clusters );
         #endif
         #endif
+
         return cluster_list;
     }
 }

@@ -20,8 +20,13 @@ namespace m3D {
     template <typename T>
     class DataStore
     {
-
+        
     public:
+        
+#pragma mark -
+#pragma mark Typedefs
+        
+        typedef DataStore<T> * ptr;
 
 #pragma mark -
 #pragma mark for_each functor

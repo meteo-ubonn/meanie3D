@@ -33,6 +33,22 @@ namespace m3D {
                                           CoordinateSystem<T> *coord_system,
                                           WeightFunction<T> *weight_function,
                                           const Verbosity verbosity = VerbosityNormal);
+            
+            /** Iterates over all clusters in the list and replaces the 
+             * points in each cluster with the value from the data store. 
+             * The method assumes, that the variables from the data store 
+             * are in the same order as the variables in the feature 
+             * space's value range. This should not be a problem if you 
+             * use the data store that the feature space was constructed 
+             * from. 
+             * 
+             * @param list
+             * @param dataStore
+             */
+            static 
+            void 
+            replace_points_from_datastore(ClusterList<T> &list,
+                                          typename DataStore<T>::ptr dataStore);
     };
 }
     
