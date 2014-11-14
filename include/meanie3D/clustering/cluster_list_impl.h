@@ -259,6 +259,7 @@ namespace m3D {
                 {
                     nc_redef(file->getId());
                     dummyVar = file->addVar( var.getName(), var.getType(), *dim);
+                    dummyVar.setCompression(false,true,3);
                     nc_enddef(file->getId());
 
                     //cout << "\tadded variable " << dummyVar.getName() << " (status=" << dummyVar.isNull() << ")" << endl;
@@ -280,6 +281,7 @@ namespace m3D {
                 {
                     nc_redef(file->getId());
                     dummyVar = file->addVar( var.getName(), var.getType(), dimensions );
+                    dummyVar.setCompression(false,true,3);
                     nc_enddef(file->getId());
                 }
 
@@ -357,6 +359,7 @@ namespace m3D {
                 NcVar var;
 
                 var = file->addVar( var_name.str(), ncDouble, dims );
+                var.setCompression(false,true,3);
 
                 // size
 
