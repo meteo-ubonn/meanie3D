@@ -276,7 +276,7 @@ namespace m3D {
                     // as the dimension variables!
 
                     coverOldByNew[n][m] = new_index.occupation_ratio(oldCluster,newCluster);
-                    coverOldByNew[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
+                    coverNewByOld[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
 
                     if (m_useOverlapConstraint)
                     {
