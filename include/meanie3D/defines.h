@@ -90,7 +90,7 @@
 // all points. 1 means, that the point was marked
 // as 'off limits' in the original feature-space
 // (one of the variables outside of valid_range).
-#define WRITE_OFF_LIMITS_MASK 1
+#define WRITE_OFF_LIMITS_MASK 0
 
 // Write out the center of the cluster in a single
 // file per cluster

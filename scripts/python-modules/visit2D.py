@@ -577,8 +577,6 @@ def visualization(conf):
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
         
-        exit()
-
         # clean up
         DeleteAllPlots();
         ClearWindow()
