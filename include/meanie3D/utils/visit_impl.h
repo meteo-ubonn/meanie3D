@@ -2184,13 +2184,13 @@ namespace m3D { namespace utils {
     VisitUtils<T>::write_multiarray_vtk(const std::string &filename,
                                         const std::string &variable_name,
                                         const CoordinateSystem<T> *cs,
-                                        MultiArray<bool> *array)
+                                        const MultiArray<bool> *array)
     {
         class Functor : public MultiArray<bool>::ForEachFunctor
         {
-            std::ofstream   &m_stream;
-            const CoordinateSystem<T>  *m_coord_system;
-            bool            m_write_coords;
+            std::ofstream                &m_stream;
+            const CoordinateSystem<T>    *m_coord_system;
+            bool                         m_write_coords;
 
         public:
 

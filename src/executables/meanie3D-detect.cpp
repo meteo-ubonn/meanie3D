@@ -671,7 +671,7 @@ int main(int argc, char** argv) {
     std::string *ci_comparison_file = NULL;
     std::string *ci_comparison_protocluster_file = NULL;
     bool ci_satellite_only = false;
-    bool include_weight_in_result = true;
+    bool include_weight_in_result = false;
     FS_TYPE cluster_coverage_threshold = 0.66;
     int convection_filter_index = -1;
     bool coalesceWithStrongestNeighbour = false;
@@ -911,9 +911,9 @@ int main(int argc, char** argv) {
 
     search_params = new RangeSearchParams<FS_TYPE>(ranges);
 
-
 #if WRITE_OFF_LIMITS_MASK
-    fs->off_limits()->write("off_limits.vtk", "off_limits");
+    std::string ol_fname = path.filename().stem().string() + "-off_limits.vtk";
+    VisitUtils<FS_TYPE>::write_multiarray_vtk(ol_fname,"off_limits",coord_system,fs->off_limits());
 #endif
 
     // Convection Filter?
@@ -1176,7 +1176,8 @@ int main(int argc, char** argv) {
 
     clusters.write(output_filename);
 
-    if (include_weight_in_result) {
+    if (include_weight_in_result) 
+    {
         cout << "NOT IMPLEMENTED" << endl;
         // cout << "Writing weight function to result file ... ";
         // cout << "done." << endl;

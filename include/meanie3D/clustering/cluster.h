@@ -25,10 +25,12 @@ namespace m3D {
     {
 
     private:
-        
-        typename Point<T>::list     m_points;
 
         typedef map< size_t, typename Histogram<T>::ptr > histogram_map_t;
+        
+        typename Point<T>::list     m_points;
+        
+        bool                        m_has_margin_points;
 
         histogram_map_t             m_histograms;
 
@@ -42,17 +44,14 @@ namespace m3D {
 
     protected:
         
-        size_t                      m_rank;                // dimension of the points
+        size_t                      m_rank;
+        size_t                      m_spatial_rank;
 
-        size_t                      m_spatial_rank;        // number of spatial dimensions (always first)
-
-        // Dynamic Range
-
-    public:
-
-        bool                        m_weight_range_calculated;     // Is the dynamic range calculated and up-to-date?
+        bool                        m_weight_range_calculated;
         T                           m_min_weight;
         T                           m_max_weight;
+
+    public:
 
 #pragma mark -
 #pragma mark Type definitions / Constants
@@ -176,7 +175,6 @@ namespace m3D {
          * otherwise. 
          */
         bool empty() const;
-
         
         /** Returns the point at the given index.
          * 
@@ -198,6 +196,20 @@ namespace m3D {
          * freed from memory. Defaults to <code>false</code> 
          */
         virtual void clear(bool deletion_flag =false);
+
+        /** If true, the cluster has points neighboring points marked
+         * as 'off limits'. This means that it's likely that the cluster
+         * is only partially visible. This information is important when
+         * considering velocity calculations etc.
+         * 
+         * @return 
+         */        
+        bool has_margin_points() const;
+        
+        /** Set the margin flag
+         * @param value
+         */
+        void set_has_margin_points(bool value);
 
 #pragma mark -
 #pragma mark Operators

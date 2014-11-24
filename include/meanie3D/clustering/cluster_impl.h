@@ -205,6 +205,18 @@ namespace m3D {
         }
         m_points.clear();
     }
+    
+    template <typename T>
+    bool Cluster<T>::has_margin_points() const
+    {
+        return m_has_margin_points;
+    }
+        
+    template <typename T>
+    void Cluster<T>::set_has_margin_points(bool value)
+    {
+        m_has_margin_points = value;
+    }
 
 #pragma mark -
 #pragma mark Derived properties

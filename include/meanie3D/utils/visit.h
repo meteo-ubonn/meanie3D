@@ -221,7 +221,7 @@ namespace m3D {
         write_multiarray_vtk(const std::string &filename,
                              const std::string &variable_name,
                              const CoordinateSystem<T> *cs,
-                             MultiArray<bool> *array);
+                             const MultiArray<bool> *array);
 
         /**
          */

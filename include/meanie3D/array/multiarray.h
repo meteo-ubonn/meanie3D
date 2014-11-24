@@ -147,23 +147,12 @@ namespace m3D {
         size_t count_value(const T &value) = 0;
         
 #pragma mark -
-#pragma mark I want variants ...
-
-        /**
-         * @param fileName
-         * @param variableName
-         * TODO: implement generically using for_each 
-         */
-        virtual
-        void write(const std::string &fileName,const std::string &variableName) const = 0;
-        
-#pragma mark -
 #pragma mark For each
 
         /** Iterates over each point in the array and calls the given function.
          * @param function to call
          */
-        void for_each(ForEachFunctor *f)
+        void for_each(ForEachFunctor *f) const
         {
             vector<int> index(this->get_dimensions().size(),0);
             this->for_each_recursive(f, 0, index);
@@ -171,7 +160,7 @@ namespace m3D {
 
     private:
 
-        void for_each_recursive(ForEachFunctor *f, size_t dim_index, vector<int> &index)
+        void for_each_recursive(ForEachFunctor *f, size_t dim_index, vector<int> &index) const
         {
             size_t dimSize = this->get_dimensions()[dim_index];
 

@@ -43,22 +43,6 @@ namespace m3D {
 
         ClusterMap      m_cluster_map;
 
-
-        /** Recursive helper method fort find_neighbours
-         *
-         */
-        void
-        find_neighbours(typename CoordinateSystem<T>::GridPoint &gridpoint,
-                        size_t dim_index,
-                        ArrayIndex<T> &index,
-                        typename Point<T>::list &list,
-                        size_t reach);
-
-        typename Point<T>::list
-        find_neighbours(const typename CoordinateSystem<T>::GridPoint &gridpoint,
-                        ArrayIndex<T> &index,
-                        size_t reach=1);
-
         /** Estimate the tendency of the weight function at the given
          * grid point with respect to it's direct (9/16) neighbours.
          * @param point

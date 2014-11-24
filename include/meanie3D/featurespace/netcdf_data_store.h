@@ -866,18 +866,18 @@ namespace m3D {
 
                 if (m_fill_value[variable_index] != NO_VALUE)
                 {
-                    is_valid = (value != m_fill_value[variable_index])
-                                && (value >= m_valid_min[variable_index])
-                                && (value <= m_valid_max[variable_index]);
+                    is_valid = (value != m_fill_value[variable_index]);
                 }
                 else
                 {
-                    is_valid = (value >= m_valid_min[variable_index]) && (value <= m_valid_max[variable_index]);
+                    is_valid = (value >= m_valid_min[variable_index]) 
+                            && (value <= m_valid_max[variable_index]);
                 }
 
                 // scale first, then offset
 
-                 unpacked_value = m_scale_factor[variable_index] * value + m_offset[variable_index];
+                 unpacked_value = m_scale_factor[variable_index] 
+                         * value + m_offset[variable_index];
             }            
 
             return unpacked_value;

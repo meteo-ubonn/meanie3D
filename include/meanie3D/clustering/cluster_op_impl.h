@@ -146,6 +146,8 @@ namespace m3D {
         // perform one search operation on the index
         // in order to pre-empt the index building
 
+        this->feature_space->sanity_check();
+
         typename Point<T>::ptr x = this->feature_space->points[0];
         typename Point<T>::list *list = this->point_index->search(x->values, params);
         delete list;
@@ -203,10 +205,17 @@ namespace m3D {
         // Analyse the graph and create clusters
 
         cluster_list.aggregate_cluster_graph(this->feature_space,weight_function,coalesceWithStrongestNeighbour,show_progress_bar);
+        this->feature_space->sanity_check();
         
-        // Replace points with original data
+        // Replace points with original data ()
 
         ClusterUtils<T>::replace_points_from_datastore(cluster_list,m_data_store);
+        this->feature_space->sanity_check();
+        
+        // Find margin points (#325)
+        
+        
+        ClusterUtils<T>::obtain_margin_flag(cluster_list,this->feature_space);
         
         #if WRITE_BOUNDARIES
             cluster_list.write_boundaries( weight_function, this->feature_space, this->point_index, resolution );

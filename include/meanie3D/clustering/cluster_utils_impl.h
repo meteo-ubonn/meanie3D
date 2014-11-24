@@ -239,6 +239,52 @@ namespace m3D {
         }
     }
     
+    template <typename T>
+    void 
+    ClusterUtils<T>::obtain_margin_flag(ClusterList<T> &list, 
+                                        typename FeatureSpace<T>::ptr fs)
+    {
+        // Create an array index of the points in the featurespace
+        
+        vector<size_t> dims = fs->coordinate_system->get_dimension_sizes();
+        
+        ArrayIndex<T> index(dims, fs->points, false);
+        
+        typename Cluster<T>::list::iterator ci;
+        
+        for (ci = list.clusters.begin(); ci != list.clusters.end(); ++ci)
+        {
+            typename Cluster<T>::ptr c = *ci;
+            
+            typename Point<T>::list::iterator pi;
+            
+            for (pi = c->get_points().begin(); pi != c->get_points().end() && !c->has_margin_points(); ++pi)
+            {
+                typename Point<T>::ptr p = *pi;
+                
+                if (!p->isOriginalPoint) continue;
+                
+                typename Point<T>::list neighbors;                
+                neighbors = index.find_neighbours(p->gridpoint,1);
+                
+                typename Point<T>::list::iterator ni;
+            
+                for (ni = neighbors.begin(); ni != neighbors.end(); ++ni)
+                {
+                    typename Point<T>::ptr n = *ni;
+                    
+                    if (fs->off_limits()->get(n->gridpoint))
+                    {
+                        c->set_has_margin_points(true);
+                        break;
+                    }
+                }
+            }
+        }
+        
+    }
+        
+    
 }
 
 #endif

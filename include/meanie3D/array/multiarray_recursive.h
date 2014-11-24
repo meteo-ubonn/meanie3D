@@ -16,7 +16,7 @@ namespace m3D {
     using namespace std;
 
     template <typename T>
-    class MultiArrayRecursive : MultiArray<T>
+    class MultiArrayRecursive : public MultiArray<T>
     {
 
     protected:
@@ -198,60 +198,6 @@ namespace m3D {
             }
         }
 
-        void write_recursive(ofstream &f, size_t dim_index,
-                             vector<int> &gridpoint,
-                             bool coordinates) const
-        {
-            size_t dimSize = this->m_dims[dim_index];
-
-            if (dim_index < (this->m_dims.size()-1) )
-            {
-                for ( size_t index = 0; index < dimSize; index++ )
-                {
-                    gridpoint[dim_index] = index;
-
-                    write_recursive(f,dim_index+1,gridpoint,coordinates);
-                }
-            }
-            else
-            {
-                vector<int> gIter = gridpoint;
-
-                for (size_t i=0; i<dimSize; i++)
-                {
-                    gIter[dim_index] = i;
-
-                    if (coordinates)
-                    {
-                        throw "not implemented";
-//                        typename CoordinateSystem<CSType>::Coordinate c;
-//                        c = m_coordinate_system->newCoordinate();
-//                        m_coordinate_system->lookup(gIter,c);
-//                        
-//                        for ( size_t ri=0; ri < c.size(); ri++ )
-//                        {
-//                            size_t index = VisitUtils<CSType>::index_of(ri);
-//                            
-//                            f << c.at(index) << "\t";
-//                        }
-//                        
-//                        if ( c.size() < 3 )
-//                        {
-//                            f << "0.0";
-//                        }
-                    }
-                    else
-                    {
-                        T value = this->get(gIter);
-
-                        f << value;
-                    }
-
-                    f << endl;
-                }
-            }
-        };
-
         void count_recursive(T value,
                              size_t &count,
                              size_t dim_index,
@@ -389,38 +335,6 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Stuff
-
-        void write(const std::string &fileName,
-                   const std::string &variableName) const
-        {
-            ofstream f(fileName.c_str());
-            f << fixed << setprecision(4);
-
-            size_t numPoints = 1;
-            for (size_t i=0; i < this->m_dims.size(); i++)
-            {
-                numPoints *= this->m_dims[i];
-            }
-
-            // Write Header
-            f << "# vtk DataFile Version 3.0" << endl;
-            f << variableName << endl;
-            f << "ASCII" << endl;
-            f << "DATASET UNSTRUCTURED_GRID" << endl;
-            f << "POINTS " << numPoints << " FLOAT" << endl;
-
-            vector<int> gp(this->m_dims.size(),0);
-            this->write_recursive(f,0,gp,true);
-
-            f << endl;
-            f << "POINT_DATA " << numPoints << endl;
-            f << "SCALARS " << variableName << " FLOAT" << endl;
-            f << "LOOKUP_TABLE default" << endl;
-
-            this->write_recursive(f,0,gp,false);
-
-            f.close();
-        }
 
         size_t
         count_value(const T &value)

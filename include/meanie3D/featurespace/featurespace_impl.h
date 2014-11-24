@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <exception>
 
 #include <boost/filesystem.hpp>
 
@@ -220,9 +221,22 @@ namespace m3D {
                 // is this contribution valid?
 
                 T value = data_store()->get(var_index, gridpoint, isPointValid);
+    
+                if (!isPointValid)
+                {
+                    // Reading routine marked this point 'off limits'
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
+                    this->m_off_limits->set(gridpoint,true);
+                }
                 
 #if DEBUG_FEATURESPACE
-                cout << "#" << var_index << "@" << gridpoint << " ("<<coordinate<<") : " << value << " valid=" << isPointValid << endl;
+                cout << "#" << var_index << "@" 
+                        << gridpoint 
+                        << " ("<<coordinate<<") : " 
+                        << value << " valid=" 
+                        << isPointValid << endl;
 #endif
 
                 if ( isPointValid )
@@ -270,15 +284,6 @@ namespace m3D {
                     value = replacement->second;
                     isPointValid = true;
                 }
-                else
-                {
-                    // Reading routine marked this point 'off limits'
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
-                    this->m_off_limits->set(gridpoint,true);
-                }
-
             }
 
             // if the point is still valid (all variables measured up to criteria)
@@ -417,6 +422,31 @@ namespace m3D {
         }
         return originalPoints;
     }
+    
+    template <typename T>
+    void 
+    FeatureSpace<T>::sanity_check()
+    {
+        size_t originalPoints = 0;
+        for (size_t i=0; i < this->points.size(); i++)
+        {
+            typename Point<T>::ptr p = this->points[i];
+
+            if (p->gridpoint.size() != this->spatial_rank()
+                || p->coordinate.size() != this->spatial_rank()
+                || p->values.size() != this->rank())
+            {
+                cerr << "Point #" << i << " is insane:" 
+                     << " gridpoint.size()=" << p->gridpoint.size()
+                     << " coordinate.size()=" << p->coordinate.size()   
+                     << " values.size()=" << p->values.size()
+                     << endl;
+                
+                throw std::range_error("insane point");
+            }
+        }        
+    }
+
 }
 
 #endif

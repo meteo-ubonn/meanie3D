@@ -366,6 +366,11 @@ namespace m3D {
                 // size
 
                 var.putAtt( "size", ncInt, (int) cluster->size() );
+                
+                // margin flag
+                
+                std::string flag = cluster->has_margin_points() ? "Y" : "N";
+                var.putAtt( "has_margin_points", flag); 
 
                 // check if there's any merge
 
@@ -661,23 +666,25 @@ namespace m3D {
 
                 NcVar var = file->getVar( var_name.str().c_str() );
 
-                // Decode mode
-
-                typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
-                boost::char_separator<char> sep(",");
-
+                // mode
+                
                 std::string mode_str;
-
                 var.getAtt("mode").getValues(mode_str);
-
                 vector<T> mode = vectors::from_string<T>(mode_str);
+                
+                // margin flag
+                
+                std::string margin_char;
+                var.getAtt("has_margin_points").getValues(margin_char);
+                bool margin_flag = margin_char == "Y";
 
                 // Create a cluster object
 
                 typename Cluster<T>::ptr cluster = new Cluster<T>( mode, dimensions.size() );
 
                 cluster->id = cid;
+                cluster->mode = mode;
+                cluster->set_has_margin_points(margin_flag);
 
                 // iterate over the data
 
@@ -814,73 +821,6 @@ namespace m3D {
     }
 
     template <typename T>
-    void
-    ClusterList<T>::find_neighbours(typename CoordinateSystem<T>::GridPoint &gridpoint,
-                                    size_t dimensionIndex,
-                                    ArrayIndex<T> &arrayIndex,
-                                    typename Point<T>::list &list,
-                                    size_t reach)
-    {
-        size_t dimSize = arrayIndex.dimensions()[dimensionIndex];
-
-        // iterate over dimensions
-
-        int start = gridpoint[dimensionIndex] - reach;
-
-        int end = gridpoint[dimensionIndex] + reach;
-
-        for ( int index = start; index <= end; index++ )
-        {
-            gridpoint[dimensionIndex] = index;
-
-            // guard against index error
-
-            if (index < 0 || index > (dimSize-1))
-            {
-                continue;
-            }
-
-            if ( dimensionIndex < (gridpoint.size()-1) )
-            {
-                // recurse
-                find_neighbours(gridpoint,dimensionIndex+1,arrayIndex,list,reach);
-            }
-            else
-            {
-                // collect
-
-                //std::cout << gridpoint << endl;
-
-                typename Point<T>::ptr p = arrayIndex.get(gridpoint);
-
-                if (p != NULL)
-                {
-                    list.push_back(p);
-                }
-            }
-        }
-
-        gridpoint[dimensionIndex] = start+reach;
-    }
-
-    template <typename T>
-    typename Point<T>::list
-    ClusterList<T>::find_neighbours(const typename CoordinateSystem<T>::GridPoint &gridpoint,
-                                    ArrayIndex<T> &index,
-                                    size_t reach)
-    {
-        typename Point<T>::list neighbours;
-
-        typename CoordinateSystem<T>::GridPoint gp = gridpoint;
-
-        //cout << "finding neighbours of " << gridpoint << " :" << endl;
-
-        this->find_neighbours(gp,0,index,neighbours,reach);
-
-        return neighbours;
-    }
-
-    template <typename T>
     T
     ClusterList<T>::weight_function_tendency(typename Point<T>::ptr p,
                                              const WeightFunction<T> *weight_function,
@@ -992,7 +932,7 @@ namespace m3D {
 
             Point<T> *current_point = *pi;
 
-            typename Point<T>::list neighbours = find_neighbours(current_point->gridpoint,index);
+            typename Point<T>::list neighbours = index.find_neighbours(current_point->gridpoint);
 
 //            // only consider points with negative or inconclusive weight
 //            // function tendency (aka uphill)
@@ -1418,7 +1358,7 @@ namespace m3D {
 
                     // Find the neighbour with the strongest response
 
-                    typename Point<T>::list neighbours = find_neighbours(p->gridpoint,index);
+                    typename Point<T>::list neighbours = index.find_neighbours(p->gridpoint);
 
                     for (size_t ni = 0; ni < neighbours.size(); ni++)
                     {
@@ -1487,7 +1427,7 @@ namespace m3D {
             start_timer();
             progress = new boost::progress_display( clusters.size() );
         }
-
+        
         size_t running_id = 0;
 
         for (typename Cluster<T>::list::iterator clit = clusters.begin(); clit != clusters.end();)
@@ -1520,10 +1460,6 @@ namespace m3D {
                 {
                     keepers.push_back(p);
                     mode += p->values;
-                }
-                else
-                {
-                    delete p;
                 }
             }
 

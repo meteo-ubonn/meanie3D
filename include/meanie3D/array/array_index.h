@@ -79,6 +79,12 @@ namespace m3D {
                         array_t *array,
                         vector<int> &gridpoint,
                         bool delete_points);
+        
+        void
+        find_neighbours_recursive(vector<int> &gridpoint,
+                                  size_t dim_index,
+                                  typename Point<T>::list &list,
+                                  size_t reach);
 
 #pragma mark -
 #pragma mark Constructors/Destructors
@@ -176,6 +182,14 @@ namespace m3D {
          * entries in the index.
          */
         size_t count(bool originalPointsOnly=false);
+        
+        /** Find the points in the neighborhood of the given gridpoint.
+         * @param grid point
+         * @param neighborhood size (in #grid points)
+         * @return list of pointers to points (no copies)
+         */
+        typename Point<T>::list
+        find_neighbours(const vector<int> &gridpoint, size_t reach=1);
 
     };
 }

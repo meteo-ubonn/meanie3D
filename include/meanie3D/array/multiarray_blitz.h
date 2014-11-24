@@ -215,12 +215,6 @@ for(int i1=0;i1<dim[0];i1++){ \
          */
         ~MultiArrayBlitz() {};
 
-        void write(const std::string &fileName,
-                const std::string &variableName) const 
-        {
-            throw "not_implemented";
-        }
-
 #pragma mark -
 #pragma mark Accessors
 

@@ -773,6 +773,7 @@ int main(int argc, char** argv)
                     dict << "          \"min\":" << to_json(min) << "," << endl;
                     dict << "          \"max\":" << to_json(max) << "," << endl;
                     dict << "          \"median\":" << to_json(median) << endl;
+                    dict << "          \"has_margin_points\":" << (c->has_margin_points() ? "Y" : "N") << endl;
                     dict << "        }";
 
                     // min/max

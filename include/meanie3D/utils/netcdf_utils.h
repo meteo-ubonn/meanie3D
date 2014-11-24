@@ -778,6 +778,78 @@ namespace m3D { namespace utils { namespace netcdf {
         return variables;
     }
 
+    /** Create an NcFile copying dimensions and dimension variables
+     * from the given file. Note: at this time only supports simple
+     * dimension variables, aka x(x) etc.
+     * 
+     * @param fn
+     * @return 
+     */
+    template <typename T>
+    NcFile* 
+    create_file_by_copying_dimensions(const std::string &source_path, 
+                                      const std::string &dest_path,
+                                      const std::vector<std::string> &dimensionNames)
+    {
+        NcFile *source = NULL;
+        
+        // open the original
+        
+        try
+        {
+            source = new NcFile(source_path.c_str(), NcFile::read);
+        }
+        catch (const netCDF::exceptions::NcException &e)
+        {
+            cerr << "Exception opening file " << source_path << " for reading : " << e.what() << endl;
+            exit(EXIT_FAILURE);
+        }
+        
+        // get source file dimensions, using coordinate system
+        CoordinateSystem<T> *source_cs = new CoordinateSystem<T>(source,dimensionNames);
+        
+        // open the copy
+
+        NcFile *dest = NULL;
+
+        try
+        {
+            dest = new NcFile(dest_path,NcFile::write);
+        }
+        catch (const netCDF::exceptions::NcException &e)
+        {
+            cerr << "Exception opening file " << dest_path << " for writing : " << e.what() << endl;
+            exit(EXIT_FAILURE);
+        }
+        
+        // copy dimensions and dimension data
+
+        for (size_t di=0; di < source_cs->rank(); di++)
+        {
+            // dimension
+            
+            NcDim d = source_cs->dimensions()[di];
+            NcDim dest_dim = dest->addDim(d.getName(), d.getSize());
+
+            // dimension variable
+
+            NcVar v = source_cs->dimension_variables()[di];
+            NcVar source_var = dest->addVar(v.getName(),v.getType(),dest_dim);
+            
+            // copy dimension data
+            
+            T* data = source_cs->get_dimension_data_ptr(di);
+            source_var.putVar(data);
+        }
+        
+        // close source file
+        
+        delete source;
+        delete source_cs;
+        
+        return dest;
+    }
+
 }}}
 
 #endif

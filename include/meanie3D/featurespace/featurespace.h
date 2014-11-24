@@ -42,12 +42,15 @@ namespace m3D {
 #pragma mark -
 #pragma mark General Typedefs
 
+        typedef FeatureSpace<T> * ptr;
         typedef map< typename CoordinateSystem<T>::Coordinate, bool> ValidityMap;
         typedef map< typename CoordinateSystem<T>::Coordinate, typename Point<T>::ptr > FeatureSpaceMap;
         typedef typename FeatureSpaceMap::iterator FSMapIterator;
         typedef vector< vector<T> > Trajectory;
         typedef typename Trajectory::iterator TrajectoryIterator;
         typedef MultiArray<T> multi_array_t;
+        
+        
 
 #pragma mark -
 #pragma mark Private
@@ -347,6 +350,12 @@ namespace m3D {
          */
         size_t
         count_original_points() const;
+        
+        /** Debug tool. Checks if any of the points are out of the 
+         * ordinary. Throws an exception if so.
+         */
+        void 
+        sanity_check();
 
     };
 }

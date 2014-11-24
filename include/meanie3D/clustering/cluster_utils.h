@@ -49,6 +49,19 @@ namespace m3D {
             void 
             replace_points_from_datastore(ClusterList<T> &list,
                                           typename DataStore<T>::ptr dataStore);
+
+            /** Iterates over the clusters in the list and checks on each 
+             * cluster's points. If a point borders the area marked as
+             * off limits in the feature space, the cluster's margin flag
+             * is set. 
+             * 
+             * @param list
+             * @param fs
+             */
+            static
+            void obtain_margin_flag(ClusterList<T> &list, 
+                                    typename FeatureSpace<T>::ptr fs);
+            
     };
 }
     

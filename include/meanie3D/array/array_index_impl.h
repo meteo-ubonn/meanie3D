@@ -425,6 +425,7 @@ namespace m3D {
                 }
                 else
                 {
+                    cerr << "ERROR:index parameter out of range: " << gp << endl;
                     throw std::invalid_argument("index parameter out of range");
                 }
             }
@@ -568,6 +569,70 @@ namespace m3D {
 
         return count;
     }
+    
+    template <typename T>
+    void
+    ArrayIndex<T>::find_neighbours_recursive(vector<int> &gridpoint,
+                                   size_t dimensionIndex,
+                                   typename Point<T>::list &list,
+                                   size_t reach)
+    {
+        size_t dimSize = this->dimensions()[dimensionIndex];
+
+        // iterate over dimensions
+
+        int start = gridpoint[dimensionIndex] - reach;
+
+        int end = gridpoint[dimensionIndex] + reach;
+
+        for ( int index = start; index <= end; index++ )
+        {
+            gridpoint[dimensionIndex] = index;
+
+            // guard against index error
+
+            if (index < 0 || index > (dimSize-1))
+            {
+                continue;
+            }
+
+            if ( dimensionIndex < (gridpoint.size()-1) )
+            {
+                // recurse
+                find_neighbours_recursive(gridpoint,dimensionIndex+1,list,reach);
+            }
+            else
+            {
+                // collect
+
+                //std::cout << gridpoint << endl;
+
+                typename Point<T>::ptr p = this->get(gridpoint);
+
+                if (p != NULL)
+                {
+                    list.push_back(p);
+                }
+            }
+        }
+
+        gridpoint[dimensionIndex] = start+reach;
+    }
+
+    template <typename T>
+    typename Point<T>::list
+    ArrayIndex<T>::find_neighbours(const vector<int> &gridpoint, size_t reach)
+    {
+        typename Point<T>::list neighbours;
+
+        typename CoordinateSystem<T>::GridPoint gp = gridpoint;
+
+        this->find_neighbours_recursive(gp,0,neighbours,reach);
+
+        return neighbours;
+    }
+
+    
 }
 
 #endif
