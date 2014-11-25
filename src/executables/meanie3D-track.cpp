@@ -49,6 +49,9 @@ void parse_commmandline(program_options::variables_map vm,
         FS_TYPE &correlation_weight,
         ::units::values::meters_per_second &max_speed,
         ::units::values::s &max_time,
+        bool &continueIDs,
+        FS_TYPE &mergeSplitThreshold,
+        FS_TYPE &mergeSplitContinuationThreshold,
         vector<size_t> &vtk_dimension_indexes,
         Verbosity &verbosity) {
     // Version
@@ -111,6 +114,18 @@ void parse_commmandline(program_options::variables_map vm,
     FS_TYPE time = vm["max-time"].as<FS_TYPE>();
 
     max_time = ::units::values::s(time);
+    
+    // continue ID?
+    
+    continueIDs = vm["continue-id"].as<bool>();
+    
+    // merge/split continuation threshold
+    
+    mergeSplitContinuationThreshold = vm["merge-split-continuation-threshold"].as<FS_TYPE>();
+    
+    // merge/split threshold
+    
+    mergeSplitThreshold = vm["merge-split-threshold"].as<FS_TYPE>();
     
     // Weights
     
@@ -205,6 +220,9 @@ int main(int argc, char** argv) {
             ("wr", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for range correlation [0..1]")
             ("ws", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for size correlation [0..1]")
             ("wt", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for histogram rank correlation [0..1]")
+            ("merge-split-threshold",program_options::value<FS_TYPE>()->default_value(1.0/3.0),"Percentage of area covered between previous/new clusters for split/merge calculation")
+            ("merge-split-continuation-threshold",program_options::value<FS_TYPE>()->default_value(0.75),"Minimum percentage of area covered between previous/new clusters to continue ID")
+            ("continue-id",program_options::value<bool>()->default_value(true),"Continue the ID when merging and splitting?")
             ("max-speed", program_options::value<FS_TYPE>()->default_value(50.0), "Maximum allowed object speed (m/s)")
             ("max-time", program_options::value<FS_TYPE>()->default_value(915.0), "Maximum allowed time difference between files (seconds)")
 #if WITH_VTK
@@ -240,6 +258,10 @@ int main(int argc, char** argv) {
     FS_TYPE range_weight, size_weight, correlation_weight;
     ::units::values::meters_per_second max_speed;
     ::units::values::s max_time;
+    
+    bool continueIDs = true;
+    FS_TYPE mergeSplitThreshold = 0.66;
+    FS_TYPE mergeSplitContinuationThreshold = 0.66;
 
     try {
         parse_commmandline(vm,
@@ -252,6 +274,9 @@ int main(int argc, char** argv) {
                 correlation_weight,
                 max_speed,
                 max_time,
+                continueIDs,
+                mergeSplitThreshold,
+                mergeSplitContinuationThreshold,
                 vtk_dimension_indexes,
                 verbosity);
     }    
@@ -280,6 +305,10 @@ int main(int argc, char** argv) {
         cout << "\tcorrelation weights: wr=" << range_weight << " ws=" << size_weight << " wt=" << correlation_weight << endl;
         cout << "\tmaximum speed: " << max_speed << " [m/s]" << endl;
         cout << "\tmaximum time difference: " << max_time << " [seconds]" << endl;
+        cout << "\tmerge/split threshold: " << mergeSplitThreshold << endl;
+        cout << "\tcontinue id in merge/split: " << (continueIDs?"yes":"no") << endl;
+        cout << "\tmerge/split id continuation threshold: " << mergeSplitContinuationThreshold << endl;
+        
 #if WITH_VTK
         cout << "\twriting results out as vtk:" << (write_vtk ? "yes" : "no") << endl;
 #endif
@@ -349,6 +378,10 @@ int main(int argc, char** argv) {
     tracking.setMaxTrackingSpeed(max_speed);
     
     tracking.set_max_deltaT(max_time);
+    
+    tracking.setMergeSplitThreshold(mergeSplitThreshold);
+    
+    tracking.setMergeSplitContinuationThreshold(mergeSplitContinuationThreshold);
 
     tracking.track(previous, current, cs, &tracking_variable_name, verbosity);
 

@@ -638,7 +638,7 @@ namespace m3D {
 
                     if ( it == current->new_ids.end() )
                     {
-                        if ( maxCover > this->m_msc_threshold )
+                        if ( maxCover > this->m_msc_threshold && m_continueIDs)
                         {
                             // if the biggest congruence is at least 75%, continue the track
 
@@ -755,7 +755,7 @@ namespace m3D {
 
                         bool continueID = (candidates[i] == largestCandidateIndex) && (maxCover > this->m_msc_threshold);
 
-                        if (continueID)
+                        if (continueID && m_continueIDs)
                         {
                             c->id = old_cluster->id;
 

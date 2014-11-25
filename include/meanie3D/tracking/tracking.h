@@ -47,6 +47,8 @@ namespace m3D {
         float   m_ms_threshold;             //
 
         float   m_msc_threshold;            // How many percent of coverage is required in splits/merges for track continuation?
+        
+        bool    m_continueIDs;
 
 
         /** Private default constructor 
@@ -73,6 +75,7 @@ namespace m3D {
         , m_useOverlapConstraint(true)
         , m_ms_threshold(0.33)                  // percentage coverage old/new for merge/split (33%)
         , m_msc_threshold(0.75)                 // percentage coverage old/new in merge/split for continuing track (75%)
+        , m_continueIDs(true)                   // continue IDs through splits/merges ?)
         {};
 
         /** Compares two cluster lists and propagates or assigns new identifiers.
@@ -91,15 +94,41 @@ namespace m3D {
 
         // Accessors
 
+        /** Maxium allowed speed for object pairings. 
+         * 
+         * @return 
+         */
         ::units::values::meters_per_second maxTrackingSpeed() { return m_maxVelocity; }
         void setMaxTrackingSpeed(::units::values::meters_per_second speed) { m_maxVelocity = speed;}
 
+        /** How much area is covered between clusters from previous and
+         * current time slice to make it a split/merge? 
+         * 
+         * @return 
+         */
         float mergeSplitThreshold() {return m_ms_threshold;}
         void setMergeSplitThreshold(float value) {m_ms_threshold=value;}
 
+        /** What is the minimum coverage between clusters from the previous
+         * and current time slice after a merge / split occured to consider
+         * the continuation of the ID?
+         * 
+         * @return 
+         */
         float mergeSplitContinuationThreshold() {return m_msc_threshold;}
         void setMergeSplitContinuationThreshold(float value) {m_msc_threshold=value;}
 
+        /** Are IDs even considered to be continued in merges/splits?
+         * 
+         * @return 
+         */
+        bool continueIDs() { return m_continueIDs; }
+        void setContinueIDs(bool value) {m_continueIDs = value;}
+        
+        /**
+         * 
+         * @return 
+         */
         ::units::values::s max_deltaT() {return m_max_deltaT;}
         void set_max_deltaT(::units::values::s seconds) {m_max_deltaT = seconds;}
 
