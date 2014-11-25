@@ -3,19 +3,15 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/index.h>
 #include <meanie3D/utils/time_utils.h>
 #include <meanie3D/utils/visit.h>
+#include <meanie3D/index.h>
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
 namespace m3D {
-
-    #if WITH_VTK
-        using m3D::VisitUtils;
-    #endif
 
     /** Abstract base class for a feature space index, which
      * requires pre-whitening of data.
