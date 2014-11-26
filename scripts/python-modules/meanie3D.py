@@ -55,6 +55,17 @@ def number_of_netcdf_files(source_dir):
     return len(netcdf_list)
 
 # -------------------------------------------------------------------
+# Creates an output filename based on given filename by
+# appending -<slicenum>.nc at the end.
+# @param basic filename
+# @param slice num 
+# @return filename-1.nc
+# -------------------------------------------------------------------
+def numbered_filename(filename,index):
+    basename = os.path.basename(filename)
+    return os.path.splitext(basename)[0]+"-"+str(index)+".nc"
+    
+# -------------------------------------------------------------------
 # Deletes the directories 'log' and 'netcdf' underneath
 # base path. Removes previous ones if they do exist
 #
@@ -186,15 +197,18 @@ def run_tracking(config,time_index):
         # Cluster
         #
 
+        # build the clustering command
+
+        command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + config['CLUSTERING_PARAMS'] 
+
+        # amend for time index and make proper logfile name
+
         if time_index < 0:
             logfile = output_dir+"/log/clustering_" + str(run_count)+".log"
         else:
+            command = command + " -t " + str(time_index)
             logfile = output_dir+"/log/clustering_" + str(time_index)+".log"
-        
-        # build the clustering command
-
-        command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + config['CLUSTERING_PARAMS']
-
+            
         # scale?
 
         if not config.get('SCALE') == "None":

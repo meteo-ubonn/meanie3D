@@ -30,12 +30,14 @@ import meanie3D
 # Prints usage and exits
 # ----------------------------------------------------------------------------
 def usage():
-    print "run_clustering.py --configuration=<json file> --source=<netcdf directory> [--scale=<scale>] [--resume]"
+    print "run_clustering.py -c=<json file> -f=<netcdf directory> [-s=<scale>] [-r] [--start=t1 --end=t2]"
     print "runs a complete set of netcdf files through the clustering/tracking"
     print "-c : json config file specifying variables etc."
     print "-f : directory containing the files. It is assumed that"
     print "           the files are in the correct order when sorted alphabetically."
     print "-s  : (optional) comma separated list of scale parameters. Overrides any scale values in the configuration."
+    print "--start index of time step to start with in files with time dimension"
+    print "--end   index of time step to end at in files with time dimension"
     print "--resume,-r : if this flag is present, the algorithm assumes to resume"
     print "              operations where it last left off. If not present, previous"
     print "              results will be erased before starting"
@@ -68,9 +70,9 @@ def main(argv):
     # Parse command line
 
     try:
-        opts, args = getopt.getopt(argv, "c:f:s:o:rh", ["resume","help","version"])
-    except getopt.GetoptError:
-        usage()
+        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["resume","help","version","start=","end="])
+    except getopt.GetoptError as detail:
+        print detail
         sys.exit(2)
 
     scales = []
@@ -79,13 +81,15 @@ def main(argv):
     output_dir = "."
     netcdf_dir = ""
     num_params = 0
+
+    start_time_index = -1;
+    end_time_index = -1;
     
     for o, a in opts:
-        
+    
         print o
         print a
-        print
-        
+
         if o == "-c":
             config_file = a
             num_params = num_params + 1
@@ -102,6 +106,12 @@ def main(argv):
         
         elif o in ["--resume","-r"]:
             resume = True
+
+        elif o in ["--start"]:
+            start_time_index = int(float(a))
+
+        elif o in ["--end"]:
+            end_time_index = int(float(a))
         
         elif o in ["--help"]:
             usage()
@@ -117,6 +127,22 @@ def main(argv):
         print num_params
         usage()
 
+    uses_time = False
+
+    # sanity checks on time range
+
+    if start_time_index != -1 or end_time_index != -1 :
+
+        if (start_time_index == -1 and end_time_index != -1) or (start_time_index != -1 and end_time_index == -1):
+            print "start-time-index and end-time-index must both be set"
+            sys.exit(2)
+
+        if start_time_index > end_time_index:
+            print "start-time-index is after end-time-index!"
+            sys.exit(2)
+
+        uses_time = True
+
     # Parse configuration data and expand
 
     configuration = meanie3D.load_configuration(config_file);
@@ -130,12 +156,24 @@ def main(argv):
     #
 
     if not scales:
-        meanie3D.run_tracking(configuration,-1)
+    
+        if uses_time == False:
+            meanie3D.run_tracking(configuration,-1)
+        else:
+            for time_index in range(start_time_index,end_time_index):
+                meanie3D.run_tracking(configuration,time_index)
 
     else:
+
         for scale in scales:
+
             configuration["SCALE"] = scale
-            meanie3D.run_tracking(configuration,-1)
+
+            if uses_time == False:
+                meanie3D.run_tracking(configuration,-1)
+            else:
+                for time_index in range(start_time_index,end_time_index):
+                    meanie3D.run_tracking(configuration,time_index)
 
     return
 
