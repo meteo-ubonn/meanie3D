@@ -100,6 +100,11 @@ void get_limits(NcVar variable, T& min, T& max) {
         int N = variable.getDim(0).getSize();
 
         T *values = (T*) malloc(sizeof (T) * N);
+        if (values == NULL)
+        {
+            cerr << "ERROR:out of memory" << endl;
+            exit(EXIT_FAILURE);
+        }
 
         variable.getVar(&values[0]);
 
@@ -125,6 +130,11 @@ void get_limits(NcVar variable, T& min, T& max) {
         int M = variable.getDim(1).getSize();
 
         T *values = (T*) malloc(sizeof (T) * N * M);
+        if (values == NULL)
+        {
+            cerr << "ERROR:out of memory" << endl;
+            exit(EXIT_FAILURE);
+        }
 
         variable.getVar(values);
 
