@@ -122,6 +122,7 @@ void get_limits(NcVar variable, T& min, T& max)
 
         numElements = variable.getDim(0).getSize();
         values = allocate<T>(numElements);
+        variable.getVar(values);
     } 
     else if (variable.getDimCount() == 2) 
     {
@@ -181,7 +182,7 @@ void get_limits(NcVar variable, T& min, T& max)
             #endif
             min = value;
         }
-
+        
         if (value > max) 
         {
             #if WITH_OPENMP
