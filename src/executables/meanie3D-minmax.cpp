@@ -426,12 +426,23 @@ int main(int argc, char** argv) {
 
             dir_iter++;
         }
-    } else {
+    } 
+    else 
+    {
         fs::path f = fs::path(source_path);
 
-        std::string extension = fs::extension(f);
-
-        if (fs::is_regular_file(f) && extension == ".nc") {
+        // there is a bug in boost 1.56 that causes this to crash
+        // on linux. Replace it with a simpler method based on the
+        // string alone
+        
+        //        std::string extension = fs::extension(f);
+        //        if (fs::is_regular_file(f) && extension == ".nc") {
+        //            files.insert(f);
+        //        }
+        
+        if (fs::is_regular_file(f) 
+            && boost::algorithm::ends_with(source_path, ".nc")) 
+        {
             files.insert(f);
         }
     }
