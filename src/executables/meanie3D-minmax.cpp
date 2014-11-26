@@ -414,10 +414,13 @@ int main(int argc, char** argv) {
         fs::directory_iterator dir_iter(source_path);
         fs::directory_iterator end;
 
-        while (dir_iter != end) {
-            fs::path f = dir_iter->path();
+        while (dir_iter != end) 
+	{
+	    fs::path f = dir_iter->path();
+	    std::string fn = f.filename().generic_string();
 
-            if (fs::is_regular_file(f) && fs::extension(f) == ".nc") {
+            if (fs::is_regular_file(f) && boost::algorithm::ends_with(fn, ".nc"))
+	    {
                 //cout << "Adding " << f.generic_string() << endl;
                 files.insert(f);
             } else {
