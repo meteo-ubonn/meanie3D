@@ -139,16 +139,13 @@ def run_tracking(config,time_index):
 
     if config['RESUME'] == False:
 
-        print "Removing results from previous runs"
-
         # consider time index. Even if not resuming, the 
         # output directories should only be created at
         # the first time step
 
         if time_index <= 0: 
+            print "Removing results from previous runs"
             create_ouput_directories(output_dir)
-
-        resume_at_index = time_index
 
     else:
 
