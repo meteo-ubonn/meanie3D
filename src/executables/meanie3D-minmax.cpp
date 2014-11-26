@@ -73,102 +73,78 @@ void parse_commmandline(program_options::variables_map vm,
 #pragma mark -
 #pragma mark Helper Methods
 
+/** Allocates an array of type T with n objects.
+ * 
+ * @param n
+ * @return 
+ */
 template <typename T>
-void get_limits(NcVar variable, T& min, T& max) {
-    min = std::numeric_limits<T>::max();
+T* allocate(size_t n)
+{
+    T *array = (T*) malloc(sizeof (T) * n);
+    if (array == NULL)
+    {
+        cerr << "ERROR:out of memory" << endl;
+        exit(EXIT_FAILURE);
+    }
+    return array;
+}
 
+template <typename T>
+void get_limits(NcVar variable, T& min, T& max) 
+{
+    min = std::numeric_limits<T>::max();
     max = std::numeric_limits<T>::min();
 
     T fill_value = 0.0;
 
     bool have_fill_value = false;
 
-    try {
+    try 
+    {
         NcVarAtt fillValue = variable.getAtt("_FillValue");
 
-        if (!fillValue.isNull()) {
+        if (!fillValue.isNull()) 
+        {
             fillValue.getValues(&fill_value);
 
             have_fill_value = true;
         }
-    }    catch (::netCDF::exceptions::NcException &e) {
-    }
+    }    
+    catch (::netCDF::exceptions::NcException &e) {}
 
-    if (variable.getDimCount() == 1) {
+    T *values = NULL;
+    size_t numElements = 0;
+    
+    if (variable.getDimCount() == 1) 
+    {
         // 1D
 
-        int N = variable.getDim(0).getSize();
-
-        T *values = (T*) malloc(sizeof (T) * N);
-        if (values == NULL)
-        {
-            cerr << "ERROR:out of memory" << endl;
-            exit(EXIT_FAILURE);
-        }
-
-        variable.getVar(&values[0]);
-
-        for (int i = 0; i < N; i++) {
-            T value = values[i];
-
-            if (have_fill_value && value == fill_value) continue;
-
-            if (value < min) {
-                min = value;
-            }
-
-            if (value > max) {
-                max = value;
-            }
-        }
-
-        delete values;
-    } else if (variable.getDimCount() == 2) {
+        numElements = variable.getDim(0).getSize();
+        values = allocate<T>(numElements);
+    } 
+    else if (variable.getDimCount() == 2) 
+    {
         // 2D
 
-        int N = variable.getDim(0).getSize();
-        int M = variable.getDim(1).getSize();
+        size_t N = variable.getDim(0).getSize();
+        size_t M = variable.getDim(1).getSize();
+        numElements = N * M; 
 
-        T *values = (T*) malloc(sizeof (T) * N * M);
-        if (values == NULL)
-        {
-            cerr << "ERROR:out of memory" << endl;
-            exit(EXIT_FAILURE);
-        }
-
+        values = allocate<T>(numElements);
         variable.getVar(values);
-
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < M; j++) {
-                T value = values[ i * M + j ];
-
-                if (have_fill_value && value == fill_value) continue;
-
-                if (value < min) {
-                    min = value;
-                }
-
-                if (value > max) {
-                    max = value;
-                }
-            }
-        }
-
-        delete values;
+        
     }
-    else if (variable.getDimCount() == 3) {
+    else if (variable.getDimCount() == 3) 
+    {
         // 3D
 
-        int N = variable.getDim(0).getSize();
-        int M = variable.getDim(1).getSize();
-        int K = variable.getDim(2).getSize();
+        size_t N = variable.getDim(0).getSize();
+        size_t M = variable.getDim(1).getSize();
+        size_t K = variable.getDim(2).getSize();
+        numElements = N * M * K;
 
-        T *values = (T*) malloc(sizeof (T) * N * M * K);
-        if (values == NULL)
-        {
-            cerr << "ERROR:out of memory" << endl;
-            exit(EXIT_FAILURE);
-        }
+        values = allocate<T>(numElements);
 
         vector<size_t> count(3, 1);
         count[0] = 1;
@@ -181,28 +157,41 @@ void get_limits(NcVar variable, T& min, T& max) {
         start[2] = 0;
 
         variable.getVar(start, count, values);
-
-        for (size_t j = 0; j < N * M * K; j++) 
-        {
-            T value = values[j];
-
-            if (have_fill_value && value == fill_value) continue;
-
-            if (value < min) {
-                min = value;
-            }
-
-            if (value > max) {
-                max = value;
-            }
-        }
-
-        delete values;
-    } 
+    }
     else 
     {
-        cerr << "Variables with " << variable.getDimCount() << " dimensions are not currently handled" << endl;
+        cerr << "ERROR:Variables with " << variable.getDimCount() 
+                << " dimensions are not currently handled" << endl;
+        return;
     }
+    
+    #if WITH_OPENMP
+    #pragma omp parallel for 
+    #endif
+    for (size_t j = 0; j < numElements; j++) 
+    {
+        T value = values[j];
+
+        if (have_fill_value && value == fill_value) continue;
+
+        if (value < min) 
+        {
+            #if WITH_OPENMP
+            #pragma omp critical
+            #endif
+            min = value;
+        }
+
+        if (value > max) 
+        {
+            #if WITH_OPENMP
+            #pragma omp critical
+            #endif
+            max = value;
+        }
+    }
+
+    delete values;
 }
 
 template <typename T>
