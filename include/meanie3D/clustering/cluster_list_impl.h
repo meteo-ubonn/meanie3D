@@ -408,35 +408,33 @@ namespace m3D {
                 string mode = to_string( cluster->mode );
 
                 var.putAtt( "mode", mode );
-
-                // Write the clusters away point by point
-
-                // index and counter
-                vector<size_t> index(2,0);
-                vector<size_t> count(2,0);
-                count[0] = 1;
-                count[1] = dim.getSize();
-
-                // iterate over points
-
-                // exit define mode
-                nc_enddef(file->getId());
-
-                for ( size_t pi = 0; pi < cluster->size(); pi++ )
+                
+                // Write cluster away
+                
+                size_t numElements = cluster->size() * cluster->rank();
+                
+                T *data = (T*) malloc(sizeof(T) * numElements);
+                
+                if (data == NULL)
+                {
+                    cerr << "ERROR:out of memory" << endl;
+                    exit(EXIT_FAILURE);
+                }
+                
+                for (size_t pi = 0; pi < cluster->size(); pi++)
                 {
                     typename Point<T>::ptr p = cluster->at(pi);
 
-                    double data[ dim.getSize() ];
-
-                    for ( size_t di = 0; di < dim.getSize(); di++ )
+                    for (size_t di = 0; di < dim.getSize(); di++)
                     {
-                        data[di] = (double)p->values[di];
+                        size_t index = pi * cluster->rank() + di;
+                        data[index] = p->values.at(di);
                     }
-
-                    index[0] = pi;
-
-                    var.putVar(index, count, &data[0] );
                 }
+                
+                var.putVar(data);
+                
+                delete data;
 
                 // Enter define mode
                 nc_redef(file->getId());
