@@ -593,7 +593,7 @@ namespace m3D { namespace utils { namespace netcdf {
 
             NcVar time_var = file.getVar("time");
 
-            if (time_var.isNull())
+            if (time_var.isNull()) 
                 throw runtime_error("ERROR:can't read 'time' variable (variable does not exist)");
 
             file.getVar("time").getVar(&timestamp);
@@ -722,7 +722,7 @@ namespace m3D { namespace utils { namespace netcdf {
 
                 return result;
             }
-            else if (time_index < 0 && !time_var.isNull())
+            else if (time_index == NO_TIME && !time_var.isNull())
             {
                 // timestamp in files where variables
                 // have no time dependency

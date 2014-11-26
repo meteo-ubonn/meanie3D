@@ -17,6 +17,10 @@ namespace m3D {
     
     using namespace netCDF;
 
+    /** Specialization of DataStore for NetCDF. 
+     * 
+     * TODO: handle the concept of time better!
+     */
     template <typename T>
     class NetCDFDataStore : public DataStore<T>
     {
@@ -77,11 +81,6 @@ namespace m3D {
         multiarray_map_t    m_buffered_data;
 
     public:
-        
-#pragma mark -
-#pragma mark Constants
-        
-        static const int NO_TIME;
 
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -95,7 +94,7 @@ namespace m3D {
         NetCDFDataStore(const std::string &filename,
                         const CoordinateSystem<T> *coordinate_system,
                         const vector<std::string> &variable_names,
-                        const int time_index = NO_TIME)
+                        const int time_index = -1)
         : m_filename(filename)
         , m_variable_names(variable_names)
         , m_coordinate_system(coordinate_system)
@@ -832,6 +831,14 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Accessors
+        
+        /** get time index
+         * 
+         * @return the time index this store was constructed with
+         */
+        int get_time_index() {
+            return this->m_time_index;
+        }
 
         /** Retrieves a value from the memory buffers
          * @param variable index
@@ -1059,9 +1066,6 @@ namespace m3D {
 
     template <typename T> 
     const T NetCDFDataStore<T>::NO_VALUE = -9999999999;
-    
-    template <typename T> 
-    const int NetCDFDataStore<T>::NO_TIME = -1;
 }
 
 #endif

@@ -130,7 +130,9 @@ namespace m3D {
             vars.push_back(variable);
         }
 
-        ClusterList<T> cluster_list(vars,cs->dimensions(),m_data_store->filename());
+        ClusterList<T> cluster_list(vars,cs->dimensions(),
+                m_data_store->filename(), 
+                m_data_store->get_time_index());
 
         // Guard against empty feature-space
 

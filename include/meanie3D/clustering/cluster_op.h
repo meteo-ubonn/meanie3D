@@ -19,6 +19,11 @@ namespace m3D {
         PostAggregationMethodDRF
     } PostAggregationMethod;
 
+    /** Encapsulates all steps needed for a complete
+     * clustering operation. 
+     * 
+     * TODO: decouple from NetCDF specific code.
+     */
     template <typename T>
     class ClusterOperation : public Operation<T>
     {

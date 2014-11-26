@@ -5,6 +5,11 @@
 // in vector utils
 #define ASSERT_VECTOR_SIZES 0
 
+/** used to indicate that a NetCDF file has a one-dimensional
+ * or non-existing time variable.
+ */
+#define NO_TIME -1
+
 // ---------------------------------------------------- //
 // Configuration
 // ---------------------------------------------------- //

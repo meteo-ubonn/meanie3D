@@ -777,10 +777,10 @@ int main(int argc, char** argv)
                     dict << "        }";
 
                     // min/max
-                    for (size_t i = 0; i < value_rank; i++)
+                    for (size_t k = 0; k < value_rank; k++)
                     {
-                        if (min[i] < track->min[i]) track->min[i] = min[i];
-                        if (max[i] > track->max[i]) track->max[i] = max[i];
+                        if (min[k] < track->min[k]) track->min[k] = min[k];
+                        if (max[k] > track->max[k]) track->max[k] = max[k];
                     }
 
                     if (i < (track->clusters.size() - 1))

@@ -137,6 +137,7 @@ namespace m3D {
         ClusterList(const vector<NcVar> &vars,
                     const vector<NcDim> &dims,
                     const string& sourcefile,
+                    int time_index = NO_TIME,
                     bool use_original_points_only=true)
         : ncFile(NULL)
         , feature_variables(vars)
@@ -149,11 +150,16 @@ namespace m3D {
         {
             try 
             {
-                long timestamp = utils::netcdf::get_time<long>(sourcefile);
+                long timestamp = utils::netcdf::get_time<long>(sourcefile, time_index);
                 this->set_time_in_seconds(::units::values::s(timestamp));
             }
             catch (runtime_error &e)
-            {}
+            {
+                cerr << "ERROR:could not obtain timestamp from file " 
+                     << sourcefile 
+                     << "(time_index=" << time_index 
+                     << endl;
+            }
         };
 
         /** @constructor
@@ -166,7 +172,8 @@ namespace m3D {
         ClusterList(const typename Cluster<T>::list &list,
                     const vector<NcDim> &dims,
                     const vector<NcVar> &vars,
-                    const string& sourcefile )
+                    const string& sourcefile,
+                    int time_index = NO_TIME)
         : ncFile(NULL)
         , feature_variables(vars)
         , variable_names(utils::netcdf::to_names(vars))
@@ -179,11 +186,16 @@ namespace m3D {
         {
             try 
             {
-                long timestamp = utils::netcdf::get_time<long>(sourcefile);
+                long timestamp = utils::netcdf::get_time<long>(sourcefile, time_index);
                 this->set_time_in_seconds(::units::values::s(timestamp));
             }
             catch (netCDF::exceptions::NcException &e)
-            {}
+            {
+                cerr << "ERROR:could not obtain timestamp from file " 
+                     << sourcefile 
+                     << "(time_index=" << time_index 
+                     << endl;
+            }
         };
 
         /** Destructor
