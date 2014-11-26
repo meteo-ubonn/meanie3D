@@ -154,6 +154,11 @@ void get_limits(NcVar variable, T& min, T& max) {
         int K = variable.getDim(2).getSize();
 
         T *values = (T*) malloc(sizeof (T) * N * M * K);
+        if (values == NULL)
+        {
+            cerr << "ERROR:out of memory" << endl;
+            exit(EXIT_FAILURE);
+        }
 
         vector<size_t> count(3, 1);
         count[0] = 1;
@@ -167,7 +172,8 @@ void get_limits(NcVar variable, T& min, T& max) {
 
         variable.getVar(start, count, values);
 
-        for (size_t j = 0; j < N * M * K; j++) {
+        for (size_t j = 0; j < N * M * K; j++) 
+        {
             T value = values[j];
 
             if (have_fill_value && value == fill_value) continue;
@@ -182,7 +188,9 @@ void get_limits(NcVar variable, T& min, T& max) {
         }
 
         delete values;
-    } else {
+    } 
+    else 
+    {
         cerr << "Variables with " << variable.getDimCount() << " dimensions are not currently handled" << endl;
     }
 }
