@@ -33,7 +33,6 @@ namespace m3D {
             start_timer();
         }
 
-
 #pragma mark -
 #pragma mark Preliminaries        
         
@@ -70,7 +69,6 @@ namespace m3D {
         
         if (!skip_tracking)
         {
-        
             // Check cluster sizes
             
             for (size_t i=0; i < previous->clusters.size(); i++)
@@ -165,14 +163,11 @@ namespace m3D {
     //                   meanVelocity * m_meanVelocitySecurityPercentage, maxMeanVelocityDisplacement );
     //        }
 
-    //        SPLog(@"\n");
-
             // Minimum object radius for overlap constraint
             // TODO: this point needs to be replaced with velocity
             // vectors from SMV/RMV estimates
 
             ::units::values::meters_per_second overlap_constraint_velocity = m_maxVelocity;
-
             ::units::values::m overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
 
             // Prepare the newcomers for re-identification
@@ -189,6 +184,11 @@ namespace m3D {
 
     #pragma mark -
     #pragma mark Compute correlation matrixes and constraints
+
+            // set precision for outputting correlation tables
+            
+            std::streamsize prec = std::cout.precision();
+            std::cout.precision(2);
 
             typename Matrix<T>::matrix_t rank_correlation = Matrix<T>::create_matrix(new_count,old_count);
             typename Matrix< ::units::values::m >::matrix_t midDisplacement = Matrix< ::units::values::m >::create_matrix(new_count,old_count);
@@ -207,12 +207,23 @@ namespace m3D {
             ClusterIndex<T> old_index(previous->clusters, cs->get_dimension_sizes());
             ClusterIndex<T> new_index(current->clusters, cs->get_dimension_sizes());
 
-            int n,m;
-
-            // check out the values for midDisplacement, histSizeDifference and kendall's tau
-
-            for ( n=0; n < new_count; n++ )
+            // Employ a mapping to parallelise
+            
+            vector<size_t> index_dims;
+            index_dims.push_back(new_count);
+            index_dims.push_back(old_count);
+            LinearIndexMapping mapping(index_dims);
+            
+            #if WITH_OPENMP
+            #pragma omp parallel for schedule(dynamic)
+            #endif
+            for (size_t idx = 0; idx < mapping.size(); idx++)
             {
+                vector<int> index_pair = mapping.linear_to_grid(idx);
+                
+                int n = index_pair[0];
+                int m = index_pair[1];
+
                 typename Cluster<T>::ptr newCluster = current->clusters[n];
 
                 typename Histogram<T>::ptr newHistogram;
@@ -222,127 +233,129 @@ namespace m3D {
                     newCluster->histogram(tracking_var_index,valid_min,valid_max);
                 }
 
-                for ( m=0; m < old_count; m++ )
+                // set all constraint flags to false to start with
+
+                constraints_satisified[n][m] = false;
+
+                // Displacement
+
+                typename Cluster<T>::ptr oldCluster = previous->clusters[m];
+
+                // Histogram Size
+
+                typename Histogram<T>::ptr oldHistogram;
+
+                if (tracking_var_index >= 0)
                 {
-                    // set all constraint flags to false to start with
-
-                    constraints_satisified[n][m] = false;
-
-                    // Displacement
-
-                    typename Cluster<T>::ptr oldCluster = previous->clusters[m];
-
-                    // Histogram Size
-
-                    typename Histogram<T>::ptr oldHistogram;
-
-                    if (tracking_var_index >= 0)
-                    {
-                        oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
-                    }
-    //
-    //                size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
-    //                
-    //                histDiff[n][m] = (max_size==0) ? 1.0 : (abs( (T)newHistogram->sum() - (T)oldHistogram->sum() ) / ((T)max_size) );
-    //                
-    //                //
-    //                // Size deviation overlap constraint
-    //                //
-    //                
-    //                // Processes in nature develop within certain bounds. It is not possible
-    //                // that a cloud covers 10 pixels in one scan and unit_multiplier in the next. The
-    //                // size deviation constraint is created to prohibit matches between objects,
-    //                // which vary too much in size
-    //                
-    //                T max_H = (T) max(oldHistogram->sum(), newHistogram->sum());
-    //                
-    //                T min_H = (T) min(oldHistogram->sum(), newHistogram->sum());
-    //                
-    //                T size_deviation = max_H / min_H;
-    //                
-    //                if ( size_deviation > m_max_size_deviation ) continue;
-
-                    //
-                    // Overlap Constraint
-                    //
-
-                    // if the object is so big, that overlap is required at the given advection velocity
-                    // then check if that is the case. If no overlap exists, prohibit the match by setting
-                    // the constraint to false. If no overlap is required, the constraint is simply set to
-                    // true, thus allowing a match.
-
-                    // Note: radius is calculated in kilometres.
-                    // TODO: calculate overlap constraint radius in the same dimension
-                    // as the dimension variables!
-
-                    coverOldByNew[n][m] = new_index.occupation_ratio(oldCluster,newCluster);
-                    coverNewByOld[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
-
-                    if (m_useOverlapConstraint)
-                    {
-                        ::units::values::m radius = oldCluster->radius(cs);
-
-                        bool requires_overlap = (radius >= overlap_constraint_radius);
-
-                        bool overlap_constraint_satisfied = true;
-
-                        if (requires_overlap)
-                        {
-                            overlap_constraint_satisfied = coverOldByNew[n][m] > 0.0;
-                        }
-
-                        if ( !overlap_constraint_satisfied ) continue;
-                    }
-
-                    // calculate average mid displacement
-
-                    vector<T> oldCenter = oldCluster->geometrical_center(current->dimensions.size());
-                    vector<T> newCenter = newCluster->geometrical_center(current->dimensions.size());
-
-                    vector<T> dx = newCenter - oldCenter;
-
-                    midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
-
-                    //
-                    // Maximum velocity constraint
-                    //
-
-                    // TODO: calculate the max displacement in the same dimension
-                    // as the dimension variables
-
-                    ::units::values::m displacement = midDisplacement[n][m];
-
-                    if ( displacement > maxDisplacement ) continue;
-
-
-                    // Histogram Correlation
-
-                    if (tracking_var_index >= 0)
-                    {
-                        // calculate spearman's tau
-
-                        if ( m_corr_weight != 0.0 )
-                        {
-                            rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
-                        }
-
-                        // track maxHistD and maxMidD
-
-                        if ( histDiff[n][m] > maxHistD )
-                        {
-                            maxHistD = histDiff[n][m];
-                        }
-                    }
-
-                    if (midDisplacement[n][m] > maxMidD)
-                    {
-                        maxMidD = midDisplacement[n][m];
-                    }
-
-                    // only if all constraints are passed, the flag is set to true
-
-                    constraints_satisified[n][m] = true;
+                    oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
                 }
+                
+                // Histogram size difference
+
+                if (m_size_weight > 0.0)
+                {
+                    size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
+
+                    histDiff[n][m] = (max_size==0) ? 1.0 : (abs( (T)newHistogram->sum() - (T)oldHistogram->sum() ) / ((T)max_size) );
+
+                    //
+                    // Size deviation overlap constraint
+                    //
+
+                    // Processes in nature develop within certain bounds. It is not possible
+                    // that a cloud covers 10 pixels in one scan and unit_multiplier in the next. The
+                    // size deviation constraint is created to prohibit matches between objects,
+                    // which vary too much in size
+
+                    T max_H = (T) max(oldHistogram->sum(), newHistogram->sum());
+
+                    T min_H = (T) min(oldHistogram->sum(), newHistogram->sum());
+
+                    T size_deviation = max_H / min_H;
+
+                    if ( size_deviation > m_max_size_deviation ) continue;
+                }
+
+                //
+                // Overlap Constraint
+                //
+
+                // if the object is so big, that overlap is required at the given advection velocity
+                // then check if that is the case. If no overlap exists, prohibit the match by setting
+                // the constraint to false. If no overlap is required, the constraint is simply set to
+                // true, thus allowing a match.
+
+                // Note: radius is calculated in kilometres.
+                // TODO: calculate overlap constraint radius in the same dimension
+                // as the dimension variables!
+
+                coverOldByNew[n][m] = new_index.occupation_ratio(oldCluster,newCluster);
+                coverNewByOld[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
+
+                if (m_useOverlapConstraint)
+                {
+                    ::units::values::m radius = oldCluster->radius(cs);
+
+                    bool requires_overlap = (radius >= overlap_constraint_radius);
+
+                    bool overlap_constraint_satisfied = true;
+
+                    if (requires_overlap)
+                    {
+                        overlap_constraint_satisfied = coverOldByNew[n][m] > 0.0;
+                    }
+
+                    if ( !overlap_constraint_satisfied ) continue;
+                }
+
+                // calculate average mid displacement
+
+                vector<T> oldCenter = oldCluster->geometrical_center(current->dimensions.size());
+                vector<T> newCenter = newCluster->geometrical_center(current->dimensions.size());
+
+                vector<T> dx = newCenter - oldCenter;
+
+                midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
+
+                //
+                // Maximum velocity constraint
+                //
+
+                // TODO: calculate the max displacement in the same dimension
+                // as the dimension variables
+
+                ::units::values::m displacement = midDisplacement[n][m];
+
+                if ( displacement > maxDisplacement ) continue;
+
+
+                // Histogram Correlation
+
+                if (tracking_var_index >= 0)
+                {
+                    // calculate spearman's tau
+
+                    if ( m_corr_weight != 0.0 )
+                    {
+                        rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
+                    }
+
+                    // track maxHistD and maxMidD
+
+                    if ( histDiff[n][m] > maxHistD )
+                    {
+                        maxHistD = histDiff[n][m];
+                    }
+                }
+
+                if (midDisplacement[n][m] > maxMidD)
+                {
+                    maxMidD = midDisplacement[n][m];
+                }
+
+                // only if all constraints are passed, the flag is set to true
+
+                constraints_satisified[n][m] = true;
             }
 
             // Can't have zeros here
@@ -351,72 +364,78 @@ namespace m3D {
             {
                 maxHistD = 1;
             }
-
+        
     #pragma mark -
     #pragma mark Calculate probabilities
 
             if ( verbosity >= VerbosityDetails )
                 cout << endl << "-- Correlation Table --" << endl;
 
-            for ( n=0; n < new_count; n++ )
+            #if WITH_OPENMP
+            #pragma omp parallel for schedule(dynamic)
+            #endif
+            for (size_t idx = 0; idx < mapping.size(); idx++)
             {
-                typename Cluster<T>::ptr newCluster = current->clusters[n];
+                vector<int> index_pair = mapping.linear_to_grid(idx);
+                
+                int n = index_pair[0];
+                int m = index_pair[1];
 
-                if ( verbosity >= VerbosityDetails )
+                typename Cluster<T>::ptr newCluster = current->clusters[n];
+                typename Cluster<T>::ptr oldCluster = previous->clusters[m];
+
+                // Only calculate values for pairs, that satisfy the
+                // overlap constraint
+
+                if ( constraints_satisified[n][m] )
                 {
+                    float prob_r = m_dist_weight * erfc( midDisplacement[n][m].get() / maxMidD.get() );
+
+                    float prob_h = 0;
+                    float prob_t = 0;
+
+                    if (tracking_var_index >= 0)
+                    {
+                        prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
+                        prob_t = m_corr_weight * rank_correlation[n][m];
+                    }
+
+                    sum_prob[n][m] = prob_t + prob_r + prob_h;
+                }
+            }
+
+            // print correlation table
+            
+            if ( verbosity >= VerbosityDetails )
+            {
+                for (int n=0; n < new_count; n++)
+                {
+                    typename Cluster<T>::ptr newCluster = current->clusters[n];
                     cout << endl << "Correlating new Cluster #" << n
                     << " (histogram size " << newCluster->histogram(tracking_var_index,valid_min,valid_max)->sum() << ")"
                     << " at " << newCluster->mode << endl;
-                }
 
-                for ( m=0; m < old_count; m++ )
-                {
-                    typename Cluster<T>::ptr oldCluster = previous->clusters[m];
-
-                    // Only calculate values for pairs, that satisfy the
-                    // overlap constraint
-
-                    if ( constraints_satisified[n][m] )
+                    for (int m=0; m < old_count; m++)
                     {
-                        float prob_r = m_dist_weight * erfc( midDisplacement[n][m].get() / maxMidD.get() );
+                        typename Cluster<T>::ptr oldCluster = previous->clusters[m];
 
-                        float prob_h = 0;
-                        float prob_t = 0;
-
-                        if (tracking_var_index >= 0)
-                        {
-                            prob_h = m_size_weight * erfc( histDiff[n][m] / maxHistD );
-                            prob_t = m_corr_weight * rank_correlation[n][m];
-                        }
-
-                        sum_prob[n][m] = prob_t + prob_r + prob_h;
-
-                        if ( verbosity >= VerbosityDetails )
-                        {
-                            printf("\t<ID#%4lu>:\t(|H|=%5lu)\t\tdR=%4.1f (%5.4f)\t\tdH=%5.4f (%5.4f)\t\ttau=%7.4f (%5.4f)\t\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
-                                   oldCluster->id,
-                                   oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
-                                   midDisplacement[n][m].get(),
-                                   prob_r,
-                                   histDiff[n][m],
-                                   prob_h,
-                                   rank_correlation[n][m],
-                                   prob_t,
-                                   sum_prob[n][m],
-                                   coverOldByNew[n][m],
-                                   coverNewByOld[n][m]);
-                        }
-                    }
-                    else
-                    {
-                        if ( verbosity >= VerbosityDetails )
-                            printf("\t<ID#%4lu>:\toverlap, size or max velocity constraints violated\n", oldCluster->id);
+                        printf("\t<ID#%4lu>:\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                                oldCluster->id,
+                                oldCluster->histogram(tracking_var_index,valid_min,valid_max)->sum(),
+                                midDisplacement[n][m].get(),
+                                histDiff[n][m],
+                                rank_correlation[n][m],
+                                sum_prob[n][m],
+                                coverOldByNew[n][m],
+                                coverNewByOld[n][m]);
                     }
                 }
             }
 
     #pragma mark -
     #pragma mark Matchmaking
+
+            int n,m;
 
             ::units::values::meters_per_second velocitySum = ::units::values::meters_per_second(0);
 
@@ -797,10 +816,12 @@ namespace m3D {
             {
                 cout << "done. (Correlating " << (new_count * old_count) << " objects took " << stop_timer() << " seconds)" << endl;
             }
+            
+            std::cout.precision(prec);
+
         }
 
         current->tracking_performed = true;
-
         current->highest_id = highest_id;
     }
 }
