@@ -343,10 +343,20 @@ namespace m3D {
                 stringstream dim_name(stringstream::in | stringstream::out);
 
                 dim_name << "cluster_dim_" << cid;
-                
+
                 NcDim cluster_dim;
 
-                cluster_dim = file->addDim( dim_name.str(), cluster->size() );
+                try
+                {
+                    cluster_dim = file->addDim( dim_name.str(), cluster->size() );
+                }
+                catch (const netCDF::exceptions::NcException &e)
+                {
+                    cerr << "ERROR:exception creating dimension " << dim_name.str()
+                         << ":" << e.what() << endl;
+                    
+                    continue;
+                }
 
                 // Create variable
 
@@ -359,9 +369,19 @@ namespace m3D {
                 dims[1] = dim;
 
                 NcVar var;
-                
-                var = file->addVar( var_name.str(), ncDouble, dims );
-                var.setCompression(false,true,3);
+
+                try
+                {
+                    var = file->addVar( var_name.str(), ncDouble, dims );
+                    var.setCompression(false,true,3);
+                }
+                catch (const netCDF::exceptions::NcException &e)
+                {
+                    cerr << "ERROR:exception creating dimension " << var_name.str()
+                         << ":" << e.what() << endl;
+                    
+                    continue;
+                }
 
                 // size
 

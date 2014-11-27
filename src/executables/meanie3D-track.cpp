@@ -310,7 +310,7 @@ int main(int argc, char** argv) {
 
     if ( verbosity >= VerbosityNormal )
     {
-        cout << "Reading " << previous_filename << " ... ";
+        cout << "Reading " << previous_filename << " ... " << flush;;
         start_timer();
     }
         
@@ -321,7 +321,7 @@ int main(int argc, char** argv) {
     if ( verbosity >= VerbosityNormal )
         cout << " done (" << stop_timer() << "s)" << endl;
 
-    if ( verbosity >= VerbosityDetails )
+    if ( verbosity >= VerbosityAll )
     {
         cout << endl << "-- previous clusters --" << endl;
         previous->print();
@@ -333,7 +333,7 @@ int main(int argc, char** argv) {
 
     if ( verbosity >= VerbosityNormal )
     {
-        cout << "Reading " << current_filename << " ... ";
+        cout << "Reading " << current_filename << " ... " << flush;;
         start_timer();
     }
 
@@ -342,7 +342,7 @@ int main(int argc, char** argv) {
     if ( verbosity >= VerbosityNormal )
         cout << " done (" << stop_timer() << "s)" << endl;
 
-    if ( verbosity >= VerbosityDetails )
+    if ( verbosity >= VerbosityAll )
     {
         cout << endl << "-- current clusters --" << endl;
         current->print();
@@ -424,12 +424,20 @@ int main(int argc, char** argv) {
 
     // Write results back
 
+    if ( verbosity >= VerbosityNormal )
+    {
+        cout << "Writing " << current_filename << " ... " << flush;;
+        start_timer();
+    }
+    
     current->write(current_filename);
+
+    if ( verbosity >= VerbosityNormal )
+        cout << " done (" << stop_timer() << "s)" << endl;
 
     // Clean up
 
     delete previous;
-
     delete current;
 
     return 0;

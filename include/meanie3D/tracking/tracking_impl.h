@@ -10,6 +10,8 @@
 #include <vector>
 #include <netcdf>
 #include <set>
+#include <utility>
+#include <algorithm>
 
 #include "tracking.h"
 
@@ -138,14 +140,24 @@ namespace m3D {
                      << m_max_deltaT << "s" << endl;
                 return;
             }
-
+            
+            // set precision for outputting correlation tables
+            std::streamsize prec = std::cout.precision();
+            std::cout.precision(2);
+            cout << setiosflags(ios::fixed);
+            
+            // calculate max displacement based on time difference
+            // and max velocity
+            
             current->tracking_time_difference = m_deltaT.get();
-
             ::units::values::m maxDisplacement = this->m_maxVelocity * this->m_deltaT;
 
             if ( verbosity >= VerbosityDetails )
-                printf("max velocity  constraint at %4.1f m/s at deltaT %4.0fs -> dR_max = %7.1fm\n",
-                       this->m_maxVelocity.get(), this->m_deltaT.get(), maxDisplacement.get() );
+                cout << "Max velocity constraint at " 
+                     << this->m_maxVelocity.get() << "m/s"
+                     << " and dT=" << this->m_deltaT.get()
+                     << " results in dRmax=" << maxDisplacement.get() 
+                    << endl;
 
             // TODO: mean velocity constraint
 
@@ -177,18 +189,12 @@ namespace m3D {
             
             if ( verbosity >= VerbosityNormal )
             {
-                cout << "Tracking has " << (new_count * old_count) << " combinations" << endl; 
-                cout << "Calculating preliminary data  ..."; 
+                cout << "Calculating preliminary data  ..." << flush;
                 start_timer();
             }
 
     #pragma mark -
     #pragma mark Compute correlation matrixes and constraints
-
-            // set precision for outputting correlation tables
-            
-            std::streamsize prec = std::cout.precision();
-            std::cout.precision(2);
 
             typename Matrix<T>::matrix_t rank_correlation = Matrix<T>::create_matrix(new_count,old_count);
             typename Matrix< ::units::values::m >::matrix_t midDisplacement = Matrix< ::units::values::m >::create_matrix(new_count,old_count);
@@ -224,63 +230,11 @@ namespace m3D {
                 int n = index_pair[0];
                 int m = index_pair[1];
 
-                typename Cluster<T>::ptr newCluster = current->clusters[n];
-
-                typename Histogram<T>::ptr newHistogram;
-
-                if (tracking_var_index >= 0)
-                {
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
-                    newCluster->histogram(tracking_var_index,valid_min,valid_max);
-                }
-
                 // set all constraint flags to false to start with
-
                 constraints_satisified[n][m] = false;
 
-                // Displacement
-
+                typename Cluster<T>::ptr newCluster = current->clusters[n];
                 typename Cluster<T>::ptr oldCluster = previous->clusters[m];
-
-                // Histogram Size
-
-                typename Histogram<T>::ptr oldHistogram;
-
-                if (tracking_var_index >= 0)
-                {
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
-                    oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
-                }
-                
-                // Histogram size difference
-
-                if (m_size_weight > 0.0)
-                {
-                    size_t max_size = max( newHistogram->sum(), oldHistogram->sum() );
-
-                    histDiff[n][m] = (max_size==0) ? 1.0 : (abs( (T)newHistogram->sum() - (T)oldHistogram->sum() ) / ((T)max_size) );
-
-                    //
-                    // Size deviation overlap constraint
-                    //
-
-                    // Processes in nature develop within certain bounds. It is not possible
-                    // that a cloud covers 10 pixels in one scan and unit_multiplier in the next. The
-                    // size deviation constraint is created to prohibit matches between objects,
-                    // which vary too much in size
-
-                    T max_H = (T) max(oldHistogram->sum(), newHistogram->sum());
-
-                    T min_H = (T) min(oldHistogram->sum(), newHistogram->sum());
-
-                    T size_deviation = max_H / min_H;
-
-                    if ( size_deviation > m_max_size_deviation ) continue;
-                }
 
                 //
                 // Overlap Constraint
@@ -295,71 +249,97 @@ namespace m3D {
                 // TODO: calculate overlap constraint radius in the same dimension
                 // as the dimension variables!
 
+                bool overlap_constraint_satisfied = true;
+
                 #if WITH_OPENMP
                 #pragma omp critical
                 #endif
                 {
                     coverOldByNew[n][m] = new_index.occupation_ratio(oldCluster,newCluster);
                     coverNewByOld[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
-                }
                 
-                if (m_useOverlapConstraint)
-                {
-                    ::units::values::m radius = oldCluster->radius(cs);
-
-                    bool requires_overlap = (radius >= overlap_constraint_radius);
-
-                    bool overlap_constraint_satisfied = true;
-
-                    if (requires_overlap)
+                    if (m_useOverlapConstraint)
                     {
-                        overlap_constraint_satisfied = coverOldByNew[n][m] > 0.0;
+                        ::units::values::m radius = oldCluster->radius(cs);
+
+                        bool requires_overlap = (radius >= overlap_constraint_radius);
+
+                        if (requires_overlap)
+                        {
+                            overlap_constraint_satisfied = coverOldByNew[n][m] > 0.0;
+                        }
                     }
 
-                    if ( !overlap_constraint_satisfied ) continue;
+                    if (overlap_constraint_satisfied)
+                    {
+                        // calculate average mid displacement
+
+                        vector<T> oldCenter,newCenter;
+
+                        oldCenter = oldCluster->geometrical_center(current->dimensions.size());
+                        newCenter = newCluster->geometrical_center(current->dimensions.size());
+
+                        vector<T> dx = newCenter - oldCenter;
+                        midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
+                    }
                 }
-
-                // calculate average mid displacement
-
-                vector<T> oldCenter,newCenter;
                 
-                #if WITH_OPENMP
-                #pragma omp critical
-                #endif
-                {
-                    oldCenter = oldCluster->geometrical_center(current->dimensions.size());
-                    newCenter = newCluster->geometrical_center(current->dimensions.size());
-                }
+                if (!overlap_constraint_satisfied) continue;
                 
-                vector<T> dx = newCenter - oldCenter;
-
-                #if WITH_OPENMP
-                #pragma omp critical
-                #endif
-                midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
-
                 //
                 // Maximum velocity constraint
                 //
 
-                if ( midDisplacement[n][m] > maxDisplacement ) continue;
+                if (midDisplacement[n][m] > maxDisplacement) continue;
 
-                // Histogram Correlation
+                // Histogram Correlation and histogram size difference
 
-                if (tracking_var_index >= 0)
+                if (((m_size_weight != 0.0) || (m_corr_weight != 0.0)) && (tracking_var_index >= 0))
                 {
+                    typename Histogram<T>::ptr newHistogram;
+                    typename Histogram<T>::ptr oldHistogram;
+
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
+                    {
+                        newCluster->histogram(tracking_var_index,valid_min,valid_max);
+                        oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
+                    }
+
+                    // Processes in nature develop within certain bounds. It is not possible
+                    // that a cloud covers 10 pixels in one scan and unit_multiplier in the next. The
+                    // size deviation constraint is created to prohibit matches between objects,
+                    // which vary too much in size
+                    
+                    if (m_size_weight != 0.0)
+                    {
+                        size_t max_size = max(newHistogram->sum(), oldHistogram->sum());
+                    
+                        histDiff[n][m] = (max_size==0) ? 1.0 : (abs((T)newHistogram->sum() - (T)oldHistogram->sum())/((T)max_size));
+                        
+                        if ( histDiff[n][m] > maxHistD )
+                        {
+                            maxHistD = histDiff[n][m];
+                        }
+
+                        T max_H = (T) max(oldHistogram->sum(), newHistogram->sum());
+
+                        T min_H = (T) min(oldHistogram->sum(), newHistogram->sum());
+
+                        T size_deviation = max_H / min_H;
+
+                        if ( size_deviation > m_max_size_deviation ) continue;
+                    }
+
+                    // Just as the number of values will have some continuity,
+                    // so will the distribution of values for a cluster. 
+
                     // calculate spearman's tau
 
                     if ( m_corr_weight != 0.0 )
                     {
                         rank_correlation[n][m] = newHistogram->correlate_kendall( oldHistogram );
-                    }
-
-                    // track maxHistD and maxMidD
-
-                    if ( histDiff[n][m] > maxHistD )
-                    {
-                        maxHistD = histDiff[n][m];
                     }
                 }
 
@@ -390,7 +370,7 @@ namespace m3D {
 
             if ( verbosity >= VerbosityNormal )
             {
-                cout << "Calculating matching table ... ";
+                cout << "Calculating matching table ... " << flush;;
                 start_timer();
             }
 
@@ -429,11 +409,8 @@ namespace m3D {
 
             // print correlation table
             
-            if ( verbosity >= VerbosityDetails )
+            if ( verbosity >= VerbosityAll )
             {
-                if ( verbosity >= VerbosityDetails )
-                    cout << endl << "-- Correlation Table --" << endl;
-
                 for (int n=0; n < new_count; n++)
                 {
                     typename Cluster<T>::ptr newCluster = current->clusters[n];
@@ -482,81 +459,83 @@ namespace m3D {
 
             if ( verbosity >= VerbosityNormal )
             {
-                cout << "Matchmaking ... ";
+                cout << "Matchmaking ... " << flush;;
                 start_timer();
             }
             
             if ( verbosity >= VerbosityDetails )
                 cout << endl << "-- Matching Results --" << endl;
 
-            while ( iterations <= maxIterations )
+            // put the matches in a special data structure
+            
+            typedef pair<size_t,T>      match_t;
+            typedef vector< match_t >   matchlist_t;
+            
+            matchlist_t matches;
+            
+            for (size_t idx = 0; idx < mapping.size(); idx++)
             {
-                // find the highest significant correlation match
+                vector<int> index_pair = mapping.linear_to_grid(idx);
+                int n = index_pair[0];
+                int m = index_pair[1];
+                
+                if (!constraints_satisified[n][m]) continue;
 
-                float maxProb = numeric_limits<float>::min();
+                matches.push_back(match_t(idx,sum_prob[n][m]));
+            }
+            
+            // sort the matches in descending order of 
+            // probability
+            
+            sort(matches.begin(), 
+                 matches.end(),  
+                 boost::bind(&match_t::second, _1) > boost::bind(&match_t::second, _2));
 
-                size_t maxN=0, maxM=0;
-
-                bool matchFound = false;
-
-                for ( n=0; n < new_count; n++ )
+            // now simply use this list to figure matches out
+            
+            for (size_t mi=0; mi < matches.size(); mi++)
+            {
+                match_t match = matches.at(mi);
+                
+                // back to n/m
+                
+                vector<int> pairing = mapping.linear_to_grid(match.first);
+                int n = pairing[0];
+                int m = pairing[1];
+                
+                typename Cluster<T>::ptr new_cluster = current->clusters[n];
+                typename Cluster<T>::ptr old_cluster = previous->clusters[m];
+                
+                // if the old cluster was matched already in a match
+                // with higher probability, then skip this one
+                
+                if (current->tracked_ids.find(old_cluster->id) 
+                        != current->tracked_ids.end())
                 {
-                    for ( m=0; m < old_count; m++ )
-                    {
-                        // only consider pairings, where the overlap constraint is satisfied
-
-                        if ( constraints_satisified[n][m] && (sum_prob[n][m] > maxProb) && (sum_prob[n][m] < currentMaxProb) )
-                        {
-                            maxProb = sum_prob[n][m];
-
-                            maxN = n;
-
-                            maxM = m;
-
-                            matchFound = true;
-                        }
-                    }
+                    continue;
                 }
 
-                if (!matchFound) break;
+                // update for mean velocity calculation
+                        
+                ::units::values::meters_per_second velocity = midDisplacement[n][m] / this->m_deltaT;
+                velocitySum += velocity;
+                velocityClusterCount++;
 
-                // take pick, remove paired candidates from arrays
+                // ID is continued
 
-                typename Cluster<T>::ptr new_cluster = current->clusters[maxN];
+                new_cluster->id = old_cluster->id;
 
-                typename Cluster<T>::ptr old_cluster = previous->clusters[maxM];
+                current->tracked_ids.insert(old_cluster->id);
+                
+                used_clusters.insert( old_cluster );
 
-                if ( new_cluster->id == m3D::NO_ID )
+                if (verbosity >= VerbosityNormal)
                 {
-                    // new cluster not tagged yet
-
-                    if ( used_clusters.find(old_cluster) == used_clusters.end() )
-                    {
-                        // old cluster not matched yet
-
-                        // TODO: calculate velocity in the same units as the dimension
-                        // variables
-
-                        ::units::values::meters_per_second velocity = midDisplacement[maxN][maxM] / this->m_deltaT;
-
-                        velocitySum += velocity;
-
-                        velocityClusterCount++;
-
-                        if ( verbosity >= VerbosityDetails )
-                            printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity.get() );
-
-                        new_cluster->id = old_cluster->id;
-
-                        used_clusters.insert( old_cluster );
-
-                        current->tracked_ids.insert( new_cluster->id );
-                    }
+                    cout << "pairing of new cluster " << n 
+                         << " / old cluster " << old_cluster->id
+                         <<" accepted (velocity " << velocity.get() << " m/s)"
+                         << endl;
                 }
-
-                currentMaxProb = maxProb;
-
-                iterations++;
             }
             
             if ( verbosity >= VerbosityNormal )
@@ -587,7 +566,7 @@ namespace m3D {
 
                     current->new_ids.insert( c->id );
 
-                    if ( verbosity >= VerbosityDetails )
+                    if ( verbosity >= VerbosityNormal )
                     {
                         cout << "#" << n
                              << " at " << c->mode
@@ -634,7 +613,7 @@ namespace m3D {
 
             if ( verbosity >= VerbosityNormal )
             {
-                cout << "Handing merges and splits ...";
+                cout << "Handing merges and splits ..." << flush;;
                 start_timer();
             }
 
@@ -696,7 +675,7 @@ namespace m3D {
                     for ( int i=0; i < candidates.size(); i++ )
                         merged_from.insert(previous->clusters[candidates[i]]->id);
 
-                    if ( verbosity >= VerbosityDetails )
+                    if ( verbosity >= VerbosityNormal )
                         cout << "clusters " << merged_from << " seem to have merged into cluster " << new_cluster->id << endl;
 
                     // store the given ID
@@ -720,7 +699,7 @@ namespace m3D {
                             current->tracked_ids.insert(new_cluster->id);
                             continued_merged_ids.insert(new_cluster->id);
 
-                            if ( verbosity >= VerbosityDetails )
+                            if ( verbosity >= VerbosityNormal )
                                 printf("\ttrack ID#%lu continues\n", new_cluster->id );
                         }
                         else
@@ -739,13 +718,13 @@ namespace m3D {
                                 current->tracked_ids.erase(the_id);
                             }
 
-                            if ( verbosity >= VerbosityDetails )
+                            if ( verbosity >= VerbosityNormal )
                                 printf("\ttrack ID#%lu ends. new track ID#%lu begins\n", the_id, new_cluster->id );
                         }
                     }
                     else
                     {
-                        if ( verbosity >= VerbosityDetails )
+                        if ( verbosity >= VerbosityNormal )
                             printf("\ttrack ID#%lu continues\n", new_cluster->id );
                     }
 
@@ -816,7 +795,7 @@ namespace m3D {
                     for ( int i=0; i < candidates.size(); i++ )
                         split_into.insert(current->clusters[candidates[i]]->id);
 
-                    if ( verbosity >= VerbosityDetails )
+                    if ( verbosity >= VerbosityNormal )
                         cout << "cluster " << old_cluster->id << " seems to have split into clusters " << split_into << endl;
 
                     for ( int i=0; i < candidates.size(); i++ )
@@ -841,7 +820,7 @@ namespace m3D {
 
                             current->tracked_ids.insert(c->id);
 
-                            if ( verbosity >= VerbosityDetails )
+                            if ( verbosity >= VerbosityNormal )
                                 printf("\ttrack ID#%lu continues\n", c->id );
                         }
                         else
@@ -854,7 +833,7 @@ namespace m3D {
 
                                 c->id = next_id(highest_id);
 
-                                if ( verbosity >= VerbosityDetails )
+                                if ( verbosity >= VerbosityNormal )
                                     printf("\tnew track ID#%lu begins\n", c->id );
 
                                 current->new_ids.insert( c->id );
