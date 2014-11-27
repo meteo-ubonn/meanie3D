@@ -133,7 +133,8 @@ namespace m3D {
                     cout << endl;
                 }
                 
-                typename Cluster<T>::ptr merged_cluster = new Cluster<T>();
+                typename Cluster<T>::ptr merged_cluster 
+                    = new Cluster<T>(old_cluster->mode,old_cluster->spatial_rank());
                 
                 merged_cluster->id = ++current_id;
                 
