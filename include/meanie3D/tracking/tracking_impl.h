@@ -543,10 +543,8 @@ namespace m3D {
 
                         velocityClusterCount++;
 
-//                        if ( verbosity >= VerbosityDetails )
-//                        {
+                        if ( verbosity >= VerbosityDetails )
                             printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity.get() );
-//                        }
 
                         new_cluster->id = old_cluster->id;
 
