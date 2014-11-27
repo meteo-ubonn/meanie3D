@@ -539,7 +539,7 @@ void correct_parallax(boost::filesystem::path in_path, const ShiftedProperties s
         nc_enddef(file.getId());
 
     } catch (netCDF::exceptions::NcException &e) {
-        cerr << e.what() << endl;
+        cerr << "ERROR:exception " << e.what() << endl;
         return;
     }
 
@@ -568,21 +568,21 @@ int main(int argc, char** argv) {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
     } catch (std::exception &e) {
-        cerr << "ERROR:parsing command line caused exception: " << e.what() << endl;
-        cerr << "Check meanie3D-trackplot --help for command line options" << endl;
-        exit(-1);
+        cerr << "ERROR:parsing command line caused exception: " << e.what() 
+             << ":check meanie3D-trackplot --help for command line options" << endl;
+        exit(EXIT_FAILURE);
     }
 
     // Version
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_SUCCESS);
     }
 
     if (vm.count("help") == 1 || argc < 2) {
         cout << desc << "\n";
-        return 1;
+        exit(EXIT_SUCCESS);
     }
 
     // Evaluate user input
@@ -593,8 +593,8 @@ int main(int argc, char** argv) {
     try {
         parse_commmandline(vm, source_path, shifted);
     } catch (const std::exception &e) {
-        cerr << e.what() << endl;
-        exit(-1);
+        cerr << "FATAL:" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     typedef set<fs::path> fset_t;
@@ -649,8 +649,8 @@ int main(int argc, char** argv) {
             correct_parallax(path, shifted);
             cout << "done." << endl;
         } catch (std::exception &e) {
-            cerr << "Exception processing " << path.filename().generic_string() << endl;
-            cerr << "Cause: " << e.what() << endl;
+            cerr << "ERORO:Exception processing " << path.filename().generic_string() 
+                    << ":" << e.what() << endl;
         }
     }
 

@@ -84,7 +84,7 @@ T* allocate(size_t n)
     T *array = (T*) malloc(sizeof (T) * n);
     if (array == NULL)
     {
-        cerr << "ERROR:out of memory" << endl;
+        cerr << "FATAL:out of memory" << endl;
         exit(EXIT_FAILURE);
     }
     return array;
@@ -356,7 +356,7 @@ void adjust_file(std::string filename, bool force) {
 
         }
     }    catch (::netCDF::exceptions::NcException e) {
-        cerr << e.what() << endl;
+        cerr << "ERROR:exception " << e.what() << endl;
     }
 }
 
@@ -383,21 +383,22 @@ int main(int argc, char** argv) {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
     }    catch (std::exception &e) {
-        cerr << "ERROR:parsing command line caused exception: " << e.what() << endl;
-        cerr << "Check meanie3D-minmax --help for command line options" << endl;
-        exit(-1);
+        cerr << "FATAL:parsing command line caused exception: " << e.what() 
+             << ": check meanie3D-minmax --help for command line options" 
+             << endl;
+        exit(EXIT_FAILURE);
     }
 
     // Version
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_SUCCESS);
     }
 
     if (vm.count("help") == 1 || argc < 2) {
         cout << desc << "\n";
-        return 1;
+        exit(EXIT_SUCCESS);
     }
 
     // Evaluate user input
@@ -410,8 +411,8 @@ int main(int argc, char** argv) {
     try {
         parse_commmandline(vm, source_path, force);
     }    catch (const std::exception &e) {
-        cerr << e.what() << endl;
-        exit(-1);
+        cerr << "ERROR:exception " << e.what() << endl;
+        exit(EXIT_FAILURE);;
     }
 
     typedef set<fs::path> fset_t;

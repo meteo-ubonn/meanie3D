@@ -353,6 +353,15 @@ namespace m3D {
          * cluster
          */
         T average_weight_response(const WeightFunction<T> *w) const;
+        
+#pragma mark -
+#pragma mark Misc
+        
+        /** Prints out cluster details 
+         * @param include points
+         */
+        void print(bool includePoints=false);
+
     };
 }
     

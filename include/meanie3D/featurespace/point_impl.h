@@ -81,6 +81,20 @@ namespace m3D {
     {
         return values == o.values;
     }
+    
+    template <class T>
+    void 
+    Point<T>::print(unsigned short num_tabs)
+    {
+        for (unsigned short ti=0; ti<num_tabs; ti++)
+            cout << "\t";
+        
+        std::cout << "gridpoint=" << this->gridpoint
+                << " coordinate=" << this->coordinate
+                << " values=" << this->values
+                << endl;
+    }
+
 }
 
 #endif

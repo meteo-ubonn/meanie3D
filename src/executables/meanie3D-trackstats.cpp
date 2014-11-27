@@ -385,9 +385,8 @@ int main(int argc, char** argv)
         program_options::notify(vm);
     } catch (std::exception &e)
     {
-        cerr << "Error parsing command line: " << e.what() << endl;
-        cerr << "Check meanie3D-trackplot --help for command line options" << endl;
-        return EXIT_FAILURE;
+        cerr << "FATAL:Error parsing command line: " << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     if (vm.count("help") == 1 || argc < 2)
@@ -452,10 +451,11 @@ int main(int argc, char** argv)
                 write_gnuplot_files,
                 write_track_dictionary);
 
-    } catch (const std::exception &e)
+    } 
+    catch (const std::exception &e)
     {
-        cerr << e.what() << endl;
-        return EXIT_FAILURE;
+        cerr << "FATAL:" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     // initialize values
@@ -535,7 +535,7 @@ int main(int argc, char** argv)
                     }
                     else if (spatial_rank != cluster_list->dimensions.size())
                     {
-                        cerr << "Spatial range must remain identical across the track" << endl;
+                        cerr << "FATAL:spatial range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
 
@@ -549,7 +549,7 @@ int main(int argc, char** argv)
                         value_rank = v_rank;
                     } else if (v_rank != value_rank)
                     {
-                        cerr << "Value range must remain identical across the track" << endl;
+                        cerr << "FATAL:value range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
 
@@ -669,7 +669,7 @@ int main(int argc, char** argv)
 
             if (dim.isNull())
             {
-                cerr << "ERROR: dimension " << dim_names[di] << " does not exist " << endl;
+                cerr << "FATAL: dimension " << dim_names[di] << " does not exist " << endl;
                 exit(EXIT_FAILURE);
             }
 
@@ -677,7 +677,7 @@ int main(int argc, char** argv)
 
             if (var.isNull())
             {
-                cerr << "ERROR: variable " << dim_names[di] << " does not exist " << endl;
+                cerr << "FATAL: variable " << dim_names[di] << " does not exist " << endl;
                 exit(EXIT_FAILURE);
             }
 

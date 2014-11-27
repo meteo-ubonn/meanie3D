@@ -320,7 +320,7 @@ template <typename T> void ms3d( const char* filename, const char* trajectoryFil
     } 
     catch ( CFFileConversionException e )
     {
-        cerr << endl << "Exception:" << e.what() << endl;
+        cerr << endl << "ERROR:exception:" << e.what() << endl;
     }
 }
 
@@ -399,7 +399,7 @@ template <typename T> void ms2d( const char* filename, const char* trajectoryFil
     } 
     catch ( CFFileConversionException e )
     {
-        cerr << endl << "Exception:" << e.what() << endl;
+        cerr << endl << "ERROR:Exception:" << e.what() << endl;
     }
 }
 

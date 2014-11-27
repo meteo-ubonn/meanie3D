@@ -93,7 +93,7 @@ namespace m3D {
         }
         catch (const netCDF::exceptions::NcException &e)
         {
-            cerr << "Exception while creating file " << netcdfPath << " : " << e.what() << endl;
+            cerr << "ERROR:exception while creating file " << netcdfPath << " : " << e.what() << endl;
             throw CFFileConversionException(e.what());
         }
 

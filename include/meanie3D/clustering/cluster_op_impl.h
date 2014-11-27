@@ -138,7 +138,7 @@ namespace m3D {
 
         if ( this->feature_space->points.size() == 0 )
         {
-            cerr << "FeatureSpace is empty" << endl;
+            cout << "Feature space is empty" << endl;
 
             return cluster_list;
         }

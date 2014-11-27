@@ -309,9 +309,8 @@ int main(int argc, char** argv)
     }
     catch (std::exception &e)
     {
-        cerr << "Error parsing command line: " << e.what() << endl;
-        cerr << "Check meanie3D-trackplot --help for command line options" << endl;
-        exit(-1);
+        cerr << "FATAL:Error parsing command line: " << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
     
     if ( vm.count("help")==1 || argc < 2 )
@@ -325,7 +324,7 @@ int main(int argc, char** argv)
     if ( vm.count("version") != 0 )
     {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
     
     // Evaluate user input
@@ -376,8 +375,8 @@ int main(int argc, char** argv)
     }
     catch (const std::exception &e)
     {
-        cerr << e.what() << endl;
-        exit(-1);
+        cerr << "FATAL:" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     // initialize values
@@ -1026,7 +1025,7 @@ int main(int argc, char** argv)
     else
     {
         cerr << "Argument --sourcepath does not point to a directory (sourcepath="+sourcepath+")" << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
     
     

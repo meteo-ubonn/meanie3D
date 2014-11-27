@@ -123,6 +123,15 @@ namespace m3D {
          */
         bool
         operator == (const Point<T> &o);
+        
+#pragma mark -
+#pragma mark Misc
+        
+        /** prints point info out to cout
+         * @param number of tabs to prepend
+         */
+        void print(unsigned short num_tabs=0);
+        
 
     };
 }

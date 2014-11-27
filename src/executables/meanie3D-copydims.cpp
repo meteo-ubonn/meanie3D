@@ -47,7 +47,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     if (vm.count("source") == 0) {
@@ -63,7 +63,7 @@ void parse_commmandline(program_options::variables_map vm,
     }    catch (const boost::exception& e) {
         cerr << "Missing 'root' argument" << endl;
 
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     // Open NetCDF file
@@ -74,7 +74,7 @@ void parse_commmandline(program_options::variables_map vm,
         file = new NcFile(source_filename, NcFile::read);
     }    catch (const netCDF::exceptions::NcException &e) {
         cerr << "ERROR opening file '" << source_filename << "' : " << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     *filePtr = file;
@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
     }    catch (std::exception &e) {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-trackplot --help for command line options" << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     if (vm.count("help") == 1 || argc < 2) {
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
         parse_commmandline(vm, &source, source_filename, root_directory, dimensions, dimension_variables);
     }    catch (const std::exception &e) {
         cerr << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     if (fs::is_directory(root_directory)) {
@@ -289,7 +289,7 @@ int main(int argc, char** argv) {
                     cout << " done." << endl;
                 }                catch (const netCDF::exceptions::NcException &e) {
                     cerr << "ERROR opening file '" << f.generic_string() << "' : " << e.what() << endl;
-                    exit(-1);
+                    exit(EXIT_FAILURE);;
                 }
             }
 

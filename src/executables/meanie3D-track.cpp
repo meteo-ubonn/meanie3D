@@ -58,7 +58,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     if (vm.count("previous") == 0) {
@@ -74,9 +74,8 @@ void parse_commmandline(program_options::variables_map vm,
     }    catch (const netCDF::exceptions::NcException &e) {
         cerr << "Exception opening file " << previous_filename << ":" << endl;
 
-        cerr << e.what() << endl;
-
-        exit(-1);
+        cerr << "FATAL:" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     try {
@@ -84,11 +83,8 @@ void parse_commmandline(program_options::variables_map vm,
 
         NcFile current_cluster_file(current_filename, NcFile::write);
     }    catch (const netCDF::exceptions::NcException &e) {
-        cerr << "Exception opening file " << current_filename << ":" << endl;
-
-        cerr << e.what() << endl;
-
-        exit(-1);
+        cerr << "FATAL:exception opening file " << current_filename << ":" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     // Verbosity
@@ -97,8 +93,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
-
-        exit(-1);
+        exit(EXIT_FAILURE);
     } else {
         verbosity = (Verbosity) vb;
     }
@@ -192,9 +187,8 @@ void parse_commmandline(program_options::variables_map vm,
             }
 
             if (!found_it) {
-                cerr << "Invalid dimension '" << name << "'. Check parameter --vtk-dimensions" << endl;
-
-                exit(-1);
+                cerr << "FATAL:invalid dimension '" << name << "'. Check parameter --vtk-dimensions" << endl;
+                exit(EXIT_FAILURE);
             }
         }
         delete file;
@@ -238,9 +232,8 @@ int main(int argc, char** argv) {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
     }    catch (std::exception &e) {
-        cerr << "Error parsing command line: " << e.what() << endl;
-        cerr << "Check meanie3D-track --help for command line options" << endl;
-        exit(-1);
+        cerr << "FATAL:error parsing command line: " << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     if (vm.count("help") == 1 || argc < 2) {
@@ -282,8 +275,8 @@ int main(int argc, char** argv) {
     }    
     catch (const std::exception &e) 
     {
-        cerr << e.what() << endl;
-        exit(-1);
+        cerr << "FATAL:" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
     
     #if WITH_VTK
@@ -315,22 +308,52 @@ int main(int argc, char** argv) {
         cout << endl;
     }
 
+    if ( verbosity >= VerbosityNormal )
+    {
+        cout << "Reading " << previous_filename << " ... ";
+        start_timer();
+    }
+        
     // Read previous clusters
 
     ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_filename);
+    
+    if ( verbosity >= VerbosityNormal )
+        cout << " done (" << stop_timer() << "s)" << endl;
+
+    if ( verbosity >= VerbosityDetails )
+    {
+        cout << endl << "-- previous clusters --" << endl;
+        previous->print();
+    }
 
     // Read current clusters
 
     CoordinateSystem<FS_TYPE> *cs;
 
+    if ( verbosity >= VerbosityNormal )
+    {
+        cout << "Reading " << current_filename << " ... ";
+        start_timer();
+    }
+
     ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read(current_filename, &cs);
+
+    if ( verbosity >= VerbosityNormal )
+        cout << " done (" << stop_timer() << "s)" << endl;
+
+    if ( verbosity >= VerbosityDetails )
+    {
+        cout << endl << "-- current clusters --" << endl;
+        current->print();
+    }
 
     // Check if the feature variables match
 
     if (previous->feature_variables != current->feature_variables) 
     {
-        cerr << "Incompatible feature variables in the cluster files:" << endl;
-        exit(-1);
+        cerr << "FATAL:Incompatible feature variables in the cluster files:" << endl;
+        exit(EXIT_FAILURE);
     }
 
     // get the tracking variable
@@ -359,15 +382,16 @@ int main(int argc, char** argv) {
             }            
             catch (const std::exception &e) 
             {
-                cerr << e.what() << endl;
-                exit(-1);
+                cerr << "FATAL:" << e.what() << endl;
+                exit(EXIT_FAILURE);
             }
         }
 
         if (!found_tracking_var) 
         {
-            cerr << "Tracking variable " << tracking_var.getName() << " is not part of the feature variables" << endl;
-            exit(-1);
+            cerr << "FATAL:tracking variable " << tracking_var.getName() 
+                 << " is not part of the feature variables" << endl;
+            exit(EXIT_FAILURE);
         }
     }
 

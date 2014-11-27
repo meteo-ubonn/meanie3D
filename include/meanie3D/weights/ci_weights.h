@@ -154,8 +154,8 @@ namespace m3D {
 
                     if (var.isNull())
                     {
-                        cerr << "CRITICAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" << endl;
-                        exit(-1);
+                        cerr << "FATAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" << endl;
+                        exit(EXIT_FAILURE);
                     }
 
                     // Obtain the constants for transforming radiances
@@ -180,8 +180,8 @@ namespace m3D {
             }
             catch (netCDF::exceptions::NcException &e)
             {
-                cerr << "CRITICAL: can not read from netcdf file " << filename << endl;
-                exit(-1);
+                cerr << "FATAL: can not read from netcdf file " << filename << endl;
+                exit(EXIT_FAILURE);
             }
 
             // Create the data store
@@ -202,8 +202,8 @@ namespace m3D {
             }
             catch (netCDF::exceptions::NcException &e)
             {
-                cerr << "CRITICAL: can not read from netcdf file " << m_ci_comparison_data_store->filename() << endl;
-                exit(-1);
+                cerr << "FATAL: can not read from netcdf file " << m_ci_comparison_data_store->filename() << endl;
+                exit(EXIT_FAILURE);
             }
 
             // index for effective range search ops

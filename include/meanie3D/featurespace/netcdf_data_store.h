@@ -125,14 +125,14 @@ namespace m3D {
 
                     if (var.isNull())
                     {
-                        cerr << "ERROR: no variable "+variable_names[i]+" found in file " + filename << endl;
-                        exit(-1);
+                        cerr << "FATAL: no variable "+variable_names[i]+" found in file " + filename << endl;
+                        exit(EXIT_FAILURE);
                     }
                 }
                 catch (netCDF::exceptions::NcException &e)
                 {
-                    cerr << "ERROR: can't access variable "+variable_names[i]+" in file " + filename << endl;
-                    exit(-1);
+                    cerr << "FATAL: can't access variable "+variable_names[i]+" in file " + filename << endl;
+                    exit(EXIT_FAILURE);
                 }
 
                 m_scale_factor[i] = 1.0;
@@ -306,8 +306,8 @@ namespace m3D {
                 T *values = (T*) calloc(N*M,sizeof(T));
 
                 if (values==NULL) {
-                    cerr << "Out of memory" << endl;
-                    exit(-1);
+                    cerr << "FATAL:out of memory" << endl;
+                    exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
@@ -382,8 +382,8 @@ namespace m3D {
                 T *values = (T*) calloc(N*M*K,sizeof(T));
                 if (values == NULL)
                 {
-                    cerr << "Out of memory" << endl;
-                    exit(-1);
+                    cerr << "FATAL:out of memory" << endl;
+                    exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
@@ -437,8 +437,8 @@ namespace m3D {
             }
             else
             {
-                cerr << "ERROR: Variables with " << spatial_dims << " spatial dimensions are not currently handled" << endl;
-                exit(-1);
+                cerr << "FATAL: Variables with " << spatial_dims << " spatial dimensions are not currently handled" << endl;
+                exit(EXIT_FAILURE);
             }
 
             // Store result in map
@@ -506,8 +506,8 @@ namespace m3D {
                 T *values = (T*) calloc(N,sizeof(T));
 
                 if (values==NULL) {
-                    cerr << "Out of memory" << endl;
-                    exit(-1);
+                    cerr << "FATAL:out of memory" << endl;
+                    exit(EXIT_FAILURE);
                 }
 
                 for (int i = 0; i < N; i++)
@@ -545,8 +545,8 @@ namespace m3D {
                 T *values = (T*) calloc(N*M,sizeof(T));
 
                 if (values==NULL) {
-                    cerr << "Out of memory" << endl;
-                    exit(-1);
+                    cerr << "FATAL:out of memory" << endl;
+                    exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
@@ -619,8 +619,8 @@ namespace m3D {
 
                 if (values == NULL)
                 {
-                    cerr << "Out of memory" << endl;
-                    exit(-1);
+                    cerr << "FATAL:out of memory" << endl;
+                    exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
@@ -676,8 +676,8 @@ namespace m3D {
             }
             else
             {
-                cerr << "ERROR: Variables with " << spatial_dims << " spatial dimensions are not currently handled" << endl;
-                exit(-1);
+                cerr << "FATAL: Variables with " << spatial_dims << " spatial dimensions are not currently handled" << endl;
+                exit(EXIT_FAILURE);
             }
         }
 
@@ -868,7 +868,7 @@ namespace m3D {
                 else
                 {
                     cerr << "FATAL: no buffered data for variable with index " << variable_index << endl;
-                    exit(-1);
+                    exit(EXIT_FAILURE);
                 }
 
                 if (m_fill_value[variable_index] != NO_VALUE)
@@ -939,7 +939,7 @@ namespace m3D {
             else
             {
                 cerr << "FATAL: no buffered data for variable with index " << variable_index << endl;
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
 
             // scale first, then offset
@@ -996,7 +996,7 @@ namespace m3D {
             else
             {
                 cerr << "FATAL: no buffered data for variable with index " << index << endl;
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
         }
 

@@ -51,7 +51,7 @@ namespace m3D {
                 std::ofstream f(m_filename.c_str(),ios::out);
                 if (!f.is_open())
                 {
-                    cerr << "ERROR:failed to open file " << m_filename << " for writing." << endl;
+                    cerr << "FATAL:failed to open file " << m_filename << " for writing." << endl;
                     exit(EXIT_FAILURE);
                 }
                 
@@ -79,7 +79,7 @@ namespace m3D {
                 ifstream f(m_filename.c_str(),ios::in);
                 if (!f.is_open())
                 {
-                    cerr << "ERROR:failed to open file " << m_filename << " for reading." << endl;
+                    cerr << "FATAL:failed to open file " << m_filename << " for reading." << endl;
                     exit(EXIT_FAILURE);
                 }
 
@@ -93,7 +93,7 @@ namespace m3D {
                     // grid point
                     if (!getline(f,line))
                     {
-                        cerr << "ERROR:failed to read line from " << m_filename << endl;
+                        cerr << "FATAL:failed to read line from " << m_filename << endl;
                         exit(EXIT_FAILURE);
                     }
                     p->gridpoint = from_string<int>(line);

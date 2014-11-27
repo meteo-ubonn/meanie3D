@@ -22,8 +22,8 @@ namespace m3D { namespace utils {
 
         if (dimension_sizes.size() != 2)
         {
-            cerr << "ERROR:this method is only supported for 2D data" << endl;
-            exit(-1);
+            cerr << "FATAL:this method is only supported for 2D data" << endl;
+            exit(EXIT_FAILURE);
         }
 
         using namespace cv;
@@ -74,8 +74,8 @@ namespace m3D { namespace utils {
 
         if (dimension_sizes.size() != 2)
         {
-            cerr << "ERROR:this method is only supported for 2D data" << endl;
-            exit(-1);
+            cerr << "FATAL:this method is only supported for 2D data" << endl;
+            exit(EXIT_FAILURE);
         }
 
         using namespace cv;
@@ -179,8 +179,8 @@ namespace m3D { namespace utils {
 
         if (coord_system->rank() != 2)
         {
-            cerr << "ERROR: 'shifted_store_from_flow_of_variable' is only supported for 2D" << endl;
-            exit(-1);
+            cerr << "FATAL:'shifted_store_from_flow_of_variable' is only supported for 2D" << endl;
+            exit(EXIT_FAILURE);
         }
 
         Mat previous_image_raw, previous_image, current_image_raw, current_image, flow, cflow;

@@ -78,9 +78,9 @@ namespace m3D { namespace utils {
 
             if (vtk_dim_names.size() != dim_names.size())
             {
-                cerr << "ERROR: --dimensions and --vtk-dimensions must have \
+                cerr << "FATAL: --dimensions and --vtk-dimensions must have \
                         the same number of arguments" << endl;
-                exit(-1);
+                exit(EXIT_FAILURE);
             }
 
             // Check if all dimensions are accounted for in --vtk-dimensions
@@ -91,11 +91,11 @@ namespace m3D { namespace utils {
 
                 if (vi == dim_names.end())
                 {
-                    cerr << "ERROR: --vtk-dimensions - entry " 
+                    cerr << "FATAL: --vtk-dimensions - entry " 
                             << vtk_dim_names[i] 
                             << " has no pendant in attribute \
                                 'featurespace_dimensions'" << endl;
-                    exit(-1);
+                    exit(EXIT_FAILURE);
                 }
 
                 int index = utils::vectors::index_of_first( dim_names, vtk_dim_names[i] );
@@ -758,7 +758,7 @@ namespace m3D { namespace utils {
         }
         catch (std::exception &e)
         {
-            cerr << e.what() << endl;
+            cerr << "ERROR:exception " << e.what() << endl;
         }
 
         for ( size_t ci = 0; ci < list->clusters.size(); ci++ )

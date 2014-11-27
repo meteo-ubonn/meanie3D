@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 
         if (vm.count("file") == 0) {
             cerr << "No input" << endl;
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
 
         string infile = vm["file"].as<string>();
@@ -101,14 +101,14 @@ int main(int argc, char** argv)
                 file_paths.push_back(fn);
             }
         } else {
-            cerr << "ERROR:File or path does not exist: " << infile << endl;
+            cerr << "FATAL:File or path does not exist: " << infile << endl;
             exit(EXIT_FAILURE);
         }
 
         boost::filesystem::path outpath(vm["output-dir"].as<std::string>());
 
         if (!boost::filesystem::exists(outpath) || !boost::filesystem::is_directory(outpath)) {
-            cerr << "ERROR:Can't write to path " << outpath << endl;
+            cerr << "FATAL:Can't write to path " << outpath << endl;
             exit(EXIT_FAILURE);
         }
 
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
                     
                     cout << " done." << endl;
                 }                catch (CFFileConversionException e) {
-                    cerr << endl << "Exception:" << e.what() << endl;
+                    cerr << endl << "ERROR:exception:" << e.what() << endl;
                 }
 
                 delete file;
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
     }    
     catch (const std::exception& e) 
     {
-        cerr << "ERROR:Exception: " << e.what() << endl;
+        cerr << "FATAL:exception: " << e.what() << endl;
         exit(EXIT_FAILURE);
     }
     

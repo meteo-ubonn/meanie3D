@@ -82,7 +82,7 @@ void parse_commmandline(program_options::variables_map vm,
         ts_format = TimestampFormatAutomatic;
     } else {
         cerr << "Unknown value '" << fmt << "' for --format. Allowed values are oase-2d oase-3d radolan" << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 }
 
@@ -158,8 +158,8 @@ timestamp_t parse_timestamp(std::string filename, TimestampFormat format) {
                 dateformat = TB4_FORMAT;
                 example = TB4_EXAMPLE;
             } else {
-                cerr << "ERROR:could not detect format for filename " << filename << ". Please advise format with --format switch." << endl;
-                exit(-1);
+                cerr << "FATAL:could not detect format for filename " << filename << ". Please advise format with --format switch." << endl;
+                exit(EXIT_FAILURE);
             }
         }
         break;
@@ -214,8 +214,8 @@ timestamp_t parse_timestamp(std::string filename, TimestampFormat format) {
     tm_t *ts = initialize_tm_struct();
 
     if (strptime(str.c_str(), dateformat.c_str(), ts) == NULL) {
-        cerr << "Error parsing datetime string " << str << " from format " << dateformat << endl;
-        exit(-1);
+        cerr << "FATAL:parsing datetime string " << str << " from format " << dateformat << endl;
+        exit(EXIT_FAILURE);
     }
 
     // HErZ-TB4 has no minute/second
@@ -256,16 +256,15 @@ int main(int argc, char** argv) {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
     }    catch (std::exception &e) {
-        cerr << "ERROR:parsing command line caused exception: " << e.what() << endl;
-        cerr << "Check meanie3D-trackplot --help for command line options" << endl;
-        exit(-1);
+        cerr << "FATAL:exception parsing command line: " << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     // Version
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     if (vm.count("help") == 1 || argc < 2) {
@@ -283,8 +282,8 @@ int main(int argc, char** argv) {
     try {
         parse_commmandline(vm, source_path, format);
     }    catch (const std::exception &e) {
-        cerr << e.what() << endl;
-        exit(-1);
+        cerr << "FATAL:" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     typedef set<fs::path> fset_t;

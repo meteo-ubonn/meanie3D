@@ -52,15 +52,14 @@ void parse_commmandline(program_options::variables_map vm,
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_SUCCESS);
     }
 
     // filename
 
     if (vm.count("file") == 0) {
         cerr << "Missing 'file' argument" << endl;
-
-        exit(1);
+        exit(EXIT_FAILURE);
     } else {
         filename = vm["file"].as<string>();
     }
@@ -84,8 +83,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     if (vm.count("type") == 0) {
         cerr << "Missing 'type' argument" << endl;
-
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 
     string type_str = vm["type"].as<string>();
@@ -135,7 +133,7 @@ void parse_commmandline(program_options::variables_map vm,
 
                 if (fi == dimensions.end()) {
                     cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of " << variable << "'s dimensions" << endl;
-                    exit(-1);
+                    exit(EXIT_FAILURE);
                 }
 
                 size_t index = fi - dimensions.begin();
@@ -146,14 +144,14 @@ void parse_commmandline(program_options::variables_map vm,
             if (vtk_dimension_indexes.size() != dimensions.size()) {
                 cerr << "The number of vtk-dimensions must be identical to the number of dimensions of " << variable << endl;
 
-                exit(-1);
+                exit(EXIT_FAILURE);;
             }
 
             delete file;
         } catch (const netCDF::exceptions::NcException &e) {
             cerr << e.what() << endl;
 
-            exit(-1);
+            exit(EXIT_FAILURE);;
         }
     }
 
@@ -197,8 +195,6 @@ void convert_composite(const string &filename,
         destination_path.replace_extension("vtk");
 
         string dest_path = destination_path.generic_string();
-
-
 
         NcFile *file = new NcFile(filename, NcFile::read);
 
@@ -257,7 +253,7 @@ void convert_composite(const string &filename,
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << e.what() << endl;
 
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 }
 
@@ -289,18 +285,18 @@ int main(int argc, char** argv) {
         program_options::notify(vm);
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "NetCDF exception:" << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     } catch (std::exception &e) {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-cfm2vtk --help for command line options" << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     // Version
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     if (vm.count("help") == 1 || argc < 2) {
@@ -343,11 +339,11 @@ int main(int argc, char** argv) {
         }
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "NetCDF exception:" << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     } catch (const std::exception &e) {
         cerr << "std::exception:" << e.what() << endl;
         cerr << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     return 0;

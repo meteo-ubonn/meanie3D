@@ -117,8 +117,8 @@ void FSTestBase<T>::generate_dimensions()
     }    
     catch (netCDF::exceptions::NcException &e) 
     {
-        cerr << "ERROR:could not create coordinate system:" << e.what() << endl;
-        exit(-1);
+        cerr << "FATAL:could not create coordinate system:" << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -143,9 +143,9 @@ FSTestBase<T>::file()
         } 
         catch (netCDF::exceptions::NcException &e)
         {
-            cerr << "ERROR:could not create file " << m_filename 
+            cerr << "FATAL:could not create file " << m_filename 
                     << ":" << e.what() << endl;
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
     }
     
@@ -161,8 +161,8 @@ FSTestBase<T>::add_variable(string name, T valid_min, T valid_max)
         std::string type_name = typeid (T).name();
 
         if (!(type_name == "f" || type_name == "d")) {
-            cerr << "Only float and double are supported at this time." << endl;
-            exit(-1);
+            cerr << "FATAL:only float and double are supported at this time." << endl;
+            exit(EXIT_FAILURE);
         }
 
         NcType type = (type_name == "f") ? ncFloat.getTypeClass() : ncDouble.getTypeClass();
@@ -178,9 +178,9 @@ FSTestBase<T>::add_variable(string name, T valid_min, T valid_max)
     } 
     catch (netCDF::exceptions::NcException &e) 
     {
-        cerr << "ERROR:could not add variable " << name << " to file "
+        cerr << "FATAL:could not add variable " << name << " to file "
                 << this->m_filename << ":" << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -207,7 +207,7 @@ FSTestBase<T>::reopen_file_for_reading()
     {
         cerr <<"ERROR:could not reopen file"<<m_filename<<" for reading:"
                 << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 }
 

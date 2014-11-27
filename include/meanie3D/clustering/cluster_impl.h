@@ -100,7 +100,7 @@ namespace m3D {
 #if DEBUG_MEANSHIFT_GRAPH
             if ( p->cluster )
             {
-                cerr << "Point " << p->values << " is already assigned to cluster at " << p->cluster->mode << endl;
+                cerr << "ERROR:point " << p->values << " is already assigned to cluster at " << p->cluster->mode << endl;
                 continue;
             }
 #endif
@@ -341,7 +341,7 @@ namespace m3D {
 
                 if ( isnan( center[0] ) )
                 {
-                    cerr << "ARGHH!" << endl;
+                    cerr << "ERROR:ARGHH!" << endl;
                 }
             }
 
@@ -629,6 +629,24 @@ namespace m3D {
                         median.at(i) = values.at(index);
                     }
                 }
+            }
+        }
+    }
+    
+    template <typename T>
+    void
+    Cluster<T>::print(bool includePoints)
+    {
+        cout << "Cluster #" << this->id << " at " 
+                << this->mode << " (" << this->size() 
+                << " points.)" << endl;
+        
+        if (includePoints)
+        {
+            for (size_t i=0; i < this->size(); i++)
+            {
+                typename Point<T>::ptr p = this->at(i);
+                p->print(1);
             }
         }
     }

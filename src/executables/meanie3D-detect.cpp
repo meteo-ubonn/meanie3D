@@ -91,7 +91,7 @@ void parse_commmandline(program_options::variables_map vm,
     } catch (const boost::exception& e) {
         cerr << "Missing parameter -o " << endl;
 
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     // Open NetCDF file
@@ -101,8 +101,8 @@ void parse_commmandline(program_options::variables_map vm,
     try {
         file = new NcFile(filename, NcFile::read);
     } catch (const netCDF::exceptions::NcException &e) {
-        cerr << "ERROR opening file '" << filename << "' : " << e.what() << endl;
-        exit(-1);
+        cerr << "Error opening file '" << filename << "' : " << e.what() << endl;
+        exit(EXIT_FAILURE);;
     }
 
     *filePtr = file;
@@ -132,7 +132,7 @@ void parse_commmandline(program_options::variables_map vm,
 
         if (dimVar.isNull()) {
             cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
-            exit(-1);
+            exit(EXIT_FAILURE);;
         }
 
         dimension_variables.push_back(dimVar);
@@ -146,7 +146,7 @@ void parse_commmandline(program_options::variables_map vm,
     if (vm.count("variables") == 0) {
         cerr << "Missing mandatory parameter --variables" << endl;
 
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     tokenizer var_tokens(vm["variables"].as<string>(), sep);
@@ -156,7 +156,7 @@ void parse_commmandline(program_options::variables_map vm,
 
         if (var.isNull()) {
             cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
-            exit(-1);
+            exit(EXIT_FAILURE);;
         }
 
         variables.push_back(var);
@@ -187,7 +187,7 @@ void parse_commmandline(program_options::variables_map vm,
 
         if (convection_filter_index < 0) {
             cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name << "' not a featurespace variable" << endl;
-            exit(-1);
+            exit(EXIT_FAILURE);;
         }
     }
 
@@ -414,7 +414,7 @@ void parse_commmandline(program_options::variables_map vm,
 
             if (fi == dimensions.end()) {
                 cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of --dimensions" << endl;
-                exit(-1);
+                exit(EXIT_FAILURE);;
             }
 
             size_t index = fi - dimensions.begin();
@@ -425,7 +425,7 @@ void parse_commmandline(program_options::variables_map vm,
         if (vtk_dimension_indexes.size() != dimensions.size()) {
             cerr << "The number of vtk-dimensions must be identical to dimensions" << endl;
 
-            exit(-1);
+            exit(EXIT_FAILURE);;
         }
     }
 
@@ -480,7 +480,7 @@ void parse_commmandline(program_options::variables_map vm,
     if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
 
-        exit(-1);
+        exit(EXIT_FAILURE);;
     } else {
         verbosity = (Verbosity) vb;
     }
@@ -500,13 +500,13 @@ void parse_commmandline(program_options::variables_map vm,
 
                 if (var.isNull()) {
                     cerr << "Can't open variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                    exit(-1);
+                    exit(EXIT_FAILURE);;
                 }
 
                 vtk_variables.push_back(var);
             } catch (const netCDF::exceptions::NcException &e) {
                 cerr << "Can't find variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                exit(-1);
+                exit(EXIT_FAILURE);;
             }
         }
     }
@@ -631,14 +631,14 @@ int main(int argc, char** argv) {
     } catch (std::exception &e) {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-detect --help for command line options" << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     // Version
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     if (vm.count("help") == 1 || argc < 2) {
@@ -753,7 +753,7 @@ int main(int argc, char** argv) {
         }
     } catch (const std::exception &e) {
         cerr << e.what() << endl;
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     bool show_progress = (verbosity > VerbositySilent);
@@ -1122,8 +1122,8 @@ int main(int argc, char** argv) {
             cluster_filter.filter_with_previous_clusters(previous, &clusters, coord_system, weight_function, verbosity);
             
         } catch (const std::exception &e) {
-            cerr << "ERROR reading previous cluster file: " << e.what() << endl;
-            exit(-1);
+            cerr << "FATAL:exception reading previous cluster file: " << e.what() << endl;
+            exit(EXIT_FAILURE);
         }
 
         cout << endl << "Done. Have " << clusters.clusters.size() << " clusters:" << endl;

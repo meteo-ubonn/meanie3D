@@ -134,7 +134,7 @@ namespace m3D {
             }
             catch (std::out_of_range& e)
             {
-                cerr << "Reverse coordinate transformation failed for coordinate=" << x_spatial << endl;
+                cerr << "ERROR:reverse coordinate transformation failed for coordinate=" << x_spatial << endl;
             }
 
             return result;

@@ -227,7 +227,7 @@ namespace m3D {
 
         if ( denominator == 0 )
         {
-            cerr << "Denominator is 0!!" << endl;
+            cerr << "ERROR:denominator is 0!!" << endl;
         }
 #endif
         vector<T> dx = numerator / denominator;

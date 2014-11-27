@@ -360,8 +360,9 @@ namespace m3D {
         read(const string& path, CoordinateSystem<T> **cs_ptr=NULL );
 
         /** Prints the cluster list out to console
+         * @param include point details?
          */
-        void print();
+        void print(bool includePoints = false);
         /** Counts the number of points in all the clusters. Must be
          * equal to the number of points in the feature space.
          */

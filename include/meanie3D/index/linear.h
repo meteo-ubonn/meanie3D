@@ -88,9 +88,8 @@ namespace m3D {
             {
                 //                KNNSearchParams *p = (KNNSearchParams *)  &params;
 
-                cerr << "KNN is not supported yet in LinearIndex" << endl;
-
-                exit(-1);
+                cerr << "FATAL:KNN is not supported yet in LinearIndex" << endl;
+                exit(EXIT_FAILURE);
             }
 
             RangeSearchParams<T> *p = (RangeSearchParams<T> *) &params;

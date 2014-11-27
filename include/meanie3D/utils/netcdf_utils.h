@@ -801,7 +801,7 @@ namespace m3D { namespace utils { namespace netcdf {
         }
         catch (const netCDF::exceptions::NcException &e)
         {
-            cerr << "Exception opening file " << source_path << " for reading : " << e.what() << endl;
+            cerr << "FATAL:exception opening file " << source_path << " for reading : " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
         
@@ -818,7 +818,7 @@ namespace m3D { namespace utils { namespace netcdf {
         }
         catch (const netCDF::exceptions::NcException &e)
         {
-            cerr << "Exception opening file " << dest_path << " for writing : " << e.what() << endl;
+            cerr << "FATAL:Exception opening file " << dest_path << " for writing : " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
         

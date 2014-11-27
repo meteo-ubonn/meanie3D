@@ -126,7 +126,7 @@ void parse_commmandline(program_options::variables_map vm,
     } catch (const boost::exception& e) {
         cerr << "Missing 'root' argument" << endl;
 
-        exit(-1);
+        exit(EXIT_FAILURE);;
     }
 
     // Open NetCDF file
@@ -136,8 +136,8 @@ void parse_commmandline(program_options::variables_map vm,
     try {
         file = new NcFile(source_filename, NcFile::read);
     } catch (const netCDF::exceptions::NcException &e) {
-        cerr << "ERROR opening file '" << source_filename << "' : " << e.what() << endl;
-        exit(-1);
+        cerr << "error opening file '" << source_filename << "' : " << e.what() << endl;
+        exit(EXIT_FAILURE);;
     }
 
     *filePtr = file;
@@ -233,9 +233,12 @@ bool read_topography(NcFile &topography_file) {
 
     initialize_array(gTopography, 0.0f);
 
-    if (topography_file.isNull()) {
+    if (topography_file.isNull()) 
+    {
         cerr << "ERROR: could not open topography file " << topography_file.getName() << endl;
-    } else {
+    } 
+    else 
+    {
         NcVar topo = topography_file.getVar("topography_srtm");
 
         if (topo.isNull()) {
@@ -307,8 +310,9 @@ void add_local_dimensions(NcFile &topography_file, NcFile &mapfile) {
         x.putVar(&x_data[0]);
         y.putVar(&y_data[0]);
         z.putVar(&z_data[0]);
-    } catch (std::exception &e) {
-        cerr << e.what() << endl;
+    } catch (std::exception &e) 
+    {
+        cerr << "ERROR:exception " << e.what() << endl;
     }
 
     delete x_data;
@@ -372,7 +376,7 @@ void add_national_dimensions(NcFile &topography_file, NcFile &mapfile) {
         y.putVar(&y_data[0]);
         z.putVar(&z_data[0]);
     } catch (std::exception &e) {
-        cerr << e.what() << endl;
+        cerr << "ERROR:exception " << e.what() << endl;
     }
 
     free(y_data);

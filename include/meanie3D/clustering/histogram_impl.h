@@ -129,7 +129,7 @@ namespace m3D {
     {
         if ( max == min )
         {
-            cerr << "Histogram::create:ERROR:degenerate case, min==max" << endl;
+            cerr << "ERROR:histogram::create:ERROR:degenerate case, min==max" << endl;
 
             vector<size_t> bins(1,points.size());
 

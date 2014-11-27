@@ -123,9 +123,8 @@ void FSUniformTest2D<T>::SetUp()
     }
     catch (const netCDF::exceptions::NcException &e)
     {
-        cerr << "Error while generating dimensions: " << e.what() << endl;
-
-        exit(-1);
+        cerr << "FATAL:error while generating dimensions: " << e.what() << endl;
+        exit(EXIT_FAILURE);
     }
 
     // Create a variable

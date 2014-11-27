@@ -33,9 +33,9 @@ namespace m3D {
         }
         catch (const exceptions::NcException &e)
         {
-            cerr << "ERROR:could not create coordinate system from file "
+            cerr << "FATAL:could not create coordinate system from file "
                     << file->getName()<<" :"<<e.what()<<endl;
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -116,13 +116,13 @@ namespace m3D {
                     } else if (strcmp(unit_string.c_str(), "km") == 0) {
                         m_dimension_units.push_back("km");
                     } else {
-                        cerr << "WARNING: Variable " << var.getName() << " has units'" << unit_string << "' which is currently not handled. It will be assumed to be in meters [m]" << endl;
+                        cerr << "WARNING:variable " << var.getName() << " has units'" << unit_string << "' which is currently not handled. It will be assumed to be in meters [m]" << endl;
                         m_dimension_units.push_back("m");
                     }
                 }
                 catch (netCDF::exceptions::NcException &e)
                 {
-                    cerr << "WARNING: Variable " << var.getName() << " has no 'units' attribute. It will be assumed to be in meters [m]" << endl;
+                    cerr << "WARNING:variable " << var.getName() << " has no 'units' attribute. It will be assumed to be in meters [m]" << endl;
                     m_dimension_units.push_back("m");
                 }
 
@@ -134,8 +134,9 @@ namespace m3D {
                 } 
                 catch (std::exception &e) 
                 {
-                    cerr << "Variable " << var.getName() << " is missing valid_min+valid_max or valid_range attribute" << endl;
-                    cerr << "Falling back on the variable values" << endl;
+                    cerr << "WARNING:variable " << var.getName() 
+                            << " is missing valid_min+valid_max or valid_range attribute" 
+                            << ", falling back on the variable values." << endl;
 
                     min = std::numeric_limits<T>::max();
                     max = std::numeric_limits<T>::min();
@@ -153,7 +154,7 @@ namespace m3D {
                         }
                     }
 
-                    cerr << "Range found from data: [" << min << "," << max << "]" << endl;
+                    cerr << "WARNING:range found from data: [" << min << "," << max << "]" << endl;
                 }
 
                 m_resolution[i] = (max - min) / (m_dimension_sizes[i] - 1);
@@ -163,9 +164,9 @@ namespace m3D {
         }
         catch (const exceptions::NcException &e)
         {
-            cerr << "ERROR:could not construct coordinate system:"
+            cerr << "FATAL:could not construct coordinate system:"
                     << e.what() << endl;
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -219,7 +220,7 @@ namespace m3D {
         try {
             reverse_lookup(coordinate, gridpoint);
         } catch (std::out_of_range& e) {
-            cerr << "Reverse coordinate transformation failed for coordinate=" << coordinate << endl;
+            cerr << "ERROR:reverse coordinate transformation failed for coordinate=" << coordinate << endl;
         }
 
         return new GridPoint(gridpoint);

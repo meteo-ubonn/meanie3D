@@ -152,9 +152,8 @@ namespace m3D {
         {
             if ( params->search_type() == SearchTypeKNN )
             {
-                std::cerr << "KNN not supported by KDTree yet" << std::endl;
-
-                exit(-1);
+                std::cerr << "FATAL:KNN not supported by KDTree yet" << std::endl;
+                exit(EXIT_FAILURE);
             }
 
             // Check if the index needs re-building

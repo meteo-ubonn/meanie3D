@@ -27,12 +27,6 @@ namespace m3D {
         using namespace utils;
         using namespace utils::vectors;
         
-        if ( verbosity >= VerbosityNormal )
-        {
-            cout << endl << "Tracking ..." << endl;
-            start_timer();
-        }
-
 #pragma mark -
 #pragma mark Preliminaries        
         
@@ -42,19 +36,21 @@ namespace m3D {
         {
             if ( verbosity >= VerbosityNormal )
             {
-                cout << "No current clusters. Skipping tracking." << endl;
+                cout << endl << "No current clusters. Skipping tracking." << endl;
             }
             skip_tracking = true;
         }
 
         // Find out the highest id from the previous list
 
-        size_t highest_id = previous->highest_id;
+        m3D::id_t highest_id = previous->highest_id;
 
         if (highest_id == NO_ID || (highest_id == 0 && previous->clusters.size() > 0))
         {
             // figure it out from the highest found ID
-
+            
+            highest_id = 0;
+                    
             for (size_t ci=0; ci < previous->clusters.size(); ci++)
             {
                 if (previous->clusters[ci]->id > highest_id)
@@ -65,7 +61,7 @@ namespace m3D {
         }
         
         if ( verbosity >= VerbosityDetails )
-        cout << "Highest used ID is " << highest_id << endl;
+            cout << "Highest used ID is " << highest_id << endl;
         
         if (!skip_tracking)
         {
@@ -111,7 +107,7 @@ namespace m3D {
                 
                 if (tracking_var_index < 0)
                 {
-                    cerr << "ERROR:Illegal variable name " << *tracking_variable_name << " for histogram comparison " << endl;
+                    cerr << "FATAL:Illegal variable name " << *tracking_variable_name << " for histogram comparison " << endl;
                     exit(EXIT_FAILURE);
                 }
                 
@@ -178,9 +174,13 @@ namespace m3D {
 
             size_t old_count = previous->clusters.size();
             size_t new_count = current->clusters.size();
-
-            if ( verbosity >= VerbosityDetails )
-                cout << "Matching " << new_count << " new clusters against " << old_count << " old clusters" << endl;
+            
+            if ( verbosity >= VerbosityNormal )
+            {
+                cout << "Tracking has " << (new_count * old_count) << " combinations" << endl; 
+                cout << "Calculating preliminary data  ..."; 
+                start_timer();
+            }
 
     #pragma mark -
     #pragma mark Compute correlation matrixes and constraints
@@ -230,6 +230,9 @@ namespace m3D {
 
                 if (tracking_var_index >= 0)
                 {
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
                     newCluster->histogram(tracking_var_index,valid_min,valid_max);
                 }
 
@@ -247,6 +250,9 @@ namespace m3D {
 
                 if (tracking_var_index >= 0)
                 {
+                    #if WITH_OPENMP
+                    #pragma omp critical
+                    #endif
                     oldHistogram = oldCluster->histogram(tracking_var_index,valid_min,valid_max);
                 }
                 
@@ -289,9 +295,14 @@ namespace m3D {
                 // TODO: calculate overlap constraint radius in the same dimension
                 // as the dimension variables!
 
-                coverOldByNew[n][m] = new_index.occupation_ratio(oldCluster,newCluster);
-                coverNewByOld[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
-
+                #if WITH_OPENMP
+                #pragma omp critical
+                #endif
+                {
+                    coverOldByNew[n][m] = new_index.occupation_ratio(oldCluster,newCluster);
+                    coverNewByOld[n][m] = old_index.occupation_ratio(newCluster,oldCluster);
+                }
+                
                 if (m_useOverlapConstraint)
                 {
                     ::units::values::m radius = oldCluster->radius(cs);
@@ -310,24 +321,28 @@ namespace m3D {
 
                 // calculate average mid displacement
 
-                vector<T> oldCenter = oldCluster->geometrical_center(current->dimensions.size());
-                vector<T> newCenter = newCluster->geometrical_center(current->dimensions.size());
-
+                vector<T> oldCenter,newCenter;
+                
+                #if WITH_OPENMP
+                #pragma omp critical
+                #endif
+                {
+                    oldCenter = oldCluster->geometrical_center(current->dimensions.size());
+                    newCenter = newCluster->geometrical_center(current->dimensions.size());
+                }
+                
                 vector<T> dx = newCenter - oldCenter;
 
+                #if WITH_OPENMP
+                #pragma omp critical
+                #endif
                 midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
 
                 //
                 // Maximum velocity constraint
                 //
 
-                // TODO: calculate the max displacement in the same dimension
-                // as the dimension variables
-
-                ::units::values::m displacement = midDisplacement[n][m];
-
-                if ( displacement > maxDisplacement ) continue;
-
+                if ( midDisplacement[n][m] > maxDisplacement ) continue;
 
                 // Histogram Correlation
 
@@ -358,6 +373,11 @@ namespace m3D {
                 constraints_satisified[n][m] = true;
             }
 
+            if ( verbosity >= VerbosityNormal )
+            {
+                cout << " done. (" << stop_timer() << "s)" << endl;
+            }
+
             // Can't have zeros here
 
             if (maxHistD==0)
@@ -368,8 +388,11 @@ namespace m3D {
     #pragma mark -
     #pragma mark Calculate probabilities
 
-            if ( verbosity >= VerbosityDetails )
-                cout << endl << "-- Correlation Table --" << endl;
+            if ( verbosity >= VerbosityNormal )
+            {
+                cout << "Calculating matching table ... ";
+                start_timer();
+            }
 
             #if WITH_OPENMP
             #pragma omp parallel for schedule(dynamic)
@@ -408,6 +431,9 @@ namespace m3D {
             
             if ( verbosity >= VerbosityDetails )
             {
+                if ( verbosity >= VerbosityDetails )
+                    cout << endl << "-- Correlation Table --" << endl;
+
                 for (int n=0; n < new_count; n++)
                 {
                     typename Cluster<T>::ptr newCluster = current->clusters[n];
@@ -431,6 +457,11 @@ namespace m3D {
                     }
                 }
             }
+            
+            if ( verbosity >= VerbosityNormal )
+            {
+                cout << " done. (" << stop_timer() << "s)" << endl;
+            }
 
     #pragma mark -
     #pragma mark Matchmaking
@@ -449,8 +480,14 @@ namespace m3D {
 
             set< typename Cluster<T>::ptr > used_clusters;
 
+            if ( verbosity >= VerbosityNormal )
+            {
+                cout << "Matchmaking ... ";
+                start_timer();
+            }
+            
             if ( verbosity >= VerbosityDetails )
-                printf("\n-- Matching Results --\n");
+                cout << endl << "-- Matching Results --" << endl;
 
             while ( iterations <= maxIterations )
             {
@@ -506,10 +543,10 @@ namespace m3D {
 
                         velocityClusterCount++;
 
-                        if ( verbosity >= VerbosityDetails )
-                        {
+//                        if ( verbosity >= VerbosityDetails )
+//                        {
                             printf("pairing new cluster #%4lu / old Cluster ID=#%4lu accepted, velocity %4.1f m/s\n", maxN, old_cluster->id, velocity.get() );
-                        }
+//                        }
 
                         new_cluster->id = old_cluster->id;
 
@@ -523,13 +560,18 @@ namespace m3D {
 
                 iterations++;
             }
+            
+            if ( verbosity >= VerbosityNormal )
+            {
+                cout << " done. (" << stop_timer() << "s)" << endl;
+            }
 
-    //        // update mean velocity
-    //        float newMeanVelocity = 0;
-    //        if (velocityClusterCount>0) newMeanVelocity = velocitySum/velocityClusterCount;
-    //        if (newMeanVelocity > 2.0) meanVelocity = newMeanVelocity;
-    //
-    //        SPLog(@"\ncurrent mean velocity: %4.2f m/s",meanVelocity);
+            //        // update mean velocity
+            //        float newMeanVelocity = 0;
+            //        if (velocityClusterCount>0) newMeanVelocity = velocitySum/velocityClusterCount;
+            //        if (newMeanVelocity > 2.0) meanVelocity = newMeanVelocity;
+            //
+            //        SPLog(@"\ncurrent mean velocity: %4.2f m/s",meanVelocity);
 
     #pragma mark -
     #pragma mark Tag unmatched clusters
@@ -592,10 +634,16 @@ namespace m3D {
     #pragma mark -
     #pragma mark Merging
 
+            if ( verbosity >= VerbosityNormal )
+            {
+                cout << "Handing merges and splits ...";
+                start_timer();
+            }
+
             if ( verbosity >= VerbosityDetails )
                 cout << endl << "-- Merges --" << endl;
 
-            // for each new Cluster check coverage of old Clusters
+            id_set_t continued_merged_ids;
 
             bool had_merges = false;
 
@@ -604,7 +652,7 @@ namespace m3D {
                 vector<float> candidates;
 
                 typename Cluster<T>::ptr new_cluster = current->clusters[n];
-
+                
                 // keep track of the largest candidate, that is: the cluster from
                 // the previous series, that covers most of the area of the current
                 // cluster
@@ -621,6 +669,12 @@ namespace m3D {
 
                         if ( overlap > this->m_ms_threshold )
                         {
+                            // check if the id was already continued in a merge
+                            
+                            typename Cluster<T>::ptr c = previous->clusters[m];
+                            id_set_t::iterator fi = continued_merged_ids.find(c->id);
+                            if (fi != continued_merged_ids.end()) continue;
+                            
                             candidates.push_back(m);
 
                             if (coverNewByOld[n][m] > maxCover)
@@ -666,6 +720,7 @@ namespace m3D {
                             new_cluster->id = c->id;
 
                             current->tracked_ids.insert(new_cluster->id);
+                            continued_merged_ids.insert(new_cluster->id);
 
                             if ( verbosity >= VerbosityDetails )
                                 printf("\ttrack ID#%lu continues\n", new_cluster->id );
@@ -712,13 +767,19 @@ namespace m3D {
             if ( verbosity >= VerbosityDetails )
                 cout << endl << "-- Splits --" << endl;
 
-            // for each new Cluster check coverage of old Clusters
-
             bool had_splits = false;
 
             for ( m=0; m < previous->clusters.size(); m++ )
             {
                 typename Cluster<T>::ptr old_cluster = previous->clusters[m];
+
+                // check if the id was already continued in a merge
+                
+                id_set_t::iterator fi = continued_merged_ids.find(old_cluster->id);
+                
+                if (fi != continued_merged_ids.end()) continue;
+                
+                // collect candidates
 
                 vector<float> candidates;
 
@@ -734,12 +795,14 @@ namespace m3D {
 
                         if ( overlap > this->m_ms_threshold )
                         {
+                            // add to split candidates and record the candidate
+                            // with the most coverage
+                            
                             candidates.push_back(n);
 
                             if (coverOldByNew[n][m] > maxCover)
                             {
                                 maxCover = coverOldByNew[n][m];
-
                                 largestCandidateIndex = n;
                             }
                         }
@@ -814,7 +877,7 @@ namespace m3D {
 
             if ( verbosity >= VerbosityNormal )
             {
-                cout << "done. (Correlating " << (new_count * old_count) << " objects took " << stop_timer() << " seconds)" << endl;
+                cout << " done. (" << stop_timer() << "s)" << endl;
             }
             
             std::cout.precision(prec);

@@ -450,7 +450,7 @@ namespace m3D {
                         points->at(index) = c;
                         if (p->isOriginalPoint != c->isOriginalPoint)
                         {
-                            cerr << "Copy ERROR" << endl;
+                            cerr << "ERROR:could not copy point" << endl;
                         }
                     }
                     else

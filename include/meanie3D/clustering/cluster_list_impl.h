@@ -158,8 +158,8 @@ namespace m3D {
             }
             catch ( const netCDF::exceptions::NcException &e )
             {
-                cerr << "Exception opening file " << filename << " for writing : " << e.what() << endl;
-                exit(-1);
+                cerr << "FATAL:exception opening file " << filename << " for writing : " << e.what() << endl;
+                exit(EXIT_FAILURE);
             }
 
             // Create dimensions
@@ -337,13 +337,13 @@ namespace m3D {
                 // everywhere else and NetCDF. Using unsigned long long
                 // produces a compiler warning but also correct results.
                 unsigned long long cid = (unsigned long long) cluster->id;
-
+                
                 // Create a dimension
 
                 stringstream dim_name(stringstream::in | stringstream::out);
 
                 dim_name << "cluster_dim_" << cid;
-
+                
                 NcDim cluster_dim;
 
                 cluster_dim = file->addDim( dim_name.str(), cluster->size() );
@@ -359,7 +359,7 @@ namespace m3D {
                 dims[1] = dim;
 
                 NcVar var;
-
+                
                 var = file->addVar( var_name.str(), ncDouble, dims );
                 var.setCompression(false,true,3);
 
@@ -369,7 +369,7 @@ namespace m3D {
                 
                 // margin flag
                 
-                std::string flag = cluster->has_margin_points() ? "Y" : "N";
+                std::string flag = (cluster->has_margin_points() ? "Y" : "N");
                 var.putAtt( "has_margin_points", flag); 
 
                 // check if there's any merge
@@ -417,7 +417,7 @@ namespace m3D {
                 
                 if (data == NULL)
                 {
-                    cerr << "ERROR:out of memory" << endl;
+                    cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
                 
@@ -459,8 +459,8 @@ namespace m3D {
                     boost::filesystem::rename(path+"-new", path, ec);
                     if (ec.value() != boost::system::errc::success)
                     {
-                        cerr << "ERROR: could not rename " << (path+"-new") << " to " << path<< endl;
-                        cerr << "REASON: " << ec.message() << endl;
+                        cerr << "ERROR: could not rename " << (path+"-new") 
+                                << " to " << path << ":" << ec.message() << endl;
                     }
                 }
                 else
@@ -494,7 +494,8 @@ namespace m3D {
         }
         catch (const std::exception &e)
         {
-            std::cerr << "Exception while writing cluster file: " << e.what() << endl;
+            std::cerr << "ERROR:exception while writing cluster file: " << e.what() << endl;
+            throw e;
         }
     }
 
@@ -519,9 +520,9 @@ namespace m3D {
         id_set_t    dropped_ids;
         id_map_t    merges;
         id_map_t    splits;
-        int         tracking_time_difference;
+        int         tracking_time_difference = NO_TIME;
         timestamp_t timestamp = 0;
-        m3D::id_t   highest_id;
+        m3D::id_t   highest_id = NO_ID;
 
         // TODO: let this exception go up
 
@@ -602,7 +603,7 @@ namespace m3D {
 
                     file->getAtt("highest_id").getValues(value);
                     //unsigned long long hid = boost::lexical_cast<unsigned long long>(value);
-                    highest_id = boost::lexical_cast<m3D::id_t>(value);
+                   highest_id = boost::lexical_cast<m3D::id_t>(value);
 
                     file->getAtt("tracking_time_difference").getValues(&tracking_time_difference);
                 }
@@ -623,7 +624,7 @@ namespace m3D {
                 if (var.isNull())
                 {
                     cerr << "FATAL: could not find featurespace variable " << feature_variable_names[i] << endl;
-                    exit(-1);
+                    exit(EXIT_FAILURE);
                 }
 
                 feature_variables.push_back(var);
@@ -653,8 +654,8 @@ namespace m3D {
                 stringstream dim_name(stringstream::in | stringstream::out);
 
                 dim_name << "cluster_dim_" << cid;
-
                 NcDim cluster_dim = file->getDim( dim_name.str().c_str() );
+                size_t cluster_size = cluster_dim.getSize();
 
                 // Read the variable
 
@@ -683,63 +684,64 @@ namespace m3D {
                 cluster->id = cid;
                 cluster->mode = mode;
                 cluster->set_has_margin_points(margin_flag);
-
-                // iterate over the data
-
-                // Read the points, one by one
-
-                vector<size_t> index(2,0);
-                vector<size_t> count(2,0);
-                count[0] = 1;
-                count[1] = fs_dim.getSize();
-
-                for ( size_t point_index = 0; point_index < cluster_dim.getSize(); point_index++ )
+                
+                // Read the cluster
+                
+                size_t numElements = cluster_size * cluster->rank();
+                
+                T *data = (T*) malloc(sizeof(T) * numElements);
+                
+                if (data == NULL)
                 {
-                    // Allocate data
+                    cerr << "FATAL:out of memory" << endl;
+                    exit(EXIT_FAILURE);
+                }
+                
+                var.getVar(data);
+                
+                for (size_t pi = 0; pi < cluster_size; pi++)
+                {
+                    vector<T> values(cluster->rank(),0.0);
 
-                    T data[fs_dim.getSize()];
-
-                    // set index up and read
-
-                    index[0] = point_index;
-
-                    var.getVar(index,count,&data[0]);
-
-                    // copy data over to vectors
-
-                    vector<T> coordinate(dimensions.size(),0);
-
-                    vector<T> values(fs_dim.getSize(),0);
-
-                    for ( size_t i=0; i<fs_dim.getSize(); i++)
+                    // copy point from data
+                    
+                    for (size_t di = 0; di < cluster->rank(); di++)
                     {
-                        values[i] = data[i];
-
-                        if ( i < dimensions.size() )
-                        {
-                            coordinate[i] = values[i];
-                        }
+                        values [di] = data[pi * cluster->rank() + di];
                     }
-
-                    // Create a point and add it to the cluster
-
-                    Point<T> *p = PointFactory<T>::get_instance()->create( coordinate, values );
-
-                    typename CoordinateSystem<T>::GridPoint gp = cs->newGridPoint();
-
+                    
+                    // get coordinate subvector
+                    
+                    vector<T> coordinate(values.begin(),values.begin() + cs->rank());
+                    
+                    // transform to gridpoint
+                    
                     try
                     {
-                        cs->reverse_lookup(p->coordinate,gp);
-
+                        vector<int> gp(cs->rank(),0);
+                        
+                        cs->reverse_lookup(coordinate,gp);
+                        
+                        // only when this succeeds do we have the complete
+                        // set of data for the point
+                        
+                        typename Point<T>::ptr p = PointFactory<T>::get_instance()->create();
+                        
+                        p->values = values;
+                        p->coordinate = coordinate;
                         p->gridpoint = gp;
-
+                       
+                        // add to cluster
+                        
                         cluster->add_point(p);
                     }
                     catch (std::out_of_range& e)
                     {
-                        cerr << "Reverse coordinate transformation failed for coordinate=" << p->coordinate << endl;
+                        cerr << "ERROR:reverse coordinate transformation failed for coordinate=" << coordinate << endl;
                     }
                 }
+
+                delete data;
 
                 list.push_back( cluster );
             }
@@ -751,10 +753,15 @@ namespace m3D {
         }
         catch (const std::exception &e)
         {
-            cerr << e.what() << endl;
+            cerr << "ERROR:exception " << e.what() << endl;
         }
 
-        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, source_file, false);
+        // When reading, use the cluster file itself as source
+        // path so that the timestamp can be read. Set the real
+        // source path up afterwards.
+        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, path, false);
+        
+        cl->source_file = source_file;
 
         cl->clusters  = list;
         cl->ncFile = file;
@@ -777,13 +784,13 @@ namespace m3D {
 
     template <typename T>
     void
-    ClusterList<T>::print()
+    ClusterList<T>::print(bool includePoints)
     {
         for ( size_t ci = 0; ci < clusters.size(); ci++ )
         {
             typename Cluster<T>::ptr c = clusters[ci];
 
-            cout << "Cluster #" << ci << " (id=" << c->id << ") at " << c->mode << " (" << c->size() << " points.)" << endl;
+            c->print(includePoints);
         }
 
     }
