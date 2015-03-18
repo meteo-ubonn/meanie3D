@@ -14,13 +14,27 @@ import string
 import shutil
 import time
 import json
+import platform
 from subprocess import call
+
+# -------------------------------------------------------------------
+# Get DYLD_LIBRARY_PATH depending on operating system. OSX needs 
+# special work because of the homebrew gfx libraries, which get 
+# in the way of the system libraries.
+# @return DYLD_LIBRARY_PATH
+# -------------------------------------------------------------------
+def get_dyld_library_path():
+    path = "/usr/local/lib"
+    if platform.system() == 'Darwin':
+        path = "/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/:"+path
+    return path
+
 
 # -------------------------------------------------------------------
 # Define some executables to be called from python
 # -------------------------------------------------------------------
 
-BIN_PREFIX = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:/usr/local/lib;"
+BIN_PREFIX = "export DYLD_LIBRARY_PATH="+get_dyld_library_path()+";"
 detection_bin = BIN_PREFIX + "meanie3D-detect"
 tracking_bin  = BIN_PREFIX + "meanie3D-track"
 trackplot_bin = BIN_PREFIX + "meanie3D-trackplot"

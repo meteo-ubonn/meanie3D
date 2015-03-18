@@ -12,6 +12,7 @@ from visit import *
 import glob
 import os
 import os.path
+import platform
 import string
 from os.path import basename
 from subprocess import call
@@ -23,6 +24,18 @@ from subprocess import call
 # module variable holding a reference
 # -------------------------------------------------------------------
 datetime_annotation="not_set"
+
+# -------------------------------------------------------------------
+# Get DYLD_LIBRARY_PATH depending on operating system. OSX needs 
+# special work because of the homebrew gfx libraries, which get 
+# in the way of the system libraries.
+# @return DYLD_LIBRARY_PATH
+# -------------------------------------------------------------------
+def get_dyld_library_path():
+    path = "/usr/local/lib"
+    if platform.system() == 'Darwin':
+        path = "/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/:"+path
+    return path
 
 # -------------------------------------------------------------------
 # Saves PNG file
