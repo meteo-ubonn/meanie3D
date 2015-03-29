@@ -516,6 +516,9 @@ namespace m3D {
 
             // now simply use this list to figure matches out
             
+            // keep track of the new clusters as well (#355)
+            id_set_t matched_ids;
+            
             for (size_t mi=0; mi < matches.size(); mi++)
             {
                 match_t match = matches.at(mi);
@@ -532,12 +535,13 @@ namespace m3D {
                 // if the old cluster was matched already in a match
                 // with higher probability, then skip this one
                 
-                if (current->tracked_ids.find(old_cluster->id) 
-                        != current->tracked_ids.end())
-                {
+                if (current->tracked_ids.find(old_cluster->id) != current->tracked_ids.end())
                     continue;
-                }
-
+                
+                // Or if the NEW cluster was matched earlier, skip again. 
+                if (matched_ids.find(new_cluster->id) != matched_ids.end())
+                    continue;
+               
                 // update for mean velocity calculation
                         
                 ::units::values::meters_per_second velocity = midDisplacement[n][m] / this->m_deltaT;
@@ -545,12 +549,12 @@ namespace m3D {
                 velocityClusterCount++;
 
                 // ID is continued
-
                 new_cluster->id = old_cluster->id;
-
                 current->tracked_ids.insert(old_cluster->id);
+                used_clusters.insert(old_cluster);
                 
-                used_clusters.insert( old_cluster );
+                // remove the new cluster from the race
+                matched_ids.insert(new_cluster->id);
 
                 if (verbosity >= VerbosityNormal)
                 {
