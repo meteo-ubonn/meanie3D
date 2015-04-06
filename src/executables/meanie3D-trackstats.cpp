@@ -93,8 +93,14 @@ void parse_commmandline(program_options::variables_map vm,
 
     // Default is the dimensions
 
-    if (vm.count("vtk-dimensions") > 0)
-    {
+    if (vm.count("vtk-dimensions") > 0) {
+        
+        if (boost::algorithm::contains(vm["vtk-dimensions"],",") 
+            || boost::algorithm::contains(vm["vtk-dimensions"],"(") 
+            || boost::algorithm::contains(vm["vtk-dimensions"],")") {
+            cerr << "wrong arguments for --vtk-dimension. Example: --vtk-dimensions x y z" << endl;
+            exit(EXIT_FAILURE);
+        }
         vtk_dim_names = vm["vtk-dimensions"].as<svec_t>();
     }
 
@@ -297,27 +303,27 @@ double average(const map<T, size_t> &m, bool ignore_one = true)
 void get_memory(double &free_memory, double &used_memory)
 {
     const double MB = 1024.0 * 1024.0;
-    
+
     vm_size_t page_size;
     mach_port_t mach_port;
     mach_msg_type_number_t count;
     vm_statistics_data_t vm_stats;
 
     mach_port = mach_host_self();
-    
-    count = sizeof(vm_stats) / sizeof(natural_t);
-    
-    if (KERN_SUCCESS == host_page_size(mach_port, &page_size) &&
-        KERN_SUCCESS == host_statistics(mach_port, HOST_VM_INFO, 
-                                        (host_info_t)&vm_stats, &count))
-    {
-        free_memory = ((double)vm_stats.free_count * (int64_t)page_size) / MB;
-        
-        
 
-        used_memory = (((double)vm_stats.active_count + 
-                       (double)vm_stats.inactive_count + 
-                       (double)vm_stats.wire_count) *  (double)page_size) / MB;
+    count = sizeof (vm_stats) / sizeof (natural_t);
+
+    if (KERN_SUCCESS == host_page_size(mach_port, &page_size) &&
+            KERN_SUCCESS == host_statistics(mach_port, HOST_VM_INFO,
+            (host_info_t) & vm_stats, &count))
+    {
+        free_memory = ((double) vm_stats.free_count * (int64_t) page_size) / MB;
+
+
+
+        used_memory = (((double) vm_stats.active_count +
+                (double) vm_stats.inactive_count +
+                (double) vm_stats.wire_count) * (double) page_size) / MB;
     }
 }
 #endif
@@ -451,8 +457,7 @@ int main(int argc, char** argv)
                 write_gnuplot_files,
                 write_track_dictionary);
 
-    } 
-    catch (const std::exception &e)
+    } catch (const std::exception &e)
     {
         cerr << "FATAL:" << e.what() << endl;
         exit(EXIT_FAILURE);
@@ -485,6 +490,15 @@ int main(int argc, char** argv)
 
     cout << "Collecting track data from NetCDF files: " << endl;
     
+    // This file should not be closed until the code has
+    // run through, or netCDF will upchuck exceptions when
+    // accessing coordinate system
+    netCDF::NcFile *coords_file = NULL;
+    vector<NcDim> dimensions;
+    vector<NcVar> dimension_vars;
+    vector<string> dim_names;
+    vector<string> var_names;
+
     size_t c_id = 0;
 
     if (fs::is_directory(source_path))
@@ -501,23 +515,43 @@ int main(int argc, char** argv)
             if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc"))
             {
                 // read the ClusterList from the file
-                
+
 #if APPLE
                 double free_mem, used_mem;
-                get_memory(free_mem,used_mem);
-                cout << "Processing " << f.filename().generic_string() 
-                        << " ( used " << used_mem << " mb, " 
-                        << free_mem<< " mb available) ... ";
+                get_memory(free_mem, used_mem);
+                cout << "Processing " << f.filename().generic_string()
+                        << " ( used " << used_mem << " mb, "
+                        << free_mem << " mb available) ... ";
 #else 
-                cout << "Processing " << f.filename().generic_string() 
+                cout << "Processing " << f.filename().generic_string()
                         << " ... ";
 #endif
-                
+
                 // Remember the first one
 
                 if (coords_filename.empty())
                 {
                     coords_filename = f.generic_string();
+                    coords_file = new NcFile(coords_filename, NcFile::read);
+                    
+                    // Read "featurespace_dimensions"
+
+                    string fs_dimensions;
+                    coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
+                    dim_names = vectors::from_string<string>(fs_dimensions);
+                    
+                    string fs_vars;
+                    coords_file->getAtt("featurespace_variables").getValues(fs_vars);
+
+                    vector<string> all_var_names = vectors::from_string<string>(fs_vars);
+                    for (size_t i = spatial_rank; i < all_var_names.size(); i++)
+                    {
+                        var_names.push_back(all_var_names[i]);
+                    }
+
+                    #if WITH_VTK
+                    VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
+                    #endif
                 }
 
                 try
@@ -532,8 +566,7 @@ int main(int argc, char** argv)
                     if (spatial_rank == 0)
                     {
                         spatial_rank = cluster_list->dimensions.size();
-                    }
-                    else if (spatial_rank != cluster_list->dimensions.size())
+                    } else if (spatial_rank != cluster_list->dimensions.size())
                     {
                         cerr << "FATAL:spatial range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
@@ -575,31 +608,29 @@ int main(int argc, char** argv)
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
                             track_map[id] = tm;
-                        }
-                        else
+                        } else
                         {
                             tm = ti->second;
                         }
 
                         boost::filesystem::path sf(cluster_list->source_file);
                         tm->sourcefiles.push_back(sf.filename().generic_string());
-                        
+
                         // Instead of the original cluster, use a TrackCluster, which
                         // has facilities of writing it's point list to disk and read
                         // it back on demand, saving memory.
-                        
+
                         TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster);
                         tm->clusters.push_back(tc);
-                        
+
                         // dispose of the points in the original cluster
-                        
+
                         cluster->clear(true);
                     }
-                    
+
                     delete cluster_list;
-                    
-                } 
-                catch (netCDF::exceptions::NcException &e)
+
+                } catch (netCDF::exceptions::NcException &e)
                 {
                     cerr << "ERROR:" << e.what() << endl;
                 } catch (std::exception &e)
@@ -622,40 +653,8 @@ int main(int argc, char** argv)
 
         CoordinateSystem<FS_TYPE> *coord_system = NULL;
 
-        // This file should not be closed until the code has
-        // run through, or netCDF will upchuck exceptions when
-        // accessing coordinate system
-
-        netCDF::NcFile *coords_file = NULL;
-
-        // collate dimensions
-        vector<NcDim> dimensions;
-        vector<NcVar> dimension_vars;
-
-        coords_file = new NcFile(coords_filename, NcFile::read);
-
-        // Read "featurespace_dimensions"
-
-        string fs_dimensions;
-        coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
-        vector<string> dim_names = vectors::from_string<string>(fs_dimensions);
-
-        string fs_vars;
-        coords_file->getAtt("featurespace_variables").getValues(fs_vars);
-
-        vector<string> all_var_names = vectors::from_string<string>(fs_vars);
-        vector<string> var_names;
-        for (size_t i = spatial_rank; i < all_var_names.size(); i++)
-        {
-            var_names.push_back(all_var_names[i]);
-        }
-
         cout << "Spatial range variables (dimensions): " << dim_names << endl;
         cout << "Value range variables: " << var_names << endl;
-
-#if WITH_VTK
-        VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
-#endif
 
         multimap<string, NcVar> vars = coords_file->getVars();
         multimap<string, NcVar>::iterator vi;
@@ -785,7 +784,7 @@ int main(int argc, char** argv)
 
                     if (i < (track->clusters.size() - 1))
                         dict << "," << endl;
-                    
+
                     // Dispose of the points again to free up memory.
                     c->clear(true);
                 }
@@ -863,9 +862,9 @@ int main(int argc, char** argv)
             // Skip the rest if cumulative size statistics and cluster / speed
             // stats are all off
 
-            if (!create_cumulated_size_statistics 
-                    && !create_cluster_statistics 
-                    && !create_speed_statistics 
+            if (!create_cumulated_size_statistics
+                    && !create_cluster_statistics
+                    && !create_speed_statistics
                     && !create_direction_statistics)
                 continue;
 
@@ -877,11 +876,11 @@ int main(int argc, char** argv)
 
             Cluster<FS_TYPE>::list::iterator ti;
             Cluster<FS_TYPE>::ptr previous_cluster = NULL;
-            
+
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
                 Cluster<FS_TYPE>::ptr cluster = *ti;
-                
+
                 if (create_cluster_statistics)
                 {
                     size_t cluster_size = cluster->size();
@@ -907,8 +906,7 @@ int main(int argc, char** argv)
                     if (csfi == cluster_sizes.end())
                     {
                         cluster_sizes[cluster_size] = 1;
-                    }
-                    else
+                    } else
                     {
                         cluster_sizes[cluster_size] = (csfi->second + 1);
                     }
@@ -952,8 +950,7 @@ int main(int argc, char** argv)
                         if (si == speeds.end())
                         {
                             speeds[speed] = 1;
-                        }
-                        else
+                        } else
                         {
                             speeds[speed] = (si->second + 1);
                         }
@@ -990,8 +987,7 @@ int main(int argc, char** argv)
                         {
                             p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
                             p.y = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(1));
-                        }
-                        else
+                        } else
                         {
 #endif
                             // traditionally the coordinates in NetCDF files
@@ -1055,8 +1051,7 @@ int main(int argc, char** argv)
                         if (si == directions.end())
                         {
                             directions[direction] = 1;
-                        }
-                        else
+                        } else
                         {
                             directions[direction] = (si->second + 1);
                         }
@@ -1088,30 +1083,30 @@ int main(int argc, char** argv)
                     {
                         // this makes a copy of the point in the index
                         index.set(p->gridpoint, p);
-                        
+
                         // get the copied point
                         indexed = index.get(p->gridpoint);
                     }
 
                     // only add up the value range
 
-                    for (size_t k=0; k<value_rank; k++)
+                    for (size_t k = 0; k < value_rank; k++)
                     {
-                        indexed->values[spatial_rank+k] += p->values[spatial_rank+k];
+                        indexed->values[spatial_rank + k] += p->values[spatial_rank + k];
                     }
 
                     points_processed++;
                 }
-                
+
                 // Purge points in memory
                 cluster->clear(true);
             }
 
             // A track's size is the number of non-null points in
             // the index
-            
+
             size_t track_size = index.count();
-            
+
 #if WITH_VTK
             if (write_cumulated_tracks_as_vtk)
             {
@@ -1125,14 +1120,13 @@ int main(int argc, char** argv)
             index.clear(true);
 
             // time to delete the map
-            
+
             map<size_t, size_t>::iterator tlfi = track_sizes.find(track_size);
 
             if (tlfi == track_sizes.end())
             {
                 track_sizes[track_size] = 1;
-            }
-            else
+            } else
             {
                 track_sizes[track_size] = (tlfi->second + 1);
             }
@@ -1146,7 +1140,7 @@ int main(int argc, char** argv)
             // Write out the cumulative file as netcdf and vtk
 
             // Don't need it anymore
-            
+
             delete track;
 
             // NETCDF
@@ -1467,8 +1461,7 @@ int main(int argc, char** argv)
         // system data
 
         delete coords_file;
-    }
-    else
+    } else
     {
         cerr << "Argument --sourcepath does not point to a directory (sourcepath=" + sourcepath + ")" << endl;
         return EXIT_FAILURE;
