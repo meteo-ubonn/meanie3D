@@ -13,6 +13,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/exception/info.hpp>
 #include <boost/smart_ptr.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <map>
 #include <vector>
@@ -94,10 +95,8 @@ void parse_commmandline(program_options::variables_map vm,
     // Default is the dimensions
 
     if (vm.count("vtk-dimensions") > 0) {
-        
-        if (boost::algorithm::contains(vm["vtk-dimensions"],",") 
-            || boost::algorithm::contains(vm["vtk-dimensions"],"(") 
-            || boost::algorithm::contains(vm["vtk-dimensions"],")") {
+        std::string s = vm["vtk-dimensions"].as<std::string>();
+        if (contains(s,",") || contains(s,"(") || contains(s,")")) {
             cerr << "wrong arguments for --vtk-dimension. Example: --vtk-dimensions x y z" << endl;
             exit(EXIT_FAILURE);
         }
