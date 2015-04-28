@@ -96,7 +96,7 @@ namespace m3D {
         , m_maxVelocity(::units::values::meters_per_second(100.0))                  // limit max velocity to 30 m/s (~108 km/h)
         , m_max_size_deviation(2.5)             // how many percent may the objects vary in size (number of points) between scans (250%)
         , m_useOverlapConstraint(true)
-        , m_ms_threshold(0.33)                  // percentage coverage old/new for merge/split (33%)
+        , m_ms_threshold(0.5)                   // percentage coverage old/new for merge/split (33%)
         , m_msc_threshold(0.75)                 // percentage coverage old/new in merge/split for continuing track (75%)
         , m_continueIDs(true)                   // continue IDs through splits/merges ?)
         {};

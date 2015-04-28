@@ -288,8 +288,7 @@ namespace m3D {
         catch (const std::exception& e)
         {
             h = Histogram<T>::create( m_points, variable_index, valid_min, valid_max, number_of_bins );
-
-            this->m_histograms.insert( std::pair< size_t, typename Histogram<T>::ptr >( variable_index, h ) );
+            this->m_histograms.insert( std::pair< size_t, typename Histogram<T>::ptr >(variable_index, h));
         }
 
         return h;
@@ -300,12 +299,9 @@ namespace m3D {
     Cluster<T>::clear_histogram_cache()
     {
         typename histogram_map_t::iterator it;
-
-        for ( it = this->m_histograms.begin(); it != this->m_histograms.end(); ++it )
-        {
+        for ( it = this->m_histograms.begin(); it != this->m_histograms.end(); ++it ) {
             delete it->second;
         }
-
         this->m_histograms.clear();
     }
 
@@ -316,14 +312,12 @@ namespace m3D {
     PointIndex<T> *
     Cluster<T>::index()
     {
-        if ( this->m_index == NULL )
-        {
+        if ( this->m_index == NULL ) {
             // index is constructed using the spatial components only
-
             vector<size_t> indexes(m_spatial_rank);
-
-            for (size_t i=0; i<m_spatial_rank; i++) indexes[i]=i;
-
+            for (size_t i=0; i<m_spatial_rank; i++) {
+                indexes[i]=i;
+            }
             this->m_index = PointIndex<T>::create( &this->points, indexes );
         }
 
@@ -334,10 +328,8 @@ namespace m3D {
     void
     Cluster<T>::clear_index()
     {
-        if ( this->m_index != NULL )
-        {
+        if ( this->m_index != NULL ) {
             delete this->m_index;
-
             this->m_index = NULL;
         }
     }
@@ -351,24 +343,17 @@ namespace m3D {
     {
         using namespace utils::vectors;
         
-        if ( m_geometrical_center.empty() )
-        {
+        if (m_geometrical_center.empty()) {
             vector<T> center(spatial_dimensions,0.0);
-
             typename Point<T>::list::iterator pi;
-
             for ( pi = this->get_points().begin(); pi != this->get_points().end(); ++pi )
             {
                 vector<T> tmp = center;
-
                 center += (*pi)->coordinate;
-
-                if ( isnan( center[0] ) )
-                {
+                if ( isnan( center[0] ) ) {
                     cerr << "ERROR:ARGHH!" << endl;
                 }
             }
-
             m_geometrical_center = center/((T)this->get_points().size());
         }
 

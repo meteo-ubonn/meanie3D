@@ -124,19 +124,13 @@ namespace m3D { namespace utils {
                                       const Cluster<T> *cluster_b) const
     {
         int common_points = 0;
-
-        for (int i=0; i < cluster_a->size(); i++)
-        {
+        for (int i=0; i < cluster_a->size(); i++) {
             typename Point<T>::ptr p = cluster_a->at(i);
-
-            if (m_index->get(p->gridpoint) == cluster_b->id)
-            {
+            if (m_index->get(p->gridpoint) == cluster_b->id) {
                 common_points++;
             }
         }
-
         double ratio = ((double)common_points)/((double)cluster_a->size());
-
         return ratio;
     }
 }}

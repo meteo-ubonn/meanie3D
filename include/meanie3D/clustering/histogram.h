@@ -42,10 +42,6 @@ namespace m3D {
 
         vector<size_t>  m_bins;
 
-        bool            m_sum_dirty;
-
-        size_t          m_sum;
-
     public:
 
         typedef Histogram<T>* ptr;
@@ -55,28 +51,25 @@ namespace m3D {
 
         /** Default @constructor is private
          */
-        Histogram() : m_sum_dirty(true),m_sum(0) {};
+        Histogram() {};
 
         /** @constructor
          * @param number of bins
          */
-        Histogram( const size_t &size ) : m_bins(vector<size_t>(size,0)), m_sum_dirty(true), m_sum(0)  {};
+        Histogram( const size_t &size ) : m_bins(vector<size_t>(size,0)) {};
 
         /** Constructor.
          * @param initial bins
          */
-        Histogram( vector<size_t> &bins ) : m_bins(bins), m_sum_dirty(true), m_sum(0) {};
+        Histogram( vector<size_t> &bins ) : m_bins(bins) {};
 
         /** Copy constructor
          */
-        Histogram( const Histogram<T> &o ) : m_bins(o.bins()), m_sum_dirty(true), m_sum(0) {};
+        Histogram( const Histogram<T> &o ) : m_bins(o.bins()) {};
 
         /** Destructor 
          */
-        ~Histogram()
-        {
-            cout << "~Histogram()" << endl;
-        };
+        ~Histogram() {};
 
 #pragma mark -
 #pragma mark Operators
