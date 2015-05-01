@@ -209,8 +209,6 @@ namespace m3D {
             ::units::values::m maxMidD = ::units::values::m(numeric_limits<T>::min());
 
             // Index the cluster lists for quick overlap calculations
-
-            ClusterIndex<T> old_index(previous->clusters, cs->get_dimension_sizes());
             
             // need to label the clusters with a unique id before we
             // index them, otherwise the area calculations will be nonsense
@@ -218,8 +216,9 @@ namespace m3D {
                 current->clusters[n]->id = n;
             }
             ClusterIndex<T> new_index(current->clusters, cs->get_dimension_sizes());
+            ClusterIndex<T> old_index(previous->clusters, cs->get_dimension_sizes());
 
-            // Employ a mapping to parallelise
+            // Employ a mapping to parallelize
             
             vector<size_t> index_dims;
             index_dims.push_back(new_count);

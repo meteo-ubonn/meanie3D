@@ -39,18 +39,13 @@ namespace m3D { namespace utils {
         // Figure out the rank of the multiarray needed
         // from the first cluster's mode
 
-        this->m_index = new MultiArrayBlitz<m3D::id_t>(dimensions);
+        this->m_index = new MultiArrayBlitz<m3D::id_t>(dimensions, m3D::NO_ID);
 
-        if (!list.empty())
-        {
-            for (size_t ci=0; ci < list.size(); ci++)
-            {
+        if (!list.empty()) {
+            for (size_t ci=0; ci < list.size(); ci++) {
                 typename Cluster<T>::ptr c = list.at(ci);
-
-                for (size_t pi=0; pi < c->size(); pi++)
-                {
+                for (size_t pi=0; pi < c->size(); pi++) {
                     typename Point<T>::ptr p = c->at(pi);
-
                     this->m_index->set(p->gridpoint,c->id);
                 }
             }
@@ -82,29 +77,17 @@ namespace m3D { namespace utils {
                                          ::m3D::id_t id)
     {
         assert(a->data()->rank() == b->data()->rank());
-
         size_t common_points;
-
         size_t dim = a->data().rank();
-
         vector<int> gridpoint(dim);
-
-        if (dim==2)
-        {
-            for (size_t i1=0; i1 < a->data()->get_dimensions(0); i1++)
-            {
+        if (dim==2) {
+            for (size_t i1=0; i1 < a->data()->get_dimensions(0); i1++) {
                 gridpoint[0] = i1;
-
-                for (size_t i2=0; i2 < a->data()->get_dimensions(1); i2++)
-                {
+                for (size_t i2=0; i2 < a->data()->get_dimensions(1); i2++) {
                     gridpoint[1] = i2;
-
                     m3D::id_t id_a = a->data()->get(gridpoint);
-
-                    if (id_a == id)
-                    {
+                    if (id_a == id) {
                         m3D::id_t id_b = b->data()->get(gridpoint);
-
                         if (id_b == id_a) common_points++;
                     }
                 }
@@ -114,7 +97,6 @@ namespace m3D { namespace utils {
         {
             throw std::runtime_error("Not implemented");
         }
-
         return common_points;
     }
 
