@@ -12,7 +12,7 @@
     "CREATE_SOURCE_MOVIE" : true,
     "CREATE_CLUSTERS_MOVIE" : true,
     "GRID_EXTENT" : "national",
-    "CONVERSION_PARAMS" : "-t cluster -v RX --write-as-xml=false --extract-skin=false --vtk-dimensions x,y",
+    "CONVERSION_PARAMS" : "-t cluster -v RX --vtk-dimensions x,y",
     "COLORTABLES" : ["hot_desaturated"],
     "COLORTABLES_INVERT_FLAGS" : [0],
     "OPACITY" : [1.0]

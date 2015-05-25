@@ -509,7 +509,6 @@ namespace m3D {
             }
 
             // put the matches in a special data structure
-            
             typedef pair<size_t,T>      match_t;
             typedef vector< match_t >   matchlist_t;
             matchlist_t matches;
@@ -587,6 +586,10 @@ namespace m3D {
                 // ID is continued
                 new_cluster->id = old_cluster->id;
                 
+                // calculate displacement
+                new_cluster->displacement = new_cluster->geometrical_center(cs->rank()) 
+                        - old_cluster->geometrical_center(cs->rank());
+                
                 // Remove the previous cluster from the race
                 used_clusters.insert(old_cluster);
                 
@@ -611,13 +614,6 @@ namespace m3D {
                 cout << " done. (" << stop_timer() << "s)" << endl;
             }
 
-            //        // update mean velocity
-            //        float newMeanVelocity = 0;
-            //        if (velocityClusterCount>0) newMeanVelocity = velocitySum/velocityClusterCount;
-            //        if (newMeanVelocity > 2.0) meanVelocity = newMeanVelocity;
-            //
-            //        SPLog(@"\ncurrent mean velocity: %4.2f m/s",meanVelocity);
-
     #pragma mark -
     #pragma mark Tag unmatched clusters
 
@@ -629,7 +625,9 @@ namespace m3D {
             // fresh one now
             for ( n=0; n < new_count; n++ ) {
                 typename Cluster<T>::ptr c = current->clusters[n];
-                if ( c->id == m3D::NO_ID ) {
+                if ( c->id == m3D::NO_ID ) 
+                {
+                    // grab a new ID and memorize it for lookup
                     c->id = next_id(highest_id);
                     current->new_ids.insert( c->id );
                     
@@ -666,7 +664,6 @@ namespace m3D {
 
                 current->dropped_ids.insert(c->id);
                 hadGoners = true;
-
             }
             
             if (!hadGoners && verbosity >= VerbosityDetails) {
@@ -692,7 +689,8 @@ namespace m3D {
             
             bool had_merges = false;
             
-            for ( n=0; n < current->clusters.size(); n++) {
+            for ( n=0; n < current->clusters.size(); n++) 
+            {
                 vector<int> candidates;
                 typename Cluster<T>::ptr new_cluster = current->clusters[n];
                 
@@ -745,7 +743,6 @@ namespace m3D {
                         typename Cluster<T>::ptr c = previous->clusters[candidates[i]];
                         merged_cluster_ids.insert(c->id);
                         merged_from.insert(c->id);
-
                     }
                     if ( verbosity >= VerbosityNormal )
                         cout << "clusters " << merged_from << " seem to have merged into cluster " << new_cluster->id << endl;
@@ -814,17 +811,12 @@ namespace m3D {
                 typename Cluster<T>::ptr old_cluster = previous->clusters[m];
 
                 // check if the id was already continued in a merge
-                
                 id_set_t::iterator fi = continued_merged_ids.find(old_cluster->id);
-                
                 if (fi != continued_merged_ids.end()) continue;
                 
                 // collect candidates
-
                 vector<float> candidates;
-
                 T maxCover = 0.0;
-
                 size_t largestCandidateIndex = 0;
 
                 for ( n=0; n < current->clusters.size(); n++ )
@@ -837,7 +829,6 @@ namespace m3D {
                         {
                             // add to split candidates and record the candidate
                             // with the most coverage
-                            
                             candidates.push_back(n);
 
                             if (coverOldByNew[n][m] > maxCover)
@@ -852,7 +843,6 @@ namespace m3D {
                 if (candidates.size() > 1 )
                 {
                     had_splits = true;
-
                     id_set_t split_into;
 
                     for ( int i=0; i < candidates.size(); i++ )
@@ -866,23 +856,17 @@ namespace m3D {
                         typename Cluster<T>::ptr c = current->clusters[ candidates[i] ];
 
                         // check if the tracked id's contains c->id
-
                         m3D::id_t the_id = c->id;
-
                         id_set_t::iterator it = current->tracked_ids.find(the_id);
 
                         // If the largest one of the new clusters is at least 75% of the
                         // size of new previous cluster, the ID of the previous cluster
                         // is continued in the largest candidate
-
                         bool continueID = (candidates[i] == largestCandidateIndex) && (maxCover > this->m_msc_threshold);
-
                         if (continueID && m_continueIDs)
                         {
                             c->id = old_cluster->id;
-
                             current->tracked_ids.insert(c->id);
-
                             if ( verbosity >= VerbosityNormal )
                                 printf("\ttrack ID#%lu continues\n", c->id );
                         }
@@ -891,14 +875,10 @@ namespace m3D {
                             if ( it != current->tracked_ids.end() )
                             {
                                 // remove from tracked id's, re-tag and add to new IDs
-
                                 current->tracked_ids.erase(it);
-
                                 c->id = next_id(highest_id);
-
                                 if ( verbosity >= VerbosityNormal )
                                     printf("\tnew track ID#%lu begins\n", c->id );
-
                                 current->new_ids.insert( c->id );
                             }
                         }

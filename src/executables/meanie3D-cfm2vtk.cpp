@@ -47,7 +47,8 @@ void parse_commmandline(program_options::variables_map vm,
         vector<size_t> &vtk_dimension_indexes,
         FileType &type,
         bool &extract_skin,
-        bool &write_as_xml) {
+        bool &write_as_xml,
+        bool &write_displacement_vectors) {
     // Version
 
     if (vm.count("version") != 0) {
@@ -99,12 +100,13 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     // Delauney filtering?
-
-    extract_skin = vm["extract-skin"].as<bool>();
+    extract_skin = vm.count("extract-skin") > 0;
 
     // xml?
-
-    write_as_xml = vm["write-as-xml"].as<bool>();
+    write_as_xml = vm.count("write-as-xml") > 0;
+    
+    // write-displacement-vectors?
+    write_displacement_vectors = vm.count("write-displacement-vectors");
 
     // VTK dimension mapping
 
@@ -158,23 +160,36 @@ void parse_commmandline(program_options::variables_map vm,
 }
 
 void convert_clusters(const string &filename,
-        const string &destination,
-        bool extract_skin,
-        bool write_as_xml) {
+                      const string &destination,
+                      bool extract_skin,
+                      bool write_as_xml,
+                      bool write_displacement_vectors) 
+{
+    boost::filesystem::path path(filename);
     CoordinateSystem<FS_TYPE> *cs = NULL;
-
     ClusterList<FS_TYPE> *list = ClusterList<FS_TYPE>::read(filename, &cs);
 
     //::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(list, cs, list->source_file, true, false, true);
-
     ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
+    
+    if (write_displacement_vectors) {
+        vector< vector<FS_TYPE> > origins;
+        vector< vector<FS_TYPE> > displacements; 
+        for (size_t i=0; i < list->size(); i++) {
+            Cluster<FS_TYPE>::ptr c = list->clusters.at(i);
+            if (!c->displacement.empty()) {
+                origins.push_back(c->geometrical_center(cs->rank()));
+                displacements.push_back(c->displacement);
+            }
+        }
+        string displacements_path = path.filename().stem().string() + "_displacements.vtk";
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_vectors_vtk(displacements_path, origins, displacements, "displacement");
+    }
 
-    boost::filesystem::path path(filename);
     string centers_path = path.filename().stem().string() + "_centers.vtk";
     ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, list->clusters);
 
     delete list;
-
     delete cs;
 }
 
@@ -182,42 +197,30 @@ void convert_composite(const string &filename,
         const string& variable_name,
         const string &destination) {
     try {
+
         // construct the destination path
-
         std::string filename_noext;
-
         string filename_only = boost::filesystem::path(filename).filename().string();
-
         boost::filesystem::path destination_path = boost::filesystem::path(destination);
-
         destination_path /= filename_only;
-
         destination_path.replace_extension("vtk");
-
         string dest_path = destination_path.generic_string();
 
         NcFile *file = new NcFile(filename, NcFile::read);
-
         vector<NcDim> dimensions = file->getVar(variable_name).getDims();
-
         vector<NcVar> dim_vars;
-
         for (size_t i = 0; i < dimensions.size(); i++) {
             NcVar var = file->getVar(dimensions[i].getName());
-
             dim_vars.push_back(var);
         }
 
         vector<NcVar> variables;
-
         variables.push_back(file->getVar(variable_name));
-
         vector<NcVar> feature_variables(dim_vars);
         for (size_t i = 0; i < variables.size(); i++)
             feature_variables.push_back(variables[i]);
 
         CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>(dimensions, dim_vars);
-
         const map<int, double> lower_thresholds, upper_thresholds, fill_values;
 
         vector<string> variable_names;
@@ -244,12 +247,10 @@ void convert_composite(const string &filename,
         VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename, fs, feature_var_names, var_names);
 
         delete cs;
-
         delete fs;
-
         delete file;
-
         delete dataStore;
+        
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << e.what() << endl;
 
@@ -273,8 +274,9 @@ int main(int argc, char** argv) {
             ("destination,d", program_options::value<string>()->default_value("."), "Name of output directory for the converted files (default '.')")
             ("type,t", program_options::value<string>(), "'clusters' or 'composite'")
 #if WITH_VTK
-            ("extract-skin,s", program_options::value<bool>()->default_value(false), "Use delaunay filter to extract skin file")
-            ("write-as-xml,x", program_options::value<bool>()->default_value(false), "Write files in xml instead of ascii")
+            ("extract-skin,s", "Use delaunay filter to extract skin file")
+            ("write-as-xml,x", "Write files in xml instead of ascii")
+            ("write-displacement-vectors", "Write out an extra file containing the displacement vectors (clusters only).")
             ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
 #endif
             ;
@@ -313,9 +315,10 @@ int main(int argc, char** argv) {
     vector<size_t> vtk_dimension_indexes;
     bool extract_skin = false;
     bool write_as_xml = false;
+    bool write_displacement_vectors = false;
 
     try {
-        parse_commmandline(vm, filename, destination, variable, vtk_dimension_indexes, type, extract_skin, write_as_xml);
+        parse_commmandline(vm, filename, destination, variable, vtk_dimension_indexes, type, extract_skin, write_as_xml, write_displacement_vectors);
 
         // Make the mapping known to the visualization routines
 
@@ -326,7 +329,7 @@ int main(int argc, char** argv) {
 
         switch (type) {
             case FileTypeClusters:
-                convert_clusters(filename, destination, extract_skin, write_as_xml);
+                convert_clusters(filename, destination, extract_skin, write_as_xml, write_displacement_vectors);
                 break;
 
             case FileTypeComposite:

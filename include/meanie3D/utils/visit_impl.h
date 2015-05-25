@@ -338,11 +338,8 @@ namespace m3D { namespace utils {
         for ( size_t ci = 0; ci < list.size(); ci++ )
         {
             typename Cluster<T>::ptr c = list[ci];
-
             size_t dim_count = spatial_only ? c->spatial_rank() : c->rank();
-
             vector<T> mode = c->mode;
-
             size_t dims_plotted = 0;
 
             for ( size_t vi = 0; vi < dim_count; vi++)
@@ -355,14 +352,12 @@ namespace m3D { namespace utils {
                 }
 
                 f << mode[dim_index] << "\t";
-
                 dims_plotted++;
             }
 
             while (dims_plotted < 3)
             {
                 f << "0.0\t";
-
                 dims_plotted++;
             }
 
@@ -376,7 +371,6 @@ namespace m3D { namespace utils {
         for ( size_t pi = 0; pi < list.size() ; pi++ )
         {
             typename Cluster<T>::ptr c = list[pi];
-
             size_t dim_count = spatial_only ? c->spatial_rank() : c->rank();
 
             if ( spatial_only )

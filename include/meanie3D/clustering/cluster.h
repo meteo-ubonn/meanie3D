@@ -60,7 +60,7 @@ namespace m3D {
         vector<T>                   m_geometrical_center;
 
         map< size_t, vector<T> >    m_weighed_centers;
-
+        
         ::units::values::m          m_radius;
 
         PointIndex<T>               *m_index;
@@ -89,6 +89,12 @@ namespace m3D {
         /** Center of this cluster
          */
         vector<T>                   mode;
+        
+        /** If the cluster was tracked, this contains the
+         * displacement vector between the last known position
+         * and the current one. 
+         */
+        vector<T>                   displacement;
 
         /** Unique cluster ID. Used for tracking.
          */

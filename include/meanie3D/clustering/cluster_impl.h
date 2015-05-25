@@ -50,7 +50,10 @@ namespace m3D {
     , m_weight_range_calculated(false)
     , m_min_weight(0)
     , m_max_weight(0)
+    , mode(vector<T>())
+    , displacement(vector<T>())
     , id(NO_ID)
+    
     {}
 
     template <typename T>
@@ -63,6 +66,7 @@ namespace m3D {
     , m_min_weight(0)
     , m_max_weight(0)
     , mode(mode)
+    , displacement(vector<T>(spatial_dimension))
     , id(NO_ID)
     {
         // TODO: change on refac #146
@@ -71,7 +75,8 @@ namespace m3D {
 
     template <typename T>
     Cluster<T>::Cluster( const Cluster<T> &o )
-    : m_radius(-1)
+    : m_points(o.get_points())
+    , m_radius(-1)
     , m_index(NULL)
     , m_rank(o.m_rank)
     , m_spatial_rank( o.m_spatial_rank )
@@ -79,16 +84,14 @@ namespace m3D {
     , m_min_weight(o.m_min_weight)
     , m_max_weight(o.m_max_weight)
     , mode(o.mode)
-    , m_points(o.get_points())
+    , displacement(o.displacement)
     , id(o.id)
-    {
-    }
+    {}
 
     template <typename T>
     Cluster<T>::~Cluster()
     {
         this->clear_histogram_cache();
-
         this->clear_index();
     }
 
@@ -320,7 +323,6 @@ namespace m3D {
             }
             this->m_index = PointIndex<T>::create( &this->points, indexes );
         }
-
         return m_index;
     }
 
@@ -365,7 +367,6 @@ namespace m3D {
     Cluster<T>::weighed_center(size_t spatial_dimensions, size_t variable_index)
     {
         vector<T> wc;
-
         try
         {
             wc = this->m_weighed_centers.at(variable_index);

@@ -408,16 +408,13 @@ namespace m3D {
                 }
 
                 // size
-
                 var.putAtt( "size", ncInt, (int) cluster->size() );
                 
                 // margin flag
-                
                 std::string flag = (cluster->has_margin_points() ? "Y" : "N");
                 var.putAtt( "has_margin_points", flag); 
 
                 // check if there's any merge
-
                 id_map_t::iterator mi = this->merges.find(cluster->id);
 
                 if (mi != this->merges.end())
@@ -428,7 +425,6 @@ namespace m3D {
                 }
 
                 // check if there's any split
-
                 for (mi = this->splits.begin(); mi != this->splits.end(); mi++)
                 {
                     id_set_t csplits = mi->second;
@@ -444,21 +440,20 @@ namespace m3D {
                 }
 
                 // id
-
                 var.putAtt( "id", boost::lexical_cast<string>(cid) );
 
                 // mode
-
                 string mode = to_string( cluster->mode );
-
                 var.putAtt( "mode", mode );
+                
+                // displacement
+                string displacement = to_string( cluster->displacement );
+                var.putAtt( "displacement", displacement );
                 
                 // Write cluster away
                 
                 size_t numElements = cluster->size() * cluster->rank();
-                
                 T *data = (T*) malloc(sizeof(T) * numElements);
-                
                 if (data == NULL)
                 {
                     cerr << "FATAL:out of memory" << endl;
@@ -664,77 +659,66 @@ namespace m3D {
             for (size_t i=0; i<feature_variable_names.size(); i++)
             {
                 NcVar var = file->getVar(feature_variable_names[i]);
-
                 if (var.isNull())
                 {
                     cerr << "FATAL: could not find featurespace variable " << feature_variable_names[i] << endl;
                     exit(EXIT_FAILURE);
                 }
-
                 feature_variables.push_back(var);
             }
 
             // Coordinate system wanted?
-
             CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions,dimension_variables);
-
             if (cs_ptr != NULL)
             {
                 *cs_ptr = cs;
             }
 
             // Read clusters one by one
-
             id_set_t::iterator cid_iter;
 
             for ( cid_iter = cluster_ids.begin(); cid_iter != cluster_ids.end(); cid_iter++ )
             {
                 // Identifier
-
                 m3D::id_t cid = *cid_iter;
 
                 // cluster dimension
-
                 stringstream dim_name(stringstream::in | stringstream::out);
-
                 dim_name << "cluster_dim_" << cid;
                 NcDim cluster_dim = file->getDim( dim_name.str().c_str() );
                 size_t cluster_size = cluster_dim.getSize();
 
                 // Read the variable
-
                 stringstream var_name(stringstream::in | stringstream::out);
-
                 var_name << "cluster_" << cid;
-
                 NcVar var = file->getVar( var_name.str().c_str() );
 
                 // mode
-                
                 std::string mode_str;
                 var.getAtt("mode").getValues(mode_str);
                 vector<T> mode = vectors::from_string<T>(mode_str);
                 
+                // displacement
+                std::string displacement_str;
+                var.getAtt("displacement").getValues(displacement_str);
+                vector<T> displacement = vectors::from_string<T>(displacement_str);
+
                 // margin flag
-                
                 std::string margin_char;
                 var.getAtt("has_margin_points").getValues(margin_char);
                 bool margin_flag = margin_char == "Y";
 
                 // Create a cluster object
-
                 typename Cluster<T>::ptr cluster = new Cluster<T>( mode, dimensions.size() );
 
                 cluster->id = cid;
                 cluster->mode = mode;
+                cluster->displacement = displacement;
                 cluster->set_has_margin_points(margin_flag);
                 
                 // Read the cluster
-                
                 size_t numElements = cluster_size * cluster->rank();
-                
                 T *data = (T*) malloc(sizeof(T) * numElements);
-                
                 if (data == NULL)
                 {
                     cerr << "FATAL:out of memory" << endl;
@@ -742,41 +726,34 @@ namespace m3D {
                 }
                 
                 var.getVar(data);
-                
                 for (size_t pi = 0; pi < cluster_size; pi++)
                 {
                     vector<T> values(cluster->rank(),0.0);
 
                     // copy point from data
-                    
                     for (size_t di = 0; di < cluster->rank(); di++)
                     {
                         values [di] = data[pi * cluster->rank() + di];
                     }
                     
                     // get coordinate subvector
-                    
                     vector<T> coordinate(values.begin(),values.begin() + cs->rank());
                     
                     // transform to gridpoint
-                    
                     try
                     {
                         vector<int> gp(cs->rank(),0);
-                        
                         cs->reverse_lookup(coordinate,gp);
                         
                         // only when this succeeds do we have the complete
                         // set of data for the point
                         
                         typename Point<T>::ptr p = PointFactory<T>::get_instance()->create();
-                        
                         p->values = values;
                         p->coordinate = coordinate;
                         p->gridpoint = gp;
                        
                         // add to cluster
-                        
                         cluster->add_point(p);
                     }
                     catch (std::out_of_range& e)
@@ -786,7 +763,6 @@ namespace m3D {
                 }
 
                 delete data;
-
                 list.push_back( cluster );
             }
 

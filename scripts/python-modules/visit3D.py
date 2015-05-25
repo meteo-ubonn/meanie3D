@@ -89,7 +89,7 @@ def add_clusters(basename,infix,col_tables):
 # @param infix (e.g. "_untracked_clusters_"
 # @param color tables
 # ------------------------------------------------------------------------------
-def add_clusters_with_colortable(basename,infix,color_table_name,color_count):
+def add_clusters_with_colortable(basename,infix,color_table_name,color_count,conf):
     
     # now the clusters
     cluster_pattern="*"+infix+"*.vt*"
@@ -111,7 +111,11 @@ def add_clusters_with_colortable(basename,infix,color_table_name,color_count):
         except ValueError:
             print "Illegal filename " + cluster_file
             continue
-        
+            
+        cluster_opacity = 1.0
+        if conf["CLUSTER_OPACITY"]:
+            cluster_opacity = conf["CLUSTER_OPACITY"]
+            
         OpenDatabase(cluster_file)
         AddPlot("Pseudocolor", "point_color")
         
@@ -123,9 +127,10 @@ def add_clusters_with_colortable(basename,infix,color_table_name,color_count):
         cp.minFlag,cp.maxFlag = 1,1
         cp.min,cp.max = 0,color_count
         cp.colorTableName = color_table_name
-        cp.opacity=1
+        # cp.opacityType = cp.Constant
+        cp.opacity=cluster_opacity
         SetPlotOptions(cp)
-
+        
     return
 
 # ------------------------------------------------------------------------------
@@ -290,6 +295,25 @@ def add_map_rivers(extent):
 # ------------------------------------------------------------------------------
 # Closes databases connected with topo
 # ------------------------------------------------------------------------------
+
+
+def add_displacement_vectors(displacements_file):
+    # open displacements vector file and add plot
+    OpenDatabase(displacements_file)
+    AddPlot("Vector","displacement")
+    # Set plot's attributes
+    p=VectorAttributes();
+    p.useStride = 1
+    p.stride = 1
+    p.scale = 0.25
+    p.scaleByMagnitude = 1
+    p.autoScale = 0
+    p.headSize = 0.25
+    p.headOn = 1
+    p.useLegend = 0
+    SetPlotOptions(p)
+    return
+    
 def close_mapstuff():
     CloseDatabase(MAPSTUFF_FILE);
     return
@@ -567,6 +591,7 @@ def visualization(conf):
         basename                = os.path.splitext(filename)[0]
         cluster_file            = conf['CLUSTER_DIR']+"/"+basename+"-clusters.nc"
         label_file              = basename+"-clusters_centers.vtk"
+        displacements_file      = basename+"-clusters_displacements.vtk"
         
         print "netcdf_file  = " + netcdf_file
         print "cluster_file = " + cluster_file
@@ -675,6 +700,8 @@ def visualization(conf):
                 
                 # build the clustering command
                 command=conversion_bin+" -f "+cluster_file+" "+conf['CONVERSION_PARAMS']
+                if conf['WITH_DISPLACEMENT_VECTORS']:
+                    command = command + " --write-displacement-vectors"
                 print command
                 return_code = call( command, shell=True)
                 
@@ -723,10 +750,14 @@ def visualization(conf):
                 
                 # Add the clusters
                 basename = conf['CLUSTER_DIR']+"/"
-                add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
+                add_clusters_with_colortable(basename, "_cluster_", "cluster_colors", num_colors, conf)
                 
                 # Add modes as labels
                 visitUtils.add_labels(label_file,"geometrical_center")
+                
+                # Add displacement vectors
+                if conf['WITH_DISPLACEMENT_VECTORS']:
+                    add_displacement_vectors(displacements_file)
                 
                 DrawPlots()
                 
