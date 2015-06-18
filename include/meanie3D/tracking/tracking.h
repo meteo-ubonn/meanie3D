@@ -154,6 +154,15 @@ namespace m3D {
          */
         ::units::values::s max_deltaT() {return m_max_deltaT;}
         void set_max_deltaT(::units::values::s seconds) {m_max_deltaT = seconds;}
+        
+        /**
+         * Move the clusters in the list by their displacement vectors 
+         * (which usually have been obtained on the last tracking run)
+         * Only clusters with existing displacement vectors are moved. 
+         * 
+         * @param clusters
+         */
+        void advect_clusters(typename ClusterList<T>::ptr clusters);
 
     };
 }

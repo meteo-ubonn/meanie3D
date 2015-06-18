@@ -39,6 +39,29 @@
 #include "tracking.h"
 
 namespace m3D {
+    
+    template <typename T>
+    void
+    Tracking<T>::advect_clusters(typename ClusterList<T>::ptr clusters) {
+        using namespace utils::vectors;
+        
+        for (size_t i=0; i < clusters->size(); i++) {
+            typename Cluster<T>::ptr c = clusters->operator [](i);
+            if (vector_norm<T>(c->displacement) != 0) {
+                // shift all points by the displacement vector
+                for (size_t i=0; i<c->size(); i++) {
+                    typename Point<T>::ptr p = c->get_points()[i];
+                    // shift coordinate
+                    p->coordinate += c->displacement;
+                    // TODO: shift gridded coordinate
+                    for (size_t ci=0; ci < c->displacement.size(); ci++) {
+                        // shift feature space point spatial range
+                       p->values[ci]+= c->displacement[ci];
+                    }
+                }
+            }
+        }
+    }
 
     template <typename T>
     void
@@ -180,8 +203,11 @@ namespace m3D {
             ::units::values::meters_per_second overlap_constraint_velocity = m_maxVelocity;
             ::units::values::m overlap_constraint_radius = 0.5 * m_deltaT * overlap_constraint_velocity;
 
+            // Advect the previous clusters by their displacement 
+            // vectors to make the results more accurate
+            this->advect_clusters(previous);
+            
             // Prepare the newcomers for re-identification
-
             current->erase_identifiers();
 
             // Get the counts
