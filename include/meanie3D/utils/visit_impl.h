@@ -29,6 +29,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
+#include <list>
 
 #include <vtkRenderer.h>
 #include <vtkActor.h>
@@ -902,8 +903,7 @@ namespace m3D { namespace utils {
 
             // Write point coordinates out as unstructured grid
 
-            typename Cluster<T>::list::iterator ti;
-            
+            typename std::list< typename Cluster<T>::ptr >::iterator ti;
             for ( ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
                 typename Cluster<T>::ptr c = (*ti);

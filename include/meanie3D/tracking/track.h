@@ -29,7 +29,8 @@
 #include <meanie3D/clustering.h>
 
 #include <vector>
-#include <map>
+#include <list>
+#include <unordered_map>
 
 namespace m3D { 
 
@@ -45,14 +46,15 @@ namespace m3D {
 #pragma mark Type definitions / Constants
             
             typedef Track* ptr;
-            typedef std::map< m3D::id_t, ptr> trackmap;
+            typedef std::unordered_map< m3D::id_t, ptr> trackmap;
 
 #pragma mark -
 #pragma mark Constructor/Destructor
 
             /** Default constructor.
              */
-            Track() {};
+            Track() {
+            };
 
 #pragma mark -
 #pragma mark Public properties
@@ -64,7 +66,7 @@ namespace m3D {
             /** A list of pointers to cluster objects constituting the
              * actual track.
              */
-            std::vector< typename Cluster<T>::ptr > clusters; 
+            std::list< typename Cluster<T>::ptr > clusters; 
 
             /** list of source files, one per cluster in the list.
              */

@@ -33,6 +33,7 @@
 
 #include <vector>
 #include <netcdf>
+#include <list>
 
 namespace m3D {
 
@@ -81,7 +82,7 @@ namespace m3D {
 
         typedef Cluster<T> *    ptr;
 
-        typedef vector<ptr>     list;
+        typedef std::vector<ptr>  list;
 
 #pragma mark -
 #pragma mark Public properties

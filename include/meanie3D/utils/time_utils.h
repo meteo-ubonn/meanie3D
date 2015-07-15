@@ -61,6 +61,18 @@ namespace m3D { namespace utils {
         return double(end_time.tv_sec-start_time_.tv_sec) 
                 + double(end_time.tv_usec-start_time_.tv_usec) / 1000000.0;
     }
+    
+    /** Stops the timer and returns the seconds since
+     * the last call of start_timer
+     * 
+     * @return 
+     */
+    void stop_timer(const std::string& message)
+    {
+        double time = stop_timer();
+        cout << message << " (" << time << "s)" << endl;
+    }
+
 }}
 
 #endif

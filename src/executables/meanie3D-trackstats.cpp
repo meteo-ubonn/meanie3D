@@ -362,16 +362,16 @@ int main(int argc, char** argv)
             ("version", "print version information and exit")
             ("basename,b", program_options::value<string>()->implicit_value(""), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files (optional)")
             ("sourcepath,s", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
-            ("exclude-degenerates,d", program_options::value<bool>()->default_value(true), "Exclude results of tracks of length one")
-            ("create-length-statistics,l", "Create a statistic of track lengths.")
+            ("exclude-degenerates,n", program_options::value<bool>()->default_value(true), "Exclude results of tracks of length one")
+            ("create-length-statistics,1", "Create a statistic of track lengths.")
             ("length-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(length_hist_default), "List of track-length values for histogram bins")
-            ("create-speed-statistics,v", "Evaluate speeds of clusters in tracks, based on geometric center point")
+            ("create-speed-statistics,2", "Evaluate speeds of clusters in tracks, based on geometric center point")
             ("speed-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(speed_hist_default), "Speed histogram. Values in [m/s]")
-            ("create-direction-statistics,d", "Evaluate directions of clusters in tracks, based on geometric center point")
+            ("create-direction-statistics,3", "Evaluate directions of clusters in tracks, based on geometric center point")
             ("direction-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(direction_hist_default), "Direction histogram. Values in [deg]. Use with radolan grid only!!")
-            ("create-cluster-statistics,c", "Evaluate each cluster in each track in terms of size.")
+            ("create-cluster-statistics,4", "Evaluate each cluster in each track in terms of size.")
             ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default), "List of cluster size values for histogram bins")
-            ("create-cumulated-size-statistics,u", "Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
+            ("create-cumulated-size-statistics,5", "Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
             ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default), "List of cumulated track size values for histogram bins")
             ("write-track-dictionary,t", "Write out a dictionary listing tracks with number of clusters etc.")
 #if WITH_VTK
@@ -506,9 +506,16 @@ int main(int argc, char** argv)
         fs::directory_iterator end;
 
         // Iterate over the "-clusters.nc" - files in sourcepath
-
+        
         while (dir_iter != end)
         {
+            double time_reading = 0;
+            double time_searching = 0;
+            double time_inserting = 0;
+            double time_pushing_clusters = 0;
+            double time_deleting = 0;
+            double time_constructing = 0;
+
             fs::path f = dir_iter->path();
 
             if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc"))
@@ -522,8 +529,6 @@ int main(int argc, char** argv)
                         << " ( used " << used_mem << " mb, "
                         << free_mem << " mb available) ... ";
 #else 
-                cout << "Processing " << f.filename().generic_string()
-                        << " ... ";
 #endif
 
                 // Remember the first one
@@ -534,6 +539,7 @@ int main(int argc, char** argv)
                     coords_file = new NcFile(coords_filename, NcFile::read);
                     
                     // Read "featurespace_dimensions"
+                    cout << "Constructing coordinate system from file " << coords_filename << endl;
 
                     string fs_dimensions;
                     coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
@@ -560,13 +566,16 @@ int main(int argc, char** argv)
                     // TODO: check if the actual dimensions and their 
                     // order remain constant
 
+                    start_timer();
                     ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read(f.generic_string());
+                    time_reading += stop_timer();
+                    
+                    cout << "Processing " << f.filename().generic_string()
+                        << " (" << cluster_list->size() << " clusters) ... ";
 
-                    if (spatial_rank == 0)
-                    {
+                    if (spatial_rank == 0) {
                         spatial_rank = cluster_list->dimensions.size();
-                    } else if (spatial_rank != cluster_list->dimensions.size())
-                    {
+                    } else if (spatial_rank != cluster_list->dimensions.size()) {
                         cerr << "FATAL:spatial range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
@@ -575,40 +584,34 @@ int main(int argc, char** argv)
                     // remain constant
 
                     size_t v_rank = cluster_list->feature_variables.size() - spatial_rank;
-
-                    if (value_rank == 0)
-                    {
+                    if (value_rank == 0) {
                         value_rank = v_rank;
-                    } else if (v_rank != value_rank)
-                    {
+                    } else if (v_rank != value_rank) {
                         cerr << "FATAL:value range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
 
                     // Iterate over the clusters in the list we just read
-
-                    Cluster<FS_TYPE>::list::iterator ci;
-
+                    Cluster<FS_TYPE>::list::const_iterator ci;
                     for (ci = cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
                     {
                         Cluster<FS_TYPE>::ptr cluster = (*ci);
-
                         m3D::id_t id = cluster->id;
-
                         Track<FS_TYPE>::ptr tm = NULL;
-
                         Track<FS_TYPE>::trackmap::const_iterator ti;
 
+                        start_timer();
                         ti = track_map.find(id);
-
-                        if (ti == track_map.end())
-                        {
+                        time_searching += stop_timer();
+                            
+                        if (ti == track_map.end()) {
                             // new entry
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
+                            start_timer();
                             track_map[id] = tm;
-                        } else
-                        {
+                            time_inserting += stop_timer();
+                        } else {
                             tm = ti->second;
                         }
 
@@ -619,15 +622,22 @@ int main(int argc, char** argv)
                         // has facilities of writing it's point list to disk and read
                         // it back on demand, saving memory.
 
+                        start_timer();
                         TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster);
                         tm->clusters.push_back(tc);
+                        time_pushing_clusters += stop_timer();
 
                         // dispose of the points in the original cluster
-
+                        start_timer();
                         cluster->clear(true);
+                        time_deleting += stop_timer();
                     }
-
+                    
+                    start_timer();
                     delete cluster_list;
+                    time_deleting += stop_timer();
+                    
+                    cout << "tracking map has " << track_map.size() << " tracks" << endl;
 
                 } catch (netCDF::exceptions::NcException &e)
                 {
@@ -639,6 +649,13 @@ int main(int argc, char** argv)
 
                 cout << "done." << endl;
             }
+            
+            cout << "Time spend:" << endl;
+            cout << "\t reading:" << time_reading << endl;
+            cout << "\t searching:" << time_searching << endl;
+            cout << "\t inserting:" << time_inserting << endl;
+            cout << "\t pushing clusters:" << time_pushing_clusters << endl;
+            cout << "\t deleting:" << time_deleting << endl;
 
             dir_iter++;
         }
@@ -702,9 +719,9 @@ int main(int argc, char** argv)
 
             size_t i = 0;
 
-            vector<Cluster<FS_TYPE>::ptr>::const_iterator ti;
+            std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
 
-            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti++)
+            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
                 Cluster<FS_TYPE>::ptr c = *ti;
                 cout << "  [" << i++ << "] x=" << c->geometrical_center(spatial_rank) << endl;
@@ -757,9 +774,10 @@ int main(int argc, char** argv)
                 track->min.resize(value_rank, std::numeric_limits<FS_TYPE>::max());
                 track->max.resize(value_rank, std::numeric_limits<FS_TYPE>::min());
 
-                for (size_t i = 0; i < track->clusters.size(); i++)
-                {
-                    Cluster<FS_TYPE>::ptr c = track->clusters[i];
+                size_t i=0;
+                std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
+                for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
+                    Cluster<FS_TYPE>::ptr c = (*ti);
 
                     vector<FS_TYPE> min, max, median;
                     c->variable_ranges(min, max, median);
@@ -786,6 +804,8 @@ int main(int argc, char** argv)
 
                     // Dispose of the points again to free up memory.
                     c->clear(true);
+                    
+                    i++;
                 }
 
                 dict << "      ]," << endl;
@@ -873,7 +893,7 @@ int main(int argc, char** argv)
 
             // Iterate over the clusters in the track and sum up
 
-            Cluster<FS_TYPE>::list::iterator ti;
+            std::list<Cluster<FS_TYPE>::ptr>::iterator ti;
             Cluster<FS_TYPE>::ptr previous_cluster = NULL;
 
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
