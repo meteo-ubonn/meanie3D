@@ -208,14 +208,11 @@ void write_histogram(const std::string &filename,
         const bin_t &values)
 {
     ofstream file(filename.c_str());
-
     file << "#" << x << "  " << y << endl;
-
     for (size_t i = 0; i < classes.size(); i++)
     {
         file << classes[i] << "  " << values[i] << endl;
     }
-
     file.close();
 }
 
@@ -226,16 +223,12 @@ void write_values(const std::string &filename,
         const map<T, size_t> &values)
 {
     ofstream file(filename.c_str());
-
     file << "track length  number of tracks" << endl;
-
     typename map<T, size_t>::const_iterator si;
-
-    for (si = values.begin(); si != values.end(); si++)
+    for (si = values.begin(); si != values.end(); si++) 
     {
         file << si->first << "  " << si->second << endl;
     }
-
     file.close();
 }
 
@@ -244,7 +237,7 @@ double average(const vector<FS_TYPE> &v)
 {
     // calculate the mean value
     double sum = 0.0;
-    for (size_t i = 0; i < v.size(); i++)
+    for (size_t i = 0; i < v.size(); i++) 
     {
         sum += boost::numeric_cast<double>(v[i]);
     }
@@ -261,27 +254,19 @@ double average(const map<T, size_t> &m, bool ignore_one = true)
 {
     // calculate the mean value
     double sum = 0.0;
-
     size_t total_count = 0;
-
     typename std::map<T, size_t>::const_iterator mi;
-
     for (mi = m.begin(); mi != m.end(); mi++)
     {
         T key = mi->first;
-
         size_t val = mi->second;
-
         if (key == 1 && ignore_one)
         {
             continue;
         }
-
         total_count += val;
-
         sum += boost::numeric_cast<double>(mi->first * mi->second);
     }
-
     return sum / boost::numeric_cast<double>(total_count);
 }
 
@@ -461,6 +446,8 @@ int main(int argc, char** argv)
         cerr << "FATAL:" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
+    
+    bool needsClusterData = write_cumulated_tracks_as_vtk;
 
     // initialize values
 
@@ -497,6 +484,10 @@ int main(int argc, char** argv)
     vector<NcVar> dimension_vars;
     vector<string> dim_names;
     vector<string> var_names;
+    
+    bool need_points = create_cluster_statistics 
+            || create_cumulated_size_statistics
+            || write_cumulated_tracks_as_vtk;
 
     size_t c_id = 0;
 
@@ -513,8 +504,12 @@ int main(int argc, char** argv)
             double time_searching = 0;
             double time_inserting = 0;
             double time_pushing_clusters = 0;
+            double time_constructing_clusters = 0;
             double time_deleting = 0;
             double time_constructing = 0;
+            
+            size_t average_cluster_size = 0;
+            size_t number_of_clusters = 0;
 
             fs::path f = dir_iter->path();
 
@@ -623,7 +618,16 @@ int main(int argc, char** argv)
                         // it back on demand, saving memory.
 
                         start_timer();
-                        TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster);
+                        TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster, need_points);
+                        time_constructing_clusters += stop_timer();
+                        average_cluster_size += cluster->size();
+                        number_of_clusters++;
+                        
+                        // Call these to cache before disposing of points
+                        // tc->geometrical_center(spatial_rank);
+
+                        
+                        start_timer();
                         tm->clusters.push_back(tc);
                         time_pushing_clusters += stop_timer();
 
@@ -637,7 +641,7 @@ int main(int argc, char** argv)
                     delete cluster_list;
                     time_deleting += stop_timer();
                     
-                    cout << "tracking map has " << track_map.size() << " tracks" << endl;
+                    // cout << "tracking map has " << track_map.size() << " tracks" << endl;
 
                 } catch (netCDF::exceptions::NcException &e)
                 {
@@ -649,13 +653,19 @@ int main(int argc, char** argv)
 
                 cout << "done." << endl;
             }
-            
-            cout << "Time spend:" << endl;
-            cout << "\t reading:" << time_reading << endl;
-            cout << "\t searching:" << time_searching << endl;
-            cout << "\t inserting:" << time_inserting << endl;
-            cout << "\t pushing clusters:" << time_pushing_clusters << endl;
-            cout << "\t deleting:" << time_deleting << endl;
+
+//            cout << "Clusters processed:" << endl;
+//            cout << "\t number:" << number_of_clusters << endl;
+//            cout << "\t average size:" << ((double)average_cluster_size) / ((double)number_of_clusters) << endl;
+//            cout << endl;
+//            
+//            cout << "Time spend:" << endl;
+//            cout << "\t reading:" << time_reading << endl;
+//            cout << "\t searching:" << time_searching << endl;
+//            cout << "\t inserting:" << time_inserting << endl;
+//            cout << "\t constructing clusters:" << time_constructing_clusters << endl;
+//            cout << "\t pushing clusters:" << time_pushing_clusters << endl;
+//            cout << "\t deleting:" << time_deleting << endl;
 
             dir_iter++;
         }
@@ -786,6 +796,7 @@ int main(int argc, char** argv)
                     dict << "          \"size\":" << c->size() << "," << endl;
                     dict << "          \"sourcefile\":\"" << track->sourcefiles[i] << "\"," << endl;
                     dict << "          \"geometrical_center\":" << to_json(c->geometrical_center(spatial_rank)) << "," << endl;
+                    dict << "          \"mode\":" << to_json(c->mode) << "," << endl;
                     dict << "          \"min\":" << to_json(min) << "," << endl;
                     dict << "          \"max\":" << to_json(max) << "," << endl;
                     dict << "          \"median\":" << to_json(median) << endl;
