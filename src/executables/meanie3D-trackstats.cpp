@@ -886,14 +886,16 @@ int main(int argc, char** argv)
                     && !create_direction_statistics)
                 continue;
 
-            // For each track, create an array index. Start with empty index.
-
-            ArrayIndex<FS_TYPE> index(coord_system->get_dimension_sizes(), false);
-
             // Iterate over the clusters in the track and sum up
 
             std::list<Cluster<FS_TYPE>::ptr>::iterator ti;
             TrackCluster<FS_TYPE> *previous_cluster = NULL;
+            
+            // Create an array index. Start with empty index.
+            ArrayIndex<FS_TYPE> *index = NULL;
+            if (create_cumulated_size_statistics) {
+                index = new ArrayIndex<FS_TYPE>(coord_system->get_dimension_sizes(), false);
+            }
 
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
@@ -1080,42 +1082,34 @@ int main(int argc, char** argv)
 
                 // Skip the rest if cumulative size statistics are off
 
-                if (!create_cumulated_size_statistics)
-                    continue;
+                if (create_cumulated_size_statistics) {
+                    // Iterate over the points of the cluster and add points
+                    // to the array index. If the point exists, add it's values
+                    // to the existing one. If not, add a new point. In the end
+                    // the index contains all points that all clusters in the
+                    // track occupied at any time
 
-                // Iterate over the points of the cluster and add points
-                // to the array index. If the point exists, add it's values
-                // to the existing one. If not, add a new point. In the end
-                // the index contains all points that all clusters in the
-                // track occupied at any time
-
-                Point<FS_TYPE>::list::iterator pi;
-
-                for (pi = cluster->get_points().begin(); pi != cluster->get_points().end(); ++pi)
-                {
-                    Point<FS_TYPE>::ptr p = *pi;
-
-                    Point<FS_TYPE>::ptr indexed = index.get(p->gridpoint);
-
-                    if (indexed == NULL)
+                    Point<FS_TYPE>::list::iterator pi;
+                    for (pi = cluster->get_points().begin(); pi != cluster->get_points().end(); ++pi)
                     {
-                        // this makes a copy of the point in the index
-                        index.set(p->gridpoint, p);
+                        Point<FS_TYPE>::ptr p = *pi;
+                        Point<FS_TYPE>::ptr indexed = index->get(p->gridpoint);
+                        if (indexed == NULL)
+                        {
+                            // this makes a copy of the point in the index
+                            index->set(p->gridpoint, p);
+                            // get the copied point
+                            indexed = index->get(p->gridpoint);
+                        }
 
-                        // get the copied point
-                        indexed = index.get(p->gridpoint);
+                        // only add up the value range
+                        for (size_t k = 0; k < value_rank; k++)
+                        {
+                            indexed->values[spatial_rank + k] += p->values[spatial_rank + k];
+                        }
+                        points_processed++;
                     }
-
-                    // only add up the value range
-
-                    for (size_t k = 0; k < value_rank; k++)
-                    {
-                        indexed->values[spatial_rank + k] += p->values[spatial_rank + k];
-                    }
-
-                    points_processed++;
                 }
-
                 // Purge points in memory
                 cluster->clear(true);
             }
@@ -1123,47 +1117,40 @@ int main(int argc, char** argv)
             // A track's size is the number of non-null points in
             // the index
 
-            size_t track_size = index.count();
 
 #if WITH_VTK
             if (write_cumulated_tracks_as_vtk)
             {
                 Point<FS_TYPE>::list cumulatedList;
-                index.replace_points(cumulatedList);
+                index->replace_points(cumulatedList);
                 string vtk_path = basename + "_cumulated_track_" + boost::lexical_cast<string>(tmi->first) + ".vtk";
                 VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path, &cumulatedList, vector<string>());
             }
 #endif
             // Delete the index to save memory
-            index.clear(true);
+            if (create_cumulated_size_statistics) {
+                
+                index->clear(true);
+                delete index;
 
-            // time to delete the map
+                // time to delete the map
+                size_t track_size = index->count();
+                map<size_t, size_t>::iterator tlfi = track_sizes.find(track_size);
+                if (tlfi == track_sizes.end())
+                {
+                    track_sizes[track_size] = 1;
+                } else
+                {
+                    track_sizes[track_size] = (tlfi->second + 1);
+                }
 
-            map<size_t, size_t>::iterator tlfi = track_sizes.find(track_size);
-
-            if (tlfi == track_sizes.end())
-            {
-                track_sizes[track_size] = 1;
-            } else
-            {
-                track_sizes[track_size] = (tlfi->second + 1);
+                // Update histogram
+                bool exceeded_max_class = false;
+                add_value_to_histogram(size_histogram_classes, size_histogram, track_size, exceeded_max_class);
+                cout << "  (processed " << points_processed << " points)" << endl;
             }
-
-            // Update histogram
-
-            bool exceeded_max_class = false;
-
-            add_value_to_histogram(size_histogram_classes, size_histogram, track_size, exceeded_max_class);
-
-            // Write out the cumulative file as netcdf and vtk
-
-            // Don't need it anymore
-
+            
             delete track;
-
-            // NETCDF
-
-            cout << "  (processed " << points_processed << " points)" << endl;
         }
 
         cout << "done." << endl;

@@ -183,30 +183,9 @@ namespace m3D {
                 }
             }
             
-            /**
-             * Copy constructor
-             * @param o
-             */
-            TrackCluster(const TrackCluster& o) {
-                this->id = o.id;
-                this->mode = o.mode;
-                this->m_rank = o.m_rank;
-                this->m_spatial_rank = o.m_spatial_rank;
-                this->m_size = o.m_size;
-                this->m_geometrical_center = o.m_geometrical_center;
-                this->m_filename = o.m_filename;
-                this->m_writes_points_to_disk = o.m_writes_points_to_disk;
-                this->m_cid = o.m_cid;
-                this->m_needs_reading = o.m_needs_reading;
-                cout << "TrackingCluster::Copy Constructor @" << this << " [" << this->m_geometrical_center << "]" << endl;
-            }
-            
             ~TrackCluster() {
-                cout << "TrackingCluster::Destructor @" << this << " [" << this->m_geometrical_center << "]" << endl;
                 this->clear(true);
             }
-            
-            
             
 #pragma mark -
 #pragma mark Public member functions
