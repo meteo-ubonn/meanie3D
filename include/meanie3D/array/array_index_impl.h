@@ -327,7 +327,7 @@ namespace m3D {
                     destroy_array_recursive( dim_index+1, array, gridpoint);
                 }
 
-                delete[] the_array;
+                delete the_array;
 
                 *array = NULL;
             }
@@ -346,7 +346,7 @@ namespace m3D {
                     destroy_array_recursive( dim_index+1, &the_array, gridpoint);
                 }
 
-                delete[] the_array;
+                delete the_array;
 
                 super_array->at(super_index) = NULL;
             }
@@ -354,7 +354,9 @@ namespace m3D {
         else
         {
             vector<void *> *super_array = *array;
+
             size_t super_index = gridpoint[dim_index-1];
+
             vector<typename Point<T>::ptr> *the_array = (vector<typename Point<T>::ptr> *) super_array->at(super_index);
 
             if (this->m_make_copies)
@@ -370,7 +372,7 @@ namespace m3D {
                     }
                 }
             }
-            delete[] the_array;
+
             super_array->at(super_index) = NULL;
         }
     }
