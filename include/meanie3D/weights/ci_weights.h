@@ -518,8 +518,8 @@ namespace m3D {
 
                             typedef std::vector<T> vec_t;
 
-                            vec_t center_p = pc->geometrical_center(m_coordinate_system->rank());
-                            vec_t center_c = cc->geometrical_center(m_coordinate_system->rank());
+                            vec_t center_p = pc->geometrical_center();
+                            vec_t center_c = cc->geometrical_center();
                             vec_t displacement = center_c - center_p;
 
                             origins.push_back(center_p);

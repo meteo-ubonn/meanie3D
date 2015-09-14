@@ -341,12 +341,12 @@ namespace m3D {
 
     template <typename T>
     vector<T>
-    Cluster<T>::geometrical_center(size_t spatial_dimensions)
+    Cluster<T>::geometrical_center()
     {
         using namespace utils::vectors;
         
         if (m_geometrical_center.empty()) {
-            vector<T> center(spatial_dimensions,0.0);
+            vector<T> center(m_spatial_rank,0.0);
             typename Point<T>::list::iterator pi;
             for ( pi = this->get_points().begin(); pi != this->get_points().end(); ++pi )
             {
@@ -364,7 +364,7 @@ namespace m3D {
 
     template <typename T>
     vector<T>
-    Cluster<T>::weighed_center(size_t spatial_dimensions, size_t variable_index)
+    Cluster<T>::weighed_center(size_t variable_index)
     {
         vector<T> wc;
         try
@@ -395,7 +395,7 @@ namespace m3D {
             // weight is assigned based on percentage of the range
             // within [min..max]
 
-            vector<T> center(spatial_dimensions,0.0);
+            vector<T> center(m_spatial_rank,0.0);
 
             T overall_mass_percent = 0.0;
 

@@ -416,7 +416,7 @@ namespace m3D { namespace utils {
 
             size_t spatial_dims = c->get_points().at(0)->coordinate.size();
 
-            vector<T> mode = c->geometrical_center(spatial_dims);
+            vector<T> mode = c->geometrical_center();
 
             if (spatial_dims==3 && at_max_height)
             {
@@ -908,7 +908,7 @@ namespace m3D { namespace utils {
             {
                 typename Cluster<T>::ptr c = (*ti);
                 
-                vector<T> center = c->geometrical_center(spatial_dimensions);
+                vector<T> center = c->geometrical_center();
 
                 for ( size_t vi = 0; vi < center.size(); vi++)
                 {

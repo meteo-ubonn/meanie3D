@@ -178,7 +178,7 @@ void convert_clusters(const string &filename,
         for (size_t i=0; i < list->size(); i++) {
             Cluster<FS_TYPE>::ptr c = list->clusters.at(i);
             if (!c->displacement.empty()) {
-                origins.push_back(c->geometrical_center(cs->rank()));
+                origins.push_back(c->geometrical_center());
                 displacements.push_back(c->displacement);
             }
         }

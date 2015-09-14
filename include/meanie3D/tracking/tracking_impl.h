@@ -309,8 +309,8 @@ namespace m3D {
                         // centers. 
 
                         vector<T> oldCenter,newCenter;
-                        oldCenter = oldCluster->geometrical_center(current->dimensions.size());
-                        newCenter = newCluster->geometrical_center(current->dimensions.size());
+                        oldCenter = oldCluster->geometrical_center();
+                        newCenter = newCluster->geometrical_center();
 
                         vector<T> dx = newCenter - oldCenter;
                         midDisplacement[n][m] = ::units::values::m(vector_norm(cs->to_meters(dx)));
@@ -613,8 +613,8 @@ namespace m3D {
                 new_cluster->id = old_cluster->id;
                 
                 // calculate displacement
-                new_cluster->displacement = new_cluster->geometrical_center(cs->rank()) 
-                        - old_cluster->geometrical_center(cs->rank());
+                new_cluster->displacement = new_cluster->geometrical_center() 
+                        - old_cluster->geometrical_center();
                 
                 // Remove the previous cluster from the race
                 used_clusters.insert(old_cluster);

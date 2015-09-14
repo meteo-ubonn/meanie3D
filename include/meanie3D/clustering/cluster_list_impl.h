@@ -699,9 +699,13 @@ namespace m3D {
                 vector<T> mode = vectors::from_string<T>(mode_str);
                 
                 // displacement
+                vector<T> displacement;
                 std::string displacement_str;
-                var.getAtt("displacement").getValues(displacement_str);
-                vector<T> displacement = vectors::from_string<T>(displacement_str);
+                try {
+                    var.getAtt("displacement").getValues(displacement_str);
+                    displacement = vectors::from_string<T>(displacement_str);
+                } catch (netCDF::exceptions::NcException &e) {
+                }
 
                 // margin flag
                 std::string margin_char;

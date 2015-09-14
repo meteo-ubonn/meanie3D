@@ -297,21 +297,19 @@ namespace m3D {
         /** Calculate the cluster center. 
          * The result is cached. The cached value can be reset by
          * calling clear_center_caches();
-         * @param number of spatial dimensions
          * @return the spatial coordinate of the geometrical center 
          * (using only the spatial components for calculation)
          */
-        vector<T> geometrical_center(size_t spatial_dimensions);
+        vector<T> geometrical_center();
 
         /** Calculate the cluster center weighed by a variable. 
          * The result is cached. The cached value can be reset by 
          * calling clear_center_caches();
-         * @param number of spatial dimensions
          * @param index of the variable used for weighing
          * @return the spatial coordinate of the geometrical center
          * (using only the spatial components for calculation)
          */
-        vector<T> weighed_center(size_t spatial_dimensions, size_t variable_index);
+        vector<T> weighed_center(size_t variable_index);
 
         /** Erases the calculation results of all center calculations,
          * forcing a fresh calculation the next time they are called.

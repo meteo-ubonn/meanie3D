@@ -485,8 +485,7 @@ int main(int argc, char** argv)
     vector<string> dim_names;
     vector<string> var_names;
     
-    bool need_points = create_cluster_statistics 
-            || create_cumulated_size_statistics
+    bool need_points = create_cumulated_size_statistics
             || write_cumulated_tracks_as_vtk;
 
     size_t c_id = 0;
@@ -718,23 +717,12 @@ int main(int argc, char** argv)
         cout << "Keying up tracks: " << endl;
 
         Track<FS_TYPE>::trackmap::iterator tmi;
-
-        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi)
-        {
+        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) {
             Track<FS_TYPE>::ptr track = tmi->second;
-
-            cout << "Track #" << tmi->first
-                    << " (" << track->clusters.size() << " clusters)"
-                    << endl;
-
             size_t i = 0;
-
             std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
-
-            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
-            {
-                Cluster<FS_TYPE>::ptr c = *ti;
-                cout << "  [" << i++ << "] x=" << c->geometrical_center(spatial_rank) << endl;
+            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
+                TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) *ti;
                 c->clear(true);
             }
         }
@@ -795,7 +783,7 @@ int main(int argc, char** argv)
                     dict << "        {" << endl;
                     dict << "          \"size\":" << c->size() << "," << endl;
                     dict << "          \"sourcefile\":\"" << track->sourcefiles[i] << "\"," << endl;
-                    dict << "          \"geometrical_center\":" << to_json(c->geometrical_center(spatial_rank)) << "," << endl;
+                    dict << "          \"geometrical_center\":" << to_json(c->geometrical_center()) << "," << endl;
                     dict << "          \"mode\":" << to_json(c->mode) << "," << endl;
                     dict << "          \"min\":" << to_json(min) << "," << endl;
                     dict << "          \"max\":" << to_json(max) << "," << endl;
@@ -905,11 +893,11 @@ int main(int argc, char** argv)
             // Iterate over the clusters in the track and sum up
 
             std::list<Cluster<FS_TYPE>::ptr>::iterator ti;
-            Cluster<FS_TYPE>::ptr previous_cluster = NULL;
+            TrackCluster<FS_TYPE> *previous_cluster = NULL;
 
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
-                Cluster<FS_TYPE>::ptr cluster = *ti;
+                TrackCluster<FS_TYPE> *cluster = (TrackCluster<FS_TYPE> *) *ti;
 
                 if (create_cluster_statistics)
                 {
@@ -948,8 +936,8 @@ int main(int argc, char** argv)
                     {
                         // calculate speed in m/s. All vectors 2D at this time
 
-                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
-                        vector<FS_TYPE> p2 = cluster->geometrical_center(2);
+                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center();
+                        vector<FS_TYPE> p2 = cluster->geometrical_center();
 
                         // RADOLAN is in km. -> Tranform to meters
                         FS_TYPE dS = vector_norm(p2 - p1) * 1000;
@@ -1003,8 +991,8 @@ int main(int argc, char** argv)
                     {
                         // calculate speed in m/s. All vectors 2D at this time
 
-                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center(2);
-                        vector<FS_TYPE> p2 = cluster->geometrical_center(2);
+                        vector<FS_TYPE> p1 = previous_cluster->geometrical_center();
+                        vector<FS_TYPE> p2 = cluster->geometrical_center();
 
                         vector<FS_TYPE> dP = p2 - p1;
 
