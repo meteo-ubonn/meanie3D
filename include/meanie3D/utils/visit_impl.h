@@ -906,7 +906,7 @@ namespace m3D { namespace utils {
             typename std::list< typename Cluster<T>::ptr >::iterator ti;
             for ( ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
-                typename Cluster<T>::ptr c = (*ti);
+                TrackCluster<T> *c = (TrackCluster<T> *) (*ti);
                 
                 vector<T> center = c->geometrical_center();
 
