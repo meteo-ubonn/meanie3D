@@ -7,9 +7,9 @@ VAR_NAME          = "RADOLAN_VAR_NAME"
 
 # Import modules
 import sys
-sys.path.append(M3D_HOME+"/scripts/python-modules")
-import glob
 import os
+sys.path.append(os.path.join(MEANIE3D_HOME,"scripts/python-modules"))
+import glob
 import time
 import visit2D
 import visitUtils
