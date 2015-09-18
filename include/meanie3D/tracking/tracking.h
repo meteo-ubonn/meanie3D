@@ -72,6 +72,8 @@ namespace m3D {
         float   m_msc_threshold;            // How many percent of coverage is required in splits/merges for track continuation?
         
         bool    m_continueIDs;
+        
+        bool    m_useDisplacementVectors;   
 
 
         /** Private default constructor 
@@ -99,6 +101,7 @@ namespace m3D {
         , m_ms_threshold(0.5)                   // percentage coverage old/new for merge/split (33%)
         , m_msc_threshold(0.75)                 // percentage coverage old/new in merge/split for continuing track (75%)
         , m_continueIDs(true)                   // continue IDs through splits/merges ?)
+        , m_useDisplacementVectors(false)
         {};
 
         /** Compares two cluster lists and propagates or assigns new identifiers.
@@ -147,6 +150,13 @@ namespace m3D {
          */
         bool continueIDs() { return m_continueIDs; }
         void setContinueIDs(bool value) {m_continueIDs = value;}
+        
+        /** 
+         * Are displacement vectors used to improve tracking?
+         * @return 
+         */
+        bool useDisplacementVectors() { return m_useDisplacementVectors; }
+        void setUseDisplacementVectors(bool value) {m_useDisplacementVectors = value;}
         
         /**
          * 

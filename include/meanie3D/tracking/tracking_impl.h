@@ -205,7 +205,9 @@ namespace m3D {
 
             // Advect the previous clusters by their displacement 
             // vectors to make the results more accurate
-            this->advect_clusters(previous);
+            if (this->m_useDisplacementVectors) {
+                this->advect_clusters(previous);
+            }
             
             // Prepare the newcomers for re-identification
             current->erase_identifiers();
