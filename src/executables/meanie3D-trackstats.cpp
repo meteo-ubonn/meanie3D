@@ -93,14 +93,16 @@ void parse_commmandline(program_options::variables_map vm,
     include_degenerates = vm["exclude-degenerates"].as<bool>();
 
     // Default is the dimensions
-
-    if (vm.count("vtk-dimensions") > 0) {
-        std::string s = vm["vtk-dimensions"].as<std::string>();
-        if (contains(s,",") || contains(s,"(") || contains(s,")")) {
-            cerr << "wrong arguments for --vtk-dimension. Example: --vtk-dimensions x y z" << endl;
-            exit(EXIT_FAILURE);
+    if (vm.count("vtk-dimensions") > 0)  {
+        // parse dimension list
+        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+        boost::char_separator<char> sep(",");
+        string str_value = vm["vtk-dimensions"].as<string>();
+        tokenizer dim_tokens(str_value, sep);
+        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+            string name = *tok_iter;
+            vtk_dim_names.push_back(name);
         }
-        vtk_dim_names = vm["vtk-dimensions"].as<svec_t>();
     }
 
     create_length_stats = vm.count("create-length-statistics") > 0;
@@ -362,7 +364,7 @@ int main(int argc, char** argv)
 #if WITH_VTK
             ("write-center-tracks-as-vtk,e", "Write tracks out as .vtk files")
             ("write-cumulated-tracks-as-vtk,m", "Write cumulated tracks out as .vtk files. Only has effect if --create-cumulated-size-statistics is used")
-            ("vtk-dimensions", program_options::value<svec_t>()->multitoken(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
+            ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
 #endif    
             ("write-gnuplot-files,g", "write individual files for the statistics fit for use with gnuplot")
             ;
@@ -549,6 +551,7 @@ int main(int argc, char** argv)
                     }
 
                     #if WITH_VTK
+                    cout << "Setting VTK dimensions:" << vtk_dim_names << endl;
                     VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
                     #endif
                 }
