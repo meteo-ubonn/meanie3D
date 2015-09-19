@@ -371,8 +371,7 @@ def visualization(conf):
     pprint(conf)
     print "-------------------------------------------------"
 
-    DYLD_LIBRARY_PATH="/usr/local/lib:/usr/lib"
-    bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
+    bin_prefix = "export DYLD_LIBRARY_PATH="+visitUtils.get_dyld_library_path()+";"
     conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
 
     # Silent
