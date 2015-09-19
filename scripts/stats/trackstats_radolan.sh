@@ -12,12 +12,8 @@ echo "Running tracking statistics on dirs: $dirs"
 for dir in $dirs; do
     if [ -d $dir/netcdf ];then
         cd $dir
-        meanie3D-trackstats --write-track-dictionary --write-gnuplot-files \
-            --create-length-statistics --create-speed-statistics \
-            --create-direction-statistics --create-cluster-statistics \
-            --write-center-tracks-as-vtk --vtk-dimensions=x y \
-            -b raa -p netcdf
-        ${MEANIE3D_HOME}/scripts/stats/plot-stats.sh
+        meanie3D-trackstats -t -g -t -1 -2 -3 -4 --vtk-dimensions=x,y -s netcdf
+        ${MEANIE3D_HOME}/scripts/stats/plot_stats.sh
         ${MEANIE3D_HOME}/scripts/visit/tracks/visualize_radolan_tracks.sh .
         cd ..
     fi

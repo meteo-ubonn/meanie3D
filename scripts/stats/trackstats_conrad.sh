@@ -20,7 +20,7 @@ meanie3D-trackstats-conrad --write-track-dictionary --write-gnuplot-files \
     -f $1
 
 # plot stats
-${MEANIE3D_HOME}/scripts/stats/plot-conrad-stats.sh
+${MEANIE3D_HOME}/scripts/stats/plot_conrad_stats.sh
 
 # plot all tracks
 ${MEANIE3D_HOME}/scripts/visit/tracks/visualize_conrad_tracks.sh .

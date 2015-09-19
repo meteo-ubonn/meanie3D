@@ -12,7 +12,7 @@ echo "Running tracking statistics on dirs: $dirs"
 for dir in $dirs; do
     if [ -d $dir/netcdf ];then
         cd $dir
-        ${MEANIE3D_HOME}/scripts/stats/plot-stats-comparison.sh
+        ${MEANIE3D_HOME}/scripts/stats/plot_stats_comparison.sh
         cd ..
     fi
 done

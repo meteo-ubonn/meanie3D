@@ -151,7 +151,7 @@ def run_tracking(config,time_index):
 
     # Resume?
 
-    if config['RESUME'] == False:
+    if config['resume'] == False:
 
         # consider time index. Even if not resuming, the 
         # output directories should only be created at
@@ -172,7 +172,7 @@ def run_tracking(config,time_index):
     if "USE_CI_SCORE" in config.keys():
         use_ci_score = config["USE_CI_SCORE"]
 
-    netcdf_pattern = config['NETCDF_DIR'] + "/*.nc"
+    netcdf_pattern = config['source_directory'] + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
     last_cluster_file=""
     run_count = 0

@@ -6,11 +6,6 @@ then
     exit 0
 fi
 
-meanie3D-trackstats --write-track-dictionary --write-gnuplot-files \
-            --create-length-statistics --create-speed-statistics \
-            --create-direction-statistics --create-cluster-statistics \
-            --write-center-tracks-as-vtk --vtk-dimensions=x y \
-            -b  -p netcdf
-
-${MEANIE3D_HOME}/scripts/stats/plot-stats.sh
+meanie3D-trackstats  meanie3D-trackstats -g -t -1 -2 -3 -4 --vtk-dimensions=x,y -s netcdf
+${MEANIE3D_HOME}/scripts/stats/plot_stats.sh
 ${MEANIE3D_HOME}/scripts/visit/tracks/visualize_radolan_tracks.sh .

@@ -338,30 +338,30 @@ def set_annotations():
 #
 # The following configuration options exist:
 #
-# 'NETCDF_DIR' : directory with the source data files
-# 'CLUSTER_DIR' : directory with the cluster results
-# 'M3D_HOME' : home directory of meanie3D (for the mapstuff file and modules)
-# 'RESUME' : if true, the existing image files are not wiped and work is
+# 'source_directory' : directory with the source data files
+# 'cluster_directory' : directory with the cluster results
+# 'meanie3d_home' : home directory of meanie3D (for the mapstuff file and modules)
+# 'resume' : if true, the existing image files are not wiped and work is
 #            picked up where it left off. Otherwise all existing images
 #            are deleted and things are started from scratch
-# 'WITH_BACKGROUND_GRADIENT' : add a gray background gradient to the canvas?
-# 'WITH_TOPOGRAPHY' : use the topography data from the mapstuff file?
-# 'WITH_RIVERS_AND_BOUNDARIES' : add rivers and boundaries?
-# 'WITH_SOURCE_BACKROUND' : re-add the source data when plotting clusters?
-# 'WITH_DATETIME' : add a date/time label?
-# 'CREATE_SOURCE_MOVIE' : create a movie from the source images?
-# 'CREATE_CLUSTERS_MOVIE' : create a movie from the cluster images?
-# 'GRID_EXTENT' : "national" or "local"
-# 'CONVERSION_PARAMS' : parameters for meanie3D-cfm2vtk
-# 'VARIABLES' : list of variables for the source data
-# 'LOWER_TRESHOLDS' : bottom cutoff for each variable,
-# 'UPPER_TRESHOLDS' : top cutoff for each variable,
-# 'VAR_MIN' : lowest value on legend
-# 'VAR_MAX' : highest value on legend
-# 'COLORTABLES' : colortable to use for each variable
-# 'COLORTABLES_INVERT_FLAGS' : flag indicating inversion of colortable
+# 'with_background_gradient' : add a gray background gradient to the canvas?
+# 'with_topography' : use the topography data from the mapstuff file?
+# 'with_rivers_and_boundaries' : add rivers and boundaries?
+# 'with_source_backround' : re-add the source data when plotting clusters?
+# 'with_datetime' : add a date/time label?
+# 'create_source_movie' : create a movie from the source images?
+# 'create_clusters_movie' : create a movie from the cluster images?
+# 'grid_extent' : "national" or "local"
+# 'conversion_params' : parameters for meanie3D-cfm2vtk
+# 'variables' : list of variables for the source data
+# 'lower_tresholds' : bottom cutoff for each variable,
+# 'upper_tresholds' : top cutoff for each variable,
+# 'var_min' : lowest value on legend
+# 'var_max' : highest value on legend
+# 'colortables' : colortable to use for each variable
+# 'colortables_invert_flags' : flag indicating inversion of colortable
 #                              for each variable
-# 'OPACITY' : opacity to use for each variable
+# 'opacity' : opacity to use for each variable
 # ------------------------------------------------------------------------------
 def visualization(conf):
 
@@ -383,7 +383,7 @@ def visualization(conf):
     print "Setting annotation attributes:"
     set_annotations()
 
-    if conf['RESUME'] == False:
+    if conf['resume'] == False:
         print "Removing results from previous runs"
         return_code=call("rm -f images movies *.vtk *.vtr *.png", shell=True)
     else:
@@ -396,16 +396,16 @@ def visualization(conf):
     print "-- Creating colortables ---"
     num_colors = visitUtils.create_cluster_colortable("cluster_colors")
 
-    if conf['WITH_TOPOGRAPHY']:
+    if conf['with_topography']:
         visitUtils.create_topography_colortable()
 
-    if conf['WITH_BACKGROUND_GRADIENT']:
+    if conf['with_background_gradient']:
         visitUtils.add_background_gradient();
 
     # Glob the netcdf directory
-    netcdf_files = sorted(glob.glob(conf['NETCDF_DIR']+"/*.nc"));
+    netcdf_files = sorted(glob.glob(conf['source_directory']+"/*.nc"));
 
-    print "Processing files in directory " + conf['NETCDF_DIR']
+    print "Processing files in directory " + conf['source_directory']
 
     # Keep track of number of images to allow
     # forced re-set in time to circumvent the
@@ -424,7 +424,7 @@ def visualization(conf):
         netcdf_path,filename    = os.path.split(netcdf_file);
         basename                = os.path.splitext(filename)[0]
         
-        cluster_file            = conf['CLUSTER_DIR']+"/"+basename+"-clusters.nc"
+        cluster_file            = conf['cluster_directory']+"/"+basename+"-clusters.nc"
         label_file              = basename+"-clusters_centers.vtk"
         
         # check if the files both exist
@@ -439,7 +439,7 @@ def visualization(conf):
         source_open = False
         skip_source = False
         
-        if conf['RESUME'] == True:
+        if conf['resume'] == True:
             fn = "source_" + number_postfix
             if os.path.exists(fn):
                 print "Skipping existing file " + fn
@@ -447,30 +447,30 @@ def visualization(conf):
         
         if skip_source == False:
 
-            if conf['CREATE_SOURCE_MOVIE']:
+            if conf['create_source_movie']:
     
                 OpenDatabase(netcdf_file);
                 source_open = True
 
-                if conf['WITH_TOPOGRAPHY']:
+                if conf['with_topography']:
                     print "-- Adding topography data --"
                     add_topography("national_topo_2D")
                 
-                if conf['WITH_RIVERS_AND_BOUNDARIES']:
+                if conf['with_rivers_and_boundaries']:
                     print "-- Adding map data --"
                     add_map_rivers("national")
                     add_map_borders("national")
                 
-                if conf['WITH_DATETIME']:
+                if conf['with_datetime']:
                     print "-- Adding timestamp --"
                     visitUtils.add_datetime(netcdf_file)
                 
                 print "-- Plotting source data --"
                 start_time = time.time()
                 
-                variables = conf['VARIABLES']
-                colortables = conf['COLORTABLES']
-                opacities = conf['OPACITY']
+                variables = conf['variables']
+                colortables = conf['colortables']
+                opacities = conf['opacity']
                 
                 for i in range(len(variables)):
 
@@ -479,14 +479,14 @@ def visualization(conf):
                     p = PseudocolorAttributes()
                     p.colorTableName = str(colortables[i])
                     p.minFlag,p.maxFlag=1,1
-                    p.min,p.max=conf['VAR_MIN'][i],conf['VAR_MAX'][i]
-                    p.invertColorTable = conf['COLORTABLES_INVERT_FLAGS'][i]
+                    p.min,p.max=conf['var_min'][i],conf['var_max'][i]
+                    p.invertColorTable = conf['colortables_invert_flags'][i]
                     SetPlotOptions(p)
                     
                     AddOperator("Threshold")
                     t = ThresholdAttributes();
-                    t.lowerBounds=(conf['LOWER_TRESHOLDS'][i])
-                    t.upperBounds=(conf['UPPER_TRESHOLDS'][i])
+                    t.lowerBounds=(conf['lower_tresholds'][i])
+                    t.upperBounds=(conf['upper_tresholds'][i])
                     SetOperatorOptions(t)
 
                 DrawPlots();
@@ -497,11 +497,11 @@ def visualization(conf):
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
         
-        if conf['CREATE_CLUSTERS_MOVIE']:
+        if conf['create_clusters_movie']:
             
             skip = False
                 
-            if conf['RESUME'] == True:
+            if conf['resume'] == True:
                 fn = "tracking_" + number_postfix
                 
                 if os.path.exists(fn):
@@ -514,29 +514,29 @@ def visualization(conf):
                 print "-- Converting clusters to .vtr --"
                 
                 # build the clustering command
-                command=conversion_bin+" -f "+cluster_file+" "+conf['CONVERSION_PARAMS']
+                command=conversion_bin+" -f "+cluster_file+" "+conf['conversion_params']
                 print command
                 return_code = call( command, shell=True)
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
                 
-                if conf['WITH_TOPOGRAPHY']:
+                if conf['with_topography']:
                     print "-- Adding topography data --"
                     add_topography("national_topo_2D")
                 
-                if conf['WITH_RIVERS_AND_BOUNDARIES']:
+                if conf['with_rivers_and_boundaries']:
                     print "-- Adding map data --"
                     add_map_rivers("national")
                     add_map_borders("national")
                 
-                if conf['WITH_DATETIME']:
+                if conf['with_datetime']:
                     print "-- Adding timestamp --"
                     visitUtils.add_datetime(netcdf_file)
                 
                 print "-- Rendering cluster scene --"
                 start_time = time.time()
                 
-                if conf['WITH_SOURCE_BACKROUND']:
+                if conf['with_source_backround']:
                     
                     if not source_open:
                         OpenDatabase(netcdf_file);
@@ -545,24 +545,24 @@ def visualization(conf):
                     for i in range(len(variables)):
                         
                         add_pseudocolor(netcdf_file,
-                                        conf['VARIABLES'][i],
-                                        conf['COLORTABLES'][i],
-                                        conf['OPACITY'][i],1)
+                                        conf['variables'][i],
+                                        conf['colortables'][i],
+                                        conf['opacity'][i],1)
                                         
                         p = PseudocolorAttributes()
-                        p.invertColorTable = conf['COLORTABLES_INVERT_FLAGS'][i]
+                        p.invertColorTable = conf['colortables_invert_flags'][i]
                         p.minFlag,p.maxFlag=1,1
-                        p.min,p.max=conf['VAR_MIN'][i],conf['VAR_MAX'][i]
+                        p.min,p.max=conf['var_min'][i],conf['var_max'][i]
                         SetPlotOptions(p)
                         
                         AddOperator("Threshold")
                         t = ThresholdAttributes();
-                        t.lowerBounds=(conf['LOWER_TRESHOLDS'][i])
-                        t.upperBounds=(conf['UPPER_TRESHOLDS'][i])
+                        t.lowerBounds=(conf['lower_tresholds'][i])
+                        t.upperBounds=(conf['upper_tresholds'][i])
                         SetOperatorOptions(t)
 
                 # Add the clusters
-                basename = conf['CLUSTER_DIR']+"/"
+                basename = conf['cluster_directory']+"/"
                 add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
                 # Add modes as labels
@@ -597,11 +597,11 @@ def visualization(conf):
     close_topography()
 
     # create loops
-    if conf['CREATE_SOURCE_MOVIE']:
+    if conf['create_source_movie']:
         visitUtils.create_movie("source_","source.gif")
         visitUtils.create_movie("source_","source.m4v")
 
-    if conf['CREATE_CLUSTERS_MOVIE']:
+    if conf['create_clusters_movie']:
         visitUtils.create_movie("tracking_","tracking.gif")
         visitUtils.create_movie("tracking_","tracking.m4v")
 

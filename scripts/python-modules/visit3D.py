@@ -507,32 +507,32 @@ def images_exist(conf,basename,image_count):
 #
 # The following configuration options exist:
 #
-# 'NETCDF_DIR' : directory with the source data files
-# 'CLUSTER_DIR' : directory with the cluster results
-# 'M3D_HOME' : home directory of meanie3D (for the mapstuff file and modules)
-# 'RESUME' : if true, the existing image files are not wiped and work is
+# 'source_directory' : directory with the source data files
+# 'cluster_directory' : directory with the cluster results
+# 'meanie3d_home' : home directory of meanie3D (for the mapstuff file and modules)
+# 'resume' : if true, the existing image files are not wiped and work is
 #            picked up where it left off. Otherwise all existing images
 #            are deleted and things are started from scratch
-# 'WITH_BACKGROUND_GRADIENT' : add a gray background gradient to the canvas?
-# 'WITH_TOPOGRAPHY' : use the topography data from the mapstuff file?
-# 'WITH_RIVERS_AND_BOUNDARIES' : add rivers and boundaries?
-# 'WITH_SOURCE_BACKROUND' : re-add the source data when plotting clusters?
-# 'WITH_DATETIME' : add a date/time label?
-# 'CREATE_SOURCE_MOVIE' : create a movie from the source images?
-# 'CREATE_CLUSTERS_MOVIE' : create a movie from the cluster images?
+# 'with_background_gradient' : add a gray background gradient to the canvas?
+# 'with_topography' : use the topography data from the mapstuff file?
+# 'with_rivers_and_boundaries' : add rivers and boundaries?
+# 'with_source_backround' : re-add the source data when plotting clusters?
+# 'with_datetime' : add a date/time label?
+# 'create_source_movie' : create a movie from the source images?
+# 'create_clusters_movie' : create a movie from the cluster images?
 # 'SCALE_FACTOR_Z' : scale factor for the Z axis.
-# 'GRID_EXTENT' : "national" or "local"
-# 'CONVERSION_PARAMS' : parameters for meanie3D-cfm2vtk
-# 'VARIABLES' : list of variables for the source data
-# 'LOWER_TRESHOLDS' : bottom cutoff for each variable,
-# 'UPPER_TRESHOLDS' : top cutoff for each variable,
-# 'VAR_MIN' : lowest value on legend
-# 'VAR_MAX' : highest value on legend
-# 'COLORTABLES' : colortable to use for each variable
-# 'COLORTABLES_INVERT_FLAGS' : flag indicating inversion of colortable
+# 'grid_extent' : "national" or "local"
+# 'conversion_params' : parameters for meanie3D-cfm2vtk
+# 'variables' : list of variables for the source data
+# 'lower_tresholds' : bottom cutoff for each variable,
+# 'upper_tresholds' : top cutoff for each variable,
+# 'var_min' : lowest value on legend
+# 'var_max' : highest value on legend
+# 'colortables' : colortable to use for each variable
+# 'colortables_invert_flags' : flag indicating inversion of colortable
 #                              for each variable
 # 'PERSPECTIVES' : array with perspective objects
-# 'OPACITY' : opacity to use for each variable
+# 'opacity' : opacity to use for each variable
 # ------------------------------------------------------------------------------
 def visualization(conf):
     
@@ -544,28 +544,27 @@ def visualization(conf):
 
     bin_prefix = "export DYLD_LIBRARY_PATH="+visitUtils.get_dyld_library_path()+";"
     conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
-    # conversion_bin = "meanie3D-cfm2vtk"
 
     # Set view and annotation attributes
 
     print "Setting annotation attributes:"
     set_annotations()
     
-    if conf['RESUME'] == False:
+    if conf['resume'] == False:
         print "Removing results from previous runs"
         return_code=call("rm -rf images movies *.vtk *.vtr *.png", shell=True)
     else:
         print "Removing intermediary files from previous runs"
         return_code=call("rm -f *.vtk *.vtr", shell=True)
 
-    if conf['CREATE_CLUSTERS_MOVIE']:
+    if conf['create_clusters_movie']:
         print "Creating colortables"
         num_colors = visitUtils.create_cluster_colortable("cluster_colors")
 
-    if conf['WITH_TOPOGRAPHY']:
+    if conf['with_topography']:
         visitUtils.create_topography_colortable()
 
-    if conf['WITH_BACKGROUND_GRADIENT']:
+    if conf['with_background_gradient']:
         print "Setting background gradient"
         visitUtils.add_background_gradient();
 
@@ -574,8 +573,8 @@ def visualization(conf):
         scaleFactorZ = conf['SCALE_FACTOR_Z']
 
     # Glob the netcdf directory
-    print "Processing files in directory " + conf['NETCDF_DIR']
-    netcdf_files = glob.glob(conf['NETCDF_DIR']+"/*.nc");
+    print "Processing files in directory " + conf['source_directory']
+    netcdf_files = glob.glob(conf['source_directory']+"/*.nc");
 
     # Keep track of number of images to allow
     # forced re-set in time to circumvent the
@@ -589,7 +588,7 @@ def visualization(conf):
         
         netcdf_path,filename    = os.path.split(netcdf_file);
         basename                = os.path.splitext(filename)[0]
-        cluster_file            = conf['CLUSTER_DIR']+"/"+basename+"-clusters.nc"
+        cluster_file            = conf['cluster_directory']+"/"+basename+"-clusters.nc"
         label_file              = basename+"-clusters_centers.vtk"
         displacements_file      = basename+"-clusters_displacements.vtk"
         
@@ -607,7 +606,7 @@ def visualization(conf):
         source_open = False
         skip_source = False
         
-        if conf['RESUME'] == True:
+        if conf['resume'] == True:
             exists = images_exist(conf,"source",image_count)
             if exists == "all":
                 print "Source visualization "+number_postfix+" exists. Skipping."
@@ -621,18 +620,18 @@ def visualization(conf):
             OpenDatabase(netcdf_file);
             source_open = True
 
-            if conf['CREATE_SOURCE_MOVIE']:
+            if conf['create_source_movie']:
                 
-                if conf['WITH_TOPOGRAPHY']:
+                if conf['with_topography']:
                     print "-- Adding topography data --"
-                    add_map_topography(conf['GRID_EXTENT'])
+                    add_map_topography(conf['grid_extent'])
                 
-                if conf['WITH_RIVERS_AND_BOUNDARIES']:
+                if conf['with_rivers_and_boundaries']:
                     print "-- Adding map data --"
-                    add_map_rivers(conf['GRID_EXTENT'])
-                    add_map_borders(conf['GRID_EXTENT'])
+                    add_map_rivers(conf['grid_extent'])
+                    add_map_borders(conf['grid_extent'])
                 
-                if conf['WITH_DATETIME']:
+                if conf['with_datetime']:
                     print "-- Adding timestamp --"
                     visitUtils.add_datetime(netcdf_file)
                 
@@ -641,24 +640,24 @@ def visualization(conf):
                 
                 # Add source data and threshold it
 
-                variables = conf['VARIABLES']
+                variables = conf['variables']
 
                 for i in range(len(variables)):
 
                     add_pseudocolor(netcdf_file,
-                                            conf['VARIABLES'][i],
-                                            conf['COLORTABLES'][i],
-                                            conf['OPACITY'][i],1)
+                                            conf['variables'][i],
+                                            conf['colortables'][i],
+                                            conf['opacity'][i],1)
                     p = PseudocolorAttributes()
                     p.minFlag,p.maxFlag=1,1
-                    p.min,p.max=conf['VAR_MIN'][i],conf['VAR_MAX'][i]
-                    p.invertColorTable = conf['COLORTABLES_INVERT_FLAGS'][i]
+                    p.min,p.max=conf['var_min'][i],conf['var_max'][i]
+                    p.invertColorTable = conf['colortables_invert_flags'][i]
                     SetPlotOptions(p)
                 
                     AddOperator("Threshold")
                     t = ThresholdAttributes();
-                    t.lowerBounds=(conf['LOWER_TRESHOLDS'][i])
-                    t.upperBounds=(conf['UPPER_TRESHOLDS'][i])
+                    t.lowerBounds=(conf['lower_tresholds'][i])
+                    t.upperBounds=(conf['upper_tresholds'][i])
                     SetOperatorOptions(t)
 
                 DrawPlots();
@@ -671,7 +670,7 @@ def visualization(conf):
                         visitUtils.save_window(filename,1)
                         perspective_nr = perspective_nr + 1
                 else:
-                    set_view_to_radolan(conf['GRID_EXTENT'],conf['SCALE_FACTOR_Z'])
+                    set_view_to_radolan(conf['grid_extent'],conf['SCALE_FACTOR_Z'])
                     visitUtils.save_window("source_",1)
                 
                 DeleteAllPlots()
@@ -679,11 +678,11 @@ def visualization(conf):
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
         
-        if conf['CREATE_CLUSTERS_MOVIE']:
+        if conf['create_clusters_movie']:
                                  
             skip = False
             
-            if conf['RESUME'] == True:
+            if conf['resume'] == True:
 
                 exists = images_exist(conf,"tracking",image_count)
                 if exists == "all":
@@ -699,7 +698,7 @@ def visualization(conf):
                 print "-- Converting clusters to .vtr --"
                 
                 # build the clustering command
-                command=conversion_bin+" -f "+cluster_file+" "+conf['CONVERSION_PARAMS']
+                command=conversion_bin+" -f "+cluster_file+" "+conf['conversion_params']
                 if conf['WITH_DISPLACEMENT_VECTORS']:
                     command = command + " --write-displacement-vectors"
                 print command
@@ -710,20 +709,20 @@ def visualization(conf):
                 print "-- Rendering cluster scene --"
                 start_time = time.time()
                 
-                if conf['WITH_TOPOGRAPHY']:
+                if conf['with_topography']:
                     print "-- Adding topography data --"
-                    add_map_topography(conf['GRID_EXTENT'])
+                    add_map_topography(conf['grid_extent'])
                 
-                if conf['WITH_RIVERS_AND_BOUNDARIES']:
+                if conf['with_rivers_and_boundaries']:
                     print "-- Adding map data --"
-                    add_map_rivers(conf['GRID_EXTENT'])
-                    add_map_borders(conf['GRID_EXTENT'])
+                    add_map_rivers(conf['grid_extent'])
+                    add_map_borders(conf['grid_extent'])
                 
-                if conf['WITH_DATETIME']:
+                if conf['with_datetime']:
                     print "-- Adding timestamp --"
                     visitUtils.add_datetime(netcdf_file)
                 
-                if conf['WITH_SOURCE_BACKROUND']:
+                if conf['with_source_backround']:
                     
                     if not source_open:
                         OpenDatabase(netcdf_file);
@@ -732,24 +731,24 @@ def visualization(conf):
                     for i in range(len(variables)):
                     
                         add_pseudocolor(netcdf_file,
-                                                conf['VARIABLES'][i],
-                                                conf['COLORTABLES'][i],
-                                                conf['OPACITY'][i],1)
+                                                conf['variables'][i],
+                                                conf['colortables'][i],
+                                                conf['opacity'][i],1)
                         p = PseudocolorAttributes()
-                        p.invertColorTable = conf['COLORTABLES_INVERT_FLAGS'][i]
+                        p.invertColorTable = conf['colortables_invert_flags'][i]
                         p.minFlag,p.maxFlag=1,1
-                        p.min,p.max=conf['VAR_MIN'][i],conf['VAR_MAX'][i]
+                        p.min,p.max=conf['var_min'][i],conf['var_max'][i]
                         SetPlotOptions(p)
                         
                         AddOperator("Threshold")
                         t = ThresholdAttributes();
-                        t.lowerBounds=(conf['LOWER_TRESHOLDS'][i])
-                        t.upperBounds=(conf['UPPER_TRESHOLDS'][i])
+                        t.lowerBounds=(conf['lower_tresholds'][i])
+                        t.upperBounds=(conf['upper_tresholds'][i])
                         SetOperatorOptions(t)
 
                 
                 # Add the clusters
-                basename = conf['CLUSTER_DIR']+"/"
+                basename = conf['cluster_directory']+"/"
                 add_clusters_with_colortable(basename, "_cluster_", "cluster_colors", num_colors, conf)
                 
                 # Add modes as labels
@@ -769,11 +768,11 @@ def visualization(conf):
                         visitUtils.save_window(filename,1)
                         perspective_nr = perspective_nr + 1
                 else:
-                    set_view_to_radolan(conf['GRID_EXTENT'],conf['SCALE_FACTOR_Z'])
+                    set_view_to_radolan(conf['grid_extent'],conf['SCALE_FACTOR_Z'])
                     visitUtils.save_window("tracking_",1)
                 
                 # change perspective back
-                set_view_to_radolan(conf['GRID_EXTENT'],conf['SCALE_FACTOR_Z']);
+                set_view_to_radolan(conf['grid_extent'],conf['SCALE_FACTOR_Z']);
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -806,13 +805,13 @@ def visualization(conf):
 
         for perspective in conf['PERSPECTIVES']:
 
-            if conf['CREATE_SOURCE_MOVIE']:
+            if conf['create_source_movie']:
                 movie_fn = "p" + str(perspective_nr) + "_source"
                 image_fn = movie_fn + "_"
                 visitUtils.create_movie(image_fn,movie_fn+".gif")
                 visitUtils.create_movie(image_fn,movie_fn+".m4v")
 
-            if  conf['CREATE_CLUSTERS_MOVIE']:
+            if  conf['create_clusters_movie']:
                 movie_fn = "p" + str(perspective_nr) + "_tracking"
                 image_fn = movie_fn + "_"
                 visitUtils.create_movie(image_fn,movie_fn+".gif")
@@ -821,11 +820,11 @@ def visualization(conf):
             perspective_nr = perspective_nr + 1
     else:
 
-        if conf['CREATE_SOURCE_MOVIE']:
+        if conf['create_source_movie']:
             visitUtils.create_movie("source_","source.gif")
             visitUtils.create_movie("source_","source.m4v")
 
-        if  conf['CREATE_CLUSTERS_MOVIE']:
+        if  conf['create_clusters_movie']:
             visitUtils.create_movie("tracking_","tracking.gif")
             visitUtils.create_movie("tracking_","tracking.m4v")
 

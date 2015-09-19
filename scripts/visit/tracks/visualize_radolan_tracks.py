@@ -95,6 +95,7 @@ for fname in list:
 
 DrawPlots()
 
+
 visitUtils.save_window("tracks",0)
 
 print "Cleaning up *.vtk"
