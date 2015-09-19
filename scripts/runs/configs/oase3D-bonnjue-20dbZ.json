@@ -1,6 +1,6 @@
 {
-    "DESCRIPTION" : "Tracking OASE 3D Bonn/Juelich composite, xband_oase_zh, threshold 20 dBZ",
-    "CLUSTERING_PARAMS" : "--d z,y,x -v xband_oase_zh --lower-thresholds xband_oase_zh=20 --upper-thresholds xband_oase_zh=75 --min-cluster-size=27",
-    "TRACKING_PARAMS" : "-t xband_oase_zh --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
-    "USE_PREVIOUS" : true
+    "description" : "Tracking OASE 3D Bonn/Juelich composite, xband_oase_zh, threshold 20 dBZ",
+    "clustering_params" : "--d z,y,x -v xband_oase_zh --lower-thresholds xband_oase_zh=20 --upper-thresholds xband_oase_zh=75 --min-cluster-size=27",
+    "tracking_params" : "-t xband_oase_zh --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
+    "use_previous" : true
 }

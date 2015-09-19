@@ -1,34 +1,31 @@
 #!/usr/bin/python
 
-# -------------------------------------------------------------------
-# Filename: meanie3D.py
-#
+# __package__ "m3d"
+__name__ = "meanie3D"
+__version__ = "1.5.4"
+
 # Contains some utility functions and the code that runs complete
 # directories through the clustering/tracking process
-# -------------------------------------------------------------------
 
 import glob
 import os
 import os.path
-import string
 import shutil
 import time
 import json
 import platform
 from subprocess import call
 
-# -------------------------------------------------------------------
-# Get DYLD_LIBRARY_PATH depending on operating system. OSX needs 
+
+## Get DYLD_LIBRARY_PATH depending on operating system. OSX needs
 # special work because of the homebrew gfx libraries, which get 
 # in the way of the system libraries.
-# @return DYLD_LIBRARY_PATH
-# -------------------------------------------------------------------
+# \return DYLD_LIBRARY_PATH
 def get_dyld_library_path():
     path = "/usr/local/lib"
     if platform.system() == 'Darwin':
         path = "/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/:"+path
     return path
-
 
 # -------------------------------------------------------------------
 # Define some executables to be called from python
@@ -39,68 +36,55 @@ detection_bin = BIN_PREFIX + "meanie3D-detect"
 tracking_bin  = BIN_PREFIX + "meanie3D-track"
 trackplot_bin = BIN_PREFIX + "meanie3D-trackplot"
 
-# -------------------------------------------------------------------
-# @return current module version
-# -------------------------------------------------------------------
-
+## Get the module version.
+# \returns module version
 def get_version():
-    return "1.5.0"
+    return __version__
 
-# -------------------------------------------------------------------
-# parses a JSON configuration file
-# @param filename
-# @return configuration dictionary
-# -------------------------------------------------------------------
+## Parses a JSON configuration file
+# \param filename
+# \returns configuration dictionary
 def load_configuration(filename):
     json_data=open(filename)
     data = json.load(json_data)
     json_data.close()
     return data;
 
-# -------------------------------------------------------------------
-# Counts the number of netcdf files in the given
+## Counts the number of netcdf files in the given
 # directory
-# @param directory
-# @return number of netcdf files
-# -------------------------------------------------------------------
+# \param directory
+# \returns number of netcdf files
 def number_of_netcdf_files(source_dir):
     netcdf_pattern = source_dir + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
     return len(netcdf_list)
 
-# -------------------------------------------------------------------
-# Creates an output filename based on given filename by
+## Creates an output filename based on given filename by
 # appending -<slicenum>.nc at the end.
-# @param basic filename
-# @param slice num 
-# @return filename-1.nc
-# -------------------------------------------------------------------
+# \param basic filename
+# \param slice num
+# \returns filename-1.nc
 def numbered_filename(filename,index):
     basename = os.path.basename(filename)
     return os.path.splitext(basename)[0]+"-"+str(index)+".nc"
     
-# -------------------------------------------------------------------
-# Deletes the directories 'log' and 'netcdf' underneath
+## Deletes the directories 'log' and 'netcdf' underneath
 # base path. Removes previous ones if they do exist
 #
-# @param base path
+# \param base path
 # -------------------------------------------------------------------
 def create_ouput_directories(base_path):
-
     # base path
-
     if not os.path.exists(base_path):
         os.makedirs(base_path)
 
     # logs
-
     log_dir = base_path+"/log"
     if os.path.exists(log_dir):
         shutil.rmtree(log_dir)
     os.makedirs(log_dir)
     
     # netcdf results
-
     netcdf_dir = base_path+"/netcdf"
     if os.path.exists(netcdf_dir):
         shutil.rmtree(netcdf_dir)
@@ -108,61 +92,53 @@ def create_ouput_directories(base_path):
 
     return
 
-# -------------------------------------------------------------------
-# Runs a batch of files through the clustering and tracking.
+## Runs a batch of files through the clustering and tracking.
 #
-# @param configuration with the following keys:
+# \param configuration with the following keys:
 # 
-#    DESCRIPTION : a description of the configuration
-#    NETCDF_DIR : directory containing files to process
-#    OUTPUT_DIR : directory to write results to
-#    M3D_HOME   : ${MEANIE3D_HOME} environment variable
-#    RESUME     : if True then pick off where you left off, if False
+#    description : a description of the configuration
+#    netcdf_dir : directory containing files to process
+#    output_dir : directory to write results to
+#    m3d_home   : ${MEANIE3D_HOME} environment variable
+#    resume     : if True then pick off where you left off, if False
 #                 all previous results are deleted and processing
 #                 starts from scratch
-#    CLUSTERING_PARAMS : parameters for meanie3D-detect
-#    TRACKING_PARAMS: parameters for meanie3D-track
-#    SCALE : scale parameter (optional)
-#    USE_PREVIOUS: True: using previous results to enhance tracking
+#    meanie3D-detect : parameters for meanie3D-detect
+#    meanie3D-track: parameters for meanie3D-track
+#    scale : scale parameter (optional)
+#    use_previous: True: using previous results to enhance tracking
 #                  Absent or False: no use of previous results.
-#    USE_CI_SCORE : Use the CI-Score algorithm
+#    use_ci_score : Use the CI-Score algorithm
 #
-# @param time index the index in time dimension to read and process.
+# \param time index the index in time dimension to read and process.
 #
-# -------------------------------------------------------------------
 def run_tracking(config,time_index):
 
     print "---------------------------------------------------"
-    print "Configuration: " + config['DESCRIPTION']
+    print "Configuration: " + config['description']
     print "---------------------------------------------------"
 
     resume_at_index = 0;
 
     # In case a scale T parameter is given, the output dir
     # is scale<T>. Otherwise it's 'clustering'
-
-    output_dir = config['OUTPUT_DIR']
-    if (config.get('SCALE') == "None"):
+    output_dir = config['output_dir']
+    if (config.get('scale') == "None"):
         output_dir = output_dir + "/clustering"
     else:
-        output_dir = output_dir + "/scale"+str(config['SCALE'])
+        output_dir = output_dir + "/scale"+str(config['scale'])
 
     print "Writing output to " + output_dir
 
     # Resume?
-
     if config['resume'] == False:
-
-        # consider time index. Even if not resuming, the 
+        # consider time index. Even if not resuming, the
         # output directories should only be created at
         # the first time step
-
-        if time_index <= 0: 
+        if time_index <= 0:
             print "Removing results from previous runs"
             create_ouput_directories(output_dir)
-
     else:
-
         resume_at_index = number_of_netcdf_files(output_dir+"/netcdf")
         print "Resuming at index " + str(resume_at_index)
 
@@ -170,7 +146,7 @@ def run_tracking(config,time_index):
 
     use_ci_score = False
     if "USE_CI_SCORE" in config.keys():
-        use_ci_score = config["USE_CI_SCORE"]
+        use_ci_score = config["use_ci_score"]
 
     netcdf_pattern = config['source_directory'] + "/*.nc"
     netcdf_list=sorted(glob.glob(netcdf_pattern))
@@ -180,9 +156,8 @@ def run_tracking(config,time_index):
     # Process the files one by one
     
     for netcdf_file in netcdf_list:
-        
+
         basename = os.path.basename(netcdf_file)
-        
         cluster_file= ""
         
         if time_index < 0:
@@ -204,16 +179,14 @@ def run_tracking(config,time_index):
 
         print "-- Clustering --"
         
-        #
-        # Cluster
-        #
+        # ----------------------------------------------
+        # Clustering
+        # ----------------------------------------------
 
         # build the clustering command
-
-        command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + config['CLUSTERING_PARAMS'] 
+        command=detection_bin+" -f "+netcdf_file+" -o "+cluster_file + " " + config['meanie3D-detect']
 
         # amend for time index and make proper logfile name
-
         if time_index < 0:
             logfile = output_dir+"/log/clustering_" + str(run_count)+".log"
         else:
@@ -222,13 +195,13 @@ def run_tracking(config,time_index):
             
         # scale?
 
-        if not config.get('SCALE') == "None":
-            scale_param = " -s " + config['SCALE']
+        if not config.get('scale') == "None":
+            scale_param = " -s " + config['scale']
             command += scale_param
         
         # use previous result to enhance current?
 
-        if ((run_count > 0) or (time_index > 0)) and config['USE_PREVIOUS']:
+        if ((run_count > 0) or (time_index > 0)) and config['use_previous']:
             command += " -p " + last_cluster_file
 
         # add ci-comparison-file if applicable
@@ -249,9 +222,9 @@ def run_tracking(config,time_index):
         return_code = call( command, shell=True)
         print "    done. (%.2f seconds)" % (time.time()-start_time)
         
-        #
+        # ----------------------------------------------
         # Tracking
-        #
+        # ----------------------------------------------
         
         # if we have a previous scan, run the tracking command
         
@@ -263,7 +236,7 @@ def run_tracking(config,time_index):
                 logfile = output_dir+"/log/tracking_" + str(time_index)+".log"
 
             print "-- Tracking --"
-            command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + config['TRACKING_PARAMS']
+            command =tracking_bin+" -p "+last_cluster_file+" -c "+cluster_file+" " + config['meanie3D-track']
             command = command + " > " + logfile
             
             # execute

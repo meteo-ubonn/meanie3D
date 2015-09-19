@@ -1,7 +1,7 @@
 {
-    "DESCRIPTION" : "Tracking on cband_radolan_rx in the national OASE 2D composite with threshold 20 dBZ",
-    "CLUSTERING_PARAMS" : "-v cband_radolan_rx --lower-thresholds cband_radolan_rx=20 --verbosity 1 -d y,x --weight-function default --wwf-lower-threshold 0 -m 15",
-    "TRACKING_PARAMS" : "-t cband_radolan_rx --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
-    "USE_PREVIOUS" : true,
-    "USE_CI_SCORE" : false
+    "description" : "Tracking on cband_radolan_rx in the national OASE 2D composite with threshold 20 dBZ",
+    "clustering_params" : "-v cband_radolan_rx --lower-thresholds cband_radolan_rx=20 --verbosity 1 -d y,x --weight-function default --wwf-lower-threshold 0 -m 15",
+    "tracking_params" : "-t cband_radolan_rx --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
+    "use_previous" : true,
+    "use_ci_score" : false
 }
