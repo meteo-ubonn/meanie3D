@@ -5,6 +5,7 @@
 # Python script for running a whole set of netcdf files through the clustering and tracking process.
 # \author Juergen Simon (juergen.simon@uni-bonn.de)
 
+import glob
 import os
 import sys
 import getopt
@@ -102,11 +103,76 @@ def print_version():
     return
 # ----------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------
+## Checks the consistency of the given configuration and hotfixes
+# problems it finds.
+# \param configuration
+#
+def check_configuration(configuration):
+
+    if (configuration['tracks']):
+
+        # visualise_tracks -> vtk_tracks:true
+        if (configuration['tracks']["visualise_tracks"] and not configuration['tracks']['vtk_tracks']):
+            print "WARNING: tracks.visualise_tracks = True -> tracks.vtk_tracks = True"
+            configuration['tracks']['vtk_tracks'] = True
+
+        # visualise_tracks -> vtk_tracks:true
+        if (configuration['tracks']["plot_stats"] and not configuration['tracks']['gnuplot']):
+            print "WARNING: track.plot_stats = True -> track.gnuplot = True"
+            configuration['tracks']['gnuplot'] = True
+
+# ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
 ## Runs the meanie3D-trackstats command.
 # \param configuration
-def run_trackstats(configuration):
+# \param directory
+def run_trackstats(configuration,directory):
+    print "Running meanie3D-trackstats for %s" % directory
+    return
+
+# ----------------------------------------------------------------------------
+## Runs gnuplot to produce .eps files
+# \param configuration
+# \param directory
+def plot_trackstats(configuration,directory):
+    print "Plotting .eps files for %s" % directory
+    return
+
+# ----------------------------------------------------------------------------
+## Creates a python script for Visit and runs Visit with the script.
+# Visualises the tracks found.
+# \param configuration
+# \param directory
+def visualise_tracks(configuration,directory):
+    print "Visualising tracks for %s" % directory
+    return
+
+# ----------------------------------------------------------------------------
+## Runs cross-scale analysis
+# \param configuration
+# \param directory
+def run_comparison(configuration):
+    print "Running cross-scale comparison"
+    return
+
+# ----------------------------------------------------------------------------
+## Creates a python script for Visit and runs Visit with the script.
+# Visualises the clusters, creates movies etc.
+# \param configuration
+# \param directory
+def visualise_clusters(configuration,directory):
+    print "Visualising clusters for %s" % directory
+    return
+
+# ----------------------------------------------------------------------------
+## Removes any files that are not part of the results and were produced
+# in any of the subsequent steps. C
+# \param configuration
+# \param directory
+def remove_junk(configuration,directory):
+    print "Cleaning temporary files for %s" % directory
     return
 
 # ----------------------------------------------------------------------------
@@ -153,19 +219,44 @@ def main(argv):
     configuration["netcdf_dir"] = netcdf_dir
     configuration["m3d_home"] = MEANIE3D_HOME
 
-    
+    # Check configuration consistency
+    check_configuration(configuration)
 
-    # run the track statistics
-    run_trackstats(configuration)
+    # In case scale parameters were given, the output dirs are scaleXYZ.
+    # Otherwise it's 'clustering'. To be safe, iterate over both
 
-    # run the track visualisations
-    run_track_visuals(configuration)
+    directories = sorted(glob.glob("scale*"))
+    if (os.path.isdir("clustering")):
+        directories.append("clustering")
 
+    print "Processing directories: %s" % str(directories)
+    for directory in directories:
+        if os.path.isdir(directory):
+            print "Processing %s" % directory
+        else:
+            print "ERROR:%s is not a directory!" % directory
+            continue
 
+        if (configuration['tracks']):
 
+            # run the track statistics
+            run_trackstats(configuration, directory)
 
-    # run
+            # run the stats plotting
+            if (configuration['tracks']['gnuplot']):
+                plot_trackstats(configuration,directory);
 
+            # run the track visualisations
+            if (configuration['tracks']['visualise_tracks']):
+                visualise_tracks(configuration, directory)
+
+        if (configuration['clusters']):
+            visualise_clusters(configuration,directory)
+
+        remove_junk(configuration,directory)
+
+    if (configuration['tracks'] and configuration['tracks']['scale_comparison']):
+        run_comparison(configuration)
 
 # ----------------------------------------------------------------------------
 
