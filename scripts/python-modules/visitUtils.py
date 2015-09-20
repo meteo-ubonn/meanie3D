@@ -26,16 +26,25 @@ from subprocess import call
 datetime_annotation="not_set"
 
 # -------------------------------------------------------------------
-# Get DYLD_LIBRARY_PATH depending on operating system. OSX needs 
-# special work because of the homebrew gfx libraries, which get 
+## Get DYLD_LIBRARY_PATH depending on operating system. OSX needs
+# special work because of the homebrew gfx libraries, which get
 # in the way of the system libraries.
-# @return DYLD_LIBRARY_PATH
-# -------------------------------------------------------------------
+# \return DYLD_LIBRARY_PATH
 def get_dyld_library_path():
     path = "/usr/local/lib"
     if platform.system() == 'Darwin':
         path = "/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/:"+path
     return path
+
+# -------------------------------------------------------------------
+## Get the complete shell command with added DYLD_LIBRARY_PATH etc.
+# for the given executable.
+# \param executable name (like meanie3D-detect, meanie3D-track etc.)
+# \return shell command to run the binary
+def get_executable_command(executable):
+    bin_prefix = "export DYLD_LIBRARY_PATH="+get_dyld_library_path()+";"
+    command = bin_prefix + "/usr/local/bin/" + executable
+    return command
 
 # -------------------------------------------------------------------
 # Saves PNG file

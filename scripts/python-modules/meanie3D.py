@@ -16,9 +16,9 @@ import json
 import platform
 from subprocess import call
 
-
+# -------------------------------------------------------------------
 ## Get DYLD_LIBRARY_PATH depending on operating system. OSX needs
-# special work because of the homebrew gfx libraries, which get 
+# special work because of the homebrew gfx libraries, which get
 # in the way of the system libraries.
 # \return DYLD_LIBRARY_PATH
 def get_dyld_library_path():
@@ -26,6 +26,17 @@ def get_dyld_library_path():
     if platform.system() == 'Darwin':
         path = "/System/Library/Frameworks/ImageIO.framework/Versions/A/Resources/:"+path
     return path
+
+# -------------------------------------------------------------------
+## Get the complete shell command with added DYLD_LIBRARY_PATH etc.
+# for the given executable.
+# \param executable name (like meanie3D-detect, meanie3D-track etc.)
+# \return shell command to run the binary
+def get_executable_command(executable):
+    bin_prefix = "export DYLD_LIBRARY_PATH="+get_dyld_library_path()+";"
+    command = bin_prefix + "/usr/local/bin/" + executable
+    return command
+
 
 # -------------------------------------------------------------------
 # Define some executables to be called from python

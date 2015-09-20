@@ -128,9 +128,56 @@ def check_configuration(configuration):
 ## Runs the meanie3D-trackstats command.
 # \param configuration
 # \param directory
+# \return True if the stats were created, False else
 def run_trackstats(configuration,directory):
     print "Running meanie3D-trackstats for %s" % directory
-    return
+    conf = configuration['tracks']
+    # Assemble command line params
+    params = []
+    if (conf['dictionary'] == True):
+        params.append("-t")
+    if (conf['gnuplot'] == True):
+        params.append("-g")
+    if (conf['length'] == True):
+        params.append("--create-length-statistics")
+    if (conf['length_classes']):
+        params.append("--length-histogram-classes=%s" % conf['length_classes'])
+    if (conf['speed'] == True):
+        params.append("--create-speed-statistics")
+    if (conf['speed_classes']):
+        params.append("--speed-histogram-classes=%s" % conf['speed_classes'])
+    if (conf['direction'] == True):
+        params.append("--create-direction-statistics")
+    if (conf['direction_classes']):
+        params.append("--direction-histogram-classes=%s" % conf['direction_classes'])
+    if (conf['size'] == True):
+        params.append("--create-cluster-statistics")
+    if (conf['size_classes']):
+        params.append("--cluster-histogram-classes=%s" % conf['size_classes'])
+    if (conf['cumulated'] == True):
+        params.append("--create-cumulated-size-statistics")
+    if (conf['cumulated_classes']):
+        params.append("--size-histogram-classes=%s" % conf['cumulated_classes'])
+    if (conf['vtk_tracks'] == True):
+        params.append("--write-center-tracks-as-vtk ")
+    if (conf['vtk_dimensions']):
+        params.append("--vtk-dimensions=%s" % conf['vtk_dimensions'])
+
+    return_code = -1
+    os.chdir(directory)
+    try:
+        command = meanie3D.get_executable_command("meanie3D-trackstats")
+        complete_command = "%s %s -s netcdf" % (command," ".join(params))
+        print complete_command
+        return_code = call( complete_command, shell=True)
+        print "Return code: %d" % return_code
+    except:
+        print "ERROR:%s" % sys.exc_info()[0]
+        raise
+
+    os.chdir("..")
+
+    return return_code == 0
 
 # ----------------------------------------------------------------------------
 ## Runs gnuplot to produce .eps files
