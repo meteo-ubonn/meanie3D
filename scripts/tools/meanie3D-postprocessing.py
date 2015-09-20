@@ -287,15 +287,15 @@ def main(argv):
         if (configuration['tracks']):
 
             # run the track statistics
-            run_trackstats(configuration, directory)
+            if (run_trackstats(configuration, directory)):
 
-            # run the stats plotting
-            if (configuration['tracks']['gnuplot']):
-                plot_trackstats(configuration,directory);
+                # run the stats plotting
+                if (configuration['tracks']['gnuplot']):
+                    plot_trackstats(configuration,directory);
 
-            # run the track visualisations
-            if (configuration['tracks']['visualise_tracks']):
-                visualise_tracks(configuration, directory)
+                # run the track visualisations
+                if (configuration['tracks']['visualise_tracks']):
+                    visualise_tracks(configuration, directory)
 
         if (configuration['clusters']):
             visualise_clusters(configuration,directory)
