@@ -154,7 +154,7 @@ def main(argv):
     # Parse configuration data and expand
 
     configuration = meanie3D.load_configuration(config_file);
-    configuration["netcdf_dir"] = netcdf_dir
+    configuration["source_directory"] = netcdf_dir
     configuration["output_dir"] = output_dir
     configuration["m3d_home"] = MEANIE3D_HOME
     configuration["resume"] = resume
@@ -175,7 +175,7 @@ def main(argv):
 
         for scale in scales:
 
-            configuration["SCALE"] = scale
+            configuration["scale"] = scale
 
             if uses_time == False:
                 meanie3D.run_tracking(configuration,-1)
