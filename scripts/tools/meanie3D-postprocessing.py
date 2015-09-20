@@ -153,8 +153,18 @@ def main(argv):
     configuration["netcdf_dir"] = netcdf_dir
     configuration["m3d_home"] = MEANIE3D_HOME
 
+    
+
     # run the track statistics
     run_trackstats(configuration)
+
+    # run the track visualisations
+    run_track_visuals(configuration)
+
+
+
+
+    # run
 
 
 # ----------------------------------------------------------------------------

@@ -1,0 +1,7 @@
+{
+    "description" : "CI-Score tracking on OASE 2D national composite",
+    "meanie3D-detect" : "-v msevi_l15_ir_108 --upper-thresholds msevi_l15_ir_108=71.9493 --verbosity 1 -d y,x --weight-function oase --wwf-lower-threshold 0 -m 15",
+    "tracking_params" : "-t msevi_l15_ir_108 --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
+    "use_previous" : true,
+    "use_ci_score" : false
+}

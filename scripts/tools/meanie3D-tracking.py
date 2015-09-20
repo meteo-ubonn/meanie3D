@@ -30,6 +30,7 @@ def usage():
     print "-f : directory containing the files. It is assumed that"
     print "           the files are in the correct order when sorted alphabetically."
     print "-s  : (optional) comma separated list of scale parameters. Overrides any scale values in the configuration."
+    print "--json-example : prints an example .json configuration and exits"
     print "--start index of time step to start with in files with time dimension"
     print "--end   index of time step to end at in files with time dimension"
     print "--resume,-r : if this flag is present, the algorithm assumes to resume"
@@ -39,6 +40,19 @@ def usage():
     print "--version   : prints the version information and exits"
     sys.exit(1)
     return
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+## Prints the configuration file .json file description and exits
+#
+def print_configuration_format():
+    print '''{'''
+    print '''   "description" : "",          /* Description of file content */'''
+    print '''   "meanie3D-detect" : "...",   /* Command line parameters to meanie3D-detect, except file locations.*/'''
+    print '''   "meanie3D-track" : "...",    /* Command line parameters to meanie3D-track, except file locations.*/'''
+    print '''   "use_previous" : true        /* true|false. See --previous-file on meanie3D-detect */'''
+    print '''}'''
+    sys.exit(1)
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
@@ -64,7 +78,7 @@ def main(argv):
     # Parse command line
 
     try:
-        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["resume","help","version","start=","end="])
+        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["json-example","resume","help","version","start=","end="])
     except getopt.GetoptError as detail:
         print detail
         sys.exit(2)
@@ -81,9 +95,6 @@ def main(argv):
     
     for o, a in opts:
     
-        print o
-        print a
-
         if o == "-c":
             config_file = a
             num_params = num_params + 1
@@ -97,7 +108,10 @@ def main(argv):
 
         elif o == "-o":
             output_dir = a
-        
+
+        elif o in ["--json-example"]:
+            print_configuration_format()
+
         elif o in ["--resume","-r"]:
             resume = True
 
