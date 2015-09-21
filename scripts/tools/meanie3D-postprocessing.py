@@ -9,6 +9,7 @@ import glob
 import os
 import sys
 import getopt
+import tempfile
 from subprocess import call
 
 # dynamically append search path
@@ -20,6 +21,10 @@ if MEANIE3D_HOME == "NOT_SET":
     sys.exit(2)
 sys.path.append(MEANIE3D_HOME+"/scripts/python-modules")
 import meanie3D
+import meanie3DUtils
+
+# make sure external commands are available
+meanie3DUtils.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -163,21 +168,19 @@ def run_trackstats(configuration,directory):
     if (conf['vtk_dimensions']):
         params.append("--vtk-dimensions=%s" % conf['vtk_dimensions'])
 
+    params.append("-s netcdf")
+
     return_code = -1
     os.chdir(directory)
     try:
-        command = meanie3D.get_executable_command("meanie3D-trackstats")
-        complete_command = "%s %s -s netcdf" % (command," ".join(params))
-        print complete_command
-        return_code = call( complete_command, shell=True)
-        print "Return code: %d" % return_code
+        return_code = meanie3DUtils.execute_command("meanie3D-trackstats"," ".join(params))
     except:
         print "ERROR:%s" % sys.exc_info()[0]
         raise
 
     os.chdir("..")
 
-    return return_code == 0
+    return (return_code == 0)
 
 # ----------------------------------------------------------------------------
 ## Runs gnuplot to produce .eps files
@@ -185,7 +188,64 @@ def run_trackstats(configuration,directory):
 # \param directory
 def plot_trackstats(configuration,directory):
     print "Plotting .eps files for %s" % directory
-    return
+    os.chdir(directory)
+
+    # create a tempfile for gnuplot
+    f = open('plot_stats.gp','w')
+
+    # track length
+    if (configuration['tracks']['length'] == True):
+        f.write('set term postscript\n')
+        f.write('set output "lengths-hist.eps"\n')
+        f.write('set title "Distribution of track length"\n')
+        f.write('set xlabel "Track length in [#steps]"\n')
+        f.write('set ylabel "Number of tracks"\n')
+        f.write('set xtics 5\n')
+        f.write('plot "lengths-hist.txt" with boxes\n')
+
+    # sizes
+    if (configuration['tracks']['size']):
+        f.write('# cluster size\n')
+        f.write('set output "sizes-hist.eps"\n')
+        f.write('set title "Distribution of cluster size"\n')
+        f.write('set xlabel "log(cluster size in [#gridpoints])"\n')
+        f.write('set ylabel "log(number of clusters)"\n')
+        f.write('set logscale y\n')
+        f.write('set logscale x\n')
+        f.write('set xtics auto\n')
+        f.write('plot "sizes-hist.txt" with boxes\n')
+        f.write('unset logscale y\n')
+        f.write('unset logscale x\n')
+
+    # speed
+    if (configuration['tracks']['speed']):
+        f.write('set output "speeds-hist.eps"\n')
+        f.write('set title "Distribution of cluster speeds"\n')
+        f.write('set xlabel "Cluster speed in [m/s]"\n')
+        f.write('set ylabel "Number of clusters"\n')
+        f.write('set xtics 2\n')
+        f.write('plot "speeds-hist.txt" with boxes\n')
+
+    # directions
+    if (configuration['tracks']['direction']):
+        f.write('set output "directions-hist.eps"\n')
+        f.write('set title "Distribution of tracking direction"\n')
+        f.write('set xlabel "Cluster direction in [deg]"\n')
+        f.write('set ylabel "Number of clusters"\n')
+        f.write('set xtics 15\n')
+        f.write('plot "directions-hist.txt" with boxes\n')
+
+    f.close()
+
+    return_code = -1
+    try:
+        return_code = meanie3DUtils.execute_command("gnuplot","plot_stats.gp")
+    except:
+        print "ERROR:%s" % sys.exc_info()[0]
+        raise
+
+    os.chdir("..")
+    return (return_code == 0)
 
 # ----------------------------------------------------------------------------
 ## Creates a python script for Visit and runs Visit with the script.
@@ -220,6 +280,17 @@ def visualise_clusters(configuration,directory):
 # \param directory
 def remove_junk(configuration,directory):
     print "Cleaning temporary files for %s" % directory
+    os.chdir(directory)
+
+    if (configuration['tracks']['vtk_tracks']):
+        for filename in glob.glob('*.vtk') :
+            os.remove(filename)
+
+    if (configuration['tracks']['gnuplot']):
+        for filename in glob.glob('*.gp') :
+            os.remove(filename)
+
+    os.chdir("..")
     return
 
 # ----------------------------------------------------------------------------
