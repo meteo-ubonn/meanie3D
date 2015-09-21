@@ -778,7 +778,7 @@ int main(int argc, char** argv)
                 size_t i=0;
                 std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
                 for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
-                    Cluster<FS_TYPE>::ptr c = (*ti);
+                    TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) (*ti);
 
                     vector<FS_TYPE> min, max, median;
                     c->variable_ranges(min, max, median);
