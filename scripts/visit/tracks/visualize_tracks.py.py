@@ -95,7 +95,6 @@ for fname in list:
 
 DrawPlots()
 
-
 meanie3D_visit_utils.save_window("tracks",0)
 
 print "Cleaning up *.vtk"

@@ -11,7 +11,7 @@ import glob
 import os
 import time
 import visit2D
-import visitUtils
+import meanie3D_visit_utils
 from subprocess import call
 
 # Silent
@@ -42,7 +42,7 @@ visit2D.set_view_to_radolan();
 
 # Add gray/black background gradient
 print "Setting background gradient"
-visitUtils.add_background_gradient();
+meanie3D_visit_utils.add_background_gradient();
 
 #print "Creating colortables"
 #visitUtils.create_topography_colortable()
@@ -117,10 +117,10 @@ for netcdf_file in netcdf_files:
     
 
     # date/time
-    visitUtils.add_datetime(netcdf_file)
+    meanie3D_visit_utils.add_datetime(netcdf_file)
 
     DrawPlots()
-    visitUtils.save_window("oase_composite_",1)
+    meanie3D_visit_utils.save_window("oase_composite_",1)
     
     CloseDatabase(netcdf_file)
     visit2D.close_mapstuff();

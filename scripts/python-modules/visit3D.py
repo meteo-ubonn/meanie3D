@@ -15,7 +15,7 @@ sys.path.append(".")
 import glob
 import os
 import time
-import visitUtils
+import meanie3D_visit_utils
 from pprint import pprint
 from subprocess import call
 
@@ -542,7 +542,7 @@ def visualization(conf):
     pprint(conf)
     print "-------------------------------------------------"
 
-    bin_prefix = "export DYLD_LIBRARY_PATH="+visitUtils.get_dyld_library_path()+";"
+    bin_prefix = "export DYLD_LIBRARY_PATH="+meanie3D_visit_utils.get_dyld_library_path()+";"
     conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
 
     # Set view and annotation attributes
@@ -559,14 +559,14 @@ def visualization(conf):
 
     if conf['create_clusters_movie']:
         print "Creating colortables"
-        num_colors = visitUtils.create_cluster_colortable("cluster_colors")
+        num_colors = meanie3D_visit_utils.create_cluster_colortable("cluster_colors")
 
     if conf['with_topography']:
-        visitUtils.create_topography_colortable()
+        meanie3D_visit_utils.create_topography_colortable()
 
     if conf['with_background_gradient']:
         print "Setting background gradient"
-        visitUtils.add_background_gradient();
+        meanie3D_visit_utils.add_background_gradient();
 
     scaleFactorZ = 1.0
     if "SCALE_FACTOR_Z" in conf.keys():
@@ -633,7 +633,7 @@ def visualization(conf):
                 
                 if conf['with_datetime']:
                     print "-- Adding timestamp --"
-                    visitUtils.add_datetime(netcdf_file)
+                    meanie3D_visit_utils.add_datetime(netcdf_file)
                 
                 print "-- Plotting source data --"
                 start_time = time.time()
@@ -667,11 +667,11 @@ def visualization(conf):
                     for perspective in conf['PERSPECTIVES']:
                         set_perspective(perspective,scaleFactorZ)
                         filename = "p" + str(perspective_nr) + "_source_"
-                        visitUtils.save_window(filename,1)
+                        meanie3D_visit_utils.save_window(filename,1)
                         perspective_nr = perspective_nr + 1
                 else:
                     set_view_to_radolan(conf['grid_extent'],conf['SCALE_FACTOR_Z'])
-                    visitUtils.save_window("source_",1)
+                    meanie3D_visit_utils.save_window("source_",1)
                 
                 DeleteAllPlots()
                 ClearWindow()
@@ -720,7 +720,7 @@ def visualization(conf):
                 
                 if conf['with_datetime']:
                     print "-- Adding timestamp --"
-                    visitUtils.add_datetime(netcdf_file)
+                    meanie3D_visit_utils.add_datetime(netcdf_file)
                 
                 if conf['with_source_backround']:
                     
@@ -752,7 +752,7 @@ def visualization(conf):
                 add_clusters_with_colortable(basename, "_cluster_", "cluster_colors", num_colors, conf)
                 
                 # Add modes as labels
-                visitUtils.add_labels(label_file,"geometrical_center")
+                meanie3D_visit_utils.add_labels(label_file,"geometrical_center")
                 
                 # Add displacement vectors
                 if conf['WITH_DISPLACEMENT_VECTORS']:
@@ -765,11 +765,11 @@ def visualization(conf):
                     for perspective in conf['PERSPECTIVES']:
                         set_perspective(perspective,scaleFactorZ)
                         filename = "p" + str(perspective_nr) + "_tracking_"
-                        visitUtils.save_window(filename,1)
+                        meanie3D_visit_utils.save_window(filename,1)
                         perspective_nr = perspective_nr + 1
                 else:
                     set_view_to_radolan(conf['grid_extent'],conf['SCALE_FACTOR_Z'])
-                    visitUtils.save_window("tracking_",1)
+                    meanie3D_visit_utils.save_window("tracking_",1)
                 
                 # change perspective back
                 set_view_to_radolan(conf['grid_extent'],conf['SCALE_FACTOR_Z']);
@@ -783,8 +783,8 @@ def visualization(conf):
         if source_open:
             CloseDatabase(netcdf_file)
             CloseDatabase(label_file)
-        visitUtils.close_pattern(basename+"*.vtr")
-        visitUtils.close_pattern(basename+"*.vtk")
+        meanie3D_visit_utils.close_pattern(basename+"*.vtr")
+        meanie3D_visit_utils.close_pattern(basename+"*.vtk")
         return_code=call("rm -f *.vt*", shell=True)
         
         # periodically kill computing engine to
@@ -808,25 +808,25 @@ def visualization(conf):
             if conf['create_source_movie']:
                 movie_fn = "p" + str(perspective_nr) + "_source"
                 image_fn = movie_fn + "_"
-                visitUtils.create_movie(image_fn,movie_fn+".gif")
-                visitUtils.create_movie(image_fn,movie_fn+".m4v")
+                meanie3D_visit_utils.create_movie(image_fn,movie_fn+".gif")
+                meanie3D_visit_utils.create_movie(image_fn,movie_fn+".m4v")
 
             if  conf['create_clusters_movie']:
                 movie_fn = "p" + str(perspective_nr) + "_tracking"
                 image_fn = movie_fn + "_"
-                visitUtils.create_movie(image_fn,movie_fn+".gif")
-                visitUtils.create_movie(image_fn,movie_fn+".m4v")
+                meanie3D_visit_utils.create_movie(image_fn,movie_fn+".gif")
+                meanie3D_visit_utils.create_movie(image_fn,movie_fn+".m4v")
 
             perspective_nr = perspective_nr + 1
     else:
 
         if conf['create_source_movie']:
-            visitUtils.create_movie("source_","source.gif")
-            visitUtils.create_movie("source_","source.m4v")
+            meanie3D_visit_utils.create_movie("source_","source.gif")
+            meanie3D_visit_utils.create_movie("source_","source.m4v")
 
         if  conf['create_clusters_movie']:
-            visitUtils.create_movie("tracking_","tracking.gif")
-            visitUtils.create_movie("tracking_","tracking.m4v")
+            meanie3D_visit_utils.create_movie("tracking_","tracking.gif")
+            meanie3D_visit_utils.create_movie("tracking_","tracking.m4v")
 
     # clean up
 

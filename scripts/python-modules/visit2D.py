@@ -15,7 +15,7 @@ sys.path.append(".")
 import glob
 import os
 import time
-import visitUtils
+import meanie3D_visit_utils
 from pprint import pprint
 from subprocess import call
 
@@ -335,8 +335,7 @@ def set_annotations():
 # Generic routine for visualizing 3D clusters in two perspectives
 #
 # TODO: control perspectives via configuration options
-#
-# The following configuration options exist:
+# \param conf configuration containing the following keys:
 #
 # 'source_directory' : directory with the source data files
 # 'cluster_directory' : directory with the cluster results
@@ -371,7 +370,7 @@ def visualization(conf):
     pprint(conf)
     print "-------------------------------------------------"
 
-    bin_prefix = "export DYLD_LIBRARY_PATH="+visitUtils.get_dyld_library_path()+";"
+    bin_prefix = "export DYLD_LIBRARY_PATH="+meanie3D_visit_utils.get_dyld_library_path()+";"
     conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
 
     # Silent
@@ -394,13 +393,13 @@ def visualization(conf):
     set_view_to_radolan();
 
     print "-- Creating colortables ---"
-    num_colors = visitUtils.create_cluster_colortable("cluster_colors")
+    num_colors = meanie3D_visit_utils.create_cluster_colortable("cluster_colors")
 
     if conf['with_topography']:
-        visitUtils.create_topography_colortable()
+        meanie3D_visit_utils.create_topography_colortable()
 
     if conf['with_background_gradient']:
-        visitUtils.add_background_gradient();
+        meanie3D_visit_utils.add_background_gradient();
 
     # Glob the netcdf directory
     netcdf_files = sorted(glob.glob(conf['source_directory']+"/*.nc"));
@@ -463,7 +462,7 @@ def visualization(conf):
                 
                 if conf['with_datetime']:
                     print "-- Adding timestamp --"
-                    visitUtils.add_datetime(netcdf_file)
+                    meanie3D_visit_utils.add_datetime(netcdf_file)
                 
                 print "-- Plotting source data --"
                 start_time = time.time()
@@ -490,7 +489,7 @@ def visualization(conf):
                     SetOperatorOptions(t)
 
                 DrawPlots();
-                visitUtils.save_window("source_",1)
+                meanie3D_visit_utils.save_window("source_",1)
 
                 DeleteAllPlots()
                 ClearWindow()
@@ -531,7 +530,7 @@ def visualization(conf):
                 
                 if conf['with_datetime']:
                     print "-- Adding timestamp --"
-                    visitUtils.add_datetime(netcdf_file)
+                    meanie3D_visit_utils.add_datetime(netcdf_file)
                 
                 print "-- Rendering cluster scene --"
                 start_time = time.time()
@@ -566,12 +565,12 @@ def visualization(conf):
                 add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
                 # Add modes as labels
-                visitUtils.add_labels(label_file,"geometrical_center")
+                meanie3D_visit_utils.add_labels(label_file,"geometrical_center")
                 
                 # save as image
                 DrawPlots()
                 
-                visitUtils.save_window("tracking_",1)
+                meanie3D_visit_utils.save_window("tracking_",1)
                 image_count=image_count+1;
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
@@ -583,8 +582,8 @@ def visualization(conf):
         if source_open:
             CloseDatabase(netcdf_file)
         CloseDatabase(label_file)
-        visitUtils.close_pattern(basename+"*.vtr")
-        visitUtils.close_pattern(basename+"*.vtk")
+        meanie3D_visit_utils.close_pattern(basename+"*.vtr")
+        meanie3D_visit_utils.close_pattern(basename+"*.vtk")
         return_code=call("rm -f *.vt*", shell=True)
         
         # periodically kill computing engine to
@@ -598,12 +597,12 @@ def visualization(conf):
 
     # create loops
     if conf['create_source_movie']:
-        visitUtils.create_movie("source_","source.gif")
-        visitUtils.create_movie("source_","source.m4v")
+        meanie3D_visit_utils.create_movie("source_","source.gif")
+        meanie3D_visit_utils.create_movie("source_","source.m4v")
 
     if conf['create_clusters_movie']:
-        visitUtils.create_movie("tracking_","tracking.gif")
-        visitUtils.create_movie("tracking_","tracking.m4v")
+        meanie3D_visit_utils.create_movie("tracking_","tracking.gif")
+        meanie3D_visit_utils.create_movie("tracking_","tracking.m4v")
 
     # clean up
     print "Cleaning up ..."

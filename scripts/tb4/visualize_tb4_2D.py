@@ -13,7 +13,7 @@ import glob
 import os
 import time
 import visit2D
-import visitUtils
+import meanie3D_visit_utils
 from subprocess import call
 
 # Presumptuous
@@ -67,13 +67,13 @@ SetAnnotationAttributes(a)
 
 # Add gray/black background gradient
 if WITH_BACKGROUND_GRADIENT:
-    visitUtils.add_background_gradient();
+    meanie3D_visit_utils.add_background_gradient();
 
 print "Cleaning up *.vt* *.png"
 #return_code=call("rm -f *.vt* *.png", shell=True)
 
 print "-- Creating colortables ---"
-num_colors = visitUtils.create_cluster_colortable("cluster_colors")
+num_colors = meanie3D_visit_utils.create_cluster_colortable("cluster_colors")
 
 # check if the files both exist
 print "Visualzing file "+NETCDF_FILE+" and cluster file "+CLUSTER_FILE
@@ -120,7 +120,7 @@ t.upperBounds=(VAR_MAX)
 SetOperatorOptions(t)
 
 DrawPlots();
-visitUtils.save_window(basename+"_"+VAR_NAME+"_",1)
+meanie3D_visit_utils.save_window(basename+"_"+VAR_NAME+"_",1)
 
 DeleteAllPlots()
 ClearWindow()
@@ -153,12 +153,12 @@ SetOperatorOptions(t)
 visit2D.add_clusters_with_colortable(cluster_basename,"_cluster_","cluster_colors",num_colors)
 
 # Add modes as labels
-visitUtils.add_labels(label_file,"geometrical_center")
+meanie3D_visit_utils.add_labels(label_file,"geometrical_center")
 
 # save as image
 DrawPlots()
 
-visitUtils.save_window(basename+"_"+VAR_NAME+"-clusters_",1)
+meanie3D_visit_utils.save_window(basename+"_"+VAR_NAME+"-clusters_",1)
 
 print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -168,8 +168,8 @@ ClearWindow()
 CloseDatabase(NETCDF_FILE)
 CloseDatabase(label_file)
 visit2D.close_topography()
-visitUtils.close_pattern(basename+"*.vtr")
-visitUtils.close_pattern(basename+"*.vtk")
+meanie3D_visit_utils.close_pattern(basename+"*.vtr")
+meanie3D_visit_utils.close_pattern(basename+"*.vtk")
 
 return_code=call("rm -f *.vt*", shell=True)
 

@@ -9,6 +9,7 @@ import glob
 import os
 import sys
 import getopt
+import shutil
 import tempfile
 from subprocess import call
 
@@ -21,10 +22,10 @@ if MEANIE3D_HOME == "NOT_SET":
     sys.exit(2)
 sys.path.append(MEANIE3D_HOME+"/scripts/python-modules")
 import meanie3D
-import meanie3DUtils
+import meanie3D_utils
 
 # make sure external commands are available
-meanie3DUtils.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
+meanie3D_utils.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -173,7 +174,7 @@ def run_trackstats(configuration,directory):
     return_code = -1
     os.chdir(directory)
     try:
-        return_code = meanie3DUtils.execute_command("meanie3D-trackstats"," ".join(params))
+        return_code = meanie3D_utils.execute_command("meanie3D-trackstats"," ".join(params))
     except:
         print "ERROR:%s" % sys.exc_info()[0]
         raise
@@ -239,7 +240,7 @@ def plot_trackstats(configuration,directory):
 
     return_code = -1
     try:
-        return_code = meanie3DUtils.execute_command("gnuplot","plot_stats.gp")
+        return_code = meanie3D_utils.execute_command("gnuplot","plot_stats.gp")
     except:
         print "ERROR:%s" % sys.exc_info()[0]
         raise
@@ -254,7 +255,43 @@ def plot_trackstats(configuration,directory):
 # \param directory
 def visualise_tracks(configuration,directory):
     print "Visualising tracks for %s" % directory
-    return
+
+    # Find template
+    templatePath = os.path.expandvars("${MEANIE3D_HOME}/scripts/tools/templates/visualise_tracks.py")
+    if not os.path.exists(templatePath):
+        print "ERROR: could not find script template 'visualise_tracks.py' in $MEANIE3D_HOME"
+        return -1
+
+    replacements = {
+        'P_TRACKS_DIR' : os.path.abspath(directory),
+        'P_M3D_HOME' : configuration['m3d_home'],
+        'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
+    }
+
+    scriptFilename = tempfile.mktemp() + ".py"
+    print "\tWriting python script for visit to: " + scriptFilename
+    with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
+        for line in infile:
+            for src, target in replacements.iteritems():
+                line = line.replace(src, target)
+            outfile.write(line)
+    print "\tDone."
+
+    # Compile command line params for visit
+    params = "-s %s" % scriptFilename
+    debugVisitScript = configuration['tracks']['debugVisitScript']
+    runHeadless = bool(os.path.expandvars("$RUN_VISIT_HEADLESS")) and not debugVisitScript
+    if runHeadless:
+        params = "-cli -nowin %s" % params
+
+    # change into directory
+    os.chdir(directory)
+    # Run visit
+    meanie3D_utils.execute_command("visit",params)
+    # Change back out
+    os.chdir('..')
+
+    return 0
 
 # ----------------------------------------------------------------------------
 ## Runs cross-scale analysis
@@ -334,8 +371,9 @@ def main(argv):
 
     # Parse configuration data and expand
     configuration = meanie3D.load_configuration(config_file);
-    configuration["netcdf_dir"] = netcdf_dir
-    configuration["m3d_home"] = MEANIE3D_HOME
+    configuration['netcdf_dir'] = netcdf_dir
+    configuration['m3d_home'] = os.path.expandvars("${MEANIE3D_HOME}")
+    configuration['config_file'] = config_file
 
     # Check configuration consistency
     check_configuration(configuration)

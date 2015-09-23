@@ -13,7 +13,7 @@ import glob
 import os
 import time
 import visit2D
-import visitUtils
+import meanie3D_visit_utils
 from subprocess import call
 
 # Silent
@@ -95,7 +95,7 @@ for fname in list:
 
 DrawPlots()
 
-visitUtils.save_window("tracks",0)
+meanie3D_visit_utils.save_window("tracks",0)
 
 print "Cleaning up *.vtk"
 return_code=call("rm -f *.vtk", shell=True)

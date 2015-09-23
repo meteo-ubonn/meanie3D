@@ -4,9 +4,9 @@
     "dictionary" : true,
     "gnuplot" : true,
     "length" : true,
-    "length_classes" : true,
+    "length_classes" : null,
     "speed" : true,
-    "speed_histogram_classes" : null,
+    "speed_classes" : null,
     "direction": true,
     "direction_classes" : null,
     "size": true,
@@ -17,7 +17,37 @@
     "vtk_dimensions" : "x,y",
     "plot_stats" : true,
     "visualise_tracks" : true,
-    "scale_comparison" : true
+    "scale_comparison" : true,
+    "debugVisitScript" : true,
+    "visit" : {
+      "dimensions" : 2,
+      "view" : {
+        "windowCoords" : [-523.962, 376.038, -4659.15, -3759.15],
+        "viewportCoords" : [0.2, 0.95, 0.15, 0.95]
+      },
+      "showBackgroundGradient" : false,
+      "map" : {
+        "mapDataFile" : "$MEANIE3D_HOME/oase-mapdata/oase-mapdata.nc",
+        "variables" : ["as_zonal/national_boundaries_2D","as_zonal/national_rivers_2D"],
+        "min" : [0,0],
+        "max" : [1,1],
+        "colorTableName" : ["Greys","hot"],
+        "invertColorTable" : [0,1],
+        "opacity" : [1,1]
+      },
+      "track" : {
+          "variable" : "track_step",
+          "pointSizePixels" : 5,
+          "minFlag" : 1,
+          "maxFlag" : 1,
+          "min" : 0,
+          "max" : 50,
+          "legendFlag" : 1,
+          "colorTableName" :"hot_desaturated",
+          "invertColorTable" : 0,
+          "opacity" : 1
+      }
+    }
   },
   "clusters" : {
     "variables" : ["RX"],

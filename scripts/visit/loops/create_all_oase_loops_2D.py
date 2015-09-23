@@ -11,7 +11,7 @@ import glob
 import os
 import time
 import visit2D
-import visitUtils
+import meanie3D_visit_utils
 from subprocess import call
 
 # Silent
@@ -42,11 +42,11 @@ visit2D.set_view_to_radolan();
 # Add gray/black background gradient
 if WITH_BACKGROUND_GRADIENT:
     print "Setting background gradient"
-    visitUtils.add_background_gradient();
+    meanie3D_visit_utils.add_background_gradient();
 
 if WITH_TOPOGRAPHY:
     print "Creating colortables"
-    visitUtils.create_topography_colortable()
+    meanie3D_visit_utils.create_topography_colortable()
 
 # General parameters
 a = GetAnnotationAttributes()
@@ -115,7 +115,7 @@ for VAR_NAME in VARIABLES:
         
         if WITH_DATETIME:
             print "-- Adding timestamp --"
-            visitUtils.add_datetime(netcdf_file)
+            meanie3D_visit_utils.add_datetime(netcdf_file)
 
         # now plot the data
         OpenDatabase(netcdf_file)
@@ -334,7 +334,7 @@ for VAR_NAME in VARIABLES:
         DrawPlots()
         CloseDatabase(netcdf_file)
         visit2D.close_topography();
-        visitUtils.save_window(VAR_NAME+"_",1)
+        meanie3D_visit_utils.save_window(VAR_NAME+"_",1)
         DeleteAllPlots()
         ClearWindow()
         

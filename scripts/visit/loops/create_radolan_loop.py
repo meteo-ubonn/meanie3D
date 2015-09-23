@@ -12,7 +12,7 @@ sys.path.append(os.path.join(MEANIE3D_HOME,"scripts/python-modules"))
 import glob
 import time
 import visit2D
-import visitUtils
+import meanie3D_visit_utils
 from subprocess import call
 
 # Silent
@@ -115,11 +115,11 @@ for netcdf_file in netcdf_list:
     SetPlotOptions(p)
 
     # date/time
-    visitUtils.add_datetime(netcdf_file)
+    meanie3D_visit_utils.add_datetime(netcdf_file)
 
     DrawPlots()
         
-    visitUtils.save_window(VAR_NAME+"-",1)
+    meanie3D_visit_utils.save_window(VAR_NAME+"-",1)
 
     # clean up
     DeleteAllPlots();
