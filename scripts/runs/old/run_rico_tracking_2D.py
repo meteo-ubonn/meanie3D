@@ -12,7 +12,7 @@ try:
     # Appending the module path is crucial
     sys.path.append(MEANIE3D_HOME+"/visit/modules")
     import os
-    import meanie3D
+    from meanie3D import meanie3D
     from subprocess import call
 except ImportError as e:
     print 'Exception error is: %s' % e

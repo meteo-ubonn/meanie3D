@@ -10,8 +10,7 @@ CONFIG_FILE = "P_CONFIGURATION_FILE"
 # Import modules
 import sys
 sys.path.append(M3D_HOME+"/scripts/python-modules")
-import visit3D
-import meanie3D_visit_utils
+from meanie3D import visit3D
 import meanie3D
 
 # Parse configuration data

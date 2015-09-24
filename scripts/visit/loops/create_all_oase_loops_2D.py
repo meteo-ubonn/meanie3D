@@ -8,10 +8,8 @@ M3D_HOME = "MEANIE3D_HOME_P"
 import sys
 sys.path.append(M3D_HOME+"/scripts/python-modules")
 import glob
-import os
-import time
-import visit2D
-import meanie3D_visit_utils
+from meanie3D import visit2D
+from meanie3D import utils
 from subprocess import call
 
 # Silent
@@ -42,11 +40,11 @@ visit2D.set_view_to_radolan();
 # Add gray/black background gradient
 if WITH_BACKGROUND_GRADIENT:
     print "Setting background gradient"
-    meanie3D_visit_utils.add_background_gradient();
+    utils.add_background_gradient();
 
 if WITH_TOPOGRAPHY:
     print "Creating colortables"
-    meanie3D_visit_utils.create_topography_colortable()
+    utils.create_topography_colortable()
 
 # General parameters
 a = GetAnnotationAttributes()
@@ -115,7 +113,7 @@ for VAR_NAME in VARIABLES:
         
         if WITH_DATETIME:
             print "-- Adding timestamp --"
-            meanie3D_visit_utils.add_datetime(netcdf_file)
+            utils.add_datetime(netcdf_file)
 
         # now plot the data
         OpenDatabase(netcdf_file)
@@ -334,7 +332,7 @@ for VAR_NAME in VARIABLES:
         DrawPlots()
         CloseDatabase(netcdf_file)
         visit2D.close_topography();
-        meanie3D_visit_utils.save_window(VAR_NAME+"_",1)
+        utils.save_window(VAR_NAME+"_",1)
         DeleteAllPlots()
         ClearWindow()
         

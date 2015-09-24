@@ -1,14 +1,13 @@
 #!/usr/bin/python
 
 # -------------------------------------------------------------------
-# Filename: meanie3D_visit_utils.py
+# Filename: utils.py
 # @author Juergen Simon (juergen_simon@mac.com)
 #
 # This modules contains a number of utility methods used throughout
 # the project.
 # -------------------------------------------------------------------
 
-from visit import *
 import glob
 import os
 import os.path
@@ -330,4 +329,4 @@ def create_dual_panel(basename_left,basename_right,basename_combined):
 
 
 
-# End of meanie3D_visit_utils.py
+# End of utils.py

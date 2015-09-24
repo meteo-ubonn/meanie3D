@@ -10,10 +10,8 @@ BASENAME          = "P_BASENAME"
 import sys
 sys.path.append(MEANIE3D_HOME+"/scripts/python-modules")
 import glob
-import os
-import time
-import visit2D
-import meanie3D_visit_utils
+from meanie3D import visit2D
+from meanie3D import utils
 from subprocess import call
 
 # Silent
@@ -95,7 +93,7 @@ for fname in list:
 
 DrawPlots()
 
-meanie3D_visit_utils.save_window("tracks",0)
+utils.save_window("tracks",0)
 
 print "Cleaning up *.vtk"
 return_code=call("rm -f *.vtk", shell=True)

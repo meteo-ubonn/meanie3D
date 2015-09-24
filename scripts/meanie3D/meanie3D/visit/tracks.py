@@ -1,24 +1,15 @@
 #!/usr/bin/python
-__author__ = "Juergen Simon"
-__email__ = "juergen.simon@uni-bonn.de"
-__version__ = "1.5.4"
+__author__ = "juergen.simon@uni-bonn.de"
 
 # ------------------------------------------------------------------------------
-# Filename: meanie3D_visit.py
+# Filename: tracks.py
 #
 # This module bundles python routines for running inside Visit.
 #
 # @author Juergen Simon (juergen.simon@uni-bonn.de)
 # ------------------------------------------------------------------------------
 
-from meanie3D_visit import *
-import sys
-sys.path.append(".")
-import glob
-import os
-import meanie3D_visit_utils
-from subprocess import call
-from visit import *
+from tracks import *
 
 ##
 # Sets the view parameters on a 2D or 3D view. The conf dictionary
@@ -215,6 +206,6 @@ def plotTracks(conf):
                 quit()
 
         DrawPlots()
-        meanie3D_visit_utils.save_window("tracks",0)
+        utils.save_window("tracks",0)
 
     quit()

@@ -17,8 +17,9 @@ MEANIE3D_HOME = os.getenv("MEANIE3D_HOME","NOT_SET");
 if MEANIE3D_HOME == "NOT_SET":
     print "ERROR: environment variable MEANIE3D_HOME is not set."
     sys.exit(2)
-sys.path.append(MEANIE3D_HOME+"/scripts/python-modules")
+sys.path.append(MEANIE3D_HOME+"/scripts/python-modules/meanie3D")
 import meanie3D
+
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -47,10 +48,11 @@ def usage():
 #
 def print_configuration_format():
     print '''{'''
-    print '''   "description" : "",          /* Description of file content */'''
-    print '''   "meanie3D-detect" : "...",   /* Command line parameters to meanie3D-detect, except file locations.*/'''
-    print '''   "meanie3D-track" : "...",    /* Command line parameters to meanie3D-track, except file locations.*/'''
-    print '''   "use_previous" : true        /* true|false. See --previous-file on meanie3D-detect */'''
+    print '''   "description" : "...",  /* Description of file content */'''
+    print '''   "data" : {...},         /* call --help config.data for help on this section */'''
+    print '''   "detection" : {...},    /* call --help config.detection for help on this section */'''
+    print '''   "tracking" : {...},     /* call --help config.tracking for help on this section */'''
+    print '''   "postprocessing" : {...} /* call --help config.postprocessing for help on this section */'''
     print '''}'''
     sys.exit(1)
 # ----------------------------------------------------------------------------
@@ -59,14 +61,9 @@ def print_configuration_format():
 ## Prints version info and exits
 #
 def print_version():
-    DYLD_LIBRARY_PATH="/usr/local/lib:/usr/lib"
-    bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
-    print "run_clustering.py : "
-    print meanie3D.get_version()
-    print "meanie3D-detect   : "
-    call( bin_prefix + "/usr/local/bin/" + "meanie3D-detect --version", shell=True)
-    print "meanie3D-track    : "
-    call( bin_prefix + "/usr/local/bin/" + "meanie3D-track --version", shell=True)
+    print "meanie3D.py: " + meanie3D.getVersion() + "\n"
+    print "meanie3D-detect: " + meanie3D.external.execute_command_with_stdout("meanie3D-detect","--version")
+    print "meanie3D-track: " + meanie3D.external.execute_command_with_stdout("meanie3D-track","--version")
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -74,9 +71,7 @@ def print_version():
 # ----------------------------------------------------------------------------
 ## Main function
 def main(argv):
-    
     # Parse command line
-
     try:
         opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["json-example","resume","help","version","start=","end="])
     except getopt.GetoptError as detail:
@@ -152,36 +147,30 @@ def main(argv):
         uses_time = True
 
     # Parse configuration data and expand
+    configuration = meanie3D.utils.load_configuration(config_file);
 
-    configuration = meanie3D.load_configuration(config_file);
-    configuration["source_directory"] = netcdf_dir
-    configuration["output_dir"] = output_dir
-    configuration["m3d_home"] = MEANIE3D_HOME
-    configuration["resume"] = resume
+    if (configuration['detection'] or configuration['tracking']):
+        configuration["source_directory"] = netcdf_dir
+        configuration["output_dir"] = output_dir
+        configuration["m3d_home"] = MEANIE3D_HOME
+        configuration["resume"] = resume
 
-    #
-    # run the actual clustering/tracking script
-    #
-
-    if not scales:
-    
-        if uses_time == False:
-            meanie3D.run_tracking(configuration,-1)
-        else:
-            for time_index in range(start_time_index,end_time_index):
-                meanie3D.run_tracking(configuration,time_index)
-
-    else:
-
-        for scale in scales:
-
-            configuration["scale"] = scale
-
+        # run the actual clustering/tracking script
+        if not scales:
             if uses_time == False:
-                meanie3D.run_tracking(configuration,-1)
+                meanie3D.tracking.run(configuration,-1)
             else:
                 for time_index in range(start_time_index,end_time_index):
-                    meanie3D.run_tracking(configuration,time_index)
+                    meanie3D.tracking.run(configuration,time_index)
+
+        else:
+            for scale in scales:
+                configuration["scale"] = scale
+                if uses_time == False:
+                    meanie3D.tracking.run(configuration,-1)
+                else:
+                    for time_index in range(start_time_index,end_time_index):
+                        meanie3D.tracking.run(configuration,time_index)
 
     return
 # ----------------------------------------------------------------------------

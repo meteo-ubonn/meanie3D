@@ -8,14 +8,13 @@
 # @author Juergen Simon (juergen_simon@mac.com)
 # ------------------------------------------------------------------------------
 
-from visit import *
 import sys
 sys.path.append(".")
 
 import glob
 import os
 import time
-import meanie3D_visit_utils
+from meanie3D.meanie3D import utils
 from pprint import pprint
 from subprocess import call
 
@@ -370,7 +369,7 @@ def visualization(conf):
     pprint(conf)
     print "-------------------------------------------------"
 
-    bin_prefix = "export DYLD_LIBRARY_PATH="+meanie3D_visit_utils.get_dyld_library_path()+";"
+    bin_prefix = "export DYLD_LIBRARY_PATH="+ utils.get_dyld_library_path()+";"
     conversion_bin = bin_prefix + "/usr/local/bin/" + "meanie3D-cfm2vtk"
 
     # Silent
@@ -393,13 +392,13 @@ def visualization(conf):
     set_view_to_radolan();
 
     print "-- Creating colortables ---"
-    num_colors = meanie3D_visit_utils.create_cluster_colortable("cluster_colors")
+    num_colors = utils.create_cluster_colortable("cluster_colors")
 
     if conf['with_topography']:
-        meanie3D_visit_utils.create_topography_colortable()
+        utils.create_topography_colortable()
 
     if conf['with_background_gradient']:
-        meanie3D_visit_utils.add_background_gradient();
+        utils.add_background_gradient();
 
     # Glob the netcdf directory
     netcdf_files = sorted(glob.glob(conf['source_directory']+"/*.nc"));
@@ -462,7 +461,7 @@ def visualization(conf):
                 
                 if conf['with_datetime']:
                     print "-- Adding timestamp --"
-                    meanie3D_visit_utils.add_datetime(netcdf_file)
+                    utils.add_datetime(netcdf_file)
                 
                 print "-- Plotting source data --"
                 start_time = time.time()
@@ -489,7 +488,7 @@ def visualization(conf):
                     SetOperatorOptions(t)
 
                 DrawPlots();
-                meanie3D_visit_utils.save_window("source_",1)
+                utils.save_window("source_",1)
 
                 DeleteAllPlots()
                 ClearWindow()
@@ -530,7 +529,7 @@ def visualization(conf):
                 
                 if conf['with_datetime']:
                     print "-- Adding timestamp --"
-                    meanie3D_visit_utils.add_datetime(netcdf_file)
+                    utils.add_datetime(netcdf_file)
                 
                 print "-- Rendering cluster scene --"
                 start_time = time.time()
@@ -565,12 +564,12 @@ def visualization(conf):
                 add_clusters_with_colortable(basename,"_cluster_","cluster_colors",num_colors)
 
                 # Add modes as labels
-                meanie3D_visit_utils.add_labels(label_file,"geometrical_center")
+                utils.add_labels(label_file,"geometrical_center")
                 
                 # save as image
                 DrawPlots()
                 
-                meanie3D_visit_utils.save_window("tracking_",1)
+                utils.save_window("tracking_",1)
                 image_count=image_count+1;
                 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
@@ -582,8 +581,8 @@ def visualization(conf):
         if source_open:
             CloseDatabase(netcdf_file)
         CloseDatabase(label_file)
-        meanie3D_visit_utils.close_pattern(basename+"*.vtr")
-        meanie3D_visit_utils.close_pattern(basename+"*.vtk")
+        utils.close_pattern(basename+"*.vtr")
+        utils.close_pattern(basename+"*.vtk")
         return_code=call("rm -f *.vt*", shell=True)
         
         # periodically kill computing engine to
@@ -597,12 +596,12 @@ def visualization(conf):
 
     # create loops
     if conf['create_source_movie']:
-        meanie3D_visit_utils.create_movie("source_","source.gif")
-        meanie3D_visit_utils.create_movie("source_","source.m4v")
+        utils.create_movie("source_","source.gif")
+        utils.create_movie("source_","source.m4v")
 
     if conf['create_clusters_movie']:
-        meanie3D_visit_utils.create_movie("tracking_","tracking.gif")
-        meanie3D_visit_utils.create_movie("tracking_","tracking.m4v")
+        utils.create_movie("tracking_","tracking.gif")
+        utils.create_movie("tracking_","tracking.m4v")
 
     # clean up
     print "Cleaning up ..."

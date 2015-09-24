@@ -9,7 +9,6 @@ import glob
 import os
 import sys
 import getopt
-import shutil
 import tempfile
 from subprocess import call
 
@@ -21,11 +20,11 @@ if MEANIE3D_HOME == "NOT_SET":
     print "ERROR: environment variable MEANIE3D_HOME is not set."
     sys.exit(2)
 sys.path.append(MEANIE3D_HOME+"/scripts/python-modules")
+from meanie3D import external
 import meanie3D
-import meanie3D_utils
 
 # make sure external commands are available
-meanie3D_utils.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
+external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -99,7 +98,7 @@ def print_configuration_format():
 def print_version():
     DYLD_LIBRARY_PATH="/usr/local/lib:/usr/lib"
     bin_prefix    = "export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:"+DYLD_LIBRARY_PATH+";"
-    print "meanie3D.py:"
+    print "utils.py:"
     print meanie3D.get_version()
     print "meanie3D-trackstats:"
     call( bin_prefix + "/usr/local/bin/" + "meanie3D-trackstats --version", shell=True)
@@ -174,7 +173,7 @@ def run_trackstats(configuration,directory):
     return_code = -1
     os.chdir(directory)
     try:
-        return_code = meanie3D_utils.execute_command("meanie3D-trackstats"," ".join(params))
+        return_code = external.execute_command("meanie3D-trackstats"," ".join(params))
     except:
         print "ERROR:%s" % sys.exc_info()[0]
         raise
@@ -240,7 +239,7 @@ def plot_trackstats(configuration,directory):
 
     return_code = -1
     try:
-        return_code = meanie3D_utils.execute_command("gnuplot","plot_stats.gp")
+        return_code = external.execute_command("gnuplot","plot_stats.gp")
     except:
         print "ERROR:%s" % sys.exc_info()[0]
         raise
@@ -287,7 +286,7 @@ def visualise_tracks(configuration,directory):
     # change into directory
     os.chdir(directory)
     # Run visit
-    meanie3D_utils.execute_command("visit",params)
+    external.execute_command("visit",params)
     # Change back out
     os.chdir('..')
 
