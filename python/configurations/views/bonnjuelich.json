@@ -1,0 +1,18 @@
+{
+  "viewNormal": [0.204365, -0.63669, 0.743546 ],
+  "focus": [ -239.212, -4222.9, 7.31354 ],
+  "viewUp": [ -0.201314, 0.716005, 0.668438 ],
+  "viewAngle": 30,
+  "parallelScale": 173.531,
+  "nearPlane": -347.062,
+  "farPlane": 347.062,
+  "imagePan": [ -0.00977129, 0.0399963 ],
+  "imageZoom": 1.4641,
+  "perspective": 1,
+  "eyeAngle": 2,
+  "centerOfRotationSet": 0,
+  "centerOfRotation": [ 0, 0, 0 ],
+  "axis3DScaleFlag": 0,
+  "axis3DScales": [ 1, 1, 1 ],
+  "shear": [ 0, 0, 1 ]
+}

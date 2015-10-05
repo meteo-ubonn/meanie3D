@@ -1,0 +1,312 @@
+#!/usr/bin/python
+
+## meanie3D-tracking.py
+#
+# Python script for running a whole set of netcdf files through the clustering and tracking process.
+# \author Juergen Simon (juergen.simon@uni-bonn.de)
+
+import glob
+import os
+import tempfile
+import sys
+
+import external
+import templates
+import utils
+
+# make sure external commands are available
+external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
+
+# ----------------------------------------------------------------------------
+## Checks the consistency of the given configuration and hotfixes
+# problems it finds.
+# \param configuration
+#
+def check_configuration(configuration):
+    if 'postprocessing' in configuration:
+        pconf = configuration['postprocessing']
+        if 'tracks' in pconf:
+            tracks = pconf['tracks']
+            # visualise_tracks -> vtk_tracks:true
+            if (tracks["visualise_tracks"] and not tracks['vtk_tracks']):
+                print "WARNING: tracks.visualise_tracks = True -> tracks.vtk_tracks = True"
+                tracks['vtk_tracks'] = True
+                # Complement vtk_dimensions to make our life a little easier down the road.
+                if configuration['data']['vtk_dimensions']:
+                    tracks['vtk_dimensions'] = configuration['data']['vtk_dimensions']
+
+            # visualise_tracks -> vtk_tracks:true
+            if (tracks["plot_stats"] and not tracks['gnuplot']):
+                print "WARNING: track.plot_stats = True -> track.gnuplot = True"
+                tracks['gnuplot'] = True
+
+# ----------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------
+## Runs the meanie3D-trackstats command.
+# \param configuration
+# \param directory
+# \return True if the stats were created, False else
+def run_trackstats(configuration,directory):
+    pconf = configuration['postprocessing']
+    if not 'tracks' in pconf:
+        return False
+    tracks = pconf['tracks']
+    if not 'meanie3D-trackstats' in tracks:
+        return False
+
+    print "Running meanie3D-trackstats for %s" % directory
+    conf = tracks['meanie3D-trackstats']
+
+    # Assemble command line params
+    params = []
+    if (conf['dictionary'] == True):
+        params.append("-t")
+    if (conf['gnuplot'] == True):
+        params.append("-g")
+    if (conf['length'] == True):
+        params.append("--create-length-statistics")
+    if (conf['length_classes']):
+        params.append("--length-histogram-classes=%s" % conf['length_classes'])
+    if (conf['speed'] == True):
+        params.append("--create-speed-statistics")
+    if (conf['speed_classes']):
+        params.append("--speed-histogram-classes=%s" % conf['speed_classes'])
+    if (conf['direction'] == True):
+        params.append("--create-direction-statistics")
+    if (conf['direction_classes']):
+        params.append("--direction-histogram-classes=%s" % conf['direction_classes'])
+    if (conf['size'] == True):
+        params.append("--create-cluster-statistics")
+    if (conf['size_classes']):
+        params.append("--cluster-histogram-classes=%s" % conf['size_classes'])
+    if (conf['cumulated'] == True):
+        params.append("--create-cumulated-size-statistics")
+    if (conf['cumulated_classes']):
+        params.append("--size-histogram-classes=%s" % conf['cumulated_classes'])
+    if (conf['vtk_tracks'] == True):
+        params.append("--write-center-tracks-as-vtk ")
+    if (conf['vtk_dimensions']):
+        params.append("--vtk-dimensions=%s" % conf['vtk_dimensions'])
+
+    params.append("-s netcdf")
+
+    return_code = -1
+    os.chdir(directory)
+    try:
+        return_code = external.execute_command("meanie3D-trackstats"," ".join(params))
+    except:
+        print "ERROR:%s" % sys.exc_info()[0]
+        raise
+
+    os.chdir("..")
+
+    return (return_code == 0)
+
+# ----------------------------------------------------------------------------
+## Runs gnuplot to produce .eps files
+# \param configuration
+# \param directory
+def plot_trackstats(configuration,directory):
+    pconf = configuration['postprocessing']
+    if not 'tracks' in pconf:
+        return False
+    tracks = pconf['tracks']
+    if not 'meanie3D-trackstats' in tracks:
+        return False
+
+    conf = tracks['meanie3D-trackstats']
+    print "Plotting .eps files for %s" % directory
+
+    os.chdir(directory)
+
+    # create a tempfile for gnuplot
+    f = open('plot_stats.gp','w')
+
+    # track length
+    if (conf['length'] == True):
+        f.write('set term postscript\n')
+        f.write('set output "lengths-hist.eps"\n')
+        f.write('set title "Distribution of track length"\n')
+        f.write('set xlabel "Track length in [#steps]"\n')
+        f.write('set ylabel "Number of tracks"\n')
+        f.write('set xtics 5\n')
+        f.write('plot "lengths-hist.txt" with boxes\n')
+
+    # sizes
+    if (conf['size']):
+        f.write('# cluster size\n')
+        f.write('set output "sizes-hist.eps"\n')
+        f.write('set title "Distribution of cluster size"\n')
+        f.write('set xlabel "log(cluster size in [#gridpoints])"\n')
+        f.write('set ylabel "log(number of clusters)"\n')
+        f.write('set logscale y\n')
+        f.write('set logscale x\n')
+        f.write('set xtics auto\n')
+        f.write('plot "sizes-hist.txt" with boxes\n')
+        f.write('unset logscale y\n')
+        f.write('unset logscale x\n')
+
+    # speed
+    if (conf['speed']):
+        f.write('set output "speeds-hist.eps"\n')
+        f.write('set title "Distribution of cluster speeds"\n')
+        f.write('set xlabel "Cluster speed in [m/s]"\n')
+        f.write('set ylabel "Number of clusters"\n')
+        f.write('set xtics 2\n')
+        f.write('plot "speeds-hist.txt" with boxes\n')
+
+    # directions
+    if (conf['direction']):
+        f.write('set output "directions-hist.eps"\n')
+        f.write('set title "Distribution of tracking direction"\n')
+        f.write('set xlabel "Cluster direction in [deg]"\n')
+        f.write('set ylabel "Number of clusters"\n')
+        f.write('set xtics 15\n')
+        f.write('plot "directions-hist.txt" with boxes\n')
+
+    f.close()
+
+    return_code = -1
+    try:
+        return_code = external.execute_command("gnuplot","plot_stats.gp")
+    except:
+        print "ERROR:%s" % sys.exc_info()[0]
+
+    os.chdir("..")
+    return (return_code == 0)
+
+# ----------------------------------------------------------------------------
+## Creates a python script for Visit and runs Visit with the script.
+# Visualises the tracks found.
+# \param configuration
+# \param directory
+def visualise_tracks(configuration,directory):
+    print "Visualising tracks for %s" % directory
+
+    # Find template
+    templatePath = templates.visualise_tracks.__file__
+    replacements = {
+        'P_TRACKS_DIR' : os.path.abspath(directory),
+        'P_M3D_HOME' : configuration['m3d_home'],
+        'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
+    }
+
+    scriptFilename = tempfile.mktemp() + ".py"
+    print "\tWriting python script for visit to: " + scriptFilename
+    with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
+        for line in infile:
+            for src, target in replacements.iteritems():
+                line = line.replace(src, target)
+            outfile.write(line)
+    print "\tDone."
+
+    # Compile command line params for visit
+    params = "-s %s" % scriptFilename
+    debugVisitScript = configuration['postprocessing']['debugVisitScript']
+    runHeadless = bool(os.path.expandvars("$RUN_VISIT_HEADLESS")) and not debugVisitScript
+    if runHeadless:
+        params = "-cli -nowin %s" % params
+
+    # change into directory
+    os.chdir(directory)
+    # Run visit
+    returnCode = -1
+    try:
+        returnCode = external.execute_command("visit",params)
+    except:
+        print "ERROR:%s" % sys.exc_info()[0]
+
+    # Change back out
+    os.chdir('..')
+    return (returnCode == 0)
+
+# ----------------------------------------------------------------------------
+## Runs cross-scale analysis
+# \param configuration
+# \param directory
+def run_comparison(configuration):
+    print "Running cross-scale comparison"
+    return
+
+# ----------------------------------------------------------------------------
+## Creates a python script for Visit and runs Visit with the script.
+# Visualises the clusters, creates movies etc.
+# \param configuration
+# \param directory
+def visualise_clusters(configuration,directory):
+    print "Visualising clusters for %s" % directory
+    return
+
+# ----------------------------------------------------------------------------
+## Removes any files that are not part of the results and were produced
+# in any of the subsequent steps. C
+# \param configuration
+# \param directory
+def remove_junk(configuration,directory):
+    print "Cleaning temporary files for %s" % directory
+    os.chdir(directory)
+
+    if (configuration['tracks']['meanie3D-trackstats']['vtk_tracks']):
+        for filename in glob.glob('*.vtk') :
+            os.remove(filename)
+
+    if (configuration['tracks']['meanie3D-trackstats']['gnuplot']):
+        for filename in glob.glob('*.gp') :
+            os.remove(filename)
+
+    os.chdir("..")
+    return
+
+
+##
+# Runs postprocessing steps according to the section 'postprocessing' in the
+# given configuration.
+# \param:directory
+# \param:configuration
+#
+def run(configuration):
+
+    # Check configuration section 'postprocessing'
+    check_configuration(configuration)
+
+    if not 'postprocessing' in configuration:
+        return
+
+    postConf = configuration['postprocessing']
+
+    # In case scale parameters were given, the output dirs are scaleXYZ.
+    # Otherwise it's 'clustering'. To be safe, iterate over both
+    directories = sorted(glob.glob("scale*"))
+    if (os.path.isdir("clustering")):
+        directories.append("clustering")
+
+    print "Processing directories: %s" % str(directories)
+    for directory in directories:
+        if os.path.isdir(directory):
+            print "Processing %s" % directory
+        else:
+            print "ERROR:%s is not a directory!" % directory
+            continue
+
+            # run the track statistics
+            if (run_trackstats(configuration, directory)):
+
+                # run the stats plotting
+                if (postConf['tracks']['meanie3D-trackstats']['gnuplot']):
+                    plot_trackstats(configuration,directory);
+
+                # run the track visualisations
+                if (postConf['tracks']['visualise_tracks']):
+                    visualise_tracks(configuration, directory)
+
+        if (postConf['clusters']):
+            visualise_clusters(configuration,directory)
+
+        remove_junk(configuration,directory)
+
+    if (postConf['tracks'] and postConf['tracks']['scale_comparison']):
+        run_comparison(configuration)
+
+# ----------------------------------------------------------------------------
+

@@ -1,0 +1,183 @@
+{
+    "description":"Processing file for RADOLAN 20dBZ runs without using displacement vectors.",
+    "data":{
+        "variables":[
+            "RX"
+        ],
+        "lowerThreshold":[
+            20
+        ],
+        "upperThreshold":[
+            75
+        ],
+        "replacementValues":null,
+        "dimensions":[
+            "y",
+            "x"
+        ],
+        "vtkDimensions":[
+            "x",
+            "y"
+        ]
+    },
+    "detection":{
+        "meanie3D-detect":"--verbosity 1 --weight-function default --wwf-lower-threshold 0",
+        "useCIScore":false,
+        "usePrevious":true,
+        "minClusterSize" : 15
+    },
+    "tracking":{
+        "histogramVariable":"RX",
+        "histogramWeight":0,
+        "positionWeight":1,
+        "sizeWeight":0,
+        "useDisplacementVectors":false,
+        "maxSpeed":null,
+        "maxTime":null,
+        "meanie3D-track":"--verbosity 3"
+    },
+    "postprocessing":{
+        "debugVisitScript" : true,
+        "tracks":{
+            "meanie3D-trackstats":{
+                "dictionary":true,
+                "gnuplot":true,
+                "length":true,
+                "length_classes":null,
+                "speed":true,
+                "speed_classes":null,
+                "direction":true,
+                "direction_classes":null,
+                "size":true,
+                "size_classes":null,
+                "cumulated":false,
+                "cumulated_classes":null,
+                "vtk_tracks":true
+            },
+            "plot_stats":true,
+            "scale_comparison":true,
+            "visualise_tracks":true,
+            "visit":{
+                "annotationAttributes":{
+                    "gradientBackgroundStyle":"Radial",
+                    "gradientColor1":[0, 0, 0, 255],
+                    "gradientColor2":[192, 192, 192, 255],
+                    "userInfoFlag":0,
+                    "timeInfoFlag":0,
+                    "legendInfoFlag":1,
+                    "databaseInfoFlag":1,
+                    "axes2D.visible":1,
+                    "axes2D.autoSetScaling":0,
+                    "axes2D.xAxis.title.visible":0,
+                    "axes2D.xAxis.title.userTitle ":1,
+                    "axes2D.xAxis.title.userUnits ":1,
+                    "axes2D.xAxis.title.title":"x",
+                    "axes2D.xAxis.title.units":"km",
+                    "axes2D.yAxis.title.visible":0,
+                    "axes2D.yAxis.title.userTitle":1,
+                    "axes2D.yAxis.title.userUnits":1,
+                    "axes2D.yAxis.title.title":"y",
+                    "axes2D.yAxis.title.units":"km"
+                },
+                "view":{
+                    "windowCoords":[ -523.962, 376.038, -4659.15, -3759.15 ],
+                    "viewportCoords":[ 0.2, 0.95, 0.15, 0.95 ]
+                },
+                "map":{
+                    "mapDataFile":"$MEANIE3D_HOME/oase-mapdata/oase-mapdata.nc",
+                    "variables":[
+                        "as_zonal/national_boundaries_2D",
+                        "as_zonal/national_rivers_2D"
+                    ],
+                    "min":[
+                        0,
+                        0
+                    ],
+                    "max":[
+                        1,
+                        1
+                    ],
+                    "colorTableName":[
+                        "Greys",
+                        "hot"
+                    ],
+                    "invertColorTable":[
+                        0,
+                        1
+                    ],
+                    "opacity":[
+                        1,
+                        1
+                    ]
+                },
+                "track":{
+                    "variable":"track_step",
+                    "pointSizePixels":5,
+                    "minFlag":1,
+                    "maxFlag":1,
+                    "min":0,
+                    "max":50,
+                    "legendFlag":1,
+                    "colorTableName":"hot_desaturated",
+                    "invertColorTable":0,
+                    "opacity":1
+                }
+            }
+        },
+        "clusters":{
+            "meanie3D-cfm2vtk":"-t cluster -v RX --vtk-dimensions x,y",
+            "showSourceBackground":true,
+            "showDateTime":true,
+            "showBackgroundGradient":true,
+            "withDisplacementVectors":true,
+            "visit":{
+                "annotationAttributes":{
+                    "gradientBackgroundStyle":"Radial",
+                    "gradientColor1":[0, 0, 0, 255],
+                    "gradientColor2":[192, 192, 192, 255],
+                    "userInfoFlag":0,
+                    "timeInfoFlag":0,
+                    "legendInfoFlag":1,
+                    "databaseInfoFlag":1,
+                    "axes2D.visible":1,
+                    "axes2D.autoSetScaling":0,
+                    "axes2D.xAxis.title.visible":0,
+                    "axes2D.xAxis.title.userTitle ":1,
+                    "axes2D.xAxis.title.userUnits ":1,
+                    "axes2D.xAxis.title.title":"x",
+                    "axes2D.xAxis.title.units":"km",
+                    "axes2D.yAxis.title.visible":0,
+                    "axes2D.yAxis.title.userTitle":1,
+                    "axes2D.yAxis.title.userUnits":1,
+                    "axes2D.yAxis.title.title":"y",
+                    "axes2D.yAxis.title.units":"km"
+                },
+                "vectorAttributes":{
+                    "variable":"displacement",
+                    "useStride":1,
+                    "stride":1,
+                    "scale":1,
+                    "scaleByMagnitude":0,
+                    "autoScale":0,
+                    "useLegend":0
+                },
+                "withBoundaries":false,
+                "boundaries":{
+                    "variable":"point_color",
+                    "opacity":1.0
+                }
+            },
+            "removeImagesFolder":true,
+            "createSourceMovie":true,
+            "createClusterMovie":true,
+            "movieFormats":[
+                "gif",
+                "m4v"
+            ],
+            "movieConvertParams":[
+                "",
+                ""
+            ]
+        }
+    }
+}
