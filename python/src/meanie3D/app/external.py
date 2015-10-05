@@ -118,8 +118,10 @@ def find_ext_cmds(command_list, recurse=False):
 def execute_command(command, parameters, with_stdout=False):
     # Make sure we searched for the command first
     if not COMMAND_MAP.has_key(command):
-        raise Exception(
-            "Requested command: %s was not found in the map. All commands must be searched before they can be used")
+        message = "Requested command: %s was not found in the map. " \
+                  "All commands must be searched before they can be used" \
+                  % command
+        raise Exception(message)
 
     cmd = get_executable_command(COMMAND_MAP.get(command)) + ' ' + parameters
     # print("Going to execute, with_stdout: %s, cmd: %s" % (with_stdout, cmd))

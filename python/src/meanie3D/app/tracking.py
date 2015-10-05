@@ -53,48 +53,81 @@ def run(config,time_index):
     print "---------------------------------------------------"
 
     checkConfiguration(config)
-    data = config['data']
+    data = utils.safeGet(config,'data')
+    detection = utils.safeGet(config,'detection')
+    tracking = utils.safeGet(config,'tracking')
 
     # Piece together the command line params for detection and tracking
     tracking_params = ""
     detect_params = ""
 
-    if config['detection']:
-        detect_params = "-v " + ','.join(data['variables'])
+    if data and detection:
+
+        variables = list()
+        lowerThresholds = list()
+        upperThresholds = list()
+        replacementValues = list()
+
         detect_params = "%s -d %s" % (detect_params, ','.join(data['dimensions']))
-        if 'vtk_dimensions' in data:
-            detect_params = "%s --vtk-dimensions %s" % (detect_params, ','.join(data['vtk_dimensions']))
-        if 'lowerThreshold' in data:
-            detect_params = "%s --lower-thresholds %s" % (detect_params, ','.join(data['lowerThreshold']))
-        if 'upperThreshold' in data:
-            detect_params = "%s --upper-thresholds %s" % (detect_params, ','.join(data['upperThreshold']))
-        if 'replacementValues' in data:
-            detect_params = "%s --replacement-values %s" % (detect_params, ','.join(data['replacementValues']))
 
-    if data['detection']:
-        detection = data['detection']
-        if 'minClusterSize' in detection:
-            detect_params = "%s -m %d" % (detect_params, detection['minClusterSize'])
-        if detection['meanie3D-detect']:
-            detect_params = "%s %s" % (detect_params, detection['meanie3D-detect'])
+        for variable in data['variables']:
+            variables.append(variable['name'])
+            if (utils.safeGet(variable,'lowerThreshold')):
+                lowerThresholds.append("%s=%s" % (variable['name'], str(variable['lowerThreshold'])))
 
-    if config['tracking']:
-        tracking = config['tracking']
-        if tracking['meanie3D-track']:
+            if (utils.safeGet(variable,'upperThreshold')):
+                upperThresholds.append("%s=%s" % (variable['name'], str(variable['upperThreshold'])))
+
+            if (utils.safeGet(variable,'replacementValue')):
+                replacementValues.append("%s=%s" % (variable['name'], str(variable['replacementValue'])))
+
+        detect_params += " -v %s" % ','.join(variables)
+
+        if lowerThresholds:
+            detect_params += " --lower-thresholds %s" % ','.join(lowerThresholds)
+
+        if upperThresholds:
+            detect_params += " --upper-thresholds %s" % ','.join(upperThresholds)
+
+        if replacementValues:
+            detect_params += " --replacement-values %s" % ','.join(lowerThresholds)
+
+        if utils.safeGet(data,'vtkDimensions'):
+            detect_params += " --vtk-dimensions %s" % ','.join(data['vtkDimensions'])
+
+    if detection:
+        minClusterSize = utils.safeGet(detection,'minClusterSize')
+        if minClusterSize:
+            detect_params = "%s -m %d" % (detect_params, minClusterSize)
+
+        additionalParams = utils.safeGet(detection,'meanie3D-detect')
+        if detect_params:
+            detect_params = "%s %s" % (detect_params, additionalParams)
+
+    if tracking:
+        
+        if utils.safeGet(tracking,'meanie3D-track'):
             tracking_params = "%s %s" % (tracking_params, tracking['meanie3D-track'])
-        if tracking['histogramVariable']:
+            
+        if utils.safeGet(tracking,'histogramVariable'):
             tracking_params = "%s -t %s" % (tracking_params, tracking['histogramVariable'])
-        if tracking['histogramWeight']:
+            
+        if utils.safeGet(tracking,'histogramWeight'):
             tracking_params = "%s --wt %s" % (tracking_params, tracking['histogramWeight'])
-        if tracking['positionWeight']:
+            
+        if utils.safeGet(tracking,'positionWeight'):
             tracking_params = "%s --wr %s" % (tracking_params, tracking['positionWeight'])
-        if tracking['sizeWeight']:
+            
+        if utils.safeGet(tracking,'sizeWeight'):
             tracking_params = "%s --ws %s" % (tracking_params, tracking['sizeWeight'])
-        if tracking['maxSpeed']:
+            
+        if utils.safeGet(tracking,'maxSpeed'):
             tracking_params = "%s --max-speed %f" % (tracking_params, tracking['maxSpeed'])
-        if tracking['maxTime']:
+            
+        if utils.safeGet(tracking,'maxTime'):
             tracking_params = "%s --max-time %d" % (tracking_params, tracking['maxTime'])
-        if tracking['useDisplacementVectors'] == True:
+            
+        if utils.safeGet(tracking,'useDisplacementVectors'):
             tracking_params = "%s -v"
 
     resume_at_index = 0;
@@ -156,7 +189,7 @@ def run(config,time_index):
         # Clustering
         # ----------------------------------------------
 
-        if config['detection']:
+        if utils.safeGet(config,'detection'):
             print "-- Clustering --"
 
             # build the clustering command
@@ -175,14 +208,17 @@ def run(config,time_index):
                 params += scale_param
 
             # use previous result to enhance current?
-            if ((run_count > 0) or (time_index > 0)) and detection['use_previous']:
+            if ((run_count > 0) or (time_index > 0)) and detection['usePrevious']:
                 params += " -p " + last_cluster_file
 
             # add ci-comparison-file if applicable
-            if run_count >= 3 and config['use_ci_score']:
+            if run_count >= 3 and utils.safeGet(detection,'useCIScore'):
                 params += " --ci-comparison-file " + netcdf_list[run_count-3]
                 proto_file = os.path.splitext(os.path.basename(netcdf_list[run_count-3]))[0] + "-protoclusters.nc"
                 params += " --ci-comparison-protocluster-file " + proto_file;
+
+            # Input file
+            params += " -f %s -o %s" % (netcdf_file,cluster_file)
 
             # complete command with directing output to logfile
             params = params + " > " + logfile

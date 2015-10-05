@@ -5,6 +5,7 @@ __author__ = "juergen.simon@uni-bonn.de"
 # -------------------------------------------------------------------
 
 import glob
+import json
 import os
 import os.path
 import shutil
@@ -61,4 +62,93 @@ def create_ouput_directories(base_path):
         shutil.rmtree(netcdf_dir)
     os.makedirs(netcdf_dir)
 
+    return
+
+##
+# Tests if the dictionary has the given key. If so, it retrieves the
+# value and returns it. If not, returns None.
+# \param:dictionary
+# \param:key
+# \param value or None
+#
+def safeGet(dict,key):
+    if key in dict and dict[key]:
+        return dict[key]
+    else:
+        return None
+
+##
+# Sets the given object values along a keypath separated
+# by periods. Example: axes2D.yAxis.title.units.
+# \param:object
+# \param:keypath
+# \param:value
+#
+def setValueForKeyPath(object,keypath,value):
+    keys = keypath.split(".")
+    if len(keys) > 1:
+        if type(object) is dict:
+            nextObject = object[keys[0]]
+        else:
+            nextObject = getattr(object,keys[0])
+        keys.pop(0)
+        remainingPath = ".".join(keys)
+        setValueForKeyPath(nextObject,remainingPath,value)
+    else:
+        # The specific enumerated values in Visit are configured
+        # as strings in configuration dictionary, but are int values
+        # in visit objects. Try to set an enumerated value when hitting
+        # this combination
+        value = None
+        if type(value) is str and type(getattr(object,keypath)) is int:
+            value = getattr(object,value)
+
+        if type(object) is dict:
+            object[keypath] = value
+        else:
+            setattr(object,keypath,value)
+
+    return
+
+##
+# Gets the given object values along a keypath separated
+# by periods. Example: axes2D.yAxis.title.units
+# \param:object
+# \param:keypath
+# \return:value
+#
+def getValueForKeyPath(object,keypath):
+    keys = keypath.split(".")
+    if len(keys) > 1:
+        if type(object) is dict:
+            nextObject = safeGet(object,keys[0])
+        else:
+            nextObject = getattr(object,keys[0])
+        keys.pop(0)
+        remainingPath = ".".join(keys)
+        return getValueForKeyPath(nextObject,remainingPath)
+    else:
+        # The specific enumerated values in Visit are configured
+        # as strings in configuration dictionary, but are int values
+        # in visit objects. Try to set an enumerated value when hitting
+        # this combination
+        value = None
+        if type(object) is dict:
+            value = safeGet(object,keypath)
+        else:
+            value = getattr(object,keypath)
+        return value
+
+##
+# Sets the values from the dictionary on the given object
+# \param:object
+# \param:dictionary
+# TODO: resolve key paths
+#
+def setValuesFromDictionary(object,dictionary):
+    for key,value in dictionary.items():
+        if type(value) is list:
+            setValueForKeyPath(object,key,tuple(value))
+        else:
+            setValueForKeyPath(object,key,value)
     return

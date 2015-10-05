@@ -2,15 +2,13 @@
     "description":"Processing file for RADOLAN 20dBZ runs without using displacement vectors.",
     "data":{
         "variables":[
-            "RX"
+            {
+                "name" : "RX",
+                "lowerThreshold" : 20,
+                "upperThreshold" : 75,
+                "replacementValue" : null
+            }
         ],
-        "lowerThreshold":[
-            20
-        ],
-        "upperThreshold":[
-            75
-        ],
-        "replacementValues":null,
         "dimensions":[
             "y",
             "x"
@@ -54,9 +52,9 @@
                 "cumulated_classes":null,
                 "vtk_tracks":true
             },
-            "plot_stats":true,
-            "scale_comparison":true,
-            "visualise_tracks":true,
+            "plotStats":true,
+            "scaleComparison":true,
+            "visualiseTracks":true,
             "visit":{
                 "annotationAttributes":{
                     "gradientBackgroundStyle":"Radial",

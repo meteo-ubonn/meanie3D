@@ -16,16 +16,19 @@ _CONFIG_FILE = "P_CONFIGURATION_FILE"
 
 # Import modules
 import sys
-sys.path.append(_M3D_HOME+"/python/python-modules")
-import meanie3D
-import tracks
+sys.path.append(os.path.dirname(_M3D_HOME)+"/..")
+import meanie3D.app.utils
+import meanie3D.visit.clusters
+import meanie3D.visit.pseudocolor
+import meanie3D.visit.tracks
+import meanie3D.visit.utils
 
 # Parse configuration data
-configuration = meanie3D.load_configuration(_CONFIG_FILE)
+configuration = meanie3D.app.utils.load_configuration(_CONFIG_FILE)
 
 # Add parsed parameters
 configuration["meanie3d_home"] = _M3D_HOME
 configuration["tracks_dir"] = _TRACKS_DIR
 
 # run it
-tracks.plotTracks(configuration)
+meanie3D.visit.tracks.plotTracks(configuration)

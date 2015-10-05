@@ -6,7 +6,8 @@ app/postprocessing.py
 app/tracking.py
 app/utils.py
 app/templates/__init__.py
-app/templates/visualise_tracks.py
+app/templates/__init__.pyc
+app/templates/tracks_visit.py
 visit/__init__.py
 visit/clusters.py
 visit/pseudocolor.py

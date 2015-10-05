@@ -256,9 +256,9 @@ def visualise_tracks(configuration,directory):
     print "Visualising tracks for %s" % directory
 
     # Find template
-    templatePath = os.path.expandvars("${MEANIE3D_HOME}/python/tools/templates/visualise_tracks.py")
+    templatePath = os.path.expandvars("${MEANIE3D_HOME}/python/tools/templates/tracks_visit.py")
     if not os.path.exists(templatePath):
-        print "ERROR: could not find script template 'visualise_tracks.py' in $MEANIE3D_HOME"
+        print "ERROR: could not find script template 'tracks_visit.py' in $MEANIE3D_HOME"
         return -1
 
     replacements = {

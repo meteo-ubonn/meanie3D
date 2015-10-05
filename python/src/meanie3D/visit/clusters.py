@@ -77,7 +77,7 @@ def add_clusters_with_colortable(infix,color_table_name,color_count,configuratio
 # @param color tables
 # @param number of colors in the color table
 # ------------------------------------------------------------------------------
-@PendingDeprecationWarning("This code is specific to project OASE and will be deprecated")
+@PendingDeprecationWarning
 def add_boundaries(basename,color_table_name,color_count, configuration):
     infix="_boundary_"
     cluster_pattern = basename+"*"+infix+"*.vt*"

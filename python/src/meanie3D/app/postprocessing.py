@@ -6,13 +6,15 @@
 # \author Juergen Simon (juergen.simon@uni-bonn.de)
 
 import glob
+import inspect
 import os
-import tempfile
+import pkg_resources
 import sys
+import tempfile
 
-import external
-import templates
-import utils
+import meanie3D
+from meanie3D.app import utils
+from meanie3D.app import external
 
 # make sure external commands are available
 external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
@@ -23,22 +25,20 @@ external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visi
 # \param configuration
 #
 def check_configuration(configuration):
-    if 'postprocessing' in configuration:
-        pconf = configuration['postprocessing']
-        if 'tracks' in pconf:
-            tracks = pconf['tracks']
-            # visualise_tracks -> vtk_tracks:true
-            if (tracks["visualise_tracks"] and not tracks['vtk_tracks']):
-                print "WARNING: tracks.visualise_tracks = True -> tracks.vtk_tracks = True"
-                tracks['vtk_tracks'] = True
-                # Complement vtk_dimensions to make our life a little easier down the road.
-                if configuration['data']['vtk_dimensions']:
-                    tracks['vtk_dimensions'] = configuration['data']['vtk_dimensions']
+    # Check that visualiseTracks has .vtk to work from
+    if utils.getValueForKeyPath(configuration,'postprocessing.tracks.visualiseTracks') and not utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks'):
+        print "WARNING: tracks.visualiseTracks = True but tracks.meanie3D-trackstats.vtk_tracks = False. Correcting."
+        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks',True)
 
-            # visualise_tracks -> vtk_tracks:true
-            if (tracks["plot_stats"] and not tracks['gnuplot']):
-                print "WARNING: track.plot_stats = True -> track.gnuplot = True"
-                tracks['gnuplot'] = True
+    # Complement vtk_dimensions to make our life a little easier down the road.
+    vtkDimensions = utils.getValueForKeyPath(configuration,'data.vtkDimensions')
+    if vtkDimensions:
+        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtkDimensions',vtkDimensions)
+
+    # Make sure that plotStats has gnuplot files to work with
+    if utils.getValueForKeyPath(configuration,'postprocessing.tracks.plotStats') and not utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot'):
+        print "WARNING: track.plot_stats = True but tracks.meanie3D-trackstats.gnuplot = False. Correcting."
+        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot',True)
 
 # ----------------------------------------------------------------------------
 
@@ -86,7 +86,7 @@ def run_trackstats(configuration,directory):
         params.append("--size-histogram-classes=%s" % conf['cumulated_classes'])
     if (conf['vtk_tracks'] == True):
         params.append("--write-center-tracks-as-vtk ")
-    if (conf['vtk_dimensions']):
+    if (conf['vtkDimensions']):
         params.append("--vtk-dimensions=%s" % conf['vtk_dimensions'])
 
     params.append("-s netcdf")
@@ -185,10 +185,10 @@ def visualise_tracks(configuration,directory):
     print "Visualising tracks for %s" % directory
 
     # Find template
-    templatePath = templates.visualise_tracks.__file__
+    templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
     replacements = {
         'P_TRACKS_DIR' : os.path.abspath(directory),
-        'P_M3D_HOME' : configuration['m3d_home'],
+        'P_M3D_HOME' : meanie3D.__file__,
         'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
     }
 
@@ -247,17 +247,16 @@ def remove_junk(configuration,directory):
     print "Cleaning temporary files for %s" % directory
     os.chdir(directory)
 
-    if (configuration['tracks']['meanie3D-trackstats']['vtk_tracks']):
+    if utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks'):
         for filename in glob.glob('*.vtk') :
             os.remove(filename)
 
-    if (configuration['tracks']['meanie3D-trackstats']['gnuplot']):
+    if utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot'):
         for filename in glob.glob('*.gp') :
             os.remove(filename)
 
     os.chdir("..")
     return
-
 
 ##
 # Runs postprocessing steps according to the section 'postprocessing' in the
@@ -289,23 +288,23 @@ def run(configuration):
             print "ERROR:%s is not a directory!" % directory
             continue
 
-            # run the track statistics
-            if (run_trackstats(configuration, directory)):
+        # run the track statistics
+        if (run_trackstats(configuration, directory)):
 
-                # run the stats plotting
-                if (postConf['tracks']['meanie3D-trackstats']['gnuplot']):
-                    plot_trackstats(configuration,directory);
+            # run the stats plotting
+            if utils.getValueForKeyPath(postConf,'tracks.plotStats'):
+                plot_trackstats(configuration,directory);
 
-                # run the track visualisations
-                if (postConf['tracks']['visualise_tracks']):
-                    visualise_tracks(configuration, directory)
+            # run the track visualisations
+            if utils.getValueForKeyPath(postConf, 'tracks.visualiseTracks'):
+                visualise_tracks(configuration, directory)
 
-        if (postConf['clusters']):
+        if utils.safeGet(postConf,'clusters'):
             visualise_clusters(configuration,directory)
 
         remove_junk(configuration,directory)
 
-    if (postConf['tracks'] and postConf['tracks']['scale_comparison']):
+    if (postConf['tracks'] and postConf['tracks']['scaleComparison']):
         run_comparison(configuration)
 
 # ----------------------------------------------------------------------------

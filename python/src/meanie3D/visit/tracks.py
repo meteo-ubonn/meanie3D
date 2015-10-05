@@ -2,12 +2,14 @@
 __author__ = "juergen.simon@uni-bonn.de"
 
 # ------------------------------------------------------------------------------
-# Filename: tracks.py
+# Filename: tracks_visit.py
 #
 # This module bundles python routines for running inside Visit.
 #
 # @author Juergen Simon (juergen.simon@uni-bonn.de)
 # ------------------------------------------------------------------------------
+
+import meanie3D.app.utils
 
 ##
 # Sets the view parameters on a 2D or 3D view. The conf dictionary
@@ -111,7 +113,8 @@ def plotMapdata(conf):
 #
 def plotTracks(conf):
 
-    if (not conf['tracks']['visit']):
+    visitConf = meanie3D.app.utils.getValueForKeyPath(conf,'tracks.visit')
+    if not visitConf:
         print "No configuration for visuals. Nothing to do."
         return 0
 
@@ -120,7 +123,6 @@ def plotTracks(conf):
     SuppressQueryOutputOn()
 
     # Check the configuration
-    visitConf = conf['tracks']['visit']
     if (not visitConf['dimensions']):
         print "ERROR:configuration must contain 'dimensions'"
         return -1

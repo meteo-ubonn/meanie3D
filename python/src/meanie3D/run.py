@@ -5,6 +5,7 @@
 # Python script for running a whole set of netcdf files through the clustering and tracking process.
 # \author Juergen Simon (juergen.simon@uni-bonn.de)
 
+import os
 import sys
 import getopt
 
@@ -12,6 +13,23 @@ import app.external
 import app.tracking
 import app.postprocessing
 import app.utils
+
+# Make sure the C++ executables are installed
+app.external.find_ext_cmds(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats"])
+
+##
+# \return meanie3D package version
+#
+def getVersion():
+    from . import __version__
+    return __version__
+
+##
+# \return meanie3D package location
+#
+def getHome():
+    import meanie3D
+    return meanie3D.__file__
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -53,9 +71,9 @@ def print_configuration_format():
 ## Prints version info and exits
 #
 def print_version():
-    print "meanie3D.py: " + meanie3D.getVersion() + "\n"
-    print "meanie3D-detect: " + meanie3D.app.external.execute_command_with_stdout("meanie3D-detect","--version")
-    print "meanie3D-track: " + meanie3D.app.external.execute_command_with_stdout("meanie3D-track","--version")
+    print "meanie3D.py: " + getVersion() + "\n"
+    print "meanie3D-detect: " + app.external.execute_command_with_stdout("meanie3D-detect","--version")
+    print "meanie3D-track: " + app.external.execute_command_with_stdout("meanie3D-track","--version")
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -83,7 +101,7 @@ def main(argv):
     for o, a in opts:
 
         if o == "-c":
-            config_file = a
+            config_file = os.path.expandvars(a)
             num_params = num_params + 1
 
         elif o == "-f":
@@ -138,12 +156,14 @@ def main(argv):
         uses_time = True
 
     # Parse configuration data and expand
-    configuration = meanie3D.utils.load_configuration(config_file);
+
+    configuration = app.utils.load_configuration(config_file);
 
     # Enrich the configuration with env/command line stuff
     configuration["source_directory"] = netcdf_dir
     configuration["output_dir"] = output_dir
     configuration["resume"] = resume
+    configuration['config_file'] = config_file
 
     # Run the detection and tracking steps
     if (configuration['detection'] or configuration['tracking']):
@@ -151,23 +171,23 @@ def main(argv):
         # run the actual clustering/tracking script
         if not scales:
             if uses_time == False:
-                meanie3D.app.tracking.run(configuration,-1)
+                app.tracking.run(configuration,-1)
             else:
                 for time_index in range(start_time_index,end_time_index):
-                    meanie3D.app.tracking.run(configuration,time_index)
+                    app.tracking.run(configuration,time_index)
 
         else:
             for scale in scales:
                 configuration["scale"] = scale
                 if uses_time == False:
-                    meanie3D.tracking.run(configuration,-1)
+                    app.tracking.run(configuration,-1)
                 else:
                     for time_index in range(start_time_index,end_time_index):
-                        meanie3D.app.tracking.run(configuration,time_index)
+                        app.tracking.run(configuration,time_index)
 
     # Run the postprocessing steps
     if (configuration['postprocessing']):
-        meanie3D.app.postprocessing.run(configuration)
+        app.postprocessing.run(configuration)
 
     return
 # ----------------------------------------------------------------------------

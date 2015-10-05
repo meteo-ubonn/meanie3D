@@ -13,13 +13,16 @@ import os
 import os.path
 import string
 from os.path import basename
+from os.path import dirname
 from subprocess import call
+
 # Own modules
-from meanie3D import external
+from meanie3D.app.utils import *
+import meanie3D.app.external
 # Visit modules
 
 # make sure external commands are available
-external.find_ext_cmds(['convert','composite'])
+meanie3D.app.external.find_ext_cmds(['convert','composite'])
 
 # -------------------------------------------------------------------
 # This module bundles python routines for handling Visit3D
@@ -41,7 +44,7 @@ def add_pseudocolor(vtk_file,configuration):
     OpenDatabase(vtk_file)
     AddPlot("Pseudocolor", configuration['variable'])
     p = PseudocolorAttributes()
-    p.__dict__.update(configuration.__dict__)
+    setValuesFromDictionary(p,configuration)
     SetPlotOptions(p)
     return
 
@@ -90,7 +93,7 @@ def path(filename):
 # @return stripped filename
 # -------------------------------------------------------------------
 def naked_name(filename):
-    base = s.basename(filename)
+    base = basename(filename)
     stripped = os.path.splitext(filename)[0]
     return stripped
 
@@ -131,44 +134,6 @@ def add_text_annotation(x,y,message):
     return
 
 
-##
-# Sets the given object values along a keypath separated
-# by periods. Example: axes2D.yAxis.title.units.
-# \param:object
-# \param:keypath
-# \param:value
-#
-def setValueForKeyPath(object,keypath,value):
-    keys = keypath.split(".")
-    if len(keys) > 1:
-        nextObject = getattr(object,keys[0])
-        keys.pop(0)
-        remainingPath = ".".join(keys)
-        setValueForKeyPath(nextObject,remainingPath,value)
-    else:
-        # The specific enumerated values in Visit are configured
-        # as strings in configuration dictionary, but are int values
-        # in visit objects. Try to set an enumerated value when hitting
-        # this combination
-        if type(value) is str and type(getattr(object,keypath)) is int:
-            setattr(object,keypath,getattr(object,value))
-        else:
-            setattr(object,keypath,value)
-    return
-
-##
-# Sets the values from the dictionary on the given object
-# \param:object
-# \param:dictionary
-# TODO: resolve key paths
-#
-def setValuesFromDictionary(object,dictionary):
-    for key,value in dictionary.items():
-        if type(value) is list:
-            setValueForKeyPath(object,key,tuple(value))
-        else:
-            setValueForKeyPath(object,key,value)
-    return
 
 # -------------------------------------------------------------------
 # Add background gradient from dark (middle)
@@ -185,8 +150,7 @@ def add_background_gradient(configuration):
             gradientBackgroundStyle = configuration['gradientBackgroundStyle']
             a.gradientBackgroundStyle = gradientBackgroundStyle
 
-    a.__dict__.update(configuration.__dict__)
-
+    setValuesFromDictionary(a,configuration)
     SetAnnotationAttributes(a)
     return
 
@@ -197,14 +161,14 @@ def add_background_gradient(configuration):
 def create_movie(basename,moviename):
     print "Creating movie '" +moviename+"' from files '" + basename+"*.png ..."
     args = "-limit memory 4GB -delay 50 -quality 100 -dispose Background %s *.png %s" % (basename,moviename)
-    external.execute_command('convert',args,False)
+    meanie3D.app.external.execute_command('convert',args,False)
     print "done."
     return
 
 # -------------------------------------------------------------------
 # Creates the color table for clusters
 # -------------------------------------------------------------------
-@PendingDeprecationWarning("This code is specific to project OASE and will be deprecated")
+@PendingDeprecationWarning
 def create_cluster_colortable(name):
     opacity=1*255
     rgb_colors = ((255, 0,      0,      opacity),   #plain red
@@ -221,7 +185,7 @@ def create_cluster_colortable(name):
 # Creates a colortable for visualizing the topography data from
 # the mapstuff file
 # -------------------------------------------------------------------
-@PendingDeprecationWarning("This code is specific to project OASE and will be deprecated")
+@PendingDeprecationWarning
 def create_topography_colortable():
     opacity=255
     rgb = ((0,   0,    100,    opacity),   #sea
@@ -248,7 +212,7 @@ def create_topography_colortable():
 # to the oase 3D composite format and adds it to
 # the currenty image
 # -------------------------------------------------------------------
-@PendingDeprecationWarning("This code is specific to project OASE and will be deprecated")
+@PendingDeprecationWarning
 def add_datetime(filename):
     
     # Only use the leaf node
@@ -305,7 +269,7 @@ def add_datetime(filename):
 # @param basename of the right image series
 # @param basename of the combined image series
 # -------------------------------------------------------------------
-@PendingDeprecationWarning("This code is specific to project OASE and will be deprecated")
+@PendingDeprecationWarning
 def create_dual_panel(basename_left,basename_right,basename_combined):
     left_files=sorted(glob.glob(basename_left+"*.png"))
     right_files=sorted(glob.glob(basename_right+"*.png"))
@@ -321,12 +285,12 @@ def create_dual_panel(basename_left,basename_right,basename_combined):
 
         # create backdrop
         combined=basename_combined+str(i)+".png"
-        call("/usr/local/bin/convert -size 1852x1024 xc:white "+combined,shell=True)
+        meanie3D.app.external.execute_command("convert","-size 1852x1024 xc:white "+combined,shell=True)
 
         # copy images and blank date
-        call("/usr/local/bin/composite -geometry +826+0 "+right_files[i]+" "+combined+" "+combined,shell=True)
-        call("/usr/local/bin/composite -geometry +0+0 "+left_files[i]+" "+combined+" "+combined,shell=True)
-        call("/usr/local/bin/composite -geometry +735+20 dateblind.png "+combined+" "+combined,shell=True)
+        meanie3D.app.external.execute_command("composite","-geometry +826+0 "+right_files[i]+" "+combined+" "+combined)
+        meanie3D.app.external.execute_command("composite","-geometry +0+0 "+left_files[i]+" "+combined+" "+combined)
+        meanie3D.app.external.execute_command("composite","-geometry +735+20 dateblind.png "+combined+" "+combined)
 
     # delete the dateblind
     call("rm dateblind.png",shell=True)
@@ -337,7 +301,7 @@ def create_dual_panel(basename_left,basename_right,basename_combined):
 # @param file
 # @param label variable name
 # -------------------------------------------------------------------
-@PendingDeprecationWarning("This code is specific to project OASE and will be deprecated")
+@PendingDeprecationWarning
 def add_labels(file,variable):
     OpenDatabase(file)
     AddPlot("Label",variable)
