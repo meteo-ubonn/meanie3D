@@ -36,6 +36,7 @@
     },
     "postprocessing":{
         "debugVisitScript" : true,
+        "runVisitHeadless" : true,
         "tracks":{
             "meanie3D-trackstats":{
                 "dictionary":true,
@@ -67,8 +68,8 @@
                     "axes2D.visible":1,
                     "axes2D.autoSetScaling":0,
                     "axes2D.xAxis.title.visible":0,
-                    "axes2D.xAxis.title.userTitle ":1,
-                    "axes2D.xAxis.title.userUnits ":1,
+                    "axes2D.xAxis.title.userTitle":1,
+                    "axes2D.xAxis.title.userUnits":1,
                     "axes2D.xAxis.title.title":"x",
                     "axes2D.xAxis.title.units":"km",
                     "axes2D.yAxis.title.visible":0,
@@ -110,15 +111,17 @@
                 },
                 "track":{
                     "variable":"track_step",
-                    "pointSizePixels":5,
-                    "minFlag":1,
-                    "maxFlag":1,
-                    "min":0,
-                    "max":50,
-                    "legendFlag":1,
-                    "colorTableName":"hot_desaturated",
-                    "invertColorTable":0,
-                    "opacity":1
+                    "PseudocolorAttributes" : {
+                        "pointSizePixels": 5,
+                        "minFlag": 1,
+                        "maxFlag": 1,
+                        "min": 0,
+                        "max": 50,
+                        "legendFlag": 1,
+                        "colorTableName": "hot_desaturated",
+                        "invertColorTable": 0,
+                        "opacity": 1
+                    }
                 }
             }
         },
@@ -140,8 +143,8 @@
                     "axes2D.visible":1,
                     "axes2D.autoSetScaling":0,
                     "axes2D.xAxis.title.visible":0,
-                    "axes2D.xAxis.title.userTitle ":1,
-                    "axes2D.xAxis.title.userUnits ":1,
+                    "axes2D.xAxis.title.userTitle":1,
+                    "axes2D.xAxis.title.userUnits":1,
                     "axes2D.xAxis.title.title":"x",
                     "axes2D.xAxis.title.units":"km",
                     "axes2D.yAxis.title.visible":0,

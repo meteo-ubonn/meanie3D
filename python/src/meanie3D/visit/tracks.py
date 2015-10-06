@@ -9,164 +9,61 @@ __author__ = "juergen.simon@uni-bonn.de"
 # @author Juergen Simon (juergen.simon@uni-bonn.de)
 # ------------------------------------------------------------------------------
 
-import meanie3D.app.utils
+# System packages
+import os
+import pprint
 
-##
-# Sets the view parameters on a 2D or 3D view. The conf dictionary
-# may contain all keys that are used on an object  returned by
-# visit's GetView2D() or GetView3D() call.
-#
-# \param conf
-# \param dimensionality (2 or 3)
-#
-def setView(conf,dimensions):
-    if (dimensions == 2):
-        v = GetView2D();
-        v.windowCoords = tuple(conf['windowCoords'])
-        v.viewportCoords = tuple(conf['viewportCoords'])
-        SetView2D(v)
-    else:
-        v = GetView3D();
-        v.viewNormal = tuple(conf["viewNormal"])
-        v.focus = tuple(conf["focus"])
-        v.viewUp = tuple(conf["viewUp"])
-        v.viewAngle = conf["viewAngle"]
-        v.parallelScale = conf["parallelScale"]
-        v.nearPlane = conf["nearPlane"]
-        v.farPlane = conf["farPlane"]
-        v.imagePan = tuple(conf["imagePan"])
-        v.imageZoom = conf["imageZoom"]
-        v.perspective = conf["perspective"]
-        v.eyeAngle = conf["eyeAngle"]
-        v.centerOfRotationSet = conf["centerOfRotationSet"]
-        v.centerOfRotation = tuple(conf["centerOfRotation"])
-        v.axis3DScaleFlag = conf["axis3DScaleFlag"]
-        v.axis3DScales = tuple(conf["axis3DScales"])
-        v.shear = tuple(conf["shear"])
-        SetView3D(v)
-##
-# Plots mapdata according to the configuration given. The configuration
-# has the follwing format (in json):
-#
-# "map" : {
-#   "mapDataFile" : "$MEANIE3D_HOME/oase-mapdata/oase-mapdata.nc",
-#   "variables" : ["as_zonal/national_boundaries_2D","as_zonal/national_rivers_2D"],
-#   "min" : [0,0],
-#   "max" : [1,1],
-#   "colorTableName" : ["Greys","hot"],
-#   "invertColorTable" : [0,1],
-#   "opacities" : [1,1]
-# }
-#
-# Note that $ variables will be replaced with the value found in the
-# environment.
-#
-def plotMapdata(conf):
-    if (conf['mapDataFile']):
-        # Expand dollar variables
-        mapFile = os.path.expandvars(conf['mapDataFile'])
-        # Check if data file exists
-        if not os.path.exists(mapFile):
-            print "ERROR:could not find map file at " + mapFile
-            return
+# Visit package
+from visit import *
 
-        # open the file and add the plot
-        OpenDatabase(mapFile)
+# Own packages
+from .utils import *
+from meanie3D.app.utils import getValueForKeyPath
+from meanie3D.app.utils import getSafe
 
-        # Iterate over variables
-        for i in range(0,len(conf['variables'])):
-            variable = conf['variables'][i]
-            AddPlot("Pseudocolor", variable)
-            p = PseudocolorAttributes()
-            p.lightingFlag = 0
-            p.legendFlag = 0;
-            p.colorTableName = conf['colorTableName'][i]
-            p.invertColorTable = conf['invertColorTable'][i];
-            p.opacity = conf['opacity'][i]
-            p.minFlag,p.maxFlag = 1,1
-            p.min,p.max = conf['min'][i], conf['max'][i]
-            SetPlotOptions(p)
-
-        DrawPlots()
 
 ##
 # Plots a list of tracks from .vtk files produced by
 # meanie3D-trackstats --write-center-tracks-as-vtk.
-# \param conf configuration dictionary containing the following keys
 #
-# 'cluster_directory' : directory with the cluster results
-# 'meanie3d_home' : home directory of meanie3D (for the mapstuff file and modules)
-#
-#  "visit" : {
-#       "dimensions" : 2,
-#       "view" : {
-#           ...
-#       },
-#       "showBackgroundGradient" : false,
-#       "map" : {
-#           ...
-#       },
-#       "tracks" : {
-#           ...
-#       }
-#  }
+# \param:conf Configuration dictionary
 #
 def plotTracks(conf):
 
-    visitConf = meanie3D.app.utils.getValueForKeyPath(conf,'tracks.visit')
+    visitConf = getValueForKeyPath(conf,'postprocessing.tracks.visit')
     if not visitConf:
         print "No configuration for visuals. Nothing to do."
         return 0
 
     # Silent
-    SuppressMessages(2)
-    SuppressQueryOutputOn()
+    # SuppressMessages(2)
+    # SuppressQueryOutputOn()
 
     # Check the configuration
-    if (not visitConf['dimensions']):
+    dimensions = getValueForKeyPath(conf,'data.dimensions')
+
+    if (not dimensions):
         print "ERROR:configuration must contain 'dimensions'"
         return -1
-    if (not visitConf['dimensions'] in [2,3]):
-        print "ERROR:'dimensions' can only be 2 or 3."
+    if (not len(dimensions) in [2,3]):
+        print "ERROR:Can only process 2D or 3D"
         return -1
 
-    # Set annotation attributes.
-    # TODO: find a sensible method of exposing this to config
-    a = GetAnnotationAttributes()
-    if (visitConf['dimensions'] == 2):
-        # 2D
-        a.axes2D.visible=1
-        a.axes2D.autoSetScaling=0
-        a.axes2D.xAxis.title.visible=0
-        a.axes2D.yAxis.title.visible=0
-    else:
-        # 3D
-        a.axes3D.visible=1
-        a.axes3D.autoSetScaling=0
-        a.axes3D.xAxis.title.visible=0
-        a.axes3D.yAxis.title.visible=0
-        a.axes3D.zAxis.title.visible=0
+    # Set up background gradient, axis labels etc.
+    setAnnotations(conf,'postprocessing.tracks.visit.annotationAttributes')
 
-    a.legendInfoFlag=1
-    a.databaseInfoFlag=0
-    a.userInfoFlag=0
-    a.timeInfoFlag=0
-    SetAnnotationAttributes(a)
+    # Set the view straight
+    setView(conf,'postprocessing.tracks.visit.view')
 
-    # Add gray/black background gradient
-    #if (visitConf['showBackgroundGradient'] == True):
-        # TODO: show background gradient
-        # visitUtils.add_background_gradient();
+    # Plot the map data
+    plotMapdata(conf,'postprocessing.tracks.visit.map')
 
-    # Set view to nationwide composite
-    if (visitConf['view']):
-        setView(visitConf['view'],visitConf['dimensions'])
+    # Plot the tracks
+    trackPlotConf = getValueForKeyPath(conf,'postprocessing.tracks.visit.track')
+    if trackPlotConf:
 
-    if (visitConf['map']):
-        plotMapdata(visitConf['map'])
-
-    if (visitConf['track']):
-        trackConf = visitConf['track']
+        # Save value of legend flag
+        legendFlag = getValueForKeyPath(trackPlotConf,'PseudocolorAttributes.legendFlag')
 
         # Plot the Tracks
         # track_pattern = conf['tracks_dir'] + "/*-track_*.vtk"
@@ -180,32 +77,24 @@ def plotTracks(conf):
         for fname in list:
 
             # add plot
-            OpenDatabase(conf['tracks_dir'] + "/" + fname);
-            AddPlot("Pseudocolor",trackConf['variable'])
+            trackFile = conf['tracks_dir'] + "/" + fname
 
-            # Configured attributes
-            cp=PseudocolorAttributes();
-            cp.pointSizePixels = trackConf['pointSizePixels']
-            cp.minFlag,cp.maxFlag = trackConf['minFlag'],trackConf['maxFlag']
-            cp.min,cp.max = trackConf['min'],trackConf['max']
-            cp.opacity = trackConf['opacity']
-            cp.colorTableName = trackConf['colorTableName']
-            cp.invertColorTable = trackConf['invertColorTable']
+            # plot the legend for the first one only
+            if (count == 1) and legendFlag:
+                meanie3D.app.utils.setValueForKeyPath(trackPlotConf,'PseudocolorAttributes.legendFlag',0)
 
-            # plot the legend for the first one
-            if count==0:
-                cp.legendFlag=trackConf['legendFlag']
-            else:
-                cp.legendFlag=0
-            SetPlotOptions(cp)
-            count = count+1
+            # Plot the actual track data
+            add_pseudocolor(trackFile,trackPlotConf)
+
+            count = count + 1
 
             # in case the script is being debugged, exit the script
             # after 10 tracks. This could be configured
-            if conf['tracks']['debugVisitScript'] and count > 10:
-                quit()
+            # if getValueForKeyPath(conf,'postprocessing.debugVisitScript') and count > 10
 
-        DrawPlots()
-        utils.save_window("tracks",0)
+        # Restore flag value
+        meanie3D.app.utils.setValueForKeyPath(trackPlotConf,'PseudocolorAttributes.legendFlag', legendFlag)
 
-    quit()
+    DrawPlots()
+    save_window("tracks",0)
+    return

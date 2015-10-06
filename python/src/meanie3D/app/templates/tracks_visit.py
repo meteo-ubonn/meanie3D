@@ -32,3 +32,4 @@ configuration["tracks_dir"] = _TRACKS_DIR
 
 # run it
 meanie3D.visit.tracks.plotTracks(configuration)
+quit()

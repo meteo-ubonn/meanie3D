@@ -118,23 +118,20 @@ def find_ext_cmds(command_list, recurse=False):
 def execute_command(command, parameters, with_stdout=False):
     # Make sure we searched for the command first
     if not COMMAND_MAP.has_key(command):
-        message = "Requested command: %s was not found in the map. " \
-                  "All commands must be searched before they can be used" \
-                  % command
-        raise Exception(message)
+        raise Exception(
+            "Requested command: %s was not found in the map. All commands must be searched before they can be used")
 
     cmd = get_executable_command(COMMAND_MAP.get(command)) + ' ' + parameters
     # print("Going to execute, with_stdout: %s, cmd: %s" % (with_stdout, cmd))
 
-    p = Popen(cmd, shell=True, stdout=subprocess.PIPE)
     if with_stdout:
+        p = Popen(cmd, shell=True, stdout=subprocess.PIPE)
         out, err = p.communicate()
         return out
     else:
-        p.communicate() # We don't care about the output
-        # print("returncode: %s" % p.returncode)
+        p = Popen(cmd, shell=True)
+        p.communicate()
         return p.returncode
-
 
 ## Executes the given command and returns the command's output
 # \param command

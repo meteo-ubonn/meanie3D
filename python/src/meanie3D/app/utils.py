@@ -9,6 +9,7 @@ import json
 import os
 import os.path
 import shutil
+import sys
 
 ## Parses a JSON configuration file
 # \param filename
@@ -71,11 +72,17 @@ def create_ouput_directories(base_path):
 # \param:key
 # \param value or None
 #
-def safeGet(dict,key):
+def getSafe(dict,key):
     if key in dict and dict[key]:
         return dict[key]
     else:
         return None
+
+##
+# Courtesy of http://stackoverflow.com/questions/1549641/how-to-capitalize-the-first-letter-of-each-word-in-a-string-python
+#
+def capitalize(line):
+    return ' '.join(s[0].upper() + s[1:] for s in line.split(' '))
 
 ##
 # Sets the given object values along a keypath separated
@@ -99,14 +106,24 @@ def setValueForKeyPath(object,keypath,value):
         # as strings in configuration dictionary, but are int values
         # in visit objects. Try to set an enumerated value when hitting
         # this combination
-        value = None
         if type(value) is str and type(getattr(object,keypath)) is int:
+            print "Attempting to resolve constant"
             value = getattr(object,value)
 
         if type(object) is dict:
             object[keypath] = value
         else:
-            setattr(object,keypath,value)
+            try:
+                setattr(object,keypath,value)
+            except:
+                try:
+                    # try a setter
+                    setter = getattr(object,'Set'+capitalize(keypath))
+                    if setter:
+                        setter(value)
+                except:
+                    sys.stderr.write("Can't set value %s for key '%s' on object" % (str(value),keypath))
+                    raise
 
     return
 
@@ -121,7 +138,7 @@ def getValueForKeyPath(object,keypath):
     keys = keypath.split(".")
     if len(keys) > 1:
         if type(object) is dict:
-            nextObject = safeGet(object,keys[0])
+            nextObject = getSafe(object,keys[0])
         else:
             nextObject = getattr(object,keys[0])
         keys.pop(0)
@@ -134,7 +151,7 @@ def getValueForKeyPath(object,keypath):
         # this combination
         value = None
         if type(object) is dict:
-            value = safeGet(object,keypath)
+            value = getSafe(object,keypath)
         else:
             value = getattr(object,keypath)
         return value
@@ -143,12 +160,8 @@ def getValueForKeyPath(object,keypath):
 # Sets the values from the dictionary on the given object
 # \param:object
 # \param:dictionary
-# TODO: resolve key paths
 #
 def setValuesFromDictionary(object,dictionary):
     for key,value in dictionary.items():
-        if type(value) is list:
-            setValueForKeyPath(object,key,tuple(value))
-        else:
-            setValueForKeyPath(object,key,value)
+        setValueForKeyPath(object,key,value)
     return

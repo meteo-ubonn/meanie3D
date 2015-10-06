@@ -15,9 +15,11 @@ import string
 from os.path import basename
 from os.path import dirname
 from subprocess import call
+import sys
+from visit import *
 
 # Own modules
-from meanie3D.app.utils import *
+import meanie3D.app.utils
 import meanie3D.app.external
 # Visit modules
 
@@ -44,7 +46,7 @@ def add_pseudocolor(vtk_file,configuration):
     OpenDatabase(vtk_file)
     AddPlot("Pseudocolor", configuration['variable'])
     p = PseudocolorAttributes()
-    setValuesFromDictionary(p,configuration)
+    setValuesFromDictionary(p,configuration['PseudocolorAttributes'])
     SetPlotOptions(p)
     return
 
@@ -58,11 +60,11 @@ def save_window(basename,progressive):
     s = GetSaveWindowAttributes()
     s.outputToCurrentDirectory = 1
     s.outputDirectory = "."
-    s.fileName=basename
+    s.fileName = basename
     s.width = 1024
     s.height = 1024
     s.quality = 100
-    s.progressive=progressive
+    s.progressive = progressive
     SetSaveWindowAttributes(s)
     SaveWindow()
     return
@@ -133,26 +135,79 @@ def add_text_annotation(x,y,message):
     text.height = 0.02
     return
 
+# ------------------------------------------------------------------------------
+# Sets the view up with the given perspective object from the configuration.
+# \param configuration Depending on what you wish to use, you can use all keys
+# found in GetView2D() or GetView3D() respectively.
+#
+def setView(configuration,path):
+    viewConfig = meanie3D.app.utils.getValueForKeyPath(configuration,path)
+    if viewConfig:
+        if 'windowCoords' in viewConfig or 'viewportCoords' in viewConfig:
+            view = GetView2D()
+            setValuesFromDictionary(view,viewConfig)
+            SetView2D(view)
+        else:
+            view = GetView3D()
+            setValuesFromDictionary(view,viewConfig)
+            SetView3D(view)
+    return
 
+##
+# Plots mapdata according to the configuration given. Note that $ variables
+# will be replaced with the value found in the environment.
+# \param:configuration Configuration dictionary
+# \param:path Path to the map configuration
+def plotMapdata(configuration,path):
+    map = meanie3D.app.utils.getValueForKeyPath(configuration,path)
+    if map:
 
-# -------------------------------------------------------------------
-# Add background gradient from dark (middle)
-# to light gray (outside)
-# -------------------------------------------------------------------
-def add_background_gradient(configuration):
-    a = AnnotationAttributes()
-    if configuration['backgroundMode']:
-        backgroundMode = a.__dict__.get(configuration['backgroundMode'])
-        a.backgroundMode = backgroundMode
+        # Find the map data file
+        mapFile = os.path.expandvars(map['mapDataFile'])
+        # Check if data file exists
+        if not os.path.exists(mapFile):
+            print "ERROR:could not find map file at " + mapFile
+            return
 
-    if a.backgroundMode == a.Gradient:
-        if configuration['gradientBackgroundStyle']:
-            gradientBackgroundStyle = configuration['gradientBackgroundStyle']
-            a.gradientBackgroundStyle = gradientBackgroundStyle
+        # open the file and add the plot
+        OpenDatabase(mapFile)
 
-    setValuesFromDictionary(a,configuration)
+        # Iterate over variables
+        for i in range(0,len(map['variables'])):
+            variable = map['variables'][i]
+            AddPlot("Pseudocolor", variable)
+            p = PseudocolorAttributes()
+            p.lightingFlag = 0
+            p.legendFlag = 0;
+            p.colorTableName = map['colorTableName'][i]
+            p.invertColorTable = map['invertColorTable'][i];
+            p.opacity = map['opacity'][i]
+            p.minFlag,p.maxFlag = 1,1
+            p.min,p.max = map['min'][i], map['max'][i]
+            SetPlotOptions(p)
+
+        DrawPlots()
+    return
+
+##
+# Set annotation attributes from defaults and configuration.
+# \param:configuration
+#
+def setAnnotations(configuration,path):
+    # Get the configuration attributes
+    a = GetAnnotationAttributes()
+    # Set some defaults
+    a.legendInfoFlag=1
+    a.databaseInfoFlag=0
+    a.userInfoFlag=0
+    a.timeInfoFlag=0
+    # Overwrite with configuration if any
+    ca = meanie3D.app.utils.getValueForKeyPath(configuration,path)
+    if ca:
+        setValuesFromDictionary(a,ca)
     SetAnnotationAttributes(a)
     return
+
 
 # -------------------------------------------------------------------
 # Creates a movie from a .png image series.
@@ -325,20 +380,77 @@ def add_labels(file,variable):
     return
 
 
+# Visit's objects are a bit of an arse. Standard getattr does
+# not seem to work in a lot of times.
+def getVisitValue(object,key):
+    value = getattr(object,key)
+    if not value:
+        # This may require a Getter
+        #print "Attempting to resolve value for %s via getter" % key
+        getter = getattr(object,'Get'+meanie3D.app.utils.capitalize(key))
+        if getter:
+            value = getter()
+            #print "Success: object value for %s is %s" % (key,str(value))
+    return value
 
 
+##
+# Sets the given object values along a keypath separated
+# by periods. Example: axes2D.yAxis.title.units.
+# \param:object
+# \param:keypath
+# \param:value
+#
+def setValueForKeyPath(object,keypath,value):
+    keys = keypath.split(".")
+    if len(keys) > 1:
+        if type(object) is dict:
+            nextObject = object[keys[0]]
+        else:
+            nextObject = getattr(object,keys[0])
+        keys.pop(0)
+        remainingPath = ".".join(keys)
+        setValueForKeyPath(nextObject,remainingPath,value)
+    else:
 
+        objectValue = getVisitValue(object,keypath)
 
+        # The specific enumerated values in Visit are configured
+        # as strings in configuration dictionary, but are int values
+        # in visit objects. Try to set an enumerated value when hitting
+        # this combination
+        if type(value) != type(objectValue):
+            value = objectValue
 
+        if type(object) is dict:
+            object[keypath] = value
+        else:
+            try:
+                setattr(object,keypath,value)
+            except:
+                try:
+                    # try a setter
+                    #print "Attempting to set value via setter"
+                    setter = getattr(object,'Set'+meanie3D.app.utils.capitalize(keypath))
+                    if setter:
+                        setter(value)
+                except:
+                    sys.stderr.write("Can't set value %s for key '%s' on object" % (str(value),keypath))
+                    raise
 
+    return
 
-
-
-
-
-
-
-
-
+##
+# Sets the values from the dictionary on the given object
+# \param:object
+# \param:dictionary
+#
+def setValuesFromDictionary(object,dictionary):
+    for key,value in dictionary.items():
+        if type(value) is list:
+            setValueForKeyPath(object,key,tuple(value))
+        else:
+            setValueForKeyPath(object,key,value)
+    return
 
 # End of utils.py

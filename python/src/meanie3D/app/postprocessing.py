@@ -33,7 +33,8 @@ def check_configuration(configuration):
     # Complement vtk_dimensions to make our life a little easier down the road.
     vtkDimensions = utils.getValueForKeyPath(configuration,'data.vtkDimensions')
     if vtkDimensions:
-        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtkDimensions',vtkDimensions)
+        vtkDimString = ",".join(vtkDimensions)
+        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtkDimensions',vtkDimString)
 
     # Make sure that plotStats has gnuplot files to work with
     if utils.getValueForKeyPath(configuration,'postprocessing.tracks.plotStats') and not utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot'):
@@ -87,7 +88,7 @@ def run_trackstats(configuration,directory):
     if (conf['vtk_tracks'] == True):
         params.append("--write-center-tracks-as-vtk ")
     if (conf['vtkDimensions']):
-        params.append("--vtk-dimensions=%s" % conf['vtk_dimensions'])
+        params.append("--vtk-dimensions=%s" % conf['vtkDimensions'])
 
     params.append("-s netcdf")
 
@@ -203,8 +204,7 @@ def visualise_tracks(configuration,directory):
 
     # Compile command line params for visit
     params = "-s %s" % scriptFilename
-    debugVisitScript = configuration['postprocessing']['debugVisitScript']
-    runHeadless = bool(os.path.expandvars("$RUN_VISIT_HEADLESS")) and not debugVisitScript
+    runHeadless = utils.getValueForKeyPath(configuration,'postprocessing.runVisitHeadless')
     if runHeadless:
         params = "-cli -nowin %s" % params
 
@@ -276,7 +276,7 @@ def run(configuration):
 
     # In case scale parameters were given, the output dirs are scaleXYZ.
     # Otherwise it's 'clustering'. To be safe, iterate over both
-    directories = sorted(glob.glob("scale*"))
+    directories = sorted(glob.glob("scale*"),reverse=True)
     if (os.path.isdir("clustering")):
         directories.append("clustering")
 
@@ -299,7 +299,7 @@ def run(configuration):
             if utils.getValueForKeyPath(postConf, 'tracks.visualiseTracks'):
                 visualise_tracks(configuration, directory)
 
-        if utils.safeGet(postConf,'clusters'):
+        if utils.getSafe(postConf,'clusters'):
             visualise_clusters(configuration,directory)
 
         remove_junk(configuration,directory)

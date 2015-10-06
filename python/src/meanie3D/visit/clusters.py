@@ -140,22 +140,6 @@ def add_vectors(displacements_file,configuration):
     return
 
 # ------------------------------------------------------------------------------
-# Sets the view up with the given perspective object from the configuration.
-# \param configuration Depending on what you wish to use, you can use all keys
-# found in GetView2D() or GetView3D() respectively.
-#
-def setView(configuration):
-    if 'windowCoords' in configuration or 'viewportCoords' in configuration:
-        view = GetView2D()
-        setValuesFromDictionary(view,configuration)
-        SetView2D(view)
-    else:
-        view = GetView3D()
-        setValuesFromDictionary(view,configuration)
-        SetView3D(v)
-    return
-
-# ------------------------------------------------------------------------------
 # Sets default 3D view params for RADOLAN grid
 # @param "local" or "national"
 # @param stretching factor for z axis
