@@ -37,6 +37,59 @@
     "postprocessing":{
         "debugVisitScript" : true,
         "runVisitHeadless" : true,
+        "visit" : {
+            "colorTables" : [
+                {
+                    "name" : "clusters",
+                    "colors" : [
+                        {
+                            "red": 255, "green": 0, "blue" : 0, "alpha": 1
+                        },
+                        {
+                            "red": 255, "green": 255, "blue" : 0, "alpha": 1
+                        },
+                        {
+                            "red": 255, "green": 0, "blue" : 255, "alpha": 1
+                        },
+                        {
+                            "red": 0, "green": 255, "blue" : 0, "alpha": 1
+                        },
+                        {
+                            "red": 0, "green": 153, "blue" : 255, "alpha": 1
+                        }
+                    ],
+                    "positions" : [0.2, 0.4, 0.6, 0.8, 1.0]
+                },
+                {
+                    "name" : "topography",
+                    "colors" : [
+                        {
+                            "red": 255, "green": 0, "blue" : 100, "alpha": 1
+                        },
+                        {
+                            "red": 120, "green": 120, "blue" : 83, "alpha": 1
+                        },
+                        {
+                            "red": 49, "green": 22, "blue" : 0, "alpha": 1
+                        },
+                        {
+                            "red": 100, "green": 100, "blue" : 100, "alpha": 1
+                        },
+                        {
+                            "red": 255, "green": 255, "blue" : 255, "alpha": 1
+                        }
+                    ],
+                    "positions" : [0.0, 0.0375, 0.30, 0.50, 0.85]
+                }
+            ],
+            "saveWindowAttributes" : {
+                "outputToCurrentDirectory": 1,
+                "outputDirectory": ".",
+                "width": 1024,
+                "height": 1024,
+                "quality": 100
+            }
+        },
         "tracks":{
             "meanie3D-trackstats":{
                 "dictionary":true,
@@ -54,7 +107,7 @@
                 "vtk_tracks":true
             },
             "plotStats":true,
-            "scaleComparison":true,
+            "runScaleComparison":true,
             "visualiseTracks":true,
             "visit":{
                 "annotationAttributes":{
@@ -84,29 +137,31 @@
                 },
                 "map":{
                     "mapDataFile":"$MEANIE3D_HOME/oase-mapdata/oase-mapdata.nc",
-                    "variables":[
-                        "as_zonal/national_boundaries_2D",
-                        "as_zonal/national_rivers_2D"
-                    ],
-                    "min":[
-                        0,
-                        0
-                    ],
-                    "max":[
-                        1,
-                        1
-                    ],
-                    "colorTableName":[
-                        "Greys",
-                        "hot"
-                    ],
-                    "invertColorTable":[
-                        0,
-                        1
-                    ],
-                    "opacity":[
-                        1,
-                        1
+                    "plots":[
+                        {
+                            "variable" : "as_zonal/national_boundaries_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTablenName" : "Greys",
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        },
+                        {
+                            "variable" : "as_zonal/national_rivers_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTablenName" : "hot",
+                                "invertColorTable" : 1,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        }
                     ]
                 },
                 "track":{
@@ -127,10 +182,15 @@
         },
         "clusters":{
             "meanie3D-cfm2vtk":"-t cluster -v RX --vtk-dimensions x,y",
+            "visualiseClusters" : true,
             "showSourceBackground":true,
             "showDateTime":true,
-            "showBackgroundGradient":true,
-            "withDisplacementVectors":true,
+            "showDisplacementVectors":true,
+            "showBoundaries":false,
+            "removeImagesFolder":true,
+            "createSourceMovie":true,
+            "createClusterMovie":true,
+            "movieFormats" : ["gif","m4v"],
             "visit":{
                 "annotationAttributes":{
                     "gradientBackgroundStyle":"Radial",
@@ -153,32 +213,105 @@
                     "axes2D.yAxis.title.title":"y",
                     "axes2D.yAxis.title.units":"km"
                 },
-                "vectorAttributes":{
-                    "variable":"displacement",
-                    "useStride":1,
-                    "stride":1,
-                    "scale":1,
-                    "scaleByMagnitude":0,
-                    "autoScale":0,
-                    "useLegend":0
+                "views":[
+                  {
+                        "windowCoords":[ -523.962, 376.038, -4659.15, -3759.15 ],
+                    "viewportCoords":[ 0.2, 0.95, 0.15, 0.95 ]
+                  }
+                ],
+                "map":{
+                    "mapDataFile":"$MEANIE3D_HOME/oase-mapdata/oase-mapdata.nc",
+                    "plots":[
+                        {
+                            "variable" : "as_zonal/national_boundaries_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTablenName" : "Greys",
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        },
+                        {
+                            "variable" : "as_zonal/national_rivers_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTablenName" : "hot",
+                                "invertColorTable" : 1,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        }
+                    ]
                 },
-                "withBoundaries":false,
-                "boundaries":{
+                "source":{
+                    "plots":[
+                        {
+                            "variable" : "RX",
+                            "PseudocolorAttributes" : {
+                                "colorTablenName" : "Greys",
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 75,
+                                "opacity" : 0.5
+                            },
+                            "ThresholdAttributes": {
+                                "lowerBounds" : 20,
+                                "upperBounds" : 75
+                            }
+                        }
+                    ]
+                },
+                "cluster":{
                     "variable":"point_color",
-                    "opacity":1.0
+                    "PseudocolorAttributes" : {
+                        "pointSizePixels": 2,
+                        "minFlag": 1,
+                        "maxFlag": 1,
+                        "min": 0,
+                        "max": 5,
+                        "legendFlag": 0,
+                        "lightingFlag": 0,
+                        "colorTableName": "clusters",
+                        "invertColorTable": 0,
+                        "opacity": 1
+                    }
+                },
+                "displacementVectors":{
+                    "variable":"displacement",
+                    "VectorAttributes" : {
+                        "useStride": 1,
+                        "stride": 1,
+                        "scale": 1,
+                        "scaleByMagnitude": 0,
+                        "autoScale": 0,
+                        "useLegend": 0
+                    }
+                },
+                "boundary":{
+                    "variable":"point_color",
+                    "PseudocolorAttributes" : {
+                        "opacity": 1.0
+                    }
+                },
+                "label" : {
+                    "variable" : "geometrical_center",
+                    "LabelAttributes": {
+                        "legendFlag": 0,
+                        "restrictNumberOfLabels": 0,
+                        "specifyTextColor1": 0,
+                        "textColor1": [255, 0, 0, 0],
+                        "textHeight1": 0.02,
+                        "formatTemplate": "%g"
+                    }
                 }
-            },
-            "removeImagesFolder":true,
-            "createSourceMovie":true,
-            "createClusterMovie":true,
-            "movieFormats":[
-                "gif",
-                "m4v"
-            ],
-            "movieConvertParams":[
-                "",
-                ""
-            ]
+            }
         }
     }
 }

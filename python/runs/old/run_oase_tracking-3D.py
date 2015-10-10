@@ -8,7 +8,7 @@ RESUME            = "P_RESUME"
 try:
     import sys
     # Appending the module path is crucial
-    sys.path.append(MEANIE3D_HOME+"/visit/modules")
+    sys.path.append(MEANIE3D_HOME+"/visualisation/modules")
     import os
     import meanie3D
     from subprocess import call

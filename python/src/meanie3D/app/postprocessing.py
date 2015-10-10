@@ -5,19 +5,21 @@
 # Python script for running a whole set of netcdf files through the clustering and tracking process.
 # \author Juergen Simon (juergen.simon@uni-bonn.de)
 
+# System packages
 import glob
-import inspect
 import os
-import pkg_resources
 import sys
-import tempfile
+import visit
 
-import meanie3D
+# Own packages
+from . import __have_visit__
+from . import __visitPath__
+
 from meanie3D.app import utils
 from meanie3D.app import external
 
 # make sure external commands are available
-external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
+external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot'])
 
 # ----------------------------------------------------------------------------
 ## Checks the consistency of the given configuration and hotfixes
@@ -25,6 +27,16 @@ external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visi
 # \param configuration
 #
 def check_configuration(configuration):
+
+    # Check the configuration
+    dimensions = utils.getValueForKeyPath(configuration,'data.dimensions')
+    if (not dimensions):
+        print "ERROR:configuration must contain 'dimensions'"
+        return -1
+    if (not len(dimensions) in [2,3]):
+        print "ERROR:Can only process 2D or 3D"
+        return -1
+
     # Check that visualiseTracks has .vtk to work from
     if utils.getValueForKeyPath(configuration,'postprocessing.tracks.visualiseTracks') and not utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks'):
         print "WARNING: tracks.visualiseTracks = True but tracks.meanie3D-trackstats.vtk_tracks = False. Correcting."
@@ -184,42 +196,48 @@ def plot_trackstats(configuration,directory):
 # \param directory
 def visualise_tracks(configuration,directory):
     print "Visualising tracks for %s" % directory
+    if not __have_visit__:
+        return
 
-    # Find template
-    templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
-    replacements = {
-        'P_TRACKS_DIR' : os.path.abspath(directory),
-        'P_M3D_HOME' : meanie3D.__file__,
-        'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
-    }
-
-    scriptFilename = tempfile.mktemp() + ".py"
-    print "\tWriting python script for visit to: " + scriptFilename
-    with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
-        for line in infile:
-            for src, target in replacements.iteritems():
-                line = line.replace(src, target)
-            outfile.write(line)
-    print "\tDone."
-
-    # Compile command line params for visit
-    params = "-s %s" % scriptFilename
-    runHeadless = utils.getValueForKeyPath(configuration,'postprocessing.runVisitHeadless')
-    if runHeadless:
-        params = "-cli -nowin %s" % params
-
-    # change into directory
-    os.chdir(directory)
-    # Run visit
-    returnCode = -1
     try:
-        returnCode = external.execute_command("visit",params)
+        visit.Launch(vdir=__visitPath__)
     except:
-        print "ERROR:%s" % sys.exc_info()[0]
 
-    # Change back out
-    os.chdir('..')
-    return (returnCode == 0)
+    # # Find template
+    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
+    # replacements = {
+    #     'P_TRACKS_DIR' : os.path.abspath(directory),
+    #     'P_M3D_HOME' : meanie3D.__file__,
+    #     'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
+    # }
+    #
+    # scriptFilename = tempfile.mktemp() + ".py"
+    # print "\tWriting python script for visualisation to: " + scriptFilename
+    # with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
+    #     for line in infile:
+    #         for src, target in replacements.iteritems():
+    #             line = line.replace(src, target)
+    #         outfile.write(line)
+    # print "\tDone."
+    #
+    # # Compile command line params for visualisation
+    # params = "-s %s" % scriptFilename
+    # runHeadless = utils.getValueForKeyPath(configuration,'postprocessing.runVisitHeadless')
+    # if runHeadless:
+    #     params = "-cli -nowin %s" % params
+    #
+    # # change into directory
+    # os.chdir(directory)
+    # # Run visualisation
+    # returnCode = -1
+    # try:
+    #     returnCode = external.execute_command("visualisation",params)
+    # except:
+    #     print "ERROR:%s" % sys.exc_info()[0]
+    #
+    # # Change back out
+    # os.chdir('..')
+    # return (returnCode == 0)
 
 # ----------------------------------------------------------------------------
 ## Runs cross-scale analysis
@@ -272,7 +290,7 @@ def run(configuration):
     if not 'postprocessing' in configuration:
         return
 
-    postConf = configuration['postprocessing']
+
 
     # In case scale parameters were given, the output dirs are scaleXYZ.
     # Otherwise it's 'clustering'. To be safe, iterate over both
@@ -292,19 +310,19 @@ def run(configuration):
         if (run_trackstats(configuration, directory)):
 
             # run the stats plotting
-            if utils.getValueForKeyPath(postConf,'tracks.plotStats'):
+            if utils.getValueForKeyPath(configuration,'postprocessing.tracks.plotStats'):
                 plot_trackstats(configuration,directory);
 
             # run the track visualisations
-            if utils.getValueForKeyPath(postConf, 'tracks.visualiseTracks'):
+            if utils.getValueForKeyPath(configuration, 'postprocessing.tracks.visualiseTracks'):
                 visualise_tracks(configuration, directory)
 
-        if utils.getSafe(postConf,'clusters'):
+        if utils.getValueForKeyPath(configuration,'postprocessing.clusters.visualiseClusters'):
             visualise_clusters(configuration,directory)
 
         remove_junk(configuration,directory)
 
-    if (postConf['tracks'] and postConf['tracks']['scaleComparison']):
+    if (utils.getValueForKeyPath(configuration,'postprocessing.tracks.runScaleComparison')):
         run_comparison(configuration)
 
 # ----------------------------------------------------------------------------

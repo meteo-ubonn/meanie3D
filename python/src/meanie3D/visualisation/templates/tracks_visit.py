@@ -15,13 +15,16 @@ _M3D_HOME    = "P_M3D_HOME"
 _CONFIG_FILE = "P_CONFIGURATION_FILE"
 
 # Import modules
+import os
+import pdb
 import sys
+
 sys.path.append(os.path.dirname(_M3D_HOME)+"/..")
 import meanie3D.app.utils
-import meanie3D.visit.clusters
-import meanie3D.visit.pseudocolor
-import meanie3D.visit.tracks
-import meanie3D.visit.utils
+import meanie3D.visualisation.clusters
+import meanie3D.visualisation.pseudocolor
+import meanie3D.visualisation.tracks
+import meanie3D.visualisation.utils
 
 # Parse configuration data
 configuration = meanie3D.app.utils.load_configuration(_CONFIG_FILE)
@@ -31,5 +34,6 @@ configuration["meanie3d_home"] = _M3D_HOME
 configuration["tracks_dir"] = _TRACKS_DIR
 
 # run it
-meanie3D.visit.tracks.plotTracks(configuration)
+pdb.set_trace()
+meanie3D.visualisation.tracks.run(configuration)
 quit()

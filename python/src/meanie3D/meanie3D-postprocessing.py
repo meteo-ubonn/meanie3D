@@ -24,7 +24,7 @@ from meanie3D import external
 import meanie3D
 
 # make sure external commands are available
-external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
+external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visualisation'])
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -268,7 +268,7 @@ def visualise_tracks(configuration,directory):
     }
 
     scriptFilename = tempfile.mktemp() + ".py"
-    print "\tWriting python script for visit to: " + scriptFilename
+    print "\tWriting python script for visualisation to: " + scriptFilename
     with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
         for line in infile:
             for src, target in replacements.iteritems():
@@ -276,7 +276,7 @@ def visualise_tracks(configuration,directory):
             outfile.write(line)
     print "\tDone."
 
-    # Compile command line params for visit
+    # Compile command line params for visualisation
     params = "-s %s" % scriptFilename
     debugVisitScript = configuration['tracks']['debugVisitScript']
     runHeadless = bool(os.path.expandvars("$RUN_VISIT_HEADLESS")) and not debugVisitScript
@@ -285,8 +285,8 @@ def visualise_tracks(configuration,directory):
 
     # change into directory
     os.chdir(directory)
-    # Run visit
-    external.execute_command("visit",params)
+    # Run visualisation
+    external.execute_command("visualisation",params)
     # Change back out
     os.chdir('..')
 

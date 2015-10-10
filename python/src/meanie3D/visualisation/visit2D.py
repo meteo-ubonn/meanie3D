@@ -29,7 +29,7 @@ TOPO_COLORMAP_INVERT = 0
 
 # ------------------------------------------------------------------------------
 # Adds clusters with names "*_infix_*.vtk" to the
-# current visit window.
+# current visualisation window.
 # @param basename first part of the search pattern
 #        used to find the clusters
 # @param infix (e.g. "_untracked_clusters_"
@@ -80,7 +80,7 @@ def add_clusters(basename,infix,col_tables,opacity):
 
 # ------------------------------------------------------------------------------
 # Adds clusters with names "*_infix_*.vtk" to the
-# current visit window.
+# current visualisation window.
 # @param basename first part of the search pattern
 #        used to find the clusters
 # @param infix (e.g. "_untracked_clusters_"
