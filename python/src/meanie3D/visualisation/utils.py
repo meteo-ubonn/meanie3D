@@ -78,6 +78,9 @@ def runGlobalVisitConf(configuration):
 #   }
 #
 def addPseudolorPlot(databaseFile,configuration):
+
+    print(configuration)
+
     variable = getValueForKeyPath(configuration,'variable')
     attributes = getValueForKeyPath(configuration,'PseudocolorAttributes')
     if variable and attributes:
@@ -98,7 +101,7 @@ def addPseudolorPlot(databaseFile,configuration):
         threshold = getValueForKeyPath(configuration,"ThresholdAttributes")
         if threshold:
             visit.AddOperator("Threshold")
-            t = visit.ThresholdAttributes();
+            t = visit.ThresholdAttributes()
             updateVisitObjectFromDictionary(t,threshold)
             visit.SetOperatorOptions(t)
     return
@@ -174,8 +177,7 @@ def addTextAnnotation(x,y,message):
 # \param configuration Depending on what you wish to use, you can use all keys
 # found in GetView2D() or GetView3D() respectively.
 #
-def setView(configuration,path):
-    viewConfig = meanie3D.app.utils.getValueForKeyPath(configuration,path)
+def setViewFromDict(viewConfig):
     if viewConfig:
         if 'windowCoords' in viewConfig or 'viewportCoords' in viewConfig:
             view = visit.GetView2D()
@@ -186,6 +188,16 @@ def setView(configuration,path):
             updateVisitObjectFromDictionary(view,viewConfig)
             visit.SetView3D(view)
     return
+
+
+##
+# Sets the view up with the given perspective object from the configuration.
+# \param configuration Depending on what you wish to use, you can use all keys
+# found in GetView2D() or GetView3D() respectively.
+#
+def setView(configuration,path):
+    viewConfig = meanie3D.app.utils.getValueForKeyPath(configuration,path)
+    setViewFromDict(viewConfig)
 
 ##
 # Plots mapdata according to the configuration given. Note that $ variables
@@ -225,6 +237,7 @@ def createColorTables(configuration,path):
             colors = colorTable['colors']
             positions = colorTable['positions']
             ccpl = visit.ColorControlPointList()
+            ccpl.categoryName = "meanie3D"
             for i in range(0,len(positions)):
                 controlPoint = visit.ColorControlPoint()
                 controlPoint.colors = tuple(colors[i])
@@ -307,7 +320,7 @@ def saveImagesForViews(views,basename):
     if views:
         for i in range(0,len(views)):
             view = views[i]
-            setView(view)
+            setViewFromDict(view)
             if len(views) > 1:
                 filename = "p%d_%s" % (i,basename)
             else:
@@ -545,8 +558,8 @@ def updateVisitObjectFromDictionary(object,dictionary):
 # to the oase 3D composite format and adds it to
 # the currenty image
 # -------------------------------------------------------------------
-@PendingDeprecationWarning
-def add_datetime(conf,filename):
+# @PendingDeprecationWarning
+def add_datetime(filename):
     # Only use the leaf node
     fn = basename(filename);
 
@@ -601,7 +614,7 @@ def add_datetime(conf,filename):
 # \param:basename of the right image series
 # \param:basename of the combined image series
 # -------------------------------------------------------------------
-@PendingDeprecationWarning
+# @PendingDeprecationWarning
 def create_dual_panel(basename_left,basename_right,basename_combined):
     left_files=sorted(glob.glob(basename_left+"*.png"))
     right_files=sorted(glob.glob(basename_right+"*.png"))

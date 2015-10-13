@@ -42,42 +42,22 @@
                 {
                     "name" : "clusters",
                     "colors" : [
-                        {
-                            "red": 255, "green": 0, "blue" : 0, "alpha": 1
-                        },
-                        {
-                            "red": 255, "green": 255, "blue" : 0, "alpha": 1
-                        },
-                        {
-                            "red": 255, "green": 0, "blue" : 255, "alpha": 1
-                        },
-                        {
-                            "red": 0, "green": 255, "blue" : 0, "alpha": 1
-                        },
-                        {
-                            "red": 0, "green": 153, "blue" : 255, "alpha": 1
-                        }
+                        [255,0,0,1],
+                        [255,255,0,1],
+                        [255,0,255,1],
+                        [0,255,0,1],
+                        [0,153,255,1]
                     ],
                     "positions" : [0.2, 0.4, 0.6, 0.8, 1.0]
                 },
                 {
                     "name" : "topography",
                     "colors" : [
-                        {
-                            "red": 255, "green": 0, "blue" : 100, "alpha": 1
-                        },
-                        {
-                            "red": 120, "green": 120, "blue" : 83, "alpha": 1
-                        },
-                        {
-                            "red": 49, "green": 22, "blue" : 0, "alpha": 1
-                        },
-                        {
-                            "red": 100, "green": 100, "blue" : 100, "alpha": 1
-                        },
-                        {
-                            "red": 255, "green": 255, "blue" : 255, "alpha": 1
-                        }
+                        [255,0,100,1],
+                        [120,120,83,1],
+                        [49,22,0,1],
+                        [100,100,100,1],
+                        [255,255,255,1]
                     ],
                     "positions" : [0.0, 0.0375, 0.30, 0.50, 0.85]
                 }
@@ -228,6 +208,7 @@
                             "variable" : "as_zonal/national_boundaries_2D",
                             "PseudocolorAttributes" : {
                                 "colorTableName" : "Greys",
+                                "legendFlag": 0,
                                 "invertColorTable" : 0,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,
@@ -240,6 +221,7 @@
                             "variable" : "as_zonal/national_rivers_2D",
                             "PseudocolorAttributes" : {
                                 "colorTableName" : "hot",
+                                "legendFlag": 0,
                                 "invertColorTable" : 1,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,
@@ -255,17 +237,18 @@
                         {
                             "variable" : "RX",
                             "PseudocolorAttributes" : {
-                                "colorTableName" : "Greys",
+                                "colorTableName" : "hot_desaturated",
+                                "legendFlag": 1,
                                 "invertColorTable" : 0,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,
-                                "min" : 0,
-                                "max" : 75,
-                                "opacity" : 0.5
+                                "min" : 0.0,
+                                "max" : 75.0,
+                                "opacity" : 1
                             },
                             "ThresholdAttributes": {
-                                "lowerBounds" : 20,
-                                "upperBounds" : 75
+                                "lowerBounds" : [20.0],
+                                "upperBounds" : [75.0]
                             }
                         }
                     ]
@@ -273,12 +256,12 @@
                 "cluster":{
                     "variable":"point_color",
                     "PseudocolorAttributes" : {
+                        "legendFlag": 0,
                         "pointSizePixels": 2,
                         "minFlag": 1,
                         "maxFlag": 1,
                         "min": 0,
                         "max": 5,
-                        "legendFlag": 0,
                         "lightingFlag": 0,
                         "colorTableName": "clusters",
                         "invertColorTable": 0,
@@ -288,6 +271,7 @@
                 "displacementVectors":{
                     "variable":"displacement",
                     "VectorAttributes" : {
+                        "legendFlag": 0,
                         "useStride": 1,
                         "stride": 1,
                         "scale": 1,

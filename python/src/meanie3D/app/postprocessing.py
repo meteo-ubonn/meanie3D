@@ -192,33 +192,26 @@ def plot_trackstats(configuration,directory):
     return (return_code == 0)
 
 # ----------------------------------------------------------------------------
-## Creates a python script for Visit and runs Visit with the script.
-# Visualises the tracks found.
+## Runs cross-scale analysis
 # \param configuration
 # \param directory
-def visualise_tracks(configuration,directory):
-    print "Visualising tracks for %s" % directory
-    if not __have_visit__:
-        return
+def run_comparison(configuration):
+    print "Running cross-scale comparison"
+    return
 
-    # try:
-    #     visit.Launch(vdir=__visitPath__)
-    # except:
-
-    # Find template
-    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
-    # home = meanie3D.__file__
-    home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
-    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","visualisation","templates","tracks_visit.py"))
-    replacements = {
-        'P_TRACKS_DIR' : os.path.abspath(directory),
-        'P_M3D_HOME' : home,
-        'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
-    }
-
+##
+# Compiles the gievn template into an executable python script and runs
+# it through visit.
+#
+# \param:templatePath
+# \param:configuration
+# \param:replacements
+# \param:directory
+# \returns:external command return code
+#
+def compileAndRunTemplate(templatePath,configuration,replacements,directory):
     scriptFilename = tempfile.mktemp() + ".py"
     # scriptFilename = os.path.abspath("generated.py")
-
     #print "\tWriting python script for visualisation to: " + scriptFilename
     with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
         for line in infile:
@@ -238,6 +231,7 @@ def visualise_tracks(configuration,directory):
     # Run visualisation
     returnCode = -1
     try:
+        print "Executing visit: " + params
         returnCode = external.execute_command('visit',params,silent=True)
     except:
         print "ERROR:%s" % sys.exc_info()[0]
@@ -246,13 +240,33 @@ def visualise_tracks(configuration,directory):
     os.chdir('..')
     return (returnCode == 0)
 
-# ----------------------------------------------------------------------------
-## Runs cross-scale analysis
+##
+# Visualises the tracks found.
 # \param configuration
 # \param directory
-def run_comparison(configuration):
-    print "Running cross-scale comparison"
-    return
+def visualise_tracks(configuration,directory):
+    print "Visualising tracks for %s" % directory
+    if not __have_visit__:
+        return
+
+    # try:
+    #     visit.Launch(vdir=__visitPath__)
+    # except:
+
+    # Find template
+    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
+    # home = meanie3D.__file__
+    home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
+    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","visualisation","templates","tracks_visit.py"))
+    replacements = {
+        'P_TRACKS_DIR' : os.path.abspath(directory),
+        'P_RESUME' : str(configuration['resume']),
+        'P_M3D_HOME' : home,
+        'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
+    }
+
+    return compileAndRunTemplate(templatePath,configuration,replacements,directory)
+
 
 # ----------------------------------------------------------------------------
 ## Creates a python script for Visit and runs Visit with the script.
@@ -261,7 +275,24 @@ def run_comparison(configuration):
 # \param directory
 def visualise_clusters(configuration,directory):
     print "Visualising clusters for %s" % directory
-    return
+    if not __have_visit__:
+        return
+
+    # Find template
+    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
+    # home = meanie3D.__file__
+    home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
+    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","visualisation","templates","clusters_visit.py"))
+    replacements = {
+        'P_CLUSTER_DIR' : os.path.abspath(directory + os.path.sep + "netcdf"),
+        'P_NETCDF_DIR' : configuration['source_directory'],
+        'P_RESUME' : str(configuration['resume']),
+        'P_M3D_HOME' : home,
+        'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
+    }
+
+    return compileAndRunTemplate(templatePath,configuration,replacements,directory)
+
 
 # ----------------------------------------------------------------------------
 ## Removes any files that are not part of the results and were produced
@@ -280,7 +311,8 @@ def cleanup(configuration,directory):
         for filename in glob.glob('*.gp') :
             os.remove(filename)
 
-    os.remove("visitlog.py")
+    if (os._exists("visitlog.py")):
+        os.remove("visitlog.py")
 
     os.chdir("..")
     return

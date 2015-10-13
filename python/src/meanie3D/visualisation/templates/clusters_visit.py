@@ -10,29 +10,29 @@ __version__ = "1.5.4"
 # produced by meanie3D-trackstats --write-center-tracks-as-vtk
 
 # Parameters
-_TRACKS_DIR     = "P_TRACKS_DIR"
+_NETCDF_DIR     = "P_NETCDF_DIR"
+_CLUSTER_DIR    = "P_CLUSTER_DIR"
 _M3D_HOME       = "P_M3D_HOME"
-_CONFIG_FILE    = "P_CONFIGURATION_FILE"
 _RESUME         = "P_RESUME"
+_CONFIG_FILE    = "P_CONFIGURATION_FILE"
 
 # Import modules
-import os
-import pdb
 import sys
-
 sys.path.append(_M3D_HOME)
 import meanie3D.app.utils
-import meanie3D.visualisation.tracks
+import meanie3D.visualisation.clusters
 
 # Parse configuration data
 configuration = meanie3D.app.utils.load_configuration(_CONFIG_FILE)
 
 # Add parsed parameters
 configuration["meanie3d_home"] = _M3D_HOME
-configuration["tracks_dir"] = _TRACKS_DIR
+configuration["cluster_directory"] = _CLUSTER_DIR
+configuration["source_directory"] = _NETCDF_DIR
 configuration['resume'] = meanie3D.app.utils.strToBool(_RESUME)
+configuration['config_file'] = _CONFIG_FILE
 
 # run it
 # pdb.set_trace()
-meanie3D.visualisation.tracks.run(configuration)
+meanie3D.visualisation.clusters.run(configuration)
 quit()
