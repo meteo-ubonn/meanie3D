@@ -9,17 +9,19 @@
 import glob
 import os
 import sys
+import tempfile
 import visit
 
 # Own packages
 from . import __have_visit__
 from . import __visitPath__
 
+import meanie3D
 from meanie3D.app import utils
 from meanie3D.app import external
 
 # make sure external commands are available
-external.find_ext_cmds(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot'])
+external.locateCommands(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
 
 # ----------------------------------------------------------------------------
 ## Checks the consistency of the given configuration and hotfixes
@@ -107,7 +109,7 @@ def run_trackstats(configuration,directory):
     return_code = -1
     os.chdir(directory)
     try:
-        return_code = external.execute_command("meanie3D-trackstats"," ".join(params))
+        return_code = external.execute_command("meanie3D-trackstats"," ".join(params),silent=True)
     except:
         print "ERROR:%s" % sys.exc_info()[0]
         raise
@@ -199,45 +201,50 @@ def visualise_tracks(configuration,directory):
     if not __have_visit__:
         return
 
-    try:
-        visit.Launch(vdir=__visitPath__)
-    except:
-
-    # # Find template
-    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
-    # replacements = {
-    #     'P_TRACKS_DIR' : os.path.abspath(directory),
-    #     'P_M3D_HOME' : meanie3D.__file__,
-    #     'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
-    # }
-    #
-    # scriptFilename = tempfile.mktemp() + ".py"
-    # print "\tWriting python script for visualisation to: " + scriptFilename
-    # with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
-    #     for line in infile:
-    #         for src, target in replacements.iteritems():
-    #             line = line.replace(src, target)
-    #         outfile.write(line)
-    # print "\tDone."
-    #
-    # # Compile command line params for visualisation
-    # params = "-s %s" % scriptFilename
-    # runHeadless = utils.getValueForKeyPath(configuration,'postprocessing.runVisitHeadless')
-    # if runHeadless:
-    #     params = "-cli -nowin %s" % params
-    #
-    # # change into directory
-    # os.chdir(directory)
-    # # Run visualisation
-    # returnCode = -1
     # try:
-    #     returnCode = external.execute_command("visualisation",params)
+    #     visit.Launch(vdir=__visitPath__)
     # except:
-    #     print "ERROR:%s" % sys.exc_info()[0]
-    #
-    # # Change back out
-    # os.chdir('..')
-    # return (returnCode == 0)
+
+    # Find template
+    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
+    # home = meanie3D.__file__
+    home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
+    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","visualisation","templates","tracks_visit.py"))
+    replacements = {
+        'P_TRACKS_DIR' : os.path.abspath(directory),
+        'P_M3D_HOME' : home,
+        'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
+    }
+
+    scriptFilename = tempfile.mktemp() + ".py"
+    # scriptFilename = os.path.abspath("generated.py")
+
+    #print "\tWriting python script for visualisation to: " + scriptFilename
+    with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
+        for line in infile:
+            for src, target in replacements.iteritems():
+                line = line.replace(src, target)
+            outfile.write(line)
+    #print "\tDone."
+
+    # Compile command line params for visualisation
+    params = "-s %s" % scriptFilename
+    runHeadless = utils.getValueForKeyPath(configuration,'postprocessing.runVisitHeadless')
+    if runHeadless:
+        params = "-cli -nowin %s" % params
+
+    # change into directory
+    os.chdir(directory)
+    # Run visualisation
+    returnCode = -1
+    try:
+        returnCode = external.execute_command('visit',params,silent=True)
+    except:
+        print "ERROR:%s" % sys.exc_info()[0]
+
+    # Change back out
+    os.chdir('..')
+    return (returnCode == 0)
 
 # ----------------------------------------------------------------------------
 ## Runs cross-scale analysis
@@ -261,7 +268,7 @@ def visualise_clusters(configuration,directory):
 # in any of the subsequent steps. C
 # \param configuration
 # \param directory
-def remove_junk(configuration,directory):
+def cleanup(configuration,directory):
     print "Cleaning temporary files for %s" % directory
     os.chdir(directory)
 
@@ -272,6 +279,8 @@ def remove_junk(configuration,directory):
     if utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot'):
         for filename in glob.glob('*.gp') :
             os.remove(filename)
+
+    os.remove("visitlog.py")
 
     os.chdir("..")
     return
@@ -289,8 +298,6 @@ def run(configuration):
 
     if not 'postprocessing' in configuration:
         return
-
-
 
     # In case scale parameters were given, the output dirs are scaleXYZ.
     # Otherwise it's 'clustering'. To be safe, iterate over both
@@ -320,7 +327,7 @@ def run(configuration):
         if utils.getValueForKeyPath(configuration,'postprocessing.clusters.visualiseClusters'):
             visualise_clusters(configuration,directory)
 
-        remove_junk(configuration,directory)
+        cleanup(configuration,directory)
 
     if (utils.getValueForKeyPath(configuration,'postprocessing.tracks.runScaleComparison')):
         run_comparison(configuration)

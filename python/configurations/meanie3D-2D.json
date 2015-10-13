@@ -141,7 +141,8 @@
                         {
                             "variable" : "as_zonal/national_boundaries_2D",
                             "PseudocolorAttributes" : {
-                                "colorTablenName" : "Greys",
+                                "colorTableName" : "xray",
+                                "legendFlag": 1,
                                 "invertColorTable" : 0,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,
@@ -153,7 +154,8 @@
                         {
                             "variable" : "as_zonal/national_rivers_2D",
                             "PseudocolorAttributes" : {
-                                "colorTablenName" : "hot",
+                                "colorTableName" : "hot",
+                                "legendFlag": 0,
                                 "invertColorTable" : 1,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,
@@ -225,7 +227,7 @@
                         {
                             "variable" : "as_zonal/national_boundaries_2D",
                             "PseudocolorAttributes" : {
-                                "colorTablenName" : "Greys",
+                                "colorTableName" : "Greys",
                                 "invertColorTable" : 0,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,
@@ -237,7 +239,7 @@
                         {
                             "variable" : "as_zonal/national_rivers_2D",
                             "PseudocolorAttributes" : {
-                                "colorTablenName" : "hot",
+                                "colorTableName" : "hot",
                                 "invertColorTable" : 1,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,
@@ -253,7 +255,7 @@
                         {
                             "variable" : "RX",
                             "PseudocolorAttributes" : {
-                                "colorTablenName" : "Greys",
+                                "colorTableName" : "Greys",
                                 "invertColorTable" : 0,
                                 "minFlag" : 1,
                                 "maxFlag" : 1,

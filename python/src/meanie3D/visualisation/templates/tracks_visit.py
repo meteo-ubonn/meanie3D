@@ -19,10 +19,9 @@ import os
 import pdb
 import sys
 
-sys.path.append(os.path.dirname(_M3D_HOME)+"/..")
+sys.path.append(_M3D_HOME)
 import meanie3D.app.utils
 import meanie3D.visualisation.clusters
-import meanie3D.visualisation.pseudocolor
 import meanie3D.visualisation.tracks
 import meanie3D.visualisation.utils
 
@@ -34,6 +33,6 @@ configuration["meanie3d_home"] = _M3D_HOME
 configuration["tracks_dir"] = _TRACKS_DIR
 
 # run it
-pdb.set_trace()
+# pdb.set_trace()
 meanie3D.visualisation.tracks.run(configuration)
 quit()

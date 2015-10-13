@@ -204,7 +204,7 @@ def find(path,filename,requiredComponent=None):
 def findVisitPaths():
     visitPath = None
     visitImportPath = None
-    cmdMap = external.find_ext_cmds(["visit"],True)
+    cmdMap = external.locateCommands(["visit"],True)
     if cmdMap['visit']:
         visitPath = os.path.abspath(os.path.join(cmdMap['visit'], os.pardir + os.sep + os.pardir))
         if visitPath:

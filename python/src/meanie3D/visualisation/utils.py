@@ -19,7 +19,7 @@ import meanie3D.app.utils
 import meanie3D.app.external
 
 # make sure external commands are available
-meanie3D.app.external.find_ext_cmds(['convert','composite'])
+meanie3D.app.external.locateCommands(['convert','composite'])
 
 # ---------------------------------------------------------
 #
@@ -86,7 +86,13 @@ def addPseudolorPlot(databaseFile,configuration):
         # Add the plot
         visit.AddPlot("Pseudocolor", variable)
         p = visit.PseudocolorAttributes()
+
+        # print attributes
+        # print "Setting colorTableName to %s" % attributes['colorTableName']
+
         updateVisitObjectFromDictionary(p,attributes)
+        # print p
+
         visit.SetPlotOptions(p)
         # Threshold?
         threshold = getValueForKeyPath(configuration,"ThresholdAttributes")
@@ -188,7 +194,7 @@ def setView(configuration,path):
 # \param:path Path to the map configuration
 #
 def addPseudocolorPlots(databaseFile,configuration,path):
-    plots = getValueForKeyPath(configuration,path())
+    plots = getValueForKeyPath(configuration,path)
     if plots:
         visit.OpenDatabase(databaseFile)
         for plot in plots:
@@ -213,7 +219,7 @@ def setAnnotations(configuration,path):
 # \param:paht to list of colortables
 #
 def createColorTables(configuration,path):
-    colorTables = getValueForKeyPath(configuration,path())
+    colorTables = getValueForKeyPath(configuration,path)
     if colorTables:
         for colorTable in colorTables:
             colors = colorTable['colors']
@@ -221,7 +227,7 @@ def createColorTables(configuration,path):
             ccpl = visit.ColorControlPointList()
             for i in range(0,len(positions)):
                 controlPoint = visit.ColorControlPoint()
-                controlPoint.colors = colors[i]
+                controlPoint.colors = tuple(colors[i])
                 controlPoint.position = positions[i]
                 ccpl.AddControlPoints(controlPoint)
             name = colorTable['name']
@@ -319,7 +325,9 @@ def saveImagesForViews(views,basename):
 def saveImage(basename,progressive):
     s = visit.GetSaveWindowAttributes()
     s.progressive = progressive
-    s.filename = basename + "_"
+    s.fileName = basename + "_"
+    s.outputToCurrentDirectory = 0
+    s.outputDirectory = os.getcwd()
     visit.SetSaveWindowAttributes(s)
     visit.SaveWindow()
     return
@@ -473,7 +481,10 @@ def setValueForKeyPath(object,keypath,value):
         # in visualisation objects. Try to set an enumerated value when hitting
         # this combination
         if type(value) != type(objectValue):
-            value = objectValue
+            if (type(value) == unicode and type(objectValue) == str):
+                value = str(value)
+            else:
+                value = objectValue
 
         if type(object) is dict:
             object[keypath] = value
@@ -483,7 +494,6 @@ def setValueForKeyPath(object,keypath,value):
             except:
                 try:
                     # try a setter
-                    #print "Attempting to set value via setter"
                     setter = getattr(object,'Set'+meanie3D.app.utils.capitalize(keypath))
                     if setter:
                         setter(value)
@@ -509,11 +519,19 @@ def getValueForKeyPath(object,keypath):
 # \param:dictionary
 #
 def updateVisitObjectFromDictionary(object,dictionary):
+    # print "Updating visit object from dictionary"
+    # print "Dictionary:"
+    # print dictionary
+    # print "Visit Object (before update):"
+    # print object
     for key,value in dictionary.items():
         if type(value) is list:
             setValueForKeyPath(object,key,tuple(value))
         else:
             setValueForKeyPath(object,key,value)
+
+    # print "Visit Object (after update):"
+    # print object
     return
 
 # ---------------------------------------------------------

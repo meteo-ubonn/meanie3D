@@ -4,6 +4,7 @@
 
 import glob
 import os
+import pprint
 import visit
 import utils
 
@@ -14,6 +15,9 @@ import utils
 # \param:conf Configuration dictionary
 #
 def run(conf):
+
+    pp = pprint.PrettyPrinter()
+    # pp.pprint(conf)
 
     # Make sure the global configuration is in place
     utils.runGlobalVisitConf(conf)
@@ -34,31 +38,38 @@ def run(conf):
 
     # Plot the tracks
     trackPlotConf = utils.getValueForKeyPath(conf,'postprocessing.tracks.visit.track')
+    # pp.pprint(trackPlotConf)
+
+    currentDirectory = os.path.abspath(os.getcwd())
+    os.chdir(conf['tracks_dir'])
+
     if trackPlotConf:
 
         # Save value of legend flag
-        legendFlag = utils.getValueForKeyPath(trackPlotConf,'PseudocolorAttributes.legendFlag')
+        legendFlag = trackPlotConf['PseudocolorAttributes']['legendFlag']
 
         # Plot the Tracks
         # track_pattern = conf['tracks_dir'] + "/*-track_*.vtk"
-        os.chdir(conf['tracks_dir'])
-        track_pattern = "*-track_*.vtk"
-        list = sorted(glob.glob(track_pattern))
 
+        track_pattern =  "*-track_*.vtk"
+        list = sorted(glob.glob(track_pattern))
         print "Looking with pattern " + track_pattern
         print "Found %d track files." % len(list)
         count = 0;
-        for fname in list:
+        for trackFile in list:
 
             # add plot
-            trackFile = conf['tracks_dir'] + os.path.sep + fname
+            # trackFile = conf['tracks_dir'] + os.path.sep + fname
 
             # plot the legend for the first one only
             if (count == 1) and legendFlag:
-                utils.setValueForKeyPath(trackPlotConf,'PseudocolorAttributes.legendFlag',0)
+                trackPlotConf['PseudocolorAttributes']['legendFlag'] = 0
+                # pp.pprint(trackPlotConf)
 
             # Plot the actual track data
-            utils.addPseudolorPlot(trackFile,trackPlotConf)
+            file = conf['tracks_dir'] + os.path.sep + trackFile
+            print "Adding plot for " + file
+            utils.addPseudolorPlot(file,trackPlotConf)
 
             count = count + 1
 
@@ -67,8 +78,15 @@ def run(conf):
             # if getValueForKeyPath(conf,'postprocessing.debugVisitScript') and count > 10
 
         # Restore flag value
-        utils.setValueForKeyPath(trackPlotConf,'PseudocolorAttributes.legendFlag', legendFlag)
+        trackPlotConf['PseudocolorAttributes']['legendFlag'] = legendFlag
+        # pp.pprint(trackPlotConf)
 
+    print "Drawing plots"
     visit.DrawPlots()
+
+    print "Saving image to %s" % os.getcwd()
     utils.saveImage("tracks",0)
+
+    os.chdir(currentDirectory)
+
     return
