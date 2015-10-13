@@ -4,7 +4,8 @@
 
 import glob
 import os
-from pprint import pprint
+#import pdb
+import pprint
 import subprocess
 import sys
 import time
@@ -12,8 +13,10 @@ import visit
 
 # Own packages
 import meanie3D.visualisation
-import meanie3D.app.external
 import utils
+
+from meanie3D.app import external
+external.locateCommands(['meanie3D-cfm2vtk'])
 
 # ------------------------------------------------------------------------------
 # Adds clusters with names "*_infix_*.vtk" to the current visualisation window.
@@ -37,9 +40,12 @@ def addClusters(infix,configuration):
         return
 
     # now the clusters
-    cluster_pattern = configuration['cluster_dir'] + os.path.sep + "*"+infix+"*.vt*"
+    cluster_pattern = "*"+infix+"*.vt*"
     print "Looking for cluster files at " + cluster_pattern
+
     cluster_list = sorted(glob.glob(cluster_pattern))
+    print "List of cluster files:"
+    print cluster_list
 
     for cluster_file in cluster_list:
         visit.OpenDatabase(cluster_file)
@@ -54,10 +60,14 @@ def addClusters(infix,configuration):
 # ------------------------------------------------------------------------------
 def run(conf):
 
+    #pp = pprint.PrettyPrinter()
+    #pp.pprint(conf)
+
     # Make sure the global configuration is in place
     utils.runGlobalVisitConf(conf)
+    #pdb.set_trace()
 
-    clusterConf = utils.getValueForKeyPath(conf,'postprocessing.cluster')
+    clusterConf = utils.getValueForKeyPath(conf,'postprocessing.clusters')
     if not clusterConf:
         print "No configuration for cluster postprocessing. Nothing to do."
         return 0
@@ -123,7 +133,6 @@ def run(conf):
                 print "Deleting partial visualization " + number_postfix
                 utils.delete_images(conf,"source",image_count)
 
-
         if skip_source == False:
 
             if utils.getValueForKeyPath(clusterConf,'createSourceMovie'):
@@ -139,11 +148,11 @@ def run(conf):
                 print "Plotting source data ..."
                 start_time = time.time()
 
-                utils.addPseudocolorPlots(netcdf_file,visitConf,'source')
+                utils.addPseudocolorPlots(netcdf_file,visitConf,'source.plots')
                 source_open = True
                 visit.DrawPlots()
 
-                utils.saveImagesForViews(views,"tracking")
+                utils.saveImagesForViews(views,"source")
 
                 visit.DeleteAllPlots()
                 visit.ClearWindow()
@@ -206,6 +215,9 @@ def run(conf):
                         utils.addVectorPlot(displacements_file,vectorConf)
 
                 visit.DrawPlots()
+
+                #pdb.set_trace()
+
                 utils.saveImagesForViews(views,"tracking")
 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
@@ -236,7 +248,7 @@ def run(conf):
     # Use imagemagick to use image sequences to make movies
 
     movieFormats = utils.getValueForKeyPath(clusterConf,'movieFormats')
-    if utils.getValueForKeyPath(clusterConf,'createSourceMovie',movieFormats):
+    if utils.getValueForKeyPath(clusterConf,'createSourceMovie'):
         utils.createMoviesForViews(views,"source", movieFormats)
 
     if utils.getValueForKeyPath(clusterConf,'createClusterMovie'):
@@ -245,7 +257,8 @@ def run(conf):
     # clean up
     print "Cleaning up ..."
     subprocess.call("mkdir images", shell=True)
-    subprocess.call("mv *.png images", shell=True)
+    subprocess.call("mv tracking_*.png images", shell=True)
+    subprocess.call("mv source_*.png images", shell=True)
     subprocess.call("mkdir movies", shell=True)
     subprocess.call("mv *.gif *.m4v movies", shell=True)
     subprocess.call("rm -f *.vt* visitlog.py", shell=True)

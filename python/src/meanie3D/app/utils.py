@@ -212,4 +212,22 @@ def findVisitPaths():
     return visitPath,visitImportPath
 
 
+##
+# Converts a string into a bool using the following sets:
+# True: ['true', '1', 't', 'y', 'yes']:
+# False: ['false', '0', 'f', 'n', 'no']:
+# \param:s
+# \returns:True if s is in true value set, False if s is None or in false value set.
+# \throws:ValueError s is neither None nor in either true or false value set.
+def strToBool(s):
+    if s:
+        test = s.lower()
+        if test in ['true', '1', 't', 'y', 'yes']:
+            return True
+        elif test in ['false', '0', 'f', 'n', 'no']:
+            return False
+        else:
+            raise ValueError
+    else:
+        return False
 
