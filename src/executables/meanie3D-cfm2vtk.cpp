@@ -170,7 +170,9 @@ void convert_clusters(const string &filename,
     ClusterList<FS_TYPE> *list = ClusterList<FS_TYPE>::read(filename, &cs);
 
     //::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(list, cs, list->source_file, true, false, true);
-    ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
+    // ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
+    
+    ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu_wholesale(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
     
     if (write_displacement_vectors) {
         vector< vector<FS_TYPE> > origins;

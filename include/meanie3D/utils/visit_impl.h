@@ -758,6 +758,224 @@ namespace m3D { namespace utils {
 
     template <typename T>
     void
+    VisitUtils<T>::write_clusters_vtu_wholesale(const ClusterList<T> *list,
+                                      const CoordinateSystem<T> *cs,
+                                      const string &base_name,
+                                      unsigned int max_colors,
+                                      bool use_ids,
+                                      bool include_boundary,
+                                      bool write_xml)
+    {
+        // escape dangerous characters from basename
+        string basename = boost::filesystem::path(base_name).stem().string();
+        string mesh_filename = basename + "_clusters_all" + (write_xml?".vtu":".vtk");
+        string poly_filename = basename + "_boundary_all" + (write_xml?".vtu":".vtk");
+
+        size_t num_points = 0;
+        size_t point_dim = 0;
+
+        cout << "Cluster list has " << list->clusters.size() << " clusters" << endl;
+        for ( size_t ci = 0; ci < list->clusters.size(); ci++ ) {
+            num_points += list->clusters[ci]->size();
+            if (point_dim == 0) {
+                point_dim = list->clusters[ci]->get_points()[0]->coordinate.size();
+            }
+        }
+        // Only process 2D/3D for now
+        assert(point_dim == 2 || point_dim == 3);
+
+        vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
+        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+
+        vtkSmartPointer<vtkDoubleArray> pointData = vtkSmartPointer<vtkDoubleArray>::New();
+        pointData->SetName("point_data");
+
+        vtkSmartPointer<vtkDoubleArray> cellData = vtkSmartPointer<vtkDoubleArray>::New();
+        cellData->SetName("cell_data");
+
+        vtkSmartPointer<vtkIntArray> pointColors = vtkSmartPointer<vtkIntArray>::New();
+        pointColors->SetName("point_color");
+        pointColors->SetLookupTable(cluster_lookup_table());
+
+        vtkSmartPointer<vtkIntArray> cellColors = vtkSmartPointer<vtkIntArray>::New();
+        cellColors->SetName("cell_color");
+        cellColors->SetLookupTable(cluster_lookup_table());
+
+        for ( size_t ci = 0; ci < list->clusters.size(); ci++ ) {
+
+            m3D::id_t id = use_ids ? list->clusters[ci]->id : ci;
+            int color = id % 6;
+            
+            typename Cluster<T>::ptr cluster = list->clusters[ci];
+
+            for (vtkIdType pi = 0; pi < cluster->size(); pi++) {
+                Point<T> *p = list->clusters[ci]->get_points()[pi];
+
+                double scalarValue = p->values[point_dim];
+                cellData->InsertNextValue(scalarValue);
+                cellColors->InsertNextValue(color);
+
+                T x, y, z;
+
+                x = y = z = 0.0;
+
+                VisitUtils<T>::get_vtk_coords(p->coordinate, x, y, z);
+
+                if (point_dim == 2) {
+                    T rx = cs->resolution()[VisitUtils<T>::index_of(0)] / 2.0;
+                    T ry = cs->resolution()[VisitUtils<T>::index_of(1)] / 2.0;
+
+                    vtkIdType p1 = points->InsertNextPoint(x - rx, y - ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p2 = points->InsertNextPoint(x + rx, y - ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p3 = points->InsertNextPoint(x + rx, y + ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p4 = points->InsertNextPoint(x - rx, y + ry, 0);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    // Create a quad on the four points
+                    vtkSmartPointer<vtkQuad> quad = vtkSmartPointer<vtkQuad>::New();
+                    quad->GetPointIds()->SetId(0, p1);
+                    quad->GetPointIds()->SetId(1, p2);
+                    quad->GetPointIds()->SetId(2, p3);
+                    quad->GetPointIds()->SetId(3, p4);
+
+                    cellArray->InsertNextCell(quad);
+                }
+                else {
+                    T rx = cs->resolution()[VisitUtils<T>::index_of(0)] / 2.0;
+                    T ry = cs->resolution()[VisitUtils<T>::index_of(1)] / 2.0;
+                    T rz = cs->resolution()[VisitUtils<T>::index_of(2)] / 2.0;
+
+                    vtkIdType p1 = points->InsertNextPoint(x - rx, y - ry, z - rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p2 = points->InsertNextPoint(x + rx, y - ry, z - rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p3 = points->InsertNextPoint(x + rx, y + ry, z - rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p4 = points->InsertNextPoint(x - rx, y + ry, z - rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p5 = points->InsertNextPoint(x - rx, y - ry, z + rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p6 = points->InsertNextPoint(x + rx, y - ry, z + rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p7 = points->InsertNextPoint(x + rx, y + ry, z + rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    vtkIdType p8 = points->InsertNextPoint(x - rx, y + ry, z + rz);
+                    pointData->InsertNextValue(scalarValue);
+                    pointColors->InsertNextValue(color);
+
+                    // Create a voxel on the eight points
+                    vtkSmartPointer<vtkHexahedron> voxel = vtkSmartPointer<vtkHexahedron>::New();
+                    voxel->GetPointIds()->SetId(0, p1);
+                    voxel->GetPointIds()->SetId(1, p2);
+                    voxel->GetPointIds()->SetId(2, p3);
+                    voxel->GetPointIds()->SetId(3, p4);
+
+                    voxel->GetPointIds()->SetId(4, p5);
+                    voxel->GetPointIds()->SetId(5, p6);
+                    voxel->GetPointIds()->SetId(6, p7);
+                    voxel->GetPointIds()->SetId(7, p8);
+
+                    cellArray->InsertNextCell(voxel);
+                }
+            }
+        }
+
+        // Create an unstructured grid and write it off
+        vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+
+        // Set point data
+        unstructuredGrid->SetPoints(points);
+
+        // Set cell data
+        if (point_dim==2) {
+            unstructuredGrid->SetCells(VTK_QUAD, cellArray);
+        } else {
+            unstructuredGrid->SetCells(VTK_HEXAHEDRON, cellArray);
+        }
+
+        unstructuredGrid->GetPointData()->AddArray(pointData);
+        unstructuredGrid->GetPointData()->AddArray(pointColors);
+        unstructuredGrid->GetCellData()->AddArray(cellData);
+        unstructuredGrid->GetCellData()->AddArray(cellColors);
+
+        // Extract the envelope
+        vtkSmartPointer<vtkAlgorithm> enveloper;
+        if (include_boundary) {
+            // Geometry filter
+            vtkSmartPointer<vtkGeometryFilter> geometry = vtkSmartPointer<vtkGeometryFilter>::New();
+            geometry->SetInputData(unstructuredGrid);
+
+            vtkSmartPointer<vtkCleanPolyData> cleaner = vtkSmartPointer<vtkCleanPolyData>::New();
+            cleaner->SetInputConnection(geometry->GetOutputPort());
+
+            // Delauny 2D/3D
+
+            if (point_dim==2)
+            {
+                vtkSmartPointer<vtkDelaunay2D> delauny = vtkSmartPointer<vtkDelaunay2D>::New();
+                delauny->SetInputConnection(cleaner->GetOutputPort());
+                enveloper = delauny;
+            }
+            else
+            {
+                vtkSmartPointer<vtkDelaunay3D> delauny = vtkSmartPointer<vtkDelaunay3D>::New();
+                delauny->SetInputConnection(cleaner->GetOutputPort());
+                enveloper = delauny;
+            }
+        }
+
+        // Write .vtu/.vtk file
+        if (write_xml) {
+            vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
+            writer->SetFileName(mesh_filename.c_str());
+            writer->SetInputData(unstructuredGrid);
+            writer->Write();
+            if (include_boundary)
+            {
+                writer->SetFileName(poly_filename.c_str());
+                writer->SetInputConnection(enveloper->GetOutputPort());
+                writer->Write();
+            }
+        } else {
+            vtkSmartPointer<vtkUnstructuredGridWriter> writer = vtkSmartPointer<vtkUnstructuredGridWriter>::New();
+            writer->SetFileName(mesh_filename.c_str());
+            writer->SetInputData(unstructuredGrid);
+            writer->Write();
+            if (include_boundary)
+            {
+                writer->SetFileName(poly_filename.c_str());
+                writer->SetInputConnection(enveloper->GetOutputPort());
+                writer->Write();
+            }
+        }
+    }
+
+    template <typename T>
+    void
     VisitUtils<T>::write_clusters_vtr(const ClusterList<T> *list,
                                       const CoordinateSystem<T> *cs,
                                       const string &base_name,

@@ -328,6 +328,17 @@ namespace m3D {
                            bool only_boundary = false,
                            bool write_xml = false);
 
+
+        static
+        void
+        write_clusters_vtu_wholesale(const ClusterList<T> *list,
+                                   const CoordinateSystem<T> *cs,
+                                   const string &base_name,
+                                   unsigned int max_colors=5,
+                                   bool use_ids = true,
+                                   bool only_boundary = false,
+                                   bool write_xml = false);
+
         /** Writes the cluster's points out as rectilinear grid
          * @param cluster list
          * @param coordinate system (required for resolution)

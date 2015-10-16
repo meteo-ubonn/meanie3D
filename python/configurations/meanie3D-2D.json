@@ -97,7 +97,7 @@
                     "userInfoFlag":0,
                     "timeInfoFlag":0,
                     "legendInfoFlag":1,
-                    "databaseInfoFlag":1,
+                    "databaseInfoFlag":0,
                     "axes2D.visible":1,
                     "axes2D.autoSetScaling":0,
                     "axes2D.xAxis.title.visible":0,
@@ -175,6 +175,7 @@
             "movieFormats" : ["gif","m4v"],
             "visit":{
                 "annotationAttributes":{
+                    "backgroundMode" : "Solid",
                     "gradientBackgroundStyle":"Radial",
                     "gradientColor1":[0, 0, 0, 255],
                     "gradientColor2":[192, 192, 192, 255],
@@ -197,7 +198,7 @@
                 },
                 "views":[
                   {
-                        "windowCoords":[ -523.962, 376.038, -4659.15, -3759.15 ],
+                    "windowCoords":[ -523.962, 376.038, -4659.15, -3759.15 ],
                     "viewportCoords":[ 0.2, 0.95, 0.15, 0.95 ]
                   }
                 ],
@@ -253,6 +254,28 @@
                         }
                     ]
                 },
+                "sourceBackground":{
+                    "plots":[
+                        {
+                            "variable" : "RX",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "Greys",
+                                "legendFlag": 1,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0.0,
+                                "max" : 75.0,
+                                "opacityType" : "Constant",
+                                "opacity" : 0.5
+                            },
+                            "ThresholdAttributes": {
+                                "lowerBounds" : [20.0],
+                                "upperBounds" : [75.0]
+                            }
+                        }
+                    ]
+                },
                 "cluster":{
                     "variable":"point_color",
                     "PseudocolorAttributes" : {
@@ -260,24 +283,28 @@
                         "pointSizePixels": 2,
                         "minFlag": 1,
                         "maxFlag": 1,
-                        "min": 0,
-                        "max": 5,
+                        "max": 5.0,
+                        "min": 0.0,
                         "lightingFlag": 0,
                         "colorTableName": "clusters",
                         "invertColorTable": 0,
-                        "opacity": 1
+                        "opacityType" : "Constant",
+                        "opacity": 0.5
                     }
                 },
                 "displacementVectors":{
                     "variable":"displacement",
                     "VectorAttributes" : {
-                        "legendFlag": 0,
+                        "useLegend": 0,
+                        "scaleByMagnitude": 1,
                         "useStride": 1,
                         "stride": 1,
-                        "scale": 1,
-                        "scaleByMagnitude": 0,
+                        "scale": 2.0,
                         "autoScale": 0,
-                        "useLegend": 0
+                        "headSize" : 0.5,
+                        "lineWidth" : 2,
+                        "colorByMag" : 0,
+                        "vectorColor" : [0,0,0,255]
                     }
                 },
                 "boundary":{
@@ -294,7 +321,9 @@
                         "specifyTextColor1": 0,
                         "textColor1": [255, 0, 0, 0],
                         "textHeight1": 0.02,
-                        "formatTemplate": "%g"
+                        "formatTemplate": "%g",
+                        "horizontalJustification": "Left",
+                        "verticalJustification": "Bottom"
                     }
                 }
             }

@@ -10,6 +10,7 @@ import os.path
 import string
 from os.path import basename
 from os.path import dirname
+import pdb
 from subprocess import call
 import sys
 import visit
@@ -78,9 +79,6 @@ def runGlobalVisitConf(configuration):
 #   }
 #
 def addPseudolorPlot(databaseFile,configuration):
-
-    print(configuration)
-
     variable = getValueForKeyPath(configuration,'variable')
     attributes = getValueForKeyPath(configuration,'PseudocolorAttributes')
     if variable and attributes:
@@ -89,13 +87,7 @@ def addPseudolorPlot(databaseFile,configuration):
         # Add the plot
         visit.AddPlot("Pseudocolor", variable)
         p = visit.PseudocolorAttributes()
-
-        # print attributes
-        # print "Setting colorTableName to %s" % attributes['colorTableName']
-
         updateVisitObjectFromDictionary(p,attributes)
-        # print p
-
         visit.SetPlotOptions(p)
         # Threshold?
         threshold = getValueForKeyPath(configuration,"ThresholdAttributes")
@@ -124,7 +116,7 @@ def addVectorPlot(databaseFile,configuration):
     if variable and attributes:
         visit.OpenDatabase(databaseFile)
         visit.AddPlot("Vector",variable)
-        p=visit.VectorAttributes();
+        p=visit.VectorAttributes()
         updateVisitObjectFromDictionary(p,attributes)
         visit.SetPlotOptions(p)
     return
@@ -144,12 +136,12 @@ def addVectorPlot(databaseFile,configuration):
 # -------------------------------------------------------------------
 def addLabelPlot(file,configuration):
     variable = getValueForKeyPath(configuration,'variable')
-    attributes = getValueForKeyPath(configuration,'VectorAttributes')
+    attributes = getValueForKeyPath(configuration,'LabelAttributes')
     if variable and attributes:
         visit.OpenDatabase(file)
         visit.AddPlot("Label",variable)
         a = visit.LabelAttributes()
-        updateVisitObjectFromDictionary(a,configuration)
+        updateVisitObjectFromDictionary(a,attributes)
         visit.SetActivePlots(visit.GetNumPlots()-1)
         visit.SetPlotOptions(a)
     return
@@ -439,7 +431,7 @@ def images_exist(views, basename, image_count):
 #
 def create_movie(basename,moviename):
     print "Creating movie '" +moviename+"' from files '" + basename+"*.png ..."
-    args = "-limit memory 4GB -delay 50 -quality 100 -dispose Background %s *.png %s" % (basename,moviename)
+    args = "-limit memory 4GB -delay 50 -quality 100 -dispose Background %s*.png %s" % (basename,moviename)
     meanie3D.app.external.execute_command('convert',args,False)
     print "done."
     return
@@ -459,13 +451,10 @@ def create_movie(basename,moviename):
 #
 def getVisitValue(object,key):
     value = getattr(object,key)
-    if not value:
-        # This may require a Getter
-        #print "Attempting to resolve value for %s via getter" % key
+    if value is None:
         getter = getattr(object,'Get'+meanie3D.app.utils.capitalize(key))
         if getter:
             value = getter()
-            #print "Success: object value for %s is %s" % (key,str(value))
     return value
 
 
@@ -495,9 +484,18 @@ def setValueForKeyPath(object,keypath,value):
         # this combination
         if type(value) != type(objectValue):
             if (type(value) == unicode and type(objectValue) == str):
+                # unicode -> str autoconversion
                 value = str(value)
+            elif (type(value) == int and type(objectValue) == float):
+                # int -> float autoconversion
+                value = float(value)
+            elif (type(value) == float and type(objectValue) == int):
+                # float -> int autoconversion
+                value = int(value)
             else:
-                value = objectValue
+                # Probably a visit enumeration constant. Resolve the value of the
+                # enumerated value and use that instead
+                value = getVisitValue(object,str(value))
 
         if type(object) is dict:
             object[keypath] = value
@@ -532,19 +530,11 @@ def getValueForKeyPath(object,keypath):
 # \param:dictionary
 #
 def updateVisitObjectFromDictionary(object,dictionary):
-    # print "Updating visit object from dictionary"
-    # print "Dictionary:"
-    # print dictionary
-    # print "Visit Object (before update):"
-    # print object
     for key,value in dictionary.items():
         if type(value) is list:
             setValueForKeyPath(object,key,tuple(value))
         else:
             setValueForKeyPath(object,key,value)
-
-    # print "Visit Object (after update):"
-    # print object
     return
 
 # ---------------------------------------------------------

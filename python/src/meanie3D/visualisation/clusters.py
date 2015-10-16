@@ -4,7 +4,7 @@
 
 import glob
 import os
-#import pdb
+import pdb
 import pprint
 import subprocess
 import sys
@@ -32,7 +32,6 @@ external.locateCommands(['meanie3D-cfm2vtk'])
 #
 # ------------------------------------------------------------------------------
 def addClusters(infix,configuration):
-
     # Get the configuration
     clusterOptions = utils.getValueForKeyPath(configuration,'postprocessing.clusters.visit.cluster')
     if not clusterOptions:
@@ -42,14 +41,12 @@ def addClusters(infix,configuration):
     # now the clusters
     cluster_pattern = "*"+infix+"*.vt*"
     print "Looking for cluster files at " + cluster_pattern
-
     cluster_list = sorted(glob.glob(cluster_pattern))
-    print "List of cluster files:"
-    print cluster_list
-
+    if not cluster_list:
+        # all?
+        cluster_list = sorted(glob.glob("*_clusters_all.vt*"))
+    print "Found %d cluster files." % len(cluster_list)
     for cluster_file in cluster_list:
-        visit.OpenDatabase(cluster_file)
-        visit.AddPlot("Pseudocolor", clusterOptions['variable'])
         utils.addPseudolorPlot(cluster_file,clusterOptions)
 
     return
@@ -59,7 +56,6 @@ def addClusters(infix,configuration):
 # \param: configuration
 # ------------------------------------------------------------------------------
 def run(conf):
-
     #pp = pprint.PrettyPrinter()
     #pp.pprint(conf)
 
@@ -181,6 +177,9 @@ def run(conf):
                          % (cluster_file,utils.getValueForKeyPath(conf,'postprocessing.clusters.meanie3D-cfm2vtk'))
                 if utils.getValueForKeyPath(conf,'postprocessing.clusters.showDisplacementVectors'):
                     params += " --write-displacement-vectors"
+
+                # pdb.set_trace()
+
                 meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -194,9 +193,9 @@ def run(conf):
                 if utils.getValueForKeyPath(clusterConf,'showDateTime'):
                     utils.add_datetime(netcdf_file)
 
-                # Add timestamp
-                if utils.getValueForKeyPath(visitConf,'showSourceBackground'):
-                    utils.addPseudocolorPlots(netcdf_file,visitConf,'source')
+                # Add background source data
+                if utils.getValueForKeyPath(clusterConf,'showSourceBackground'):
+                    utils.addPseudocolorPlots(netcdf_file,visitConf,'sourceBackground.plots')
                     source_open = True
 
                 # Add the clusters
@@ -209,15 +208,12 @@ def run(conf):
                     utils.addLabelPlot(label_file,labelConf)
 
                 # Add displacement vectors
-                if utils.getValueForKeyPath(conf,'showDisplacementVectors'):
+                if utils.getValueForKeyPath(clusterConf,'showDisplacementVectors'):
                     vectorConf = utils.getValueForKeyPath(visitConf,'displacementVectors')
                     if vectorConf:
                         utils.addVectorPlot(displacements_file,vectorConf)
 
                 visit.DrawPlots()
-
-                #pdb.set_trace()
-
                 utils.saveImagesForViews(views,"tracking")
 
                 print "    done. (%.2f seconds)" % (time.time()-start_time)

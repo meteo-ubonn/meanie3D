@@ -45,70 +45,74 @@ namespace m3D {
      * point is called the cluster's 'mode'.
      */
     template <class T>
-    class Cluster
-    {
-
+    class Cluster {
     private:
 
         typedef map< size_t, typename Histogram<T>::ptr > histogram_map_t;
-        
-        typename Point<T>::list     m_points;
-        
-        bool                        m_has_margin_points;
 
-        histogram_map_t             m_histograms;
+        typename Point<T>::list m_points;
 
-        vector<T>                   m_geometrical_center;
+        bool m_has_margin_points;
 
-        map< size_t, vector<T> >    m_weighed_centers;
-        
-        ::units::values::m          m_radius;
+        histogram_map_t m_histograms;
 
-        PointIndex<T>               *m_index;
+        vector<T> m_geometrical_center;
+
+        map< size_t, vector<T> > m_weighed_centers;
+
+        ::units::values::m m_radius;
+
+        PointIndex<T> *m_index;
 
     protected:
-        
-        size_t                      m_rank;
-        size_t                      m_spatial_rank;
 
-        bool                        m_weight_range_calculated;
-        T                           m_min_weight;
-        T                           m_max_weight;
+        size_t m_rank;
+        size_t m_spatial_rank;
+
+        bool m_weight_range_calculated;
+        T m_min_weight;
+        T m_max_weight;
 
     public:
 
 #pragma mark -
 #pragma mark Type definitions / Constants
 
-        typedef Cluster<T> *    ptr;
+        typedef Cluster<T> * ptr;
 
-        typedef std::vector<ptr>  list;
+        typedef std::vector<ptr> list;
 
 #pragma mark -
 #pragma mark Public properties
 
         /** Center of this cluster
          */
-        vector<T>                   mode;
-        
+        vector<T> mode;
+
         /** If the cluster was tracked, this contains the
          * displacement vector between the last known position
          * and the current one. 
          */
-        vector<T>                   displacement;
+        vector<T> displacement;
 
         /** Unique cluster ID. Used for tracking.
          */
-        m3D::id_t                   id;
-
-        size_t 
-        value_rank() { return m_rank - m_spatial_rank; }
-        
-        size_t
-        spatial_rank() { return m_spatial_rank; };
+        m3D::id_t id;
 
         size_t
-        rank() { return m_rank; };
+        value_rank() {
+            return m_rank - m_spatial_rank;
+        }
+
+        size_t
+        spatial_rank() {
+            return m_spatial_rank;
+        };
+
+        size_t
+        rank() {
+            return m_rank;
+        };
 
 #pragma mark -
 #pragma mark Constructor/Destructor
@@ -139,26 +143,26 @@ namespace m3D {
          * @param shared pointer to a feature space point
          */
         void
-        add_point( Point<T> *point );
+        add_point(Point<T> *point);
 
         /** Remove the feature space point from this cluster
          * @param feature space point
          */
         void
-        remove_point( Point<T> *point );
+        remove_point(Point<T> *point);
 
         /** Add a list of points to this cluster.
          * Does not insert duplicates.
          */
         void
-        add_points( const vector< Point<T> * > &list, bool addOriginalPointsOnly=true );
+        add_points(const vector< Point<T> * > &list, bool addOriginalPointsOnly = true);
 
         /** Searches the list of points in this cluster for the given one.
          * @param point
          * @return yes/no
          */
         bool
-        has_point( typename Point<T>::ptr point );
+        has_point(typename Point<T>::ptr point);
 
 #pragma mark -
 #pragma mark Derived properties
@@ -170,7 +174,7 @@ namespace m3D {
          * @return centroid
          */
         vector<T>
-        weighed_center( const size_t &variable_index );
+        weighed_center(const size_t &variable_index);
 
 #pragma mark -
 #pragma mark Accessors
@@ -180,7 +184,7 @@ namespace m3D {
          * @return reference to point list
          */
         virtual typename Point<T>::list &get_points();
-        
+
         /** Sets the points given. The existing points
          * are not deleted from memory by default.
          * 
@@ -192,7 +196,7 @@ namespace m3D {
          */
         void set_points(const typename Point<T>::list &points,
                 bool delete_existing = false);
-        
+
         /** Returns the number of points in this cluster
          * 
          * @return 
@@ -205,27 +209,27 @@ namespace m3D {
          * otherwise. 
          */
         bool empty() const;
-        
+
         /** Returns the point at the given index.
          * 
          * @param index
          * @return 
          */
         typename Point<T>::ptr operator[](const size_t &index);
-        
+
         /** Returns the point at the given index.
          * 
          * @param index
          * @return 
          */
         typename Point<T>::ptr at(const size_t& index) const;
-        
+
         /** Clears the point list. 
          * 
          * @param deletion_flag if <code>true</code>, the points will be
          * freed from memory. Defaults to <code>false</code> 
          */
-        virtual void clear(bool deletion_flag =false);
+        virtual void clear(bool deletion_flag = false);
 
         /** If true, the cluster has points neighboring points marked
          * as 'off limits'. This means that it's likely that the cluster
@@ -233,9 +237,9 @@ namespace m3D {
          * considering velocity calculations etc.
          * 
          * @return 
-         */        
+         */
         bool has_margin_points() const;
-        
+
         /** Set the margin flag
          * @param value
          */
@@ -247,12 +251,12 @@ namespace m3D {
         /** Equal operator. Two clusters are considered equal, when they have identical modes.
          * @param cluster
          */
-        bool operator == (const Cluster<T> &o);
+        bool operator==(const Cluster<T> &o);
 
         /** Copy Operator
          * @param cluster
          */
-        Cluster<T> operator = (const Cluster<T> &o);
+        Cluster<T> operator=(const Cluster<T> &o);
 
 #pragma mark -
 #pragma mark Histogram
@@ -268,9 +272,9 @@ namespace m3D {
          * @return handle on the histogram
          */
         const typename Histogram<T>::ptr histogram(size_t variable_index,
-                                                   T valid_min,
-                                                   T valid_max,
-                                                   size_t number_of_bins = 25 );
+                T valid_min,
+                T valid_max,
+                size_t number_of_bins = 25);
 
         /** Clears the histogram caches. Subsequent calls to histogram()
          * will return freshly calculated histograms
@@ -337,12 +341,12 @@ namespace m3D {
          * the same order. 
          * @param a vector which will contain the maximum values found
          * @param a vector which will contain the median values found
-         */        
-        void 
+         */
+        void
         variable_ranges(std::vector<T> &min,
-                        std::vector<T> &max,
-                        std::vector<T> &median);
-        
+                std::vector<T> &max,
+                std::vector<T> &median);
+
 #pragma mark -
 #pragma mark DRF merging
 
@@ -354,9 +358,9 @@ namespace m3D {
          */
         static void
         dynamic_range(const typename Point<T>::list &list,
-                      const WeightFunction<T> *weight_function,
-                      T &lower_bound,
-                      T &upper_bound );
+                const WeightFunction<T> *weight_function,
+                T &lower_bound,
+                T &upper_bound);
 
         /** Finds the lower and upper bound of weight function response in the
          * whole cluster
@@ -367,8 +371,8 @@ namespace m3D {
          */
         void
         dynamic_range(const WeightFunction<T> *weight_function,
-                      T &lower_bound,
-                      T &upper_bound);
+                T &lower_bound,
+                T &upper_bound);
 
 #pragma mark -
 #pragma mark Coalescence Merging
@@ -381,16 +385,16 @@ namespace m3D {
          * cluster
          */
         T average_weight_response(const WeightFunction<T> *w) const;
-        
+
 #pragma mark -
 #pragma mark Misc
-        
+
         /** Prints out cluster details 
          * @param include points
          */
-        void print(bool includePoints=false);
+        void print(bool includePoints = false);
 
     };
 }
-    
+
 #endif
