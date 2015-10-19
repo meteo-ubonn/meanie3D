@@ -13,6 +13,10 @@ import getopt
 
 import meanie3D
 import meanie3D.app
+import meanie3D.app.external
+import meanie3D.app.tracking
+import meanie3D.app.utils
+import meanie3D.app.postprocessing
 
 # Make sure the C++ executables are installed
 meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats"])
@@ -77,9 +81,10 @@ def print_version():
 
 # ----------------------------------------------------------------------------
 ## Main function
-def main(argv):
+def main():
     # Parse command line
     try:
+        argv = sys.argv[1:]
         opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["json-example","resume","help","version","start=","end="])
     except getopt.GetoptError as detail:
         print detail
@@ -157,10 +162,10 @@ def main(argv):
     configuration = meanie3D.app.utils.load_configuration(config_file);
 
     # Enrich the configuration with env/command line stuff
-    configuration["source_directory"] = netcdf_dir
-    configuration["output_dir"] = output_dir
+    configuration["source_directory"] = os.path.abspath(netcdf_dir)
+    configuration["output_dir"] = os.path.abspath(output_dir)
     configuration["resume"] = resume
-    configuration['config_file'] = config_file
+    configuration['config_file'] = os.path.abspath(config_file)
 
     # Run the detection and tracking steps
     if (configuration['detection'] or configuration['tracking']):
