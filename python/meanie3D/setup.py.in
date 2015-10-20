@@ -8,6 +8,7 @@ setup(
     license='MIT License',
     author='Juergen Simon',
     author_email='juergen.simon@uni-bonn.de',
+    zip_safe = True,
     description='A python script for running the meanie3D clustering and tracking algorithms as well as processing and visualising the results.',
     py_modules=['meanie3D_run'],
     entry_points = {
