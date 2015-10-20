@@ -17,13 +17,16 @@ SET(CMAKE_MACOSX_RPATH OFF)
 # -------------------------------------
 
 PROJECT(meanie3D)
+ENABLE_LANGUAGE(CXX)
 
 SET(${PROJECT_NAME}_MAJOR_VERSION 1)
 SET(${PROJECT_NAME}_MINOR_VERSION 5)
 SET(${PROJECT_NAME}_PATCH_LEVEL 4)
 SET(PACKAGE_VERSION "1.5.4")
-
-ENABLE_LANGUAGE(CXX)
+SET(PROJECT_URL "http://git.meteo.uni-bonn.de/projects/meanie3d")
+SET(PROJECT_LICENSE "MIT License")
+SET(PROJECT_AUTHOR "Juergen Simon")
+SET(PROJECT_AUTHOR_EMAIL "juergen.simon@uni-bonn.de")
 
 # ------------------------------------- 
 # Paths and build configuration
