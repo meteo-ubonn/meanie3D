@@ -65,6 +65,7 @@ void parse_commmandline(program_options::variables_map vm,
         bool &include_degenerates,
         bool &create_cumulated_size_stats,
         bin_t &size_histogram_bins,
+        bool &create_cumulated_tracking_stats,
         bool &write_center_tracks_as_vtk,
         bool &write_cumulated_tracks_as_vtk,
         bool &write_gnuplot_files,
@@ -119,6 +120,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     create_cluster_stats = vm.count("create-cluster-statistics") > 0;
     cluster_histogram_bins = vm["cluster-histogram-classes"].as<bin_t>();
+
+    create_cumulated_tracking_stats = vm.count("create-cumulated-tracking-stats") > 0;
 }
 
 #pragma mark -
@@ -348,7 +351,7 @@ int main(int argc, char** argv)
             ("help,h", "produce help message")
             ("version", "print version information and exit")
             ("basename,b", program_options::value<string>()->implicit_value(""), "Basename for filtering input files. Only files starting with this are used. It is also prepended to result files (optional)")
-            ("sourcepath,s", program_options::value<string>()->default_value("."), "Current cluster file (netCDF)")
+            ("sourcepath,s", program_options::value<string>()->default_value("."), "Directory containing cluster files.")
             ("exclude-degenerates,n", program_options::value<bool>()->default_value(true), "Exclude results of tracks of length one")
             ("create-length-statistics,1", "Create a statistic of track lengths.")
             ("length-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(length_hist_default), "List of track-length values for histogram bins")
@@ -358,7 +361,8 @@ int main(int argc, char** argv)
             ("direction-histogram-classes", program_options::value<fvec_t>()->multitoken()->default_value(direction_hist_default), "Direction histogram. Values in [deg]. Use with radolan grid only!!")
             ("create-cluster-statistics,4", "Evaluate each cluster in each track in terms of size.")
             ("cluster-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(cluster_hist_default), "List of cluster size values for histogram bins")
-            ("create-cumulated-size-statistics,5", "Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
+            ("create-cumulated-tracking-stats,5", "Obtain a number of tracking stats")
+            ("create-cumulated-size-statistics,6", "Evaluate each track in terms of cumulative size. Warning: this process takes a lot of memory.")
             ("size-histogram-classes", program_options::value<bin_t>()->multitoken()->default_value(size_hist_default), "List of cumulated track size values for histogram bins")
             ("write-track-dictionary,t", "Write out a dictionary listing tracks with number of clusters etc.")
 #if WITH_VTK
@@ -413,12 +417,13 @@ int main(int argc, char** argv)
     bool create_cumulated_size_statistics = false;
     bin_t size_histogram_classes;
 
+    bool create_cumulated_tracking_stats = true;
+
     bool write_center_tracks_as_vtk = false;
     bool write_cumulated_tracks_as_vtk = false;
     svec_t vtk_dim_names;
 
     bool write_gnuplot_files = false;
-
     bool write_track_dictionary = false;
 
     try
@@ -438,6 +443,7 @@ int main(int argc, char** argv)
                 exclude_degenerates,
                 create_cumulated_size_statistics,
                 size_histogram_classes,
+                create_cumulated_tracking_stats,
                 write_center_tracks_as_vtk,
                 write_cumulated_tracks_as_vtk,
                 write_gnuplot_files,
@@ -486,7 +492,14 @@ int main(int argc, char** argv)
     vector<NcVar> dimension_vars;
     vector<string> dim_names;
     vector<string> var_names;
-    
+
+    // Store the cluster min/max and median values so that the
+    // points can be disposed of early on.
+    typedef map< m3D::id_t, vector<FS_TYPE> > val_map_t;
+    val_map_t cluster_min;
+    val_map_t cluster_max;
+    val_map_t cluster_median;
+
     bool need_points = create_cumulated_size_statistics
             || write_cumulated_tracks_as_vtk;
 
@@ -501,14 +514,14 @@ int main(int argc, char** argv)
         
         while (dir_iter != end)
         {
-            double time_reading = 0;
-            double time_searching = 0;
-            double time_inserting = 0;
-            double time_pushing_clusters = 0;
-            double time_constructing_clusters = 0;
-            double time_deleting = 0;
-            double time_constructing = 0;
-            
+//            double time_reading = 0;
+//            double time_searching = 0;
+//            double time_inserting = 0;
+//            double time_pushing_clusters = 0;
+//            double time_constructing_clusters = 0;
+//            double time_deleting = 0;
+//            double time_constructing = 0;
+
             size_t average_cluster_size = 0;
             size_t number_of_clusters = 0;
 
@@ -526,9 +539,7 @@ int main(int argc, char** argv)
                         << free_mem << " mb available) ... ";
 #else 
 #endif
-
                 // Remember the first one
-
                 if (coords_filename.empty())
                 {
                     coords_filename = f.generic_string();
@@ -563,10 +574,10 @@ int main(int argc, char** argv)
                     // TODO: check if the actual dimensions and their 
                     // order remain constant
 
-                    start_timer();
+//                    start_timer();
                     ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read(f.generic_string());
-                    time_reading += stop_timer();
-                    
+//                    time_reading += stop_timer();
+
                     cout << "Processing " << f.filename().generic_string()
                         << " (" << cluster_list->size() << " clusters) ... ";
 
@@ -597,17 +608,17 @@ int main(int argc, char** argv)
                         Track<FS_TYPE>::ptr tm = NULL;
                         Track<FS_TYPE>::trackmap::const_iterator ti;
 
-                        start_timer();
+//                        start_timer();
                         ti = track_map.find(id);
-                        time_searching += stop_timer();
+//                        time_searching += stop_timer();
                             
                         if (ti == track_map.end()) {
                             // new entry
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
-                            start_timer();
+//                            start_timer();
                             track_map[id] = tm;
-                            time_inserting += stop_timer();
+//                            time_inserting += stop_timer();
                         } else {
                             tm = ti->second;
                         }
@@ -619,29 +630,34 @@ int main(int argc, char** argv)
                         // has facilities of writing it's point list to disk and read
                         // it back on demand, saving memory.
 
-                        start_timer();
+//                        start_timer();
                         TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster, need_points);
-                        time_constructing_clusters += stop_timer();
+//                        time_constructing_clusters += stop_timer();
                         average_cluster_size += cluster->size();
                         number_of_clusters++;
                         
                         // Call these to cache before disposing of points
                         // tc->geometrical_center(spatial_rank);
 
-                        
-                        start_timer();
+//                        start_timer();
                         tm->clusters.push_back(tc);
-                        time_pushing_clusters += stop_timer();
+//                        time_pushing_clusters += stop_timer();
+
+                        vector<FS_TYPE> min, max, median;
+                        cluster->variable_ranges(min, max, median);
+                        cluster_min[cluster->id] = min;
+                        cluster_max[cluster->id] = max;
+                        cluster_median[cluster->id] = median;
 
                         // dispose of the points in the original cluster
-                        start_timer();
+//                        start_timer();
                         cluster->clear(true);
-                        time_deleting += stop_timer();
+//                        time_deleting += stop_timer();
                     }
                     
-                    start_timer();
+//                    start_timer();
                     delete cluster_list;
-                    time_deleting += stop_timer();
+//                    time_deleting += stop_timer();
                     
                     // cout << "tracking map has " << track_map.size() << " tracks" << endl;
 
@@ -760,6 +776,7 @@ int main(int argc, char** argv)
             for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi)
             {
                 Track<FS_TYPE>::ptr track = tmi->second;
+                if (track->clusters.size() == 1 && exclude_degenerates) continue;
 
                 dict << "    {" << endl;
 
@@ -778,10 +795,12 @@ int main(int argc, char** argv)
                 size_t i=0;
                 std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
                 for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
-                    TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) (*ti);
 
+                    TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) (*ti);
                     vector<FS_TYPE> min, max, median;
-                    c->variable_ranges(min, max, median);
+                    min = cluster_min[c->id];
+                    max = cluster_max[c->id];
+                    median = cluster_median[c->id];
 
                     dict << "        {" << endl;
                     dict << "          \"size\":" << c->size() << "," << endl;
