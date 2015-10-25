@@ -2,12 +2,12 @@ from setuptools import find_packages, setup
 setup(
     name='meanie3D',
     version='${PACKAGE_VERSION}',
-    packages=["meanie3D","meanie3D.app", "meanie3D.visualisation"],
+    packages=["meanie3D","meanie3D.app", "meanie3D.visualisation", "meanie3D.visualisation.templates"],
     url='${PROJECT_URL}',
     license='${PROJECT_LICENSE}',
     author='${PROJECT_AUTHOR}',
     author_email='${PROJECT_AUTHOR_EMAIL}',
-    zip_safe = True,
+    zip_safe = False,
     description='A python script for running the meanie3D clustering and tracking algorithms as well as processing and visualising the results.',
     entry_points = {
         'console_scripts' : [

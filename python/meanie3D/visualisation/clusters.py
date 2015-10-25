@@ -178,8 +178,7 @@ def run(conf):
                 if utils.getValueForKeyPath(conf,'postprocessing.clusters.showDisplacementVectors'):
                     params += " --write-displacement-vectors"
 
-                # pdb.set_trace()
-
+                # pdb.set_trace();
                 meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -253,8 +252,8 @@ def run(conf):
     # clean up
     print "Cleaning up ..."
     subprocess.call("mkdir images", shell=True)
-    subprocess.call("mv tracking_*.png images", shell=True)
-    subprocess.call("mv source_*.png images", shell=True)
+    subprocess.call("mv *tracking_*.png images", shell=True)
+    subprocess.call("mv *source_*.png images", shell=True)
     subprocess.call("mkdir movies", shell=True)
     subprocess.call("mv *.gif *.m4v movies", shell=True)
     subprocess.call("rm -f *.vt* visitlog.py", shell=True)
