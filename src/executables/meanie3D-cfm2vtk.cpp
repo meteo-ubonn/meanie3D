@@ -112,51 +112,39 @@ void parse_commmandline(program_options::variables_map vm,
 
     if (vm.count("vtk-dimensions") > 0) {
         // parse dimension list
-
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
         boost::char_separator<char> sep(",");
-
         string str_value = vm["vtk-dimensions"].as<string>();
-
         tokenizer dim_tokens(str_value, sep);
-
         try {
             NcFile *file = new NcFile(filename, NcFile::read);
-
             vector<NcDim> dimensions = file->getVar(variable).getDims();
-
             for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
                 const char* name = (*tok_iter).c_str();
-
                 NcDim dim = file->getDim(name);
-
                 vector<NcDim>::const_iterator fi = find(dimensions.begin(), dimensions.end(), dim);
-
                 if (fi == dimensions.end()) {
                     cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of " << variable << "'s dimensions" << endl;
                     exit(EXIT_FAILURE);
                 }
-
                 size_t index = fi - dimensions.begin();
-
                 vtk_dimension_indexes.push_back(index);
             }
 
             if (vtk_dimension_indexes.size() != dimensions.size()) {
                 cerr << "The number of vtk-dimensions must be identical to the number of dimensions of " << variable << endl;
-
                 exit(EXIT_FAILURE);;
             }
 
             delete file;
         } catch (const netCDF::exceptions::NcException &e) {
             cerr << e.what() << endl;
-
             exit(EXIT_FAILURE);;
         }
+    } else {
+        cerr << "Missing parameter --vtk-dimensions" << endl;
+        exit(EXIT_FAILURE);;
     }
-
 }
 
 void convert_clusters(const string &filename,
