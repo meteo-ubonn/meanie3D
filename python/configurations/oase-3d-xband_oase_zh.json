@@ -1,0 +1,392 @@
+{
+  "description":"Processing file for Oase3D local composite.",
+  "data":{
+    "variables":[
+      {
+        "name": "xband_oase_zh",
+        "lowerThreshold": 20.0,
+        "upperThreshold": 75.0,
+        "replacementValue": null
+      }
+    ],
+    "dimensions":["z","y","x"],
+    "vtkDimensions":["x","y","z"]
+  },
+  "detection":{
+    "meanie3D-detect":"--verbosity 1 --weight-function default --wwf-lower-threshold 0",
+    "useCIScore": false,
+    "usePrevious":true,
+    "minClusterSize" : 27
+  },
+  "tracking":{
+    "histogramVariable" : "xband_oase_zh",
+    "histogramWeight" : 0,
+    "positionWeight" : 1,
+    "sizeWeight" : 0,
+    "useDisplacementVectors" : false,
+    "maxSpeed" : null,
+    "maxTime" : null,
+    "meanie3D-track":"--verbosity 3"
+  },
+  "postprocessing":{
+        "debugVisitScript" : true,
+        "runVisitHeadless" : true,
+        "visit" : {
+            "colorTables" : [
+                {
+                    "name" : "clusters",
+                    "colors" : [
+                        [255,0,0,1],
+                        [255,255,0,1],
+                        [255,0,255,1],
+                        [0,255,0,1],
+                        [0,153,255,1]
+                    ],
+                    "positions" : [0.2, 0.4, 0.6, 0.8, 1.0]
+                },
+                {
+                    "name" : "topography",
+                    "colors" : [
+                        [255,0,100,1],
+                        [120,120,83,1],
+                        [49,22,0,1],
+                        [100,100,100,1],
+                        [255,255,255,1]
+                    ],
+                    "positions" : [0.0, 0.0375, 0.30, 0.50, 0.85]
+                }
+            ],
+            "saveWindowAttributes" : {
+                "outputToCurrentDirectory": 1,
+                "outputDirectory": ".",
+                "width": 1024,
+                "height": 1024,
+                "quality": 100
+            }
+        },
+        "tracks":{
+            "meanie3D-trackstats":{
+                "dictionary":true,
+                "gnuplot":true,
+                "length":true,
+                "length_classes":null,
+                "speed":true,
+                "speed_classes":null,
+                "direction":true,
+                "direction_classes":null,
+                "size":true,
+                "size_classes":null,
+                "cumulated":false,
+                "cumulated_classes":null,
+                "vtk_tracks":true
+            },
+            "plotStats":true,
+            "runScaleComparison":true,
+            "visualiseTracks":true,
+            "visit":{
+                "annotationAttributes":{
+                    "gradientBackgroundStyle":"Radial",
+                    "gradientColor1":[0, 0, 0, 255],
+                    "gradientColor2":[192, 192, 192, 255],
+                    "userInfoFlag":0,
+                    "timeInfoFlag":0,
+                    "legendInfoFlag":1,
+                    "databaseInfoFlag":0,
+                    "axes3D.visible":1,
+                    "axes3D.autoSetScaling":0,
+                    "axes3D.xAxis.title.visible":0,
+                    "axes3D.xAxis.title.userTitle":1,
+                    "axes3D.xAxis.title.userUnits":1,
+                    "axes3D.xAxis.title.title":"x",
+                    "axes3D.xAxis.title.units":"km",
+		    "axes3D.xAxis.title.font.scale": 0.25,
+
+                    "axes3D.yAxis.title.visible":0,
+                    "axes3D.yAxis.title.userTitle":1,
+                    "axes3D.yAxis.title.userUnits":1,
+		    "axes3D.yAxis.title.title":"y",
+                    "axes3D.yAxis.title.units":"km",
+		    "axes3D.yAxis.title.font.scale": 0.25,
+
+                    "axes3D.zAxis.title.visible":0,
+                    "axes3D.zAxis.title.userTitle":1,
+                    "axes3D.zAxis.title.userUnits":1,
+                    "axes3D.zAxis.title.title":"z",
+                    "axes3D.zAxis.title.units":"km",
+		    "axes3D.zAxis.title.font.scale": 0.25	
+                },
+                "view":{
+                  "viewNormal": [0.204365, -0.63669, 0.743546 ],
+                  "focus": [ -239.212, -4222.9, 7.31354 ],
+                  "viewUp": [ -0.201314, 0.716005, 0.668438 ],
+                  "viewAngle": 30,
+                  "parallelScale": 173.531,
+                  "nearPlane": -347.062,
+                  "farPlane": 347.062,
+                  "imagePan": [ -0.00977129, 0.0399963 ],
+                  "imageZoom": 1.4641,
+                  "perspective": 1,
+                  "eyeAngle": 2,
+                  "centerOfRotationSet": 0,
+                  "centerOfRotation": [ 0, 0, 0 ],
+                  "axis3DScaleFlag": 0,
+                  "axis3DScales": [ 1, 1, 1 ],
+                  "shear": [ 0, 0, 1 ]
+                },
+                "map":{
+                    "mapDataFile":"/Volumes/meteo/oase-mapdata/oase-mapdata.nc",
+                    "plots":[
+                        {
+                            "variable" : "as_zonal/local_boundaries_3D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "xray",
+                                "legendFlag": 1,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        },
+                        {
+                            "variable" : "as_zonal/local_rivers_3D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "hot",
+                                "legendFlag": 0,
+                                "invertColorTable" : 1,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        }
+                    ]
+                },
+                "track":{
+                    "variable":"track_step",
+                    "PseudocolorAttributes" : {
+                        "pointSizePixels": 5,
+                        "minFlag": 1,
+                        "maxFlag": 1,
+                        "min": 0,
+                        "max": 50,
+                        "legendFlag": 1,
+                        "colorTableName": "hot_desaturated",
+                        "invertColorTable": 0,
+                        "opacity": 1
+                    }
+                }
+            }
+        },
+        "clusters":{
+            "meanie3D-cfm2vtk":"-t cluster -v xband_oase_zh --vtk-dimensions x,y,z",
+            "visualiseClusters" : true,
+            "showSourceBackground":true,
+            "showDateTime":true,
+            "showDisplacementVectors":true,
+            "showBoundaries":false,
+            "removeImagesFolder":true,
+            "createSourceMovie":true,
+            "createClusterMovie":true,
+            "movieFormats" : ["gif","m4v"],
+            "visit":{
+                "annotationAttributes":{
+                    "gradientBackgroundStyle":"Radial",
+                    "gradientColor1":[0, 0, 0, 255],
+                    "gradientColor2":[192, 192, 192, 255],
+                    "userInfoFlag":0,
+                    "timeInfoFlag":0,
+                    "legendInfoFlag":1,
+                    "databaseInfoFlag":0,
+                    "axes3D.visible":1,
+                    "axes3D.autoSetScaling":0,
+                    "axes3D.xAxis.title.visible":0,
+                    "axes3D.xAxis.title.userTitle":1,
+                    "axes3D.xAxis.title.userUnits":1,
+                    "axes3D.xAxis.title.title":"x",
+                    "axes3D.xAxis.title.units":"km",
+					"axes3D.xAxis.title.font.scale": 0.25,
+                    "axes3D.yAxis.title.visible":0,
+                    "axes3D.yAxis.title.userTitle":1,
+                    "axes3D.yAxis.title.userUnits":1,
+					"axes3D.yAxis.title.title":"y",
+					"axes3D.yAxis.title.units":"km",
+					"axes3D.yAxis.title.font.scale": 0.25,
+                    "axes3D.zAxis.title.visible":0,
+                    "axes3D.zAxis.title.userTitle":1,
+                    "axes3D.zAxis.title.userUnits":1,
+                    "axes3D.zAxis.title.title":"z",
+                    "axes3D.zAxis.title.units":"km",
+					"axes3D.zAxis.title.font.scale": 0.25	
+                },
+                "views":[
+                  {
+                    "viewNormal": [0.204365, -0.63669, 0.743546 ],
+                    "focus": [ -239.212, -4222.9, 7.31354 ],
+                    "viewUp": [ -0.201314, 0.716005, 0.668438 ],
+                    "viewAngle": 30,
+                    "parallelScale": 173.531,
+                    "nearPlane": -347.062,
+                    "farPlane": 347.062,
+                    "imagePan": [ -0.00977129, 0.0399963 ],
+                    "imageZoom": 1.4641,
+                    "perspective": 1,
+                    "eyeAngle": 2,
+                    "centerOfRotationSet": 0,
+                    "centerOfRotation": [ 0, 0, 0 ],
+                    "axis3DScaleFlag": 0,
+                    "axis3DScales": [ 1, 1, 1 ],
+                    "shear": [ 0, 0, 1 ]
+                  },
+                  {
+                    "viewNormal": [0, 0, 1 ],
+                    "focus": [-239.212, -4222.9, 7.375],
+                    "viewUp": [0, 1, 0],
+                    "viewAngle": 30,
+                    "parallelScale": 173.886,
+                    "nearPlane": -347.773,
+                    "farPlane": 347.773,
+                    "imagePan": [0,0],
+                    "imageZoom": 1,
+                    "perspective": 1,
+                    "eyeAngle": 2,
+                    "centerOfRotationSet": 0,
+                    "centerOfRotation": [ 0, 0, 0 ],
+                    "axis3DScaleFlag": 1,
+                    "axis3DScales": [ 1, 1, 2 ],
+                    "shear": [ 0, 0, 1 ]
+                  }
+                ],
+                "map":{
+                    "mapDataFile":"/Volumes/meteo/oase-mapdata/oase-mapdata.nc",
+                    "plots":[
+                        {
+                            "variable" : "as_zonal/local_boundaries_3D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "Greys",
+                                "legendFlag": 0,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        },
+                        {
+                            "variable" : "as_zonal/local_rivers_3D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "hot",
+                                "legendFlag": 0,
+                                "invertColorTable" : 1,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        }
+                    ]
+                },
+                "source":{
+                    "plots":[
+                        {
+                            "variable" : "xband_oase_zh",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "hot_desaturated",
+                                "legendFlag": 1,
+                                "invertColorTable" : 0,
+		                        "lightingFlag": 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0.0,
+                                "max" : 75.0,
+								"opacityType" : "Ramp",
+                                "opacity" : 1
+                            },
+                            "ThresholdAttributes": {
+                                "lowerBounds" : [20.0],
+                                "upperBounds" : [75.0]
+                            }
+                        }
+                    ]
+                },
+                "sourceBackground":{
+                    "plots":[
+                        {
+                            "variable" : "xband_oase_zh",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "Greys",
+                                "legendFlag": 1,
+		                        "lightingFlag": 0,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0.0,
+                                "max" : 75.0,
+                                "opacityType" : "Ramp",
+                                "opacity" : 1.0
+                            },
+                            "ThresholdAttributes": {
+                                "lowerBounds" : [20.0],
+                                "upperBounds" : [75.0]
+                            }
+                        }
+                    ]
+                },
+                "cluster":{
+                    "variable":"point_color",
+                    "PseudocolorAttributes" : {
+                        "legendFlag": 0,
+                        "pointSizePixels": 2,
+                        "minFlag": 1,
+                        "maxFlag": 1,
+                        "max": 5.0,
+                        "min": 0.0,
+                        "lightingFlag": 0,
+                        "colorTableName": "clusters",
+                        "invertColorTable": 0,
+                        "opacityType" : "Constant",
+                        "opacity": 0.75
+                    }
+                },
+                "displacementVectors":{
+                    "variable":"displacement",
+                    "VectorAttributes" : {
+                        "useLegend": 0,
+                        "scaleByMagnitude": 1,
+                        "useStride": 1,
+                        "stride": 1,
+                        "scale": 1.0,
+                        "autoScale": 0,
+                        "headSize" : 0.25,
+                        "lineWidth" : 2,
+                        "colorByMag" : 0,
+                        "vectorColor" : [0,0,0,255]
+                    }
+                },
+                "boundary":{
+                    "variable":"point_color",
+                    "PseudocolorAttributes" : {
+                        "opacity": 1.0
+                    }
+                },
+                "label" : {
+                    "variable" : "geometrical_center",
+                    "LabelAttributes": {
+                        "legendFlag": 0,
+                        "restrictNumberOfLabels": 0,
+                        "specifyTextColor1": 0,
+                        "textColor1": [255, 0, 0, 0],
+                        "textHeight1": 0.02,
+                        "formatTemplate": "%g",
+                        "horizontalJustification": "Left",
+                        "verticalJustification": "Bottom"
+                    }
+                }
+            }
+        }
+    }
+}
