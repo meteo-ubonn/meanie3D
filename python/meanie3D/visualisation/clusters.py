@@ -83,7 +83,7 @@ def run(conf):
 
     if not utils.getValueForKeyPath(conf,'resume'):
         print "Removing results from previous runs"
-        subprocess.call("rm -rf images movies *.vtk *.vtr *.png", shell=True)
+        subprocess.call("rm -rf images movies *.vtk *.vtr *tracking*.png *source*.png", shell=True)
     else:
         print "Removing intermediary files from previous runs"
         subprocess.call("rm -f *.vtk *.vtr", shell=True)
