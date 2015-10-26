@@ -1,0 +1,332 @@
+{
+    "description":"Processing file for RADOLAN 20dBZ runs without using displacement vectors.",
+    "data":{
+        "variables":[
+            {
+                "name" : "RX",
+                "lowerThreshold" : 20,
+                "upperThreshold" : 75,
+                "replacementValue" : null
+            }
+        ],
+        "dimensions":[
+            "y",
+            "x"
+        ],
+        "vtkDimensions":[
+            "x",
+            "y"
+        ]
+    },
+    "detection":{
+        "meanie3D-detect":"--verbosity 1 --weight-function default --wwf-lower-threshold 0",
+        "useCIScore":false,
+        "usePrevious":true,
+        "minClusterSize" : 15
+    },
+    "tracking":{
+        "histogramVariable":"RX",
+        "histogramWeight":0,
+        "positionWeight":1,
+        "sizeWeight":0,
+        "useDisplacementVectors":false,
+        "maxSpeed":null,
+        "maxTime":null,
+        "meanie3D-track":"--verbosity 3"
+    },
+    "postprocessing":{
+        "debugVisitScript" : true,
+        "runVisitHeadless" : true,
+        "visit" : {
+            "colorTables" : [
+                {
+                    "name" : "clusters",
+                    "colors" : [
+                        [255,0,0,1],
+                        [255,255,0,1],
+                        [255,0,255,1],
+                        [0,255,0,1],
+                        [0,153,255,1]
+                    ],
+                    "positions" : [0.2, 0.4, 0.6, 0.8, 1.0]
+                },
+                {
+                    "name" : "topography",
+                    "colors" : [
+                        [255,0,100,1],
+                        [120,120,83,1],
+                        [49,22,0,1],
+                        [100,100,100,1],
+                        [255,255,255,1]
+                    ],
+                    "positions" : [0.0, 0.0375, 0.30, 0.50, 0.85]
+                }
+            ],
+            "saveWindowAttributes" : {
+                "outputToCurrentDirectory": 1,
+                "outputDirectory": ".",
+                "width": 1024,
+                "height": 1024,
+                "quality": 100
+            }
+        },
+        "tracks":{
+            "meanie3D-trackstats":{
+                "dictionary":true,
+                "gnuplot":true,
+                "length":true,
+                "length_classes":null,
+                "speed":true,
+                "speed_classes":null,
+                "direction":true,
+                "direction_classes":null,
+                "size":true,
+                "size_classes":null,
+                "cumulated":false,
+                "cumulated_classes":null,
+                "vtk_tracks":true
+            },
+            "plotStats":true,
+            "runScaleComparison":true,
+            "visualiseTracks":true,
+            "visit":{
+                "annotationAttributes":{
+                    "gradientBackgroundStyle":"Radial",
+                    "gradientColor1":[0, 0, 0, 255],
+                    "gradientColor2":[192, 192, 192, 255],
+                    "userInfoFlag":0,
+                    "timeInfoFlag":0,
+                    "legendInfoFlag":1,
+                    "databaseInfoFlag":0,
+                    "axes2D.visible":1,
+                    "axes2D.autoSetScaling":0,
+                    "axes2D.xAxis.title.visible":0,
+                    "axes2D.xAxis.title.userTitle":1,
+                    "axes2D.xAxis.title.userUnits":1,
+                    "axes2D.xAxis.title.title":"x",
+                    "axes2D.xAxis.title.units":"km",
+                    "axes2D.yAxis.title.visible":0,
+                    "axes2D.yAxis.title.userTitle":1,
+                    "axes2D.yAxis.title.userUnits":1,
+                    "axes2D.yAxis.title.title":"y",
+                    "axes2D.yAxis.title.units":"km"
+                },
+                "view":{
+                    "windowCoords":[ -523.962, 376.038, -4659.15, -3759.15 ],
+                    "viewportCoords":[ 0.2, 0.95, 0.15, 0.95 ]
+                },
+                "map":{
+                    "mapDataFile":"/Volumes/meteo/oase-mapdata/oase-mapdata.nc",
+                    "plots":[
+                        {
+                            "variable" : "as_zonal/national_boundaries_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "xray",
+                                "legendFlag": 1,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        },
+                        {
+                            "variable" : "as_zonal/national_rivers_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "hot",
+                                "legendFlag": 0,
+                                "invertColorTable" : 1,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        }
+                    ]
+                },
+                "track":{
+                    "variable":"track_step",
+                    "PseudocolorAttributes" : {
+                        "pointSizePixels": 5,
+                        "minFlag": 1,
+                        "maxFlag": 1,
+                        "min": 0,
+                        "max": 50,
+                        "legendFlag": 1,
+                        "colorTableName": "hot_desaturated",
+                        "invertColorTable": 0,
+                        "opacity": 1
+                    }
+                }
+            }
+        },
+        "clusters":{
+            "meanie3D-cfm2vtk":"-t cluster -v RX --vtk-dimensions x,y",
+            "visualiseClusters" : true,
+            "showSourceBackground":false,
+            "showDateTime":true,
+            "showDisplacementVectors":true,
+            "showBoundaries":false,
+            "removeImagesFolder":true,
+            "createSourceMovie":true,
+            "createClusterMovie":true,
+            "movieFormats" : ["gif","m4v"],
+            "visit":{
+                "annotationAttributes":{
+                    "backgroundMode" : "Solid",
+                    "gradientBackgroundStyle":"Radial",
+                    "gradientColor1":[0, 0, 0, 255],
+                    "gradientColor2":[192, 192, 192, 255],
+                    "userInfoFlag":0,
+                    "timeInfoFlag":0,
+                    "legendInfoFlag":1,
+                    "databaseInfoFlag":1,
+                    "axes2D.visible":1,
+                    "axes2D.autoSetScaling":0,
+                    "axes2D.xAxis.title.visible":0,
+                    "axes2D.xAxis.title.userTitle":1,
+                    "axes2D.xAxis.title.userUnits":1,
+                    "axes2D.xAxis.title.title":"x",
+                    "axes2D.xAxis.title.units":"km",
+                    "axes2D.yAxis.title.visible":0,
+                    "axes2D.yAxis.title.userTitle":1,
+                    "axes2D.yAxis.title.userUnits":1,
+                    "axes2D.yAxis.title.title":"y",
+                    "axes2D.yAxis.title.units":"km"
+                },
+                "views":[
+                  {
+                    "windowCoords":[ -523.962, 376.038, -4659.15, -3759.15 ],
+                    "viewportCoords":[ 0.2, 0.95, 0.15, 0.95 ]
+                  }
+                ],
+                "map":{
+                    "mapDataFile":"/Volumes/meteo/oase-mapdata/oase-mapdata.nc",
+                    "plots":[
+                        {
+                            "variable" : "as_zonal/national_boundaries_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "Greys",
+                                "legendFlag": 0,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        },
+                        {
+                            "variable" : "as_zonal/national_rivers_2D",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "hot",
+                                "legendFlag": 0,
+                                "invertColorTable" : 1,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0,
+                                "max" : 1,
+                                "opacity" : 1
+                            }
+                        }
+                    ]
+                },
+                "source":{
+                    "plots":[
+                        {
+                            "variable" : "RX",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "hot_desaturated",
+                                "legendFlag": 1,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0.0,
+                                "max" : 75.0,
+                                "opacity" : 1
+                            },
+                            "ThresholdAttributes": {
+                                "lowerBounds" : [20.0],
+                                "upperBounds" : [75.0]
+                            }
+                        }
+                    ]
+                },
+                "sourceBackground":{
+                    "plots":[
+                        {
+                            "variable" : "RX",
+                            "PseudocolorAttributes" : {
+                                "colorTableName" : "Greys",
+                                "legendFlag": 0,
+                                "invertColorTable" : 0,
+                                "minFlag" : 1,
+                                "maxFlag" : 1,
+                                "min" : 0.0,
+                                "max" : 75.0,
+                                "opacityType" : "Constant",
+                                "opacity" : 0.5
+                            },
+                            "ThresholdAttributes": {
+                                "lowerBounds" : [20.0],
+                                "upperBounds" : [75.0]
+                            }
+                        }
+                    ]
+                },
+                "cluster":{
+                    "variable":"point_color",
+                    "PseudocolorAttributes" : {
+                        "legendFlag": 0,
+                        "pointSizePixels": 2,
+                        "minFlag": 1,
+                        "maxFlag": 1,
+                        "max": 5.0,
+                        "min": 0.0,
+                        "lightingFlag": 0,
+                        "colorTableName": "clusters",
+                        "invertColorTable": 0,
+                        "opacityType" : "Constant",
+                        "opacity": 0.5
+                    }
+                },
+                "displacementVectors":{
+                    "variable":"displacement",
+                    "VectorAttributes" : {
+                        "useLegend": 0,
+                        "scaleByMagnitude": 1,
+                        "useStride": 1,
+                        "stride": 1,
+                        "scale": 2.0,
+                        "autoScale": 0,
+                        "headSize" : 0.5,
+                        "lineWidth" : 2,
+                        "colorByMag" : 0,
+                        "vectorColor" : [0,0,0,255]
+                    }
+                },
+                "boundary":{
+                    "variable":"point_color",
+                    "PseudocolorAttributes" : {
+                        "opacity": 1.0
+                    }
+                },
+                "label" : {
+                    "variable" : "geometrical_center",
+                    "LabelAttributes": {
+                        "legendFlag": 0,
+                        "restrictNumberOfLabels": 0,
+                        "specifyTextColor1": 0,
+                        "textColor1": [255, 0, 0, 0],
+                        "textHeight1": 0.02,
+                        "formatTemplate": "%g",
+                        "horizontalJustification": "Left",
+                        "verticalJustification": "Bottom"
+                    }
+                }
+            }
+        }
+    }
+}
