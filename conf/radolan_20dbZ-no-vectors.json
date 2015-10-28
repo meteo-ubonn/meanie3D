@@ -289,7 +289,7 @@
                         "colorTableName": "clusters",
                         "invertColorTable": 0,
                         "opacityType" : "Constant",
-                        "opacity": 0.5
+                        "opacity": 1.0
                     }
                 },
                 "displacementVectors":{
