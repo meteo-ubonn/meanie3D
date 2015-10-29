@@ -1,9 +1,3 @@
-__author__ = "juergen.simon@uni-bonn.de"
-
-# -------------------------------------------------------------------
-# Define some executables to be called from python
-# -------------------------------------------------------------------
-
 import glob
 import json
 import os

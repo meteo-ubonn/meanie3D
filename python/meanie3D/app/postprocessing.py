@@ -1,11 +1,3 @@
-#!/usr/bin/python
-
-## meanie3D-tracking.py
-#
-# Python script for running a whole set of netcdf files through the clustering and tracking process.
-# \author Juergen Simon (juergen.simon@uni-bonn.de)
-
-# System packages
 import glob
 import os
 import sys

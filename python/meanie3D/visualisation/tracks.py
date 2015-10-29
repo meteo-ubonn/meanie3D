@@ -1,7 +1,3 @@
-##
-# This modules contains code to visualise tracks in visit.
-#
-
 import glob
 import os
 import pprint

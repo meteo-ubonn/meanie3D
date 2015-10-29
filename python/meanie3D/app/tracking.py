@@ -1,5 +1,3 @@
-__author__ = "juergen.simon@uni-bonn.de"
-
 import glob
 import os
 import os.path

@@ -1,9 +1,3 @@
-##
-# This modules contains a number of utility methods for visualisation
-# purposes, such as commonly used plots, setup of color tables, adding
-# annotations to plots etc.
-#
-
 import glob
 import os
 import os.path

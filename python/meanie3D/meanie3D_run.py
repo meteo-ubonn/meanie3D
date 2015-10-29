@@ -1,12 +1,5 @@
 #!/usr/bin/python
 
-## meanie3D.py
-#
-# Python script for running a whole set of netcdf files through the clustering and tracking process
-# Includes postprocessing chain for stats, visualisation and cross-scale comparison
-#
-# \author Juergen Simon (juergen.simon@uni-bonn.de)
-
 import os
 import sys
 import getopt
@@ -20,19 +13,6 @@ import meanie3D.app.postprocessing
 
 # Make sure the C++ executables are installed
 meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats","rm"])
-
-##
-# \return meanie3D package version
-#
-def getVersion():
-    from . import __version__
-    return __version__
-
-##
-# \return meanie3D package location
-#
-def getHome():
-    return meanie3D.__file__
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -74,7 +54,7 @@ def print_configuration_format():
 ## Prints version info and exits
 #
 def print_version():
-    print "meanie3D: " + getVersion() + "\n"
+    print "meanie3D: " + meanie3D.getVersion() + "\n"
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
