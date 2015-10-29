@@ -46,6 +46,9 @@ namespace m3D {
         size_t              m_size;
 
     public:
+        
+        LinearIndexMapping() {
+        }
 
         /** Constructs a mapping object 
          */

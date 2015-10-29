@@ -327,6 +327,7 @@ int main(int argc, char** argv)
         cout << "\tmerge/split threshold: " << mergeSplitThreshold << endl;
         cout << "\tcontinue id in merge/split: " << (continueIDs ? "yes" : "no") << endl;
         cout << "\tmerge/split id continuation threshold: " << mergeSplitContinuationThreshold << endl;
+        cout << "\tusing displacement vectors to shift previous clusters: " << (useDisplacementVectors?"yes":"no") << endl;
 
 #if WITH_VTK
         cout << "\twriting results out as vtk:" << (write_vtk ? "yes" : "no") << endl;
@@ -426,16 +427,14 @@ int main(int argc, char** argv)
     // Perform tracking
 
     Tracking<FS_TYPE> tracking(range_weight, size_weight, correlation_weight);
-
     tracking.setMaxTrackingSpeed(max_speed);
-
-    tracking.set_max_deltaT(max_time);
-
+    tracking.setMaxDeltaT(max_time);
     tracking.setMergeSplitThreshold(mergeSplitThreshold);
-
     tracking.setMergeSplitContinuationThreshold(mergeSplitContinuationThreshold);
+    tracking.setUseDisplacementVectors(useDisplacementVectors);
+    tracking.setVerbosity(verbosity);
 
-    tracking.track(previous, current, cs, &tracking_variable_name, verbosity);
+    tracking.track(previous, current, cs, &tracking_variable_name);
 
 #if WITH_VTK
     if (write_vtk)

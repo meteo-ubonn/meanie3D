@@ -462,7 +462,7 @@ namespace m3D {
                 // Time difference calculation can be a second or so
                 // off. Allow some slack.
 
-                proto_tracker.set_max_deltaT(::units::values::s(930));
+                proto_tracker.setMaxDeltaT(::units::values::s(930));
 
                 // TODO: tracking needs to be refactored to work on
                 // weight function histograms rather than variable

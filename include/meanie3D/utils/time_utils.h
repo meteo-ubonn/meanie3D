@@ -42,8 +42,7 @@ namespace m3D { namespace utils {
     {
         if (!message.empty())
         {
-            cout << message << endl;
-            fflush(stdout);
+            cout << message << flush;
         }
         gettimeofday(&start_time_,NULL);
     }

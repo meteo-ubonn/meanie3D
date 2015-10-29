@@ -34,7 +34,7 @@ namespace m3D { namespace utils {
     // Matrix
 
     template <typename T>
-    struct Matrix
+    struct SimpleMatrix
     {
         // A matrix is a 2D vector construct in this context
         typedef vector< vector<T> > matrix_t;

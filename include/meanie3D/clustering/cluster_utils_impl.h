@@ -45,7 +45,7 @@ namespace m3D {
                                                    WeightFunction<T> *weight_function,
                                                    const Verbosity verbosity)
     {
-        using utils::Matrix;
+        using utils::SimpleMatrix;
         using namespace utils::vectors;
         
         if ( verbosity >= VerbosityNormal )
@@ -74,8 +74,8 @@ namespace m3D {
         size_t old_count = previous->clusters.size();
         id_t current_id = current->clusters[current->clusters.size()-1]->id;
         
-        typename Matrix<T>::matrix_t coverOldByNew = Matrix<T>::create_matrix(new_count,old_count);
-        typename Matrix<T>::matrix_t coverNewByOld = Matrix<T>::create_matrix(new_count,old_count);
+        typename SimpleMatrix<T>::matrix_t coverOldByNew = SimpleMatrix<T>::create_matrix(new_count,old_count);
+        typename SimpleMatrix<T>::matrix_t coverNewByOld = SimpleMatrix<T>::create_matrix(new_count,old_count);
         
         // compute overlap
         
