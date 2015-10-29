@@ -19,7 +19,7 @@ import meanie3D.app.utils
 import meanie3D.app.postprocessing
 
 # Make sure the C++ executables are installed
-meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats"])
+meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats","rm"])
 
 ##
 # \return meanie3D package version
@@ -166,6 +166,10 @@ def main():
     configuration["output_dir"] = os.path.abspath(output_dir)
     configuration["resume"] = resume
     configuration['config_file'] = os.path.abspath(config_file)
+
+    # Remove previous results
+    if resume == False:
+        meanie3D.app.utils.removeOutputDirectories(configuration,scales)
 
     # Run the detection and tracking steps
     if (configuration['detection'] or configuration['tracking']):

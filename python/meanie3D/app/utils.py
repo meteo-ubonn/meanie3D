@@ -33,8 +33,7 @@ def number_of_netcdf_files(source_dir):
     return len(netcdf_list)
 
 
-## Creates an output filename based on given filename by
-# appending -<slicenum>.nc at the end.
+##
 # \param basic filename
 # \param slice num
 # \returns filename-1.nc
@@ -43,12 +42,12 @@ def numbered_filename(filename,index):
     return os.path.splitext(basename)[0]+"-"+str(index)+".nc"
 
 
-## Deletes the directories 'log' and 'netcdf' underneath
-# base path. Removes previous ones if they do exist
-#
-# \param base path
 # -------------------------------------------------------------------
 def create_ouput_directories(base_path):
+    '''
+    :param base_path:
+    :return:
+    '''
     # base path
     if not os.path.exists(base_path):
         os.makedirs(base_path)
@@ -65,6 +64,46 @@ def create_ouput_directories(base_path):
         shutil.rmtree(netcdf_dir)
     os.makedirs(netcdf_dir)
 
+    return
+
+
+def askYesNo(prompt):
+    '''
+    Gets an answer to a yes/no kind of question
+    :param prompt:
+    :return:True if yes, False if no.
+    '''
+    result = None
+    msg = "%s [y|n]:" % prompt
+    while not result in ('y','Y','n','N'):
+        result = raw_input(msg)
+    return result in ('y','Y')
+
+def removeOutputDirectories(config,scales):
+    '''
+    :param config:
+    :param scales:
+    :return:
+    '''
+    dirsExist = False
+    output_dir = config['output_dir']
+    if scales:
+        for scale in scales:
+            dir = output_dir + "/scale"+str(scale)
+            dirsExist = (dirsExist or os.path.exists(dir))
+    else:
+        dir = output_dir + "/clustering"
+        dirsExist = os.path.exists(dir)
+
+    if dirsExist:
+        if askYesNo("Results exist from previous runs. They will be removed. Do you wish to proceed?"):
+            if scales:
+                for scale in scales:
+                    dir = output_dir + "/scale"+str(scale)
+                    external.execute_command("rm","-rf %s" % os.path.abspath(dir))
+            else:
+                dir = output_dir + "/clustering"
+                external.execute_command("rm","-rf %s" % os.path.abspath(dir))
     return
 
 ##
