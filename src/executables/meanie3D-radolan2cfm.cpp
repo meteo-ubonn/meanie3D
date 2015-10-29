@@ -12,16 +12,16 @@ using namespace boost;
 using namespace Radolan;
 using namespace m3D;
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
-    try 
+    try
     {
         program_options::options_description desc("Options");
         desc.add_options()
                 ("help,h", "show this message")
                 ("version", "print version information and exit")
                 ("endianess", "print out the system's endianess")
-                ("rvp6","Write out one-byte formats like RX as BYTE with rvp6 conversion, not as converted FLOAT")
+                ("rvp6", "Write out one-byte formats like RX as BYTE with rvp6 conversion, not as converted FLOAT")
                 ("file,f", program_options::value<string>(), "Radolan filename or directory containing radolan scans")
                 ("output-dir,o", program_options::value<string>()->default_value("."), "Path to write the results to. Defaults to current directory.")
                 ("threshold,t", program_options::value<float>(), "Value threshold (depends of product)")
@@ -32,41 +32,44 @@ int main(int argc, char** argv)
                 ;
 
         program_options::variables_map vm;
-        try {
+        try
+        {
             program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
             program_options::notify(vm);
-        }
-        catch (std::exception &e)
+        }        catch (std::exception &e)
         {
             cerr << "ERROR:could not parse command line:" << e.what() << endl;
             exit(EXIT_FAILURE);
         }
 
-        if (vm.count("version") != 0) {
+        if (vm.count("version") != 0)
+        {
             cout << m3D::VERSION << endl;
             exit(EXIT_SUCCESS);
         }
 
         if (vm.count("endianess") != 0)
         {
-             cout << "Endianess: " << (isLittleEndian() ? "little" : "big") << endl;
-             exit(EXIT_SUCCESS);
+            cout << "Endianess: " << (isLittleEndian() ? "little" : "big") << endl;
+            exit(EXIT_SUCCESS);
         }
-        
-        if (vm.count("help") != 0 || argc < 2 || vm.count("file") == 0) {
+
+        if (vm.count("help") != 0 || argc < 2 || vm.count("file") == 0)
+        {
             cout << desc << "\n";
             exit(EXIT_SUCCESS);
         }
 
         // check parameters
 
-        bool convert_to_netcdf = (vm.count("netcdf") == 0  && vm.count("vtk") == 0) 
-                                        || (vm.count("netcdf") > 0);
-        
+        bool convert_to_netcdf = (vm.count("netcdf") == 0 && vm.count("vtk") == 0)
+                || (vm.count("netcdf") > 0);
+
         bool convert_to_vtk = (vm.count("vtk") > 0);
         bool write_as_rvp6 = (vm.count("rvp6") > 0);
 
-        if (vm.count("file") == 0) {
+        if (vm.count("file") == 0)
+        {
             cerr << "No input" << endl;
             exit(EXIT_FAILURE);
         }
@@ -85,44 +88,55 @@ int main(int argc, char** argv)
 
         vector<std::string> file_paths;
 
-        if (fs::exists(path)) {
-            if (fs::is_directory(path)) {
-                for (fs::directory_iterator dir_iter(path); dir_iter != end_iter; ++dir_iter) {
-                    if (fs::is_regular_file(dir_iter->status())) {
+        if (fs::exists(path))
+        {
+            if (fs::is_directory(path))
+            {
+                for (fs::directory_iterator dir_iter(path); dir_iter != end_iter; ++dir_iter)
+                {
+                    if (fs::is_regular_file(dir_iter->status()))
+                    {
                         std::string fn = dir_iter->path().generic_string();
 
-                        if (0 == fn.compare(fn.length() - ending.length(), ending.length(), ending)) {
+                        if (0 == fn.compare(fn.length() - ending.length(), ending.length(), ending))
+                        {
                             file_paths.push_back(fn);
                         }
                     }
                 }
-            } else {
+            } else
+            {
                 std::string fn = path.generic_string();
                 file_paths.push_back(fn);
             }
-        } else {
+        } else
+        {
             cerr << "FATAL:File or path does not exist: " << infile << endl;
             exit(EXIT_FAILURE);
         }
 
         boost::filesystem::path outpath(vm["output-dir"].as<std::string>());
 
-        if (!boost::filesystem::exists(outpath) || !boost::filesystem::is_directory(outpath)) {
+        if (!boost::filesystem::exists(outpath) || !boost::filesystem::is_directory(outpath))
+        {
             cerr << "FATAL:Can't write to path " << outpath << endl;
             exit(EXIT_FAILURE);
         }
 
         RDDataType *threshold = NULL;
 
-        if (vm.count("threshold") > 0) {
+        if (vm.count("threshold") > 0)
+        {
             threshold = (RDDataType *) malloc(sizeof (RDDataType));
             *threshold = vm["threshold"].as<RDDataType>();
         }
 
-        if (convert_to_netcdf) {
+        if (convert_to_netcdf)
+        {
             vector<std::string>::iterator fi;
 
-            for (fi = file_paths.begin(); fi != file_paths.end(); fi++) {
+            for (fi = file_paths.begin(); fi != file_paths.end(); fi++)
+            {
                 std::string fn = *fi;
 
                 boost::filesystem::path path = outpath;
@@ -133,17 +147,18 @@ int main(int argc, char** argv)
 
                 netCDF::NcFile *file = NULL;
 
-                try 
+                try
                 {
-                    file = CFConvertRadolanFile(fn.c_str(), 
-                            path.generic_string().c_str(), 
-                            write_as_rvp6, 
+                    file = CFConvertRadolanFile(fn.c_str(),
+                            path.generic_string().c_str(),
+                            write_as_rvp6,
                             threshold,
                             netCDF::NcFile::replace,
                             false);
-                    
+
                     cout << " done." << endl;
-                }                catch (CFFileConversionException e) {
+                } catch (CFFileConversionException e)
+                {
                     cerr << endl << "ERROR:exception:" << e.what() << endl;
                 }
 
@@ -153,10 +168,12 @@ int main(int argc, char** argv)
 
 #if WITH_VTK
 
-        if (convert_to_vtk) {
+        if (convert_to_vtk)
+        {
             vector<std::string>::iterator fi;
 
-            for (fi = file_paths.begin(); fi != file_paths.end(); fi++) {
+            for (fi = file_paths.begin(); fi != file_paths.end(); fi++)
+            {
                 std::string fn = *fi;
 
                 string outfile = fn + ".vtk";
@@ -170,13 +187,12 @@ int main(int argc, char** argv)
         }
 #endif
 
-    }    
-    catch (const std::exception& e) 
+    } catch (const std::exception& e)
     {
         cerr << "FATAL:exception: " << e.what() << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     exit(EXIT_SUCCESS);
 
 }

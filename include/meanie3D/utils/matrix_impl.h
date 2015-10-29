@@ -29,39 +29,39 @@
 
 #include "matrix.h"
 
-namespace m3D { namespace utils {
+namespace m3D {
+    namespace utils {
 
-    template <typename T>
-    typename SimpleMatrix<T>::matrix_t
-    SimpleMatrix<T>::create_matrix(size_t width, size_t height)
-    {
-        matrix_t matrix;
-
-        matrix.resize(width);
-
-        for (int i=0; i<width; ++i)
+        template <typename T>
+        typename SimpleMatrix<T>::matrix_t
+        SimpleMatrix<T>::create_matrix(size_t width, size_t height)
         {
-            matrix[i].resize(height);
+            matrix_t matrix;
+
+            matrix.resize(width);
+
+            for (int i = 0; i < width; ++i) {
+                matrix[i].resize(height);
+            }
+
+            return matrix;
         }
 
-        return matrix;
-    }
-
-    template <typename T>
-    typename SimpleMatrix<T>::flag_matrix_t
-    SimpleMatrix<T>::create_flag_matrix(size_t width, size_t height, int defaultValue)
-    {
-        flag_matrix_t matrix;
-
-        matrix.resize(width);
-
-        for (size_t i=0; i<width; ++i)
+        template <typename T>
+        typename SimpleMatrix<T>::flag_matrix_t
+        SimpleMatrix<T>::create_flag_matrix(size_t width, size_t height, int defaultValue)
         {
-            matrix[i].resize(height,defaultValue);
-        }
+            flag_matrix_t matrix;
 
-        return matrix;
+            matrix.resize(width);
+
+            for (size_t i = 0; i < width; ++i) {
+                matrix[i].resize(height, defaultValue);
+            }
+
+            return matrix;
+        }
     }
-}}
+}
 
 #endif

@@ -34,7 +34,7 @@
 
 using namespace Radolan;
 
-namespace m3D { 
+namespace m3D {
 
     /** Converts the radolan file at path into a CF-Metadata compliant NetCDF-File.
      * 
@@ -48,13 +48,13 @@ namespace m3D {
      * @return NCFile* NetCDF-Filehandler
      * @throw CFFileConversionException
      */
-    netCDF::NcFile * CFConvertRadolanFile( const char* radolanPath,
-                                  const char* netcdfPath,
-                                  bool write_one_bytes_as_byte = false,
-                                  const RDDataType *threshold = NULL,
-                                  netCDF::NcFile::FileMode mode = netCDF::NcFile::replace, 
-                                  bool omitOutside = true)
-        throw (CFFileConversionException);
+    netCDF::NcFile * CFConvertRadolanFile(const char* radolanPath,
+            const char* netcdfPath,
+            bool write_one_bytes_as_byte = false,
+            const RDDataType *threshold = NULL,
+            netCDF::NcFile::FileMode mode = netCDF::NcFile::replace,
+            bool omitOutside = true)
+    throw (CFFileConversionException);
 
     /** Converts the radolan file at path into a CF-Metadata compliant NetCDF-File. 
      * @param radolanPath full path to the radolan file
@@ -66,12 +66,12 @@ namespace m3D {
      * @return NCFile* NetCDF-Filehandler
      * @throw CFFileConversionException
      */
-    netCDF::NcFile * CFConvertRadolanScan( RDScan *scan,
-                                  const char* netcdfPath, 
-                                  bool write_one_bytes_as_byte,
-                                  const RDDataType *threshold = NULL,
-                                  netCDF::NcFile::FileMode mode = netCDF::NcFile::write)
-        throw (CFFileConversionException);
+    netCDF::NcFile * CFConvertRadolanScan(RDScan *scan,
+            const char* netcdfPath,
+            bool write_one_bytes_as_byte,
+            const RDDataType *threshold = NULL,
+            netCDF::NcFile::FileMode mode = netCDF::NcFile::write)
+    throw (CFFileConversionException);
 
     /** Simple function to get a visual rep of the file with ascii characters 
      * on terminal.
@@ -79,13 +79,13 @@ namespace m3D {
      * @param print values every latVertices points in y
      * @param print values every lonVertices points in x
      */
-    void CFPrintConvertedRadolanScan( netCDF::NcFile *file, int latVertices=20, int lonVertices=20 );
+    void CFPrintConvertedRadolanScan(netCDF::NcFile *file, int latVertices = 20, int lonVertices = 20);
 
     /** CF-Metadata 'standard_name' for the given scan type 
      * @param scanType
      * @return standard_name
      */
-    const char * CFRadolanDataStandardName( RDScanType scanType );
+    const char * CFRadolanDataStandardName(RDScanType scanType);
 
 }
 

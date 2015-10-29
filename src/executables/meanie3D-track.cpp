@@ -327,7 +327,7 @@ int main(int argc, char** argv)
         cout << "\tmerge/split threshold: " << mergeSplitThreshold << endl;
         cout << "\tcontinue id in merge/split: " << (continueIDs ? "yes" : "no") << endl;
         cout << "\tmerge/split id continuation threshold: " << mergeSplitContinuationThreshold << endl;
-        cout << "\tusing displacement vectors to shift previous clusters: " << (useDisplacementVectors?"yes":"no") << endl;
+        cout << "\tusing displacement vectors to shift previous clusters: " << (useDisplacementVectors ? "yes" : "no") << endl;
 
 #if WITH_VTK
         cout << "\twriting results out as vtk:" << (write_vtk ? "yes" : "no") << endl;
@@ -392,8 +392,7 @@ int main(int argc, char** argv)
     if (tracking_variable_name == "__default__")
     {
         tracking_var = current->feature_variables[current->dimensions.size()];
-    }
-    else
+    } else
     {
         bool found_tracking_var = false;
 

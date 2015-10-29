@@ -42,177 +42,174 @@ namespace m3D {
     template<typename T>
     class TrackCluster : public Cluster<T>
     {
-        private:
-            
+    private:
+
 #pragma mark -
 #pragma mark Private members
-            
-            // A running number unique for each cluster 
-            unsigned long       m_cid;
-            
-            // The file containing the actual data
-            std::string         m_filename;
-            
-            // name of the cluster's variable in external memory
-            std::string         m_variable_name;
-            
-            // Flag indicating if points need writing off
-            // or whether they can remain in memory]
-            bool                m_writes_points_to_disk;
 
-            // Flag indicating if the data is available in system
-            // memory or if it needs reading from external memory
-            bool                m_needs_reading;
-            
-            // Buffers cluster size
-            size_t              m_size; 
-            
-            std::vector<T>      m_geometrical_center;
-            
+        // A running number unique for each cluster 
+        unsigned long m_cid;
+
+        // The file containing the actual data
+        std::string m_filename;
+
+        // name of the cluster's variable in external memory
+        std::string m_variable_name;
+
+        // Flag indicating if points need writing off
+        // or whether they can remain in memory]
+        bool m_writes_points_to_disk;
+
+        // Flag indicating if the data is available in system
+        // memory or if it needs reading from external memory
+        bool m_needs_reading;
+
+        // Buffers cluster size
+        size_t m_size;
+
+        std::vector<T> m_geometrical_center;
+
 #pragma mark -
 #pragma mark Private member functions
 
-            /**  Write point list out to file.
-             * 
-             * TODO: perhaps find a faster, binary file format
-             * 
-             * @param points
-             */
-            void write_points(typename Point<T>::list points)
-            {
-                std::ofstream f(m_filename.c_str(),ios::out);
-                if (!f.is_open())
-                {
-                    cerr << "FATAL:failed to open file " << m_filename << " for writing." << endl;
-                    exit(EXIT_FAILURE);
-                }
-                
-                // three lines per point: values, gridpoint, coordinate
-                
-                typename Point<T>::list::iterator pi;
-                for (pi=points.begin(); pi!=points.end(); pi++)
-                {
-                    typename Point<T>::ptr p = *pi;
-                    f << p->values << endl;
-                    f << p->gridpoint << endl;
-                }
-                
-                f.close();
+        /**  Write point list out to file.
+         * 
+         * TODO: perhaps find a faster, binary file format
+         * 
+         * @param points
+         */
+        void write_points(typename Point<T>::list points)
+        {
+            std::ofstream f(m_filename.c_str(), ios::out);
+            if (!f.is_open()) {
+                cerr << "FATAL:failed to open file " << m_filename << " for writing." << endl;
+                exit(EXIT_FAILURE);
             }
 
-            /** Reads points from file.
-             * 
-             * @param list
-             */            
-            void read_points()
-            {
-                using m3D::utils::vectors::from_string;
+            // three lines per point: values, gridpoint, coordinate
 
-                ifstream f(m_filename.c_str(),ios::in);
-                if (!f.is_open())
-                {
-                    cerr << "FATAL:failed to open file " << m_filename << " for reading." << endl;
+            typename Point<T>::list::iterator pi;
+            for (pi = points.begin(); pi != points.end(); pi++) {
+                typename Point<T>::ptr p = *pi;
+                f << p->values << endl;
+                f << p->gridpoint << endl;
+            }
+
+            f.close();
+        }
+
+        /** Reads points from file.
+         * 
+         * @param list
+         */
+        void read_points()
+        {
+            using m3D::utils::vectors::from_string;
+
+            ifstream f(m_filename.c_str(), ios::in);
+            if (!f.is_open()) {
+                cerr << "FATAL:failed to open file " << m_filename << " for reading." << endl;
+                exit(EXIT_FAILURE);
+            }
+
+            std::string line;
+            while (getline(f, line)) {
+                // values
+                typename Point<T>::ptr p = PointFactory<T>::get_instance()->create();
+                p->values = from_string<T>(line);
+
+                // grid point
+                if (!getline(f, line)) {
+                    cerr << "FATAL:failed to read line from " << m_filename << endl;
                     exit(EXIT_FAILURE);
                 }
+                p->gridpoint = from_string<int>(line);
 
-                std::string line;
-                while (getline(f,line))
-                {
-                    // values
-                    typename Point<T>::ptr p = PointFactory<T>::get_instance()->create();
-                    p->values = from_string<T>(line);
+                // reconstruct coordinate from spatial range
+                p->coordinate = std::vector<T>(p->values.begin(),
+                        p->values.begin() + p->gridpoint.size());
 
-                    // grid point
-                    if (!getline(f,line))
-                    {
-                        cerr << "FATAL:failed to read line from " << m_filename << endl;
-                        exit(EXIT_FAILURE);
-                    }
-                    p->gridpoint = from_string<int>(line);
-
-                    // reconstruct coordinate from spatial range
-                    p->coordinate = std::vector<T>(p->values.begin(), 
-                            p->values.begin()+p->gridpoint.size());
-                    
-                    this->add_point(p);
-                }
+                this->add_point(p);
             }
-            
+        }
+
 #pragma mark -
 #pragma mark Constructor/Destructor
 
-        public:
+    public:
 
-            /** Constructor
-             * 
-             * @param c_id this id must be unique.
-             * @param cluster 
-             */
-            TrackCluster(unsigned long c_id, 
-                         typename Cluster<T>::ptr cluster,
-                         bool write_points_to_disk = false)
-            : m_cid(c_id)
-            , m_writes_points_to_disk(write_points_to_disk)
-            , m_needs_reading(true)
-            
-            {
-                this->id = cluster->id;
-                this->mode = cluster->mode;
-                this->m_rank = cluster->rank();
-                this->m_spatial_rank = cluster->spatial_rank();
-                this->m_size = cluster->size();
-                this->m_geometrical_center = cluster->geometrical_center();
-                // cout << "TrackingCluster::Constructor @" << this << " [" << this->m_geometrical_center << "]" << endl;
-                
-                std::string num_postfix = boost::lexical_cast<string>(c_id);
-                
-                // name of the external 'memory'
-                m_filename = "/tmp/cluster_" + num_postfix + ".txt";
-                
-                // write out to external memory
-                if (m_writes_points_to_disk) {
-                    this->write_points(cluster->get_points());
-                } else {
-                    // Add a copy of the points
-//                    for (size_t i=0; i<cluster->size(); i++) {
-//                        typename Point<T>::ptr original = cluster->get_points().at(i);
-//                        typename Point<T>::ptr copy = PointFactory<T>::get_instance()->copy(original);
-//                        this->get_points().push_back(copy);
-//                    }
-//                    cluster->clear(true);
-                }
+        /** Constructor
+         * 
+         * @param c_id this id must be unique.
+         * @param cluster 
+         */
+        TrackCluster(unsigned long c_id,
+                typename Cluster<T>::ptr cluster,
+                bool write_points_to_disk = false)
+        : m_cid(c_id)
+        , m_writes_points_to_disk(write_points_to_disk)
+        , m_needs_reading(true)
+
+        {
+            this->id = cluster->id;
+            this->mode = cluster->mode;
+            this->m_rank = cluster->rank();
+            this->m_spatial_rank = cluster->spatial_rank();
+            this->m_size = cluster->size();
+            this->m_geometrical_center = cluster->geometrical_center();
+            // cout << "TrackingCluster::Constructor @" << this << " [" << this->m_geometrical_center << "]" << endl;
+
+            std::string num_postfix = boost::lexical_cast<string>(c_id);
+
+            // name of the external 'memory'
+            m_filename = "/tmp/cluster_" + num_postfix + ".txt";
+
+            // write out to external memory
+            if (m_writes_points_to_disk) {
+                this->write_points(cluster->get_points());
+            } else {
+                // Add a copy of the points
+                //                    for (size_t i=0; i<cluster->size(); i++) {
+                //                        typename Point<T>::ptr original = cluster->get_points().at(i);
+                //                        typename Point<T>::ptr copy = PointFactory<T>::get_instance()->copy(original);
+                //                        this->get_points().push_back(copy);
+                //                    }
+                //                    cluster->clear(true);
             }
-            
-            ~TrackCluster() {
-                this->clear(true);
-            }
-            
+        }
+
+        ~TrackCluster()
+        {
+            this->clear(true);
+        }
+
 #pragma mark -
 #pragma mark Public member functions
 
-            virtual void clear(bool deletion_flag=false)
-            {
-                Cluster<T>::clear(deletion_flag);
-                this->m_needs_reading = true;
+        virtual void clear(bool deletion_flag = false)
+        {
+            Cluster<T>::clear(deletion_flag);
+            this->m_needs_reading = true;
+        }
+
+        typename Point<T>::list &get_points()
+        {
+            if (m_writes_points_to_disk && this->m_needs_reading) {
+                this->read_points();
+                this->m_needs_reading = false;
             }
-            
-            typename Point<T>::list &get_points()
-            {
-                if (m_writes_points_to_disk && this->m_needs_reading)
-                {
-                    this->read_points();
-                    this->m_needs_reading = false;
-                }
-                return Cluster<T>::get_points();
-            }
-            
-            vector<T> geometrical_center() {
-                return this->m_geometrical_center;
-            }
-            
-            size_t size() {
-                return this->m_size;
-            }
+            return Cluster<T>::get_points();
+        }
+
+        vector<T> geometrical_center()
+        {
+            return this->m_geometrical_center;
+        }
+
+        size_t size()
+        {
+            return this->m_size;
+        }
     };
 };
 

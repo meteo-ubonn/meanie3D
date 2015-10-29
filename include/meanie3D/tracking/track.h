@@ -32,65 +32,69 @@
 #include <list>
 #include <unordered_map>
 
-namespace m3D { 
+namespace m3D {
 
     /** This simple class constitutes one track. It mainly consists
      * of public properties.
-     */        
+     */
     template<typename T>
     class Track
     {
-        public:
-            
+    public:
+
 #pragma mark -
 #pragma mark Type definitions / Constants
-            
-            typedef Track* ptr;
-            typedef std::unordered_map< m3D::id_t, ptr> trackmap;
+
+        typedef Track* ptr;
+        typedef std::unordered_map< m3D::id_t, ptr> trackmap;
 
 #pragma mark -
 #pragma mark Constructor/Destructor
 
-            /** Default constructor.
-             */
-            Track() {
-            };
+        /** Default constructor.
+         */
+        Track()
+        {
+        };
 
 #pragma mark -
 #pragma mark Public properties
 
-            /** the cluster's identifier
-             */
-            m3D::id_t id; 
+        /** the cluster's identifier
+         */
+        m3D::id_t id;
 
-            /** A list of pointers to cluster objects constituting the
-             * actual track.
-             */
-            std::list< typename Cluster<T>::ptr > clusters; 
+        /** A list of pointers to cluster objects constituting the
+         * actual track.
+         */
+        std::list< typename Cluster<T>::ptr > clusters;
 
-            /** list of source files, one per cluster in the list.
-             */
-            std::vector< std::string > sourcefiles; 
+        /** list of source files, one per cluster in the list.
+         */
+        std::vector< std::string > sourcefiles;
 
-            /** A list of minimum values found for each variable
-             * in the cluster's value range.
-             */
-            std::vector<T> min;
+        /** A list of minimum values found for each variable
+         * in the cluster's value range.
+         */
+        std::vector<T> min;
 
-            /** A list of maximum values found for each variable
-             * in the cluster's value range.
-             */
-            std::vector<T> max;
-            
+        /** A list of maximum values found for each variable
+         * in the cluster's value range.
+         */
+        std::vector<T> max;
+
 #pragma mark -
 #pragma mark Public methods
-            
-            /** Shortcut for clusters.size()
-             * 
-             * @return number of clusters in this track.
-             */
-            size_t size() { return clusters.size(); };
-            
+
+        /** Shortcut for clusters.size()
+         * 
+         * @return number of clusters in this track.
+         */
+        size_t size()
+        {
+            return clusters.size();
+        };
+
     };
 }
 

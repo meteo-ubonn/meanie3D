@@ -35,12 +35,12 @@ namespace m3D {
 
     /** This represents one point f in feature space F.
      */
-    template <class T> 
+    template <class T>
     struct Histogram
     {
     private:
 
-        vector<size_t>  m_bins;
+        vector<size_t> m_bins;
 
     public:
 
@@ -51,25 +51,35 @@ namespace m3D {
 
         /** Default @constructor is private
          */
-        Histogram() {};
+        Histogram()
+        {
+        };
 
         /** @constructor
          * @param number of bins
          */
-        Histogram( const size_t &size ) : m_bins(vector<size_t>(size,0)) {};
+        Histogram(const size_t &size) : m_bins(vector<size_t>(size, 0))
+        {
+        };
 
         /** Constructor.
          * @param initial bins
          */
-        Histogram( vector<size_t> &bins ) : m_bins(bins) {};
+        Histogram(vector<size_t> &bins) : m_bins(bins)
+        {
+        };
 
         /** Copy constructor
          */
-        Histogram( const Histogram<T> &o ) : m_bins(o.bins()) {};
+        Histogram(const Histogram<T> &o) : m_bins(o.bins())
+        {
+        };
 
         /** Destructor 
          */
-        ~Histogram() {};
+        ~Histogram()
+        {
+        };
 
 #pragma mark -
 #pragma mark Operators
@@ -77,12 +87,18 @@ namespace m3D {
         /** equals operator == */
 
         bool
-        operator == (const Histogram<T> &o) { return this->m_bins = o.bins(); };
+        operator==(const Histogram<T> &o)
+        {
+            return this->m_bins = o.bins();
+        };
 
         /** assignment operator = */
 
         Histogram<T>
-        operator = (const Histogram& o) { return Histogram<T>(o); };
+                operator=(const Histogram& o)
+        {
+            return Histogram<T>(o);
+        };
 
 #pragma mark -
 #pragma mark Accessors
@@ -90,7 +106,10 @@ namespace m3D {
         /** Get the number of bins
          * @return size
          */
-        const size_t size() const { return this->m_bins.size(); };
+        const size_t size() const
+        {
+            return this->m_bins.size();
+        };
 
         /** Contains the sum of all bins 
          */
@@ -98,12 +117,15 @@ namespace m3D {
 
         /** Access all bins at once
          */
-        const vector<size_t> &bins() const { return m_bins; };
+        const vector<size_t> &bins() const
+        {
+            return m_bins;
+        };
 
         /** Access a bin directly
          * @param index
          */
-        T& operator [] (const size_t index);
+        T& operator[](const size_t index);
 
         /** Allocates an int array and fills it with the bins. 
          * @return int array of size this->size()
@@ -127,7 +149,7 @@ namespace m3D {
          * @param number of bins (default 10).
          */
         static typename Histogram<T>::ptr
-        create( typename Point<T>::list &points, size_t variable_index, T min, T max, size_t number_of_bins = 10 );
+        create(typename Point<T>::list &points, size_t variable_index, T min, T max, size_t number_of_bins = 10);
 
 #pragma mark -
 #pragma mark Histogram Correlation
@@ -137,14 +159,14 @@ namespace m3D {
          * @param other histogram
          * @return rho [-1.0 .. 1.0]
          */
-        T correlate_spearman( const typename Histogram<T>::ptr o );
+        T correlate_spearman(const typename Histogram<T>::ptr o);
 
         /** Kendall histogram corellation with another histogram
          * (see numerical recipes 2nd edition)
          * @param other histogram
          * @return tau [-1.0 .. 1.0]
          */
-        T correlate_kendall( const typename Histogram<T>::ptr o );
+        T correlate_kendall(const typename Histogram<T>::ptr o);
 
     };
 }

@@ -7,13 +7,14 @@
 #include <map>
 
 namespace m3D {
-    
+
     /** Function that simply creates a weight by returning
      * the value of a variable at each point. 
      * @deprecated to be removed shortly
      */
     template <class T>
-    class VariableWeighed : public WeightFunction<T> {
+    class VariableWeighed : public WeightFunction<T>
+    {
     private:
 
         NcVar m_variable;

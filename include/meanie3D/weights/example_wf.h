@@ -38,24 +38,23 @@
 #include <vector>
 
 namespace m3D {
-    
+
     template <class T>
     class ExampleWF : public WeightFunction<T>
     {
     private:
 
-        MultiArray<T>       *m_weight;
+        MultiArray<T> *m_weight;
 
     public:
 
         ExampleWF(FeatureSpace<T> *fs, const vector<T> &center)
         {
             using namespace utils::vectors;
-            
-            m_weight = new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(),0.0);
-            
-            for (size_t i=0; i < fs->points.size(); i++)
-            {
+
+            m_weight = new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0);
+
+            for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
                 T distance = vector_norm(center - p->coordinate);
                 m_weight->set(p->gridpoint, distance);
@@ -64,8 +63,7 @@ namespace m3D {
 
         ~ExampleWF()
         {
-            if (m_weight!=NULL)
-            {
+            if (m_weight != NULL) {
                 delete m_weight;
                 m_weight = NULL;
             }

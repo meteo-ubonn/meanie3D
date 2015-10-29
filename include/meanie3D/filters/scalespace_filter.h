@@ -39,42 +39,41 @@ namespace m3D {
     template <typename T>
     class ScaleSpaceFilter : public FeatureSpaceFilter<T>
     {
-
     private:
 
-        T                               m_scale;            /// Scale
+        T m_scale; /// Scale
 
-        T                               m_decay;            /// Decay
+        T m_decay; /// Decay
 
-        vector<ScaleSpaceKernel<T> >    m_kernels;          /// Scale-Space kernel
+        vector<ScaleSpaceKernel<T> > m_kernels; /// Scale-Space kernel
 
-        map<size_t,T>                   m_unfiltered_min;   /// unfiltered minimum
-        map<size_t,T>                   m_unfiltered_max;   /// unfiltered maximum
+        map<size_t, T> m_unfiltered_min; /// unfiltered minimum
+        map<size_t, T> m_unfiltered_max; /// unfiltered maximum
 
-        map<size_t,T>                   m_min;              /// minimum tracker
-        map<size_t,T>                   m_max;              /// maximum tracker
+        map<size_t, T> m_min; /// minimum tracker
+        map<size_t, T> m_max; /// maximum tracker
 
-        boost::progress_display         *m_progress_bar;    /// Progress meter
+        boost::progress_display *m_progress_bar; /// Progress meter
 
-        size_t                          m_modified_points;
+        size_t m_modified_points;
 
-        size_t                          m_created_points;
+        size_t m_created_points;
 
-        vector<netCDF::NcVar>           m_excluded_vars;
+        vector<netCDF::NcVar> m_excluded_vars;
 
         void
         applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
-                                     ArrayIndex<T> *originalIndex,
-                                     ArrayIndex<T> *filteredPoints,
-                                     vector<size_t> &dimensionIndexes,
-                                     size_t dimensionIndex,
-                                     typename CoordinateSystem<T>::GridPoint& gridpoint);
+                ArrayIndex<T> *originalIndex,
+                ArrayIndex<T> *filteredPoints,
+                vector<size_t> &dimensionIndexes,
+                size_t dimensionIndex,
+                typename CoordinateSystem<T>::GridPoint& gridpoint);
 
         void
         applyWithArrayIndexForDimension(FeatureSpace<T> *fs,
-                                        ArrayIndex<T> *originalIndex,
-                                        ArrayIndex<T> *filteredPoints,
-                                        size_t fixedDimensionIndex);
+                ArrayIndex<T> *originalIndex,
+                ArrayIndex<T> *filteredPoints,
+                size_t fixedDimensionIndex);
 
         void
         applyWithArrayIndex(FeatureSpace<T> *fs);
@@ -82,13 +81,13 @@ namespace m3D {
 #pragma mark -
 #pragma mark Paralellized versions
 
-        void 
+        void
         apply_parallellized_on_dimension(FeatureSpace<T> *fs,
-                                         ArrayIndex<T> *originalIndex,
-                                         ArrayIndex<T> *filteredPoints,
-                                         size_t fixedDimensionIndex);
+                ArrayIndex<T> *originalIndex,
+                ArrayIndex<T> *filteredPoints,
+                size_t fixedDimensionIndex);
 
-        void 
+        void
         apply_parallellized(FeatureSpace<T> *fs);
 
     public:
@@ -104,10 +103,10 @@ namespace m3D {
          * @throws logic_error if scale < 0 or decay < 0 or > 1.
          */
         ScaleSpaceFilter(T scale,
-                         const vector<T> &resolution,
-                         vector<netCDF::NcVar> &exclude_from_scale_space_filtering,
-                         T decay = 0.01,
-                         bool show_progress = false);
+                const vector<T> &resolution,
+                vector<netCDF::NcVar> &exclude_from_scale_space_filtering,
+                T decay = 0.01,
+                bool show_progress = false);
 
         /** Destructor
          */
@@ -121,7 +120,7 @@ namespace m3D {
          *
          * @param feature space
          */
-        virtual void apply( FeatureSpace<T> *fs );
+        virtual void apply(FeatureSpace<T> *fs);
 
 #pragma mark -
 #pragma mark After the processing 
@@ -130,14 +129,14 @@ namespace m3D {
          * of the filtered scan from these variables. 
          * @return filtered minimum
          */
-        const map<size_t,T> &
+        const map<size_t, T> &
         get_filtered_min();
 
         /** After the filtering, one can retrieve the value ranges
          * of the filtered scan from these variables.
          * @return filtered maximum
          */
-        const map<size_t,T> &
+        const map<size_t, T> &
         get_filtered_max();
 
         /** Retrieve the scaling ratios for the individual variables
@@ -147,7 +146,7 @@ namespace m3D {
          * 
          * This describes how the range is changed under transformation.
          */
-        map<size_t,T> 
+        map<size_t, T>
         getRangeFactors();
 
     };

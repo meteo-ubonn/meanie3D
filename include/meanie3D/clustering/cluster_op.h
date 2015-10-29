@@ -37,7 +37,8 @@ namespace m3D {
 
     // Various available post-aggregation methods
 
-    typedef enum {
+    typedef enum
+    {
         PostAggregationMethodNone,
         PostAggregationMethodCoalescence,
         PostAggregationMethodDRF
@@ -51,21 +52,20 @@ namespace m3D {
     template <typename T>
     class ClusterOperation : public Operation<T>
     {
-
     private:
 
-        NetCDFDataStore<T>          *m_data_store;
+        NetCDFDataStore<T> *m_data_store;
 
-        boost::progress_display     *m_progress_bar;
-        size_t                      m_cluster_threadcount;
+        boost::progress_display *m_progress_bar;
+        size_t m_cluster_threadcount;
 
 #if PROVIDE_THREADSAFETY
-        mutex                m_cluster_threadcount_mutex;
-        mutex                m_clusters_mutex;
-        mutex                m_cluster_progress_mutex;
+        mutex m_cluster_threadcount_mutex;
+        mutex m_clusters_mutex;
+        mutex m_cluster_progress_mutex;
 #endif
 
-        public :
+    public:
 
         /** Used to move the progress bar forward if it's switched
          * on during the clustering operation.
@@ -79,13 +79,17 @@ namespace m3D {
         void report_done();
 
         ClusterOperation(FeatureSpace<T> *fs,
-                         NetCDFDataStore<T> *data_store,
-                         PointIndex<T> *index)
-        : Operation<T>( fs, index )
+                NetCDFDataStore<T> *data_store,
+                PointIndex<T> *index)
+        : Operation<T>(fs, index)
         , m_progress_bar(NULL)
-        , m_data_store(data_store) {};
+        , m_data_store(data_store)
+        {
+        };
 
-        virtual ~ClusterOperation() {}
+        virtual ~ClusterOperation()
+        {
+        }
 
         /** Clustering the whole feature space by running an iterative procedure for each point
          * in feature space.
@@ -105,11 +109,11 @@ namespace m3D {
          * @return ClusterList object with the results.
          */
         ClusterList<T> cluster(const SearchParameters *params,
-                               const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
-                               const WeightFunction<T> *weight_function = NULL,
-                               const bool coalesceWithStrongestNeighbour = false,
-                               const bool write_meanshift_vectors = false,
-                               const bool show_progress_bar = true );
+                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
+                const WeightFunction<T> *weight_function = NULL,
+                const bool coalesceWithStrongestNeighbour = false,
+                const bool write_meanshift_vectors = false,
+                const bool show_progress_bar = true);
 
 #pragma mark -
 #pragma mark Some public helpers for visualization
@@ -122,5 +126,5 @@ namespace m3D {
 
     };
 }
-    
+
 #endif

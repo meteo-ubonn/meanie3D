@@ -11,7 +11,8 @@ namespace m3D {
 
     template <class T>
     VariableWeighed<T>::VariableWeighed(NcFile* file, CoordinateSystem<T> *coord_system, const NcVar &variable)
-    : m_variable(variable), m_coordinate_system(coord_system) {
+    : m_variable(variable), m_coordinate_system(coord_system)
+    {
         T max;
 
         variable.getAtt("valid_min").getValues(&m_min);
@@ -34,21 +35,24 @@ namespace m3D {
     }
 
     template <class T>
-    VariableWeighed<T>::~VariableWeighed() {
+    VariableWeighed<T>::~VariableWeighed()
+    {
     }
 
     template <class T>
-    T VariableWeighed<T>::operator()(const vector<T> &values) const {
+    T VariableWeighed<T>::operator()(const vector<T> &values) const
+    {
         return values.back();
     }
 
     template <class T>
-    T VariableWeighed<T>::operator()(const typename Point<T>::ptr p) const {
+    T VariableWeighed<T>::operator()(const typename Point<T>::ptr p) const
+    {
         return p->values.back();
     }
 
     template <class T>
-    T VariableWeighed<T>::operator()(const vector<int> &gridpoint) const 
+    T VariableWeighed<T>::operator()(const vector<int> &gridpoint) const
     {
         throw "not implemented";
     }

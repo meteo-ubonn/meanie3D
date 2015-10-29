@@ -28,10 +28,11 @@
 #include <iostream>
 
 namespace m3D {
-    
+
     static const std::string VERSION = "1.5.3";
-    
-    void print_version() {
+
+    void print_version()
+    {
         std::cout << VERSION << std::endl;
     }
 }

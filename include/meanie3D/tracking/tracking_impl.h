@@ -604,7 +604,7 @@ namespace m3D {
         }
 
         run.averageVelocity = velocitySum / boost::numeric_cast<T>(velocityClusterCount);
-        
+
         // Tag unmatched clusters
 
         if (m_verbosity >= VerbosityDetails)
@@ -666,7 +666,7 @@ namespace m3D {
         if (m_verbosity >= VerbosityDetails) {
             cout << endl << "-- Merges --" << endl;
         }
-       
+
         bool had_merges = false;
 
         size_t n, m;
@@ -765,8 +765,8 @@ namespace m3D {
                 }
             }
         }
-        
-        if (m_verbosity >= VerbosityDetails && !had_merges) 
+
+        if (m_verbosity >= VerbosityDetails && !had_merges)
             cout << "none." << endl;
     }
 
@@ -774,9 +774,9 @@ namespace m3D {
     void
     Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t &run)
     {
-        if (m_verbosity >= VerbosityDetails) 
+        if (m_verbosity >= VerbosityDetails)
             cout << endl << "-- Splits --" << endl;
-        
+
         bool had_splits = false;
         size_t n, m;
         for (m = 0; m < run.previous->clusters.size(); m++) {
@@ -848,7 +848,7 @@ namespace m3D {
                 run.current->splits[old_cluster->id] = split_into;
             }
         }
-        
+
         if (m_verbosity >= VerbosityDetails && !had_splits)
             cout << "none." << endl;
     }

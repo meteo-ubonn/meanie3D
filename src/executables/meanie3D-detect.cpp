@@ -77,8 +77,10 @@ void parse_commmandline(program_options::variables_map vm,
         vector<size_t> &vtk_dimension_indexes,
         Verbosity &verbosity,
         unsigned int &min_cluster_size,
-        vector<NcVar> &vtk_variables) {
-    if (vm.count("file") == 0) {
+        vector<NcVar> &vtk_variables)
+{
+    if (vm.count("file") == 0)
+    {
         cerr << "Missing input file argument" << endl;
 
         exit(1);
@@ -86,30 +88,37 @@ void parse_commmandline(program_options::variables_map vm,
 
     filename = vm["file"].as<string>();
 
-    try {
+    try
+    {
         output_filename = vm["output"].as<string>();
-    } catch (const boost::exception& e) {
+    } catch (const boost::exception& e)
+    {
         cerr << "Missing parameter -o " << endl;
 
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Open NetCDF file
 
     NcFile *file = NULL;
 
-    try {
+    try
+    {
         file = new NcFile(filename, NcFile::read);
-    } catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e)
+    {
         cerr << "Error opening file '" << filename << "' : " << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     *filePtr = file;
 
     // Extract dimensions
 
-    if (vm.count("dimensions") == 0) {
+    if (vm.count("dimensions") == 0)
+    {
         cerr << "Missing parameter --dimensions" << endl;
 
         exit(1);
@@ -123,16 +132,19 @@ void parse_commmandline(program_options::variables_map vm,
 
     tokenizer dim_tokens(vm["dimensions"].as<string>(), sep);
 
-    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
+    {
         const char* name = (*tok_iter).c_str();
 
         dimensions.push_back(file->getDim(name));
 
         NcVar dimVar = file->getVar(name);
 
-        if (dimVar.isNull()) {
+        if (dimVar.isNull())
+        {
             cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
 
         dimension_variables.push_back(dimVar);
@@ -143,20 +155,25 @@ void parse_commmandline(program_options::variables_map vm,
 
     // parse variables
 
-    if (vm.count("variables") == 0) {
+    if (vm.count("variables") == 0)
+    {
         cerr << "Missing mandatory parameter --variables" << endl;
 
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     tokenizer var_tokens(vm["variables"].as<string>(), sep);
 
-    for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter) {
+    for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter)
+    {
         NcVar var = file->getVar(*tok_iter);
 
-        if (var.isNull()) {
+        if (var.isNull())
+        {
             cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
 
         variables.push_back(var);
@@ -172,38 +189,46 @@ void parse_commmandline(program_options::variables_map vm,
 
     convection_filter_index = -1;
 
-    if (vm.count("convection-filter-variable") > 0) {
+    if (vm.count("convection-filter-variable") > 0)
+    {
         std::string cf_var_name = vm["convection-filter-variable"].as<string>();
 
-        for (int index = 0; index < variables.size(); index++) {
+        for (int index = 0; index < variables.size(); index++)
+        {
             NcVar v = variables.at(index);
 
-            if (v.getName() == cf_var_name) {
+            if (v.getName() == cf_var_name)
+            {
                 // give the index in the complete feature-space vector
                 // not just the list of variables handed in
                 convection_filter_index = dimensions.size() + index;
             }
         }
 
-        if (convection_filter_index < 0) {
+        if (convection_filter_index < 0)
+        {
             cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name << "' not a featurespace variable" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
     }
 
 
     // parse ranges if there
 
-    if (vm.count("ranges") > 0) {
+    if (vm.count("ranges") > 0)
+    {
         tokenizer bw_tokens(vm["ranges"].as<string>(), sep);
 
-        for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter) {
+        for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter)
+        {
             const char* bw = (*tok_iter).c_str();
 
             ranges.push_back((FS_TYPE) strtod(bw, (char **) NULL));
         }
 
-        if (ranges.size() != dimension_variables.size() + variables.size()) {
+        if (ranges.size() != dimension_variables.size() + variables.size())
+        {
             cerr << "Please provide " << dimension_variables.size() + variables.size() << " bandwidth values" << endl;
 
             exit(1);
@@ -214,12 +239,14 @@ void parse_commmandline(program_options::variables_map vm,
 
     // Lower Thresholds
 
-    if (vm.count("lower-thresholds") > 0) {
+    if (vm.count("lower-thresholds") > 0)
+    {
         boost::char_separator<char> equals("=");
 
         tokenizer tokens(vm["lower-thresholds"].as<string>(), sep);
 
-        for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
+        for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter)
+        {
             std::string pair = *tok_iter;
 
             tokenizer subtokens(pair, equals);
@@ -230,11 +257,14 @@ void parse_commmandline(program_options::variables_map vm,
 
             bool have_var = false;
 
-            for (int i = 0; i < variables.size() && !have_var; i++) {
-                if (variables[i].getName() == variableName) {
+            for (int i = 0; i < variables.size() && !have_var; i++)
+            {
+                if (variables[i].getName() == variableName)
+                {
                     subtoken_iter++;
 
-                    if (subtoken_iter == subtokens.end()) {
+                    if (subtoken_iter == subtokens.end())
+                    {
                         cerr << "Missing threshold value for variable " << variableName << endl;
                         exit(1);
                     }
@@ -246,7 +276,8 @@ void parse_commmandline(program_options::variables_map vm,
                 }
             }
 
-            if (!have_var) {
+            if (!have_var)
+            {
                 cerr << "No variable named " << variableName << " found. Check --lower-thresholds parameter" << endl;
                 exit(1);
             }
@@ -255,12 +286,14 @@ void parse_commmandline(program_options::variables_map vm,
 
     // Upper Thresholds
 
-    if (vm.count("upper-thresholds") > 0) {
+    if (vm.count("upper-thresholds") > 0)
+    {
         boost::char_separator<char> equals("=");
 
         tokenizer tokens(vm["upper-thresholds"].as<string>(), sep);
 
-        for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
+        for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter)
+        {
             std::string pair = *tok_iter;
 
             tokenizer subtokens(pair, equals);
@@ -271,11 +304,14 @@ void parse_commmandline(program_options::variables_map vm,
 
             bool have_var = false;
 
-            for (int i = 0; i < variables.size(); i++) {
-                if (variables[i].getName() == variableName) {
+            for (int i = 0; i < variables.size(); i++)
+            {
+                if (variables[i].getName() == variableName)
+                {
                     subtoken_iter++;
 
-                    if (subtoken_iter == subtokens.end()) {
+                    if (subtoken_iter == subtokens.end())
+                    {
                         cerr << "Missing threshold value for variable " << variableName << endl;
                         exit(1);
                     }
@@ -287,7 +323,8 @@ void parse_commmandline(program_options::variables_map vm,
                 }
             }
 
-            if (!have_var) {
+            if (!have_var)
+            {
                 cerr << "No variable named " << variableName << " found. Check --upper-thresholds parameter" << endl;
                 exit(1);
             }
@@ -296,12 +333,14 @@ void parse_commmandline(program_options::variables_map vm,
 
     // Fill values
 
-    if (vm.count("replacement-values") > 0) {
+    if (vm.count("replacement-values") > 0)
+    {
         boost::char_separator<char> equals("=");
 
         tokenizer tokens(vm["replacement-values"].as<string>(), sep);
 
-        for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
+        for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter)
+        {
             std::string pair = *tok_iter;
 
             tokenizer subtokens(pair, equals);
@@ -312,13 +351,16 @@ void parse_commmandline(program_options::variables_map vm,
 
             NcVar variable;
 
-            for (size_t i = 0; i < variables.size(); i++) {
-                if (variables[i].getName() == variableName) {
+            for (size_t i = 0; i < variables.size(); i++)
+            {
+                if (variables[i].getName() == variableName)
+                {
                     variable = variables[i];
                 }
             }
 
-            if (variable.isNull()) {
+            if (variable.isNull())
+            {
                 cerr << "No variable named " << variableName << " found. Check --replacement-values parameter" << endl;
 
                 exit(1);
@@ -326,7 +368,8 @@ void parse_commmandline(program_options::variables_map vm,
 
             subtoken_iter++;
 
-            if (subtoken_iter == subtokens.end()) {
+            if (subtoken_iter == subtokens.end())
+            {
                 cerr << "Missing replacement value for variable " << variableName << endl;
                 exit(1);
             }
@@ -348,7 +391,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     kernel_name = vm["kernel-name"].as<string>();
 
-    if (!(kernel_name == "uniform" || kernel_name == "epanechnikov" || kernel_name == "gauss" || kernel_name == "none")) {
+    if (!(kernel_name == "uniform" || kernel_name == "epanechnikov" || kernel_name == "gauss" || kernel_name == "none"))
+    {
         cerr << "Illegal kernel name " << kernel_name << ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
         exit(1);
     }
@@ -357,7 +401,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     weight_function_name = vm["weight-function-name"].as<string>();
 
-    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase" || weight_function_name == "pow10")) {
+    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase" || weight_function_name == "pow10"))
+    {
         cerr << "Illegal weight function name " << weight_function_name << ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
         exit(1);
     }
@@ -394,7 +439,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     // VTK dimension mapping
 
-    if (vm.count("vtk-dimensions") > 0) {
+    if (vm.count("vtk-dimensions") > 0)
+    {
         // parse dimension list
 
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
@@ -405,16 +451,19 @@ void parse_commmandline(program_options::variables_map vm,
 
         tokenizer dim_tokens(str_value, sep);
 
-        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
+        {
             const char* name = (*tok_iter).c_str();
 
             NcDim dim = file->getDim(name);
 
             vector<NcDim>::const_iterator fi = find(dimensions.begin(), dimensions.end(), dim);
 
-            if (fi == dimensions.end()) {
+            if (fi == dimensions.end())
+            {
                 cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of --dimensions" << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
 
             size_t index = fi - dimensions.begin();
@@ -422,51 +471,62 @@ void parse_commmandline(program_options::variables_map vm,
             vtk_dimension_indexes.push_back(index);
         }
 
-        if (vtk_dimension_indexes.size() != dimensions.size()) {
+        if (vtk_dimension_indexes.size() != dimensions.size())
+        {
             cerr << "The number of vtk-dimensions must be identical to dimensions" << endl;
 
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
     }
 
     // Previous file
 
-    if (vm.count("previous-file") > 0) {
+    if (vm.count("previous-file") > 0)
+    {
         std::string previous = vm["previous-file"].as<string>();
 
         boost::filesystem::path previous_path(previous);
 
-        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
+        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path))
+        {
             *previous_file = new std::string(previous);
-        } else {
+        } else
+        {
             cerr << "Illegal value for parameter --previous-file: does not exist or is no regular file" << endl;
         }
     }
 
     // ci_comparison_file
 
-    if (vm.count("ci-comparison-file") > 0) {
+    if (vm.count("ci-comparison-file") > 0)
+    {
         std::string previous = vm["ci-comparison-file"].as<string>();
 
         boost::filesystem::path previous_path(previous);
 
-        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
+        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path))
+        {
             *ci_comparison_file = new std::string(previous);
-        } else {
+        } else
+        {
             cerr << "Illegal value for parameter --ci-comparison-file: does not exist or is no regular file" << endl;
         }
     }
 
     // ci-comparison-protocluster-file
 
-    if (vm.count("ci-comparison-protocluster-file") > 0) {
+    if (vm.count("ci-comparison-protocluster-file") > 0)
+    {
         std::string previous = vm["ci-comparison-protocluster-file"].as<string>();
 
         boost::filesystem::path previous_path(previous);
 
-        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
+        if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path))
+        {
             *ci_comparison_protocluster_file = new std::string(previous);
-        } else {
+        } else
+        {
             cerr << "Illegal value for parameter --ci-comparison-protocluster-file: does not exist or is no regular file" << endl;
         }
     }
@@ -477,11 +537,14 @@ void parse_commmandline(program_options::variables_map vm,
 
     unsigned int vb = vm["verbosity"].as<unsigned int>();
 
-    if (vb > VerbosityAll) {
+    if (vb > VerbosityAll)
+    {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
 
-        exit(EXIT_FAILURE);;
-    } else {
+        exit(EXIT_FAILURE);
+        ;
+    } else
+    {
         verbosity = (Verbosity) vb;
     }
 
@@ -489,30 +552,38 @@ void parse_commmandline(program_options::variables_map vm,
 
     // vtk-variables
 
-    if (vm.count("write-variables-as-vtk") > 0) {
+    if (vm.count("write-variables-as-vtk") > 0)
+    {
         tokenizer bw_tokens(vm["write-variables-as-vtk"].as<string>(), sep);
 
-        for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter) {
+        for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter)
+        {
             const char* bw = (*tok_iter).c_str();
 
-            try {
+            try
+            {
                 NcVar var = file->getVar(bw);
 
-                if (var.isNull()) {
+                if (var.isNull())
+                {
                     cerr << "Can't open variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                    exit(EXIT_FAILURE);;
+                    exit(EXIT_FAILURE);
+                    ;
                 }
 
                 vtk_variables.push_back(var);
-            } catch (const netCDF::exceptions::NcException &e) {
+            } catch (const netCDF::exceptions::NcException &e)
+            {
                 cerr << "Can't find variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
         }
     }
 }
 
-void print_compile_time_options() {
+void print_compile_time_options()
+{
 #if WRITE_BANDWIDTH
     cout << "\tWRITE_BANDWIDTH=1" << endl;
 #else
@@ -580,7 +651,8 @@ void print_compile_time_options() {
 
 /* ******************************************************************** */
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     using namespace m3D;
 
     // Declare the supported options.
@@ -625,23 +697,29 @@ int main(int argc, char** argv) {
             ("verbosity", program_options::value<unsigned int>()->default_value(1u), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.");
 
     program_options::variables_map vm;
-    try {
+    try
+    {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    } catch (std::exception &e) {
+    } catch (std::exception &e)
+    {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-detect --help for command line options" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Version
 
-    if (vm.count("version") != 0) {
+    if (vm.count("version") != 0)
+    {
         cout << m3D::VERSION << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
-    if (vm.count("help") == 1 || argc < 2) {
+    if (vm.count("help") == 1 || argc < 2)
+    {
         cout << desc << "\n";
         return 1;
     }
@@ -692,7 +770,8 @@ int main(int argc, char** argv) {
 
     FS_TYPE kernel_width = 0.0;
 
-    try {
+    try
+    {
         parse_commmandline(vm,
                 &file,
                 filename,
@@ -741,24 +820,29 @@ int main(int argc, char** argv) {
         // Get timestamp
 
         // Tracking comparison (solve that generically sometime)
-        if (boost::contains(filename, "rico.out.xy.")) {
+        if (boost::contains(filename, "rico.out.xy."))
+        {
             // time for this is days since simulation start
             double time_in_days = utils::netcdf::get_time<double>(filename, time_index);
 
             // a day has 24 * 60 * 60 seconds
             timestamp = (long) round(time_in_days * 24.0 * 60.0 * 60.0);
-        } else {
+        } else
+        {
             // Seconds since epoch
             timestamp = utils::netcdf::get_time<long>(filename, time_index);
         }
-    } catch (const std::exception &e) {
+    } catch (const std::exception &e)
+    {
         cerr << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     bool show_progress = (verbosity > VerbositySilent);
 
-    if (verbosity > VerbositySilent) {
+    if (verbosity > VerbositySilent)
+    {
         cout << "----------------------------------------------------" << endl;
         cout << "meanie3D-detect" << endl;
         cout << "----------------------------------------------------" << endl;
@@ -768,9 +852,11 @@ int main(int argc, char** argv) {
 
         cout << "\tinput file = " << filename << endl;
 
-        if (time_index >= 0) {
+        if (time_index >= 0)
+        {
             cout << "\tusing point in time at index " << time_index << " (timestamp=" << timestamp << ")" << endl;
-        } else {
+        } else
+        {
             cout << "\ttime is not a variable dimension. Using timestamp " << timestamp << endl;
         }
 
@@ -778,39 +864,47 @@ int main(int argc, char** argv) {
 
         cout << "\tvariables = " << vm["variables"].as<string>() << endl;
 
-        if (!ranges.empty()) {
+        if (!ranges.empty())
+        {
             cout << "\tranges = " << ranges << endl;
 
             // calculate kernel width as average of ranges
 
             kernel_width = boost::numeric_cast<FS_TYPE>(0.0);
 
-            for (size_t i = 0; i < dimensions.size(); i++) {
+            for (size_t i = 0; i < dimensions.size(); i++)
+            {
                 kernel_width += ranges[i];
             }
 
             kernel_width = kernel_width / boost::numeric_cast<FS_TYPE>(dimensions.size());
-        } else {
+        } else
+        {
             cout << "\tautomatic bandwidth selection" << endl;
         }
 
-        if (!lower_thresholds.empty()) {
+        if (!lower_thresholds.empty())
+        {
             cout << "\tusing lower thresholds " << vm["lower-thresholds"].as<string>() << endl;
         }
 
-        if (!upper_thresholds.empty()) {
+        if (!upper_thresholds.empty())
+        {
             cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
         }
 
-        if (scale != NO_SCALE) {
+        if (scale != NO_SCALE)
+        {
             double width = sqrt(ceil(-2.0 * scale * log(0.01))) / 2;
 
-            if (ranges.empty()) {
+            if (ranges.empty())
+            {
                 kernel_width = width;
             }
 
             cout << "\tpre-smoothing data with scale parameter " << scale << " (kernel width = " << width << ")" << endl;
-        } else {
+        } else
+        {
             cout << "\tno scale-space smoothing" << endl;
         }
 
@@ -820,19 +914,23 @@ int main(int argc, char** argv) {
         cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
         cout << "\t\tupper weight-function threshold: " << wwf_upper_threshold << endl;
 
-        if (ci_comparison_file != NULL) {
+        if (ci_comparison_file != NULL)
+        {
             cout << "\tCI comparison file for time trends:" << *ci_comparison_file << endl;
         }
 
-        if (previous_file != NULL) {
+        if (previous_file != NULL)
+        {
             cout << "\tprevious file:" << *previous_file << endl;
 
-            if (vm.count("previous-cluster-coverage-threshold") > 0) {
+            if (vm.count("previous-cluster-coverage-threshold") > 0)
+            {
                 cout << "\tprevious file coverage threshold:" << cluster_coverage_threshold << endl;
             }
         }
 
-        if (min_cluster_size > 1) {
+        if (min_cluster_size > 1)
+        {
             cout << "\tminimum cluster size = " << min_cluster_size << endl;
         }
 
@@ -840,7 +938,8 @@ int main(int argc, char** argv) {
         cout << "\tcoalesce results with strongest neighbor: " << (coalesceWithStrongestNeighbour ? "yes" : "no") << endl;
         cout << "\toutput written to file: " << output_filename << endl;
 
-        if (!vtk_variables.empty()) {
+        if (!vtk_variables.empty())
+        {
             cout << "\twriting out these variables as vtk after processing:" << vm["write-variables-as-vtk"].as<string>() << endl;
         }
 
@@ -850,7 +949,8 @@ int main(int argc, char** argv) {
         cout << "\twrite cluster centers as vtk: " << (write_cluster_centers ? "yes" : "no") << endl;
         cout << "\twriting cluster weights as vtk: " << (write_weight_response ? "yes" : "no") << endl;
 
-        if (verbosity > VerbosityNormal) {
+        if (verbosity > VerbosityNormal)
+        {
             cout << endl;
             cout << "Compiled options (use -D to switch them on and off during compile time)" << endl;
             print_compile_time_options();
@@ -885,7 +985,8 @@ int main(int argc, char** argv) {
     VisitUtils<FS_TYPE>::write_featurespace_vtk(fn, fs);
 #endif
 
-    if (ranges.empty()) {
+    if (ranges.empty())
+    {
         // if ranges are not explicitly given, figure the out
         // based on scale
 
@@ -895,13 +996,15 @@ int main(int argc, char** argv) {
 
         FS_TYPE filter_width = sqrt(ceil(-2.0 * t * log(0.01))) / 2.0;
 
-        for (size_t i = 0; i < dimensions.size(); i++) {
+        for (size_t i = 0; i < dimensions.size(); i++)
+        {
             ranges.push_back(filter_width);
         }
 
         // value range
 
-        for (size_t i = 0; i < data_store->rank(); i++) {
+        for (size_t i = 0; i < data_store->rank(); i++)
+        {
             FS_TYPE range = data_store->valid_max(i) - data_store->valid_min(i);
             ranges.push_back(range);
         }
@@ -913,12 +1016,13 @@ int main(int argc, char** argv) {
 
 #if WRITE_OFF_LIMITS_MASK
     std::string ol_fname = path.filename().stem().string() + "-off_limits.vtk";
-    VisitUtils<FS_TYPE>::write_multiarray_vtk(ol_fname,"off_limits",coord_system,fs->off_limits());
+    VisitUtils<FS_TYPE>::write_multiarray_vtk(ol_fname, "off_limits", coord_system, fs->off_limits());
 #endif
 
     // Convection Filter?
 
-    if (convection_filter_index >= 0) {
+    if (convection_filter_index >= 0)
+    {
         ConvectionFilter<FS_TYPE> convection_filter(ranges, convection_filter_index, show_progress);
         convection_filter.apply(fs);
     }
@@ -929,7 +1033,8 @@ int main(int argc, char** argv) {
 
     // Scale-Space smoothing
 
-    if (scale != NO_SCALE) {
+    if (scale != NO_SCALE)
+    {
         // TODO: make decay a parameter or at least a constant
 
         FS_TYPE decay = 0.01;
@@ -944,12 +1049,14 @@ int main(int argc, char** argv) {
         VisitUtils<FS_TYPE>::write_featurespace_vtk(fn, fs);
 #endif
 
-        if (verbosity > VerbositySilent) {
+        if (verbosity > VerbositySilent)
+        {
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
             start_timer();
         }
 
-        if (weight_function_name == "oase") {
+        if (weight_function_name == "oase")
+        {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
                     filename,
                     ranges,
@@ -965,11 +1072,14 @@ int main(int argc, char** argv) {
             //                                                              ranges,
             //                                                              sf.get_filtered_min(),
             //                                                              sf.get_filtered_max());
-        } else if (weight_function_name == "inverse") {
+        } else if (weight_function_name == "inverse")
+        {
             weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
-        } else if (weight_function_name == "pow10") {
+        } else if (weight_function_name == "pow10")
+        {
             weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
-        } else {
+        } else
+        {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         }
 
@@ -981,17 +1091,21 @@ int main(int argc, char** argv) {
 
         wtf.apply(fs);
 
-        if (verbosity > VerbositySilent) {
+        if (verbosity > VerbositySilent)
+        {
             cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
         }
 
-    } else {
-        if (verbosity > VerbositySilent) {
+    } else
+    {
+        if (verbosity > VerbositySilent)
+        {
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
             start_timer();
         }
 
-        if (weight_function_name == "oase") {
+        if (weight_function_name == "oase")
+        {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
                     filename,
                     ranges,
@@ -1000,11 +1114,14 @@ int main(int argc, char** argv) {
                     ci_satellite_only);
 
             //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
-        } else if (weight_function_name == "inverse") {
+        } else if (weight_function_name == "inverse")
+        {
             weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, lower_thresholds, upper_thresholds);
-        } else if (weight_function_name == "pow10") {
+        } else if (weight_function_name == "pow10")
+        {
             weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
-        } else {
+        } else
+        {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
 
@@ -1016,19 +1133,22 @@ int main(int argc, char** argv) {
 
         wtf.apply(fs);
 
-        if (verbosity > VerbositySilent) {
+        if (verbosity > VerbositySilent)
+        {
             cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
         }
     }
 
 #if WITH_VTK
 
-    if (write_weight_function) {
+    if (write_weight_function)
+    {
         std::string wfname = path.filename().stem().string() + "-weights";
         VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
     }
 
-    if (!vtk_variables.empty()) {
+    if (!vtk_variables.empty())
+    {
         string filename_only = path.filename().string();
         boost::filesystem::path destination_path = boost::filesystem::path(".");
 
@@ -1069,11 +1189,14 @@ int main(int argc, char** argv) {
 
     Kernel<FS_TYPE> *kernel = NULL;
 
-    if (kernel_name == "uniform") {
+    if (kernel_name == "uniform")
+    {
         kernel = new UniformKernel<FS_TYPE>(kernel_width);
-    } else if (kernel_name == "gauss") {
+    } else if (kernel_name == "gauss")
+    {
         kernel = new GaussianNormalKernel<FS_TYPE>(kernel_width);
-    } else if (kernel_name == "epanechnikov") {
+    } else if (kernel_name == "epanechnikov")
+    {
         kernel = new EpanechnikovKernel<FS_TYPE>(kernel_width);
     }
 
@@ -1097,20 +1220,23 @@ int main(int argc, char** argv) {
 
     // Collate with previous clusters, if provided
 
-    if (previous_file != NULL) {
+    if (previous_file != NULL)
+    {
         cout << endl << "Collating with previous results:" << endl;
 
         if (verbosity >= VerbosityDetails)
             clusters.print();
 
-        try {
+        try
+        {
             ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_file->c_str());
 
             if (verbosity >= VerbosityNormal)
                 cout << "Comparing " << clusters.clusters.size() << " new clusters to "
                 << previous->clusters.size() << " clusters" << endl;
 
-            if (verbosity >= VerbosityDetails) {
+            if (verbosity >= VerbosityDetails)
+            {
                 cout << "List of new clusters:" << endl;
                 clusters.print();
                 cout << endl << "List of previous clusters:" << endl;
@@ -1120,8 +1246,9 @@ int main(int argc, char** argv) {
             ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
 
             cluster_filter.filter_with_previous_clusters(previous, &clusters, coord_system, weight_function, verbosity);
-            
-        } catch (const std::exception &e) {
+
+        } catch (const std::exception &e)
+        {
             cerr << "FATAL:exception reading previous cluster file: " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
@@ -1143,15 +1270,18 @@ int main(int argc, char** argv) {
     // Write out the cluster list
 
 #if WITH_VTK
-    if (write_vtk && clusters.clusters.size() > 0) {
+    if (write_vtk && clusters.clusters.size() > 0)
+    {
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(&clusters, coord_system, path.filename().string());
     }
-    if (write_cluster_modes) {
+    if (write_cluster_modes)
+    {
         string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, clusters.clusters, true);
     }
 
-    if (write_cluster_centers) {
+    if (write_cluster_centers)
+    {
         string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, clusters.clusters);
     }
@@ -1161,7 +1291,8 @@ int main(int argc, char** argv) {
     ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_meanshift_vtk(shifts_path, clusters.clusters);
 #endif
 
-    if (write_weight_response && clusters.clusters.size() > 0) {
+    if (write_weight_response && clusters.clusters.size() > 0)
+    {
         string wr_path = path.filename().stem().string() + "-clusters_weight";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function, false);
     }
@@ -1176,7 +1307,7 @@ int main(int argc, char** argv) {
 
     clusters.write(output_filename);
 
-    if (include_weight_in_result) 
+    if (include_weight_in_result)
     {
         cout << "NOT IMPLEMENTED" << endl;
         // cout << "Writing weight function to result file ... ";

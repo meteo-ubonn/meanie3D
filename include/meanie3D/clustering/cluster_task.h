@@ -35,56 +35,56 @@ namespace m3D {
 
     using namespace ::std;
 
-    template <typename T> 
+    template <typename T>
     struct ClusterTask
     {
-        FeatureSpace<T>         *m_fs;
-        PointIndex<T>           *m_index;
-        ClusterOperation<T>     *m_op;
-        ClusterList<T>          *m_cluster_list;
+        FeatureSpace<T> *m_fs;
+        PointIndex<T> *m_index;
+        ClusterOperation<T> *m_op;
+        ClusterList<T> *m_cluster_list;
 
-        const Kernel<T>         *m_kernel;
+        const Kernel<T> *m_kernel;
         const WeightFunction<T> *m_weight_function;
-        const double            m_drf_threshold;
+        const double m_drf_threshold;
 
-        const SearchParameters  *m_search_params;
+        const SearchParameters *m_search_params;
 
-        const size_t            m_start_index;
-        const size_t            m_end_index;
+        const size_t m_start_index;
+        const size_t m_end_index;
 
-        const bool              m_show_progress;
+        const bool m_show_progress;
 
     public:
 
         /** Constructor for single-threaded or boost threads 
          */
-        ClusterTask( FeatureSpace<T> *fs,  
-                     PointIndex<T> *index,
-                     ClusterOperation<T> *op,
-                     ClusterList<T> *cs,
-                     const size_t start_index,
-                     const size_t end_index,
-                     const SearchParameters *params,
-                     const Kernel<T> *kernel,
-                     const WeightFunction<T> *weight_function,
-                     const double &drf_threshold,
-                     const bool show_progress = true ) :
-        m_fs(fs), 
+        ClusterTask(FeatureSpace<T> *fs,
+                PointIndex<T> *index,
+                ClusterOperation<T> *op,
+                ClusterList<T> *cs,
+                const size_t start_index,
+                const size_t end_index,
+                const SearchParameters *params,
+                const Kernel<T> *kernel,
+                const WeightFunction<T> *weight_function,
+                const double &drf_threshold,
+                const bool show_progress = true) :
+        m_fs(fs),
         m_index(index),
         m_op(op),
         m_cluster_list(cs),
-        m_kernel( kernel),
+        m_kernel(kernel),
         m_weight_function(weight_function),
         m_drf_threshold(drf_threshold),
-        m_search_params( params ), 
-        m_start_index(start_index), 
-        m_end_index(end_index), 
+        m_search_params(params),
+        m_start_index(start_index),
+        m_end_index(end_index),
         m_show_progress(show_progress)
         {
         };
 
         /** Copy contructor */
-        ClusterTask( const ClusterTask &other )
+        ClusterTask(const ClusterTask &other)
         : m_fs(other.m_fs),
         m_index(other.m_index),
         m_op(other.m_op),
@@ -103,37 +103,36 @@ namespace m3D {
 
         /** Constructor for TBB
          */
-        ClusterTask( FeatureSpace<T> *fs,  
-                     PointIndex<T> *index,
-                     ClusterOperation<T> *op,
-                     ClusterList<T> *cs,
-                     const SearchParameters *params,
-                     const Kernel<T> *kernel,
-                     const WeightFunction<T> *weight_function,
-                     const double &drf_threshold,
-                     const bool show_progress = true ) :
-        m_fs(fs), 
+        ClusterTask(FeatureSpace<T> *fs,
+                PointIndex<T> *index,
+                ClusterOperation<T> *op,
+                ClusterList<T> *cs,
+                const SearchParameters *params,
+                const Kernel<T> *kernel,
+                const WeightFunction<T> *weight_function,
+                const double &drf_threshold,
+                const bool show_progress = true) :
+        m_fs(fs),
         m_index(index),
         m_op(op),
         m_cluster_list(cs),
-        m_start_index(0), 
-        m_end_index(0), 
-        m_search_params( params ),
-        m_kernel( kernel),
+        m_start_index(0),
+        m_end_index(0),
+        m_search_params(params),
+        m_kernel(kernel),
         m_weight_function(weight_function),
-        m_drf_threshold( drf_threshold ),
+        m_drf_threshold(drf_threshold),
         m_show_progress(show_progress)
-        {};
-
-        void 
-        operator()( const tbb::blocked_range<size_t>& r ) const
         {
-            MeanshiftOperation<T> ms_op( m_fs, m_index );
+        };
 
-            for ( size_t index = r.begin(); index != r.end(); index++ )
-            {
-                if ( m_show_progress )
-                {
+        void
+        operator()(const tbb::blocked_range<size_t>& r) const
+        {
+            MeanshiftOperation<T> ms_op(m_fs, m_index);
+
+            for (size_t index = r.begin(); index != r.end(); index++) {
+                if (m_show_progress) {
                     m_op->increment_cluster_progress();
                 }
 
@@ -141,12 +140,11 @@ namespace m3D {
 
                 bool normalize = !(GRID_ROUNDING_METHOD_NONE == 1);
 
-                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function, normalize );
+                x->shift = ms_op.meanshift(x->values, m_search_params, m_kernel, m_weight_function, normalize);
 
                 vector<T> spatial_shift = m_fs->spatial_component(x->shift);
 
-                if (normalize)
-                {
+                if (normalize) {
                     x->gridded_shift = m_fs->coordinate_system->rounded_gridpoint(spatial_shift);
                 }
             }
@@ -155,31 +153,29 @@ namespace m3D {
         }
 #endif
 
-        void 
+        void
         operator()()
         {
-            MeanshiftOperation<T> ms_op( m_fs, m_index );
+            MeanshiftOperation<T> ms_op(m_fs, m_index);
 
 
-            #if WITH_OPENMP
+#if WITH_OPENMP
             // Prime the index
             ms_op.prime_index(m_search_params);
             // omp_set_nested(1);
-            #pragma omp parallel for schedule(dynamic) 
-            #endif
-            for ( size_t index = m_start_index; index < m_end_index; index++ )
-            {
-                if ( m_show_progress )
-                {
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
+#pragma omp parallel for schedule(dynamic) 
+#endif
+            for (size_t index = m_start_index; index < m_end_index; index++) {
+                if (m_show_progress) {
+#if WITH_OPENMP
+#pragma omp critical
+#endif
                     m_op->increment_cluster_progress();
                 }
 
                 typename Point<T>::ptr x = m_fs->points[ index ];
 
-                x->shift = ms_op.meanshift( x->values, m_search_params, m_kernel, m_weight_function );
+                x->shift = ms_op.meanshift(x->values, m_search_params, m_kernel, m_weight_function);
 
                 vector<T> spatial_shift = m_fs->spatial_component(x->shift);
 

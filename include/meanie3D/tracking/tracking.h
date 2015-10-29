@@ -196,16 +196,17 @@ namespace m3D {
         {
             m_max_deltaT = seconds;
         }
-        
+
         /**
          * 
          * @param verbosity
          */
-        void setVerbosity(Verbosity verbosity) {
+        void setVerbosity(Verbosity verbosity)
+        {
             m_verbosity = verbosity;
         }
-        
-        
+
+
 
     protected:
 
@@ -223,8 +224,8 @@ namespace m3D {
             typename ClusterList<T>::ptr previous; // current cluster list
 
             // Properties
-            const CoordinateSystem<T> *cs;  // Coordinate system (for transformations)
-            LinearIndexMapping mapping;     // maps i <-> (n,m)
+            const CoordinateSystem<T> *cs; // Coordinate system (for transformations)
+            LinearIndexMapping mapping; // maps i <-> (n,m)
 
             std::string tracking_variable;
             int tracking_var_index;
@@ -239,14 +240,14 @@ namespace m3D {
             ::units::values::m overlap_constraint_radius;
             ::units::values::meters_per_second overlap_constraint_velocity;
 
-            m3D::id_t highestId;                // Stores the highest used ID
+            m3D::id_t highestId; // Stores the highest used ID
             set< typename Cluster<T>::ptr > used_clusters;
             matchlist_t matches;
             id_set_t matched_ids;
 
             id_set_t merged_cluster_ids;
             id_set_t continued_merged_ids;
-            
+
             ::units::values::meters_per_second averageVelocity;
             // Correlation data
             typename SimpleMatrix<T>::matrix_t rank_correlation;

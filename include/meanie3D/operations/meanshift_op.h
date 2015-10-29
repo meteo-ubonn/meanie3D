@@ -32,7 +32,7 @@
 
 #include <vector>
 
-namespace m3D { 
+namespace m3D {
 
     template <typename T>
     class MeanshiftOperation : public Operation<T>
@@ -42,9 +42,13 @@ namespace m3D {
         //static const int NO_WEIGHT;
 
         MeanshiftOperation(FeatureSpace<T> *fs,
-                           PointIndex<T> *index ) : Operation<T>(fs,index) {}
+                PointIndex<T> *index) : Operation<T>(fs, index)
+        {
+        }
 
-        virtual ~MeanshiftOperation() {}
+        virtual ~MeanshiftOperation()
+        {
+        }
 
 
         /** Call this up-front to preempt lazy index construction.
@@ -63,12 +67,12 @@ namespace m3D {
          *        to the coordinate system's resolution
          * @return mean shift vector
          */
-        vector<T> 
+        vector<T>
         meanshift(const vector<T> &x,
-                  const SearchParameters *params,
-                  const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
-                  const WeightFunction<T> *w = NULL,
-                  const bool normalize_shift = true);
+                const SearchParameters *params,
+                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
+                const WeightFunction<T> *w = NULL,
+                const bool normalize_shift = true);
     };
 }
 

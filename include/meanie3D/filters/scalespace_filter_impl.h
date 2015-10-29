@@ -45,46 +45,42 @@ namespace m3D {
 
     template <typename T>
     ScaleSpaceFilter<T>::ScaleSpaceFilter(T scale,
-                                          const vector<T> &resolution,
-                                          vector<NcVar> &excluded_vars,
-                                          T decay,
-                                          bool show_progress)
+            const vector<T> &resolution,
+            vector<NcVar> &excluded_vars,
+            T decay,
+            bool show_progress)
     : FeatureSpaceFilter<T>(show_progress)
     , m_scale(scale)
     , m_decay(decay)
     , m_progress_bar(NULL)
     , m_excluded_vars(excluded_vars)
     {
-        if ( scale < 0 )
-        {
+        if (scale < 0) {
             throw logic_error("scale can not be less than zero");
         }
 
-        if ( decay < 0 || decay >= 1 )
-        {
+        if (decay < 0 || decay >= 1) {
             throw logic_error("decay must be > 0 and < 1");
         }
 
-        T filter_width = sqrt(ceil(-2.0*scale*log(decay)))/2;
+        T filter_width = sqrt(ceil(-2.0 * scale * log(decay))) / 2;
 
         m_kernels.clear();
 
-        for (size_t i = 0; i < resolution.size(); i++)
-        {
+        for (size_t i = 0; i < resolution.size(); i++) {
             // calculate the distances vector
 
             size_t mask_size = filter_width / resolution[i];
 
-            vector<T> distances(mask_size,0.0);
+            vector<T> distances(mask_size, 0.0);
 
-            for (size_t j=0; j < mask_size; j++)
-            {
-                distances[j] = ((T)j) * resolution[i];
+            for (size_t j = 0; j < mask_size; j++) {
+                distances[j] = ((T) j) * resolution[i];
             }
 
             // create the kernel
 
-            ScaleSpaceKernel<T> kernel(scale,distances);
+            ScaleSpaceKernel<T> kernel(scale, distances);
 
             m_kernels.push_back(kernel);
         }
@@ -101,11 +97,11 @@ namespace m3D {
     template <typename T>
     void
     ScaleSpaceFilter<T>::applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
-                                                      ArrayIndex<T> *originalIndex,
-                                                      ArrayIndex<T> *filteredPoints,
-                                                      vector<size_t> &dimensionIndexes,
-                                                      size_t dimensionIndex,
-                                                      typename CoordinateSystem<T>::GridPoint& gridpoint)
+            ArrayIndex<T> *originalIndex,
+            ArrayIndex<T> *filteredPoints,
+            vector<size_t> &dimensionIndexes,
+            size_t dimensionIndex,
+            typename CoordinateSystem<T>::GridPoint& gridpoint)
     {
         // loop over the dimension with the given index. For each
         // coordinate, loop over the other two. At Each point, apply
@@ -121,20 +117,15 @@ namespace m3D {
 
         // iterate over dimensions
 
-        for ( int index = 0; index < dim.getSize(); index++ )
-        {
+        for (int index = 0; index < dim.getSize(); index++) {
             gridpoint[realDimIndex] = index;
 
-            if ( dimensionIndex < (gridpoint.size()-1) )
-            {
-                applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, dimensionIndex+1, gridpoint);
-            }
-            else
-            {
+            if (dimensionIndex < (gridpoint.size() - 1)) {
+                applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, dimensionIndex + 1, gridpoint);
+            } else {
                 // we reached the fixed dimension
 
-                if (this->show_progress()) 
-                {
+                if (this->show_progress()) {
                     m_progress_bar->operator++();
                 }
 
@@ -150,9 +141,9 @@ namespace m3D {
                 // outside the bounds of the array
 
                 int width = g.values().size() - 1;
-                int gpIndex = (int)gridpoint[realDimIndex];
+                int gpIndex = (int) gridpoint[realDimIndex];
                 int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
-                int maxIndex = ((gpIndex + width) < (dim.getSize()-1)) ? (gpIndex + width) : (dim.getSize()-1);
+                int maxIndex = ((gpIndex + width) < (dim.getSize() - 1)) ? (gpIndex + width) : (dim.getSize() - 1);
 
                 // Convolute in 1D around the given point with
                 // the mask size determined by the kernel
@@ -160,12 +151,11 @@ namespace m3D {
 
                 typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
 
-                vector<T> sum(fs->value_rank(),0.0);
+                vector<T> sum(fs->value_rank(), 0.0);
 
                 size_t sumCount = 0;
 
-                for (int i=minIndex; i<maxIndex; i++)
-                {
+                for (int i = minIndex; i < maxIndex; i++) {
                     // set gridpoint to current position
 
                     gridIter[realDimIndex] = i;
@@ -173,8 +163,8 @@ namespace m3D {
                     // Again, make sure no points originally marked as
                     // off limits are used
 
-//                    if (fs->off_limits()->get(gridIter))
-//                        continue;
+                    //                    if (fs->off_limits()->get(gridIter))
+                    //                        continue;
 
                     // get the point at the iterated position
 
@@ -185,11 +175,10 @@ namespace m3D {
 
                     // apply the pre-sampled gaussian and sum up
 
-                    size_t d = (i <= index) ? (index-i) : (i-index);
+                    size_t d = (i <= index) ? (index - i) : (i - index);
 
-                    for (int varIndex=0; varIndex < fs->value_rank(); varIndex++)
-                    {
-                        T value = pIter->values[cs->rank()+varIndex];
+                    for (int varIndex = 0; varIndex < fs->value_rank(); varIndex++) {
+                        T value = pIter->values[cs->rank() + varIndex];
                         sum[varIndex] += g.value(d) * value;
                     }
 
@@ -207,17 +196,16 @@ namespace m3D {
 
                 // If no point existed, decide if we need to create one
 
-                if (p == NULL)
-                {
+                if (p == NULL) {
                     // Create a new point with default values
                     // and insert into array index
 
                     typename CoordinateSystem<T>::Coordinate coordinate = cs->newCoordinate();
-                    cs->lookup(gridpoint,coordinate);
+                    cs->lookup(gridpoint, coordinate);
                     vector<T> values = coordinate;
-                    values.resize(fs->rank(),0.0);
+                    values.resize(fs->rank(), 0.0);
 
-                    p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
+                    p = PointFactory<T>::get_instance()->create(gridpoint, coordinate, values);
 
                     // Did this exist in the original index?
 
@@ -228,7 +216,7 @@ namespace m3D {
                     // is no need to copy it again when adding
                     // it to the array index
 
-                    filteredPoints->set(gridpoint,p,false);
+                    filteredPoints->set(gridpoint, p, false);
 
                     if (!p->isOriginalPoint)
                         m_created_points++;
@@ -239,13 +227,11 @@ namespace m3D {
                 // If we have a point after all that, update it with the
                 // filtered value
 
-                if (p != NULL)
-                {
+                if (p != NULL) {
                     // copy values and track limits
 
-                    for (int varIndex=0; varIndex < fs->value_rank(); varIndex++)
-                    {
-                        p->values[fs->spatial_rank()+varIndex] = sum[varIndex];
+                    for (int varIndex = 0; varIndex < fs->value_rank(); varIndex++) {
+                        p->values[fs->spatial_rank() + varIndex] = sum[varIndex];
 
                         if (sum[varIndex] < m_min[varIndex])
                             m_min[varIndex] = sum[varIndex];
@@ -261,9 +247,9 @@ namespace m3D {
     template <typename T>
     void
     ScaleSpaceFilter<T>::applyWithArrayIndexForDimension(FeatureSpace<T> *fs,
-                                                         ArrayIndex<T> *originalIndex,
-                                                         ArrayIndex<T> *filteredPoints,
-                                                         size_t fixedDimensionIndex)
+            ArrayIndex<T> *originalIndex,
+            ArrayIndex<T> *filteredPoints,
+            size_t fixedDimensionIndex)
     {
         // iterate over the other two
 
@@ -272,9 +258,8 @@ namespace m3D {
 
         vector<size_t> dimensionIndexes;
 
-        for (size_t j=0; j<fs->coordinate_system->rank(); j++)
-        {
-            if (j==fixedDimensionIndex) continue;
+        for (size_t j = 0; j < fs->coordinate_system->rank(); j++) {
+            if (j == fixedDimensionIndex) continue;
             dimensionIndexes.push_back(j);
         }
 
@@ -288,7 +273,6 @@ namespace m3D {
         applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, 0, gridpoint);
     }
 
-
     template <typename T>
     void
     ScaleSpaceFilter<T>::applyWithArrayIndex(FeatureSpace<T> *fs)
@@ -299,8 +283,7 @@ namespace m3D {
 
         // index the original
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << endl << "Constructing array indexes ...";
 
             start_timer();
@@ -310,31 +293,27 @@ namespace m3D {
 
         ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), false);
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
         }
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << endl << "Applying scale filter t=" << m_scale << " decay=" << m_decay << " ... " << endl;
 
             long numPoints = 1;
 
-            for ( size_t i=0; i < fs->coordinate_system->rank(); i++)
-            {
+            for (size_t i = 0; i < fs->coordinate_system->rank(); i++) {
                 numPoints *= fs->coordinate_system->dimensions()[i].getSize();
             }
 
-            m_progress_bar = new boost::progress_display( fs->spatial_rank() * numPoints );
+            m_progress_bar = new boost::progress_display(fs->spatial_rank() * numPoints);
 
             start_timer();
         }
 
         // initialize min/max and re-set counts
 
-        for (size_t varIndex=0; varIndex<fs->value_rank(); varIndex++)
-        {
+        for (size_t varIndex = 0; varIndex < fs->value_rank(); varIndex++) {
             m_min[varIndex] = std::numeric_limits<T>::max();
             m_max[varIndex] = std::numeric_limits<T>::min();
         }
@@ -343,17 +322,15 @@ namespace m3D {
 
         // Apply dimension by dimension (exploiting separability)
 
-        for (size_t dimIndex=0; dimIndex < fs->spatial_rank(); dimIndex++)
-        {
+        for (size_t dimIndex = 0; dimIndex < fs->spatial_rank(); dimIndex++) {
             applyWithArrayIndexForDimension(fs, originalIndex, filteredIndex, dimIndex);
 
             delete originalIndex;
 
-            if (dimIndex < (fs->spatial_rank()-1))
-            {
+            if (dimIndex < (fs->spatial_rank() - 1)) {
                 originalIndex = filteredIndex;
 
-                filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(),false);
+                filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), false);
             }
         }
 
@@ -362,16 +339,14 @@ namespace m3D {
         filteredIndex->replace_points(fs->points);
 
         size_t originalPoints = 0;
-        for (size_t i=0; i < fs->points.size(); i++)
-        {
+        for (size_t i = 0; i < fs->points.size(); i++) {
             if (fs->points[i]->isOriginalPoint) originalPoints++;
         }
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
             cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
-                 << "(" << m_created_points << " new points))" << endl;
+                    << "(" << m_created_points << " new points))" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
         }
@@ -384,9 +359,9 @@ namespace m3D {
     template <typename T>
     void
     ScaleSpaceFilter<T>::apply_parallellized_on_dimension(FeatureSpace<T> *fs,
-                                                        ArrayIndex<T> *originalIndex,
-                                                        ArrayIndex<T> *filteredPoints,
-                                                        size_t fixedDimension)
+            ArrayIndex<T> *originalIndex,
+            ArrayIndex<T> *filteredPoints,
+            size_t fixedDimension)
     {
         using namespace std;
 
@@ -400,18 +375,17 @@ namespace m3D {
 
         std::vector<size_t> iter_dimensions;
 
-        for (size_t i=0; i < dim_sizes.size(); i++)
+        for (size_t i = 0; i < dim_sizes.size(); i++)
             if (i != fixedDimension)
                 iter_dimensions.push_back(dim_sizes[i]);
 
         LinearIndexMapping mapping(iter_dimensions);
         size_t N = mapping.size();
 
-        #if WITH_OPENMP
-        #pragma omp parallel for schedule(dynamic)
-        #endif
-        for (size_t n=0; n < N; n++)
-        {
+#if WITH_OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+        for (size_t n = 0; n < N; n++) {
             // re-assemble the starting point for the iteration from
             // the mapping's components
 
@@ -419,8 +393,8 @@ namespace m3D {
             vector<int> startPoint(cs->rank());
 
             size_t runningIndex = 0;
-            for (size_t i=0; i<cs->rank(); i++)
-                if ( i != fixedDimension )
+            for (size_t i = 0; i < cs->rank(); i++)
+                if (i != fixedDimension)
                     startPoint[i] = truncatedGridPoint[runningIndex++];
 
             size_t fixedDimSize = dim_sizes[fixedDimension];
@@ -429,13 +403,11 @@ namespace m3D {
             // TODO: consider to nest this depending on 
             // problem size
 
-            for (size_t k=0; k < dim_sizes[fixedDimension]; k++)
-            {
-                if (this->show_progress()) 
-                {
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
+            for (size_t k = 0; k < dim_sizes[fixedDimension]; k++) {
+                if (this->show_progress()) {
+#if WITH_OPENMP
+#pragma omp critical
+#endif
                     m_progress_bar->operator++();
                 }
 
@@ -444,10 +416,10 @@ namespace m3D {
                 vector<int> gridpoint(startPoint);
                 gridpoint[fixedDimension] = k;
 
-                #if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
-                    if (fs->off_limits()->get(gridpoint))
-                        continue;
-                #endif  
+#if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
+                if (fs->off_limits()->get(gridpoint))
+                    continue;
+#endif  
 
                 ScaleSpaceKernel<T> g = this->m_kernels[fixedDimension];
 
@@ -455,9 +427,9 @@ namespace m3D {
                 // outside the bounds of the array
 
                 int width = g.values().size() - 1;
-                int gpIndex = (int)gridpoint[fixedDimension];
+                int gpIndex = (int) gridpoint[fixedDimension];
                 int minIndex = (gpIndex - width >= 0) ? (gpIndex - width) : 0;
-                int maxIndex = ((gpIndex + width) < (fixedDimSize-1)) ? (gpIndex + width) : (fixedDimSize-1);
+                int maxIndex = ((gpIndex + width) < (fixedDimSize - 1)) ? (gpIndex + width) : (fixedDimSize - 1);
 
                 // Convolute in 1D around the given point with
                 // the mask size determined by the kernel
@@ -465,37 +437,35 @@ namespace m3D {
 
                 typename CoordinateSystem<T>::GridPoint gridIter = gridpoint;
 
-                vector<T> sum(value_rank,0.0);
+                vector<T> sum(value_rank, 0.0);
 
                 size_t sumCount = 0;
 
-                for ( int i = minIndex; i < maxIndex; i++ )
-                {
+                for (int i = minIndex; i < maxIndex; i++) {
                     gridIter[fixedDimension] = i;
 
                     // Again, make sure no points originally marked as
                     // off limits are used
 
-                    #if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
-                        if (fs->off_limits()->get(gridpoint))
-                            continue;
-                    #endif  
+#if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
+                    if (fs->off_limits()->get(gridpoint))
+                        continue;
+#endif  
 
                     // get the point at the iterated position
 
                     Point<T> *pIter = originalIndex->get(gridIter);
 
-                    if (pIter == NULL) 
+                    if (pIter == NULL)
                         continue;
 
                     // apply the pre-sampled gaussian and sum up
                     // in each variable in the feature-space
 
-                    size_t d = (i <= k) ? (k-i) : (i-k);
+                    size_t d = (i <= k) ? (k - i) : (i - k);
 
-                    for (int varIndex=0; varIndex < value_rank; varIndex++)
-                    {
-                        T value = pIter->values[cs->rank()+varIndex];
+                    for (int varIndex = 0; varIndex < value_rank; varIndex++) {
+                        T value = pIter->values[cs->rank() + varIndex];
                         sum[varIndex] += g.value(d) * value;
                     }
 
@@ -513,17 +483,16 @@ namespace m3D {
 
                 // If no point existed, decide if we need to create one
 
-                if (p == NULL)
-                {
+                if (p == NULL) {
                     // Create a new point with default values
                     // and insert into array index
 
                     typename CoordinateSystem<T>::Coordinate coordinate = cs->newCoordinate();
-                    cs->lookup(gridpoint,coordinate);
+                    cs->lookup(gridpoint, coordinate);
                     vector<T> values = coordinate;
-                    values.resize(fs->rank(),0.0);
+                    values.resize(fs->rank(), 0.0);
 
-                    p = PointFactory<T>::get_instance()->create(gridpoint,coordinate,values);
+                    p = PointFactory<T>::get_instance()->create(gridpoint, coordinate, values);
 
                     // Did this exist in the original index?
 
@@ -534,17 +503,14 @@ namespace m3D {
                     // is no need to copy it again when adding
                     // it to the array index
 
-                    #if WITH_OPENMP
-                    #pragma omp critical
-                    #endif
-                    filteredPoints->set(gridpoint,p,false);
+#if WITH_OPENMP
+#pragma omp critical
+#endif
+                    filteredPoints->set(gridpoint, p, false);
 
-                    if (!p->isOriginalPoint)
-                    {
+                    if (!p->isOriginalPoint) {
                         m_created_points++;
-                    }
-                    else
-                    {
+                    } else {
                         m_modified_points++;
                     }
                 }
@@ -552,27 +518,23 @@ namespace m3D {
                 // If we have a point after all that, update it with the
                 // filtered value
 
-                if (p != NULL)
-                {
+                if (p != NULL) {
                     // copy values and track limits
 
-                    for (int varIndex=0; varIndex < value_rank; varIndex++)
-                    {
-                        p->values[numDims+varIndex] = sum[varIndex];
+                    for (int varIndex = 0; varIndex < value_rank; varIndex++) {
+                        p->values[numDims + varIndex] = sum[varIndex];
 
-                        if (sum[varIndex] < m_min[varIndex])
-                        {
-                            #if WITH_OPENMP
-                            #pragma omp critical
-                            #endif
+                        if (sum[varIndex] < m_min[varIndex]) {
+#if WITH_OPENMP
+#pragma omp critical
+#endif
                             m_min[varIndex] = sum[varIndex];
                         }
 
-                        if (sum[varIndex] > m_max[varIndex])
-                        {
-                            #if WITH_OPENMP
-                            #pragma omp critical
-                            #endif
+                        if (sum[varIndex] > m_max[varIndex]) {
+#if WITH_OPENMP
+#pragma omp critical
+#endif
                             m_max[varIndex] = sum[varIndex];
                         }
                     }
@@ -595,8 +557,7 @@ namespace m3D {
 
         // index the original
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << endl << "Constructing array indexes ...";
             start_timer();
         }
@@ -604,27 +565,23 @@ namespace m3D {
         ArrayIndex<T> *originalIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), fs->points, true);
         ArrayIndex<T> *filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), false);
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
         }
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << endl << "Applying scale filter t=" << m_scale << " decay=" << m_decay << " ... " << endl;
 
             long numPoints = 1;
-            for ( size_t i=0; i < fs->coordinate_system->rank(); i++)
-            {
+            for (size_t i = 0; i < fs->coordinate_system->rank(); i++) {
                 numPoints *= fs->coordinate_system->dimensions()[i].getSize();
             }
-            m_progress_bar = new boost::progress_display( fs->spatial_rank() * numPoints );
+            m_progress_bar = new boost::progress_display(fs->spatial_rank() * numPoints);
             start_timer();
         }
 
         // initialize min/max and re-set counts
-        for (size_t varIndex=0; varIndex < value_rank; varIndex++)
-        {
+        for (size_t varIndex = 0; varIndex < value_rank; varIndex++) {
             m_min[varIndex] = std::numeric_limits<T>::max();
             m_max[varIndex] = std::numeric_limits<T>::min();
         }
@@ -635,17 +592,15 @@ namespace m3D {
         // Apply dimension by dimension (exploiting separability)
         //
 
-        for (size_t dimIndex=0; dimIndex < fs->spatial_rank(); dimIndex++)
-        {
+        for (size_t dimIndex = 0; dimIndex < fs->spatial_rank(); dimIndex++) {
             apply_parallellized_on_dimension(fs, originalIndex, filteredIndex, dimIndex);
 
             delete originalIndex;
 
-            if (dimIndex < (fs->spatial_rank()-1))
-            {
+            if (dimIndex < (fs->spatial_rank() - 1)) {
                 originalIndex = filteredIndex;
 
-                filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(),false);
+                filteredIndex = new ArrayIndex<T>(cs->get_dimension_sizes(), false);
             }
         }
 
@@ -655,16 +610,14 @@ namespace m3D {
         filteredIndex->replace_points(fs->points);
 
         size_t originalPoints = 0;
-        for (size_t i=0; i < fs->points.size(); i++)
-        {
+        for (size_t i = 0; i < fs->points.size(); i++) {
             if (fs->points[i]->isOriginalPoint) originalPoints++;
         }
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
             cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
-                 << "(" << m_created_points << " new points))" << endl;
+                    << "(" << m_created_points << " new points))" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
         }
@@ -676,7 +629,7 @@ namespace m3D {
 
     template <typename T>
     void
-    ScaleSpaceFilter<T>::apply( FeatureSpace<T> *fs )
+    ScaleSpaceFilter<T>::apply(FeatureSpace<T> *fs)
     {
         this->m_unfiltered_min = fs->min();
         this->m_unfiltered_max = fs->max();
@@ -689,30 +642,29 @@ namespace m3D {
 #pragma mark Range handling
 
     template <typename T>
-    map<size_t,T> 
+    map<size_t, T>
     ScaleSpaceFilter<T>::getRangeFactors()
     {
-        map<size_t,T> factors;
-        typename map<size_t,T>::iterator mi;
+        map<size_t, T> factors;
+        typename map<size_t, T>::iterator mi;
 
-        for (mi = m_min.begin(); mi != m_min.end(); mi++)
-        {
+        for (mi = m_min.begin(); mi != m_min.end(); mi++) {
             size_t i = mi->first;
-            factors[i] = (m_max[i]-m_min[i])/(m_unfiltered_max[i]-m_unfiltered_min[i]);
+            factors[i] = (m_max[i] - m_min[i]) / (m_unfiltered_max[i] - m_unfiltered_min[i]);
         }
 
         return factors;
     }
 
     template <typename T>
-    const map<size_t,T> &
+    const map<size_t, T> &
     ScaleSpaceFilter<T>::get_filtered_min()
     {
         return m_min;
     }
 
     template <typename T>
-    const map<size_t,T> &
+    const map<size_t, T> &
     ScaleSpaceFilter<T>::get_filtered_max()
     {
         return m_max;

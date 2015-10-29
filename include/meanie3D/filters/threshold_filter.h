@@ -39,10 +39,9 @@ namespace m3D {
     template <class T>
     class ThresholdFilter : public FeatureSpaceFilter<T>
     {
-
     private:
 
-        vector<T>  m_thresholds;
+        vector<T> m_thresholds;
 
     public:
 
@@ -72,7 +71,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Abstract filter method
 
-        virtual void apply( FeatureSpace<T> *fs );
+        virtual void apply(FeatureSpace<T> *fs);
     };
 
 }

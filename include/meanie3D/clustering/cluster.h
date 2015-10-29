@@ -44,11 +44,12 @@ namespace m3D {
      * where multiple trajectories of original feature space points end. This end
      * point is called the cluster's 'mode'.
      */
-    template <class T>
-    class Cluster {
+    template<class T>
+    class Cluster
+    {
     private:
 
-        typedef map< size_t, typename Histogram<T>::ptr > histogram_map_t;
+        typedef map<size_t, typename Histogram<T>::ptr> histogram_map_t;
 
         typename Point<T>::list m_points;
 
@@ -58,7 +59,7 @@ namespace m3D {
 
         vector<T> m_geometrical_center;
 
-        map< size_t, vector<T> > m_weighed_centers;
+        map<size_t, vector<T> > m_weighed_centers;
 
         ::units::values::m m_radius;
 
@@ -78,7 +79,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Type definitions / Constants
 
-        typedef Cluster<T> * ptr;
+        typedef Cluster<T> *ptr;
 
         typedef std::vector<ptr> list;
 
@@ -100,17 +101,20 @@ namespace m3D {
         m3D::id_t id;
 
         size_t
-        value_rank() {
+        value_rank()
+        {
             return m_rank - m_spatial_rank;
         }
 
         size_t
-        spatial_rank() {
+        spatial_rank()
+        {
             return m_spatial_rank;
         };
 
         size_t
-        rank() {
+        rank()
+        {
             return m_rank;
         };
 
@@ -155,7 +159,7 @@ namespace m3D {
          * Does not insert duplicates.
          */
         void
-        add_points(const vector< Point<T> * > &list, bool addOriginalPointsOnly = true);
+        add_points(const vector<Point<T> *> &list, bool addOriginalPointsOnly = true);
 
         /** Searches the list of points in this cluster for the given one.
          * @param point
@@ -222,7 +226,7 @@ namespace m3D {
          * @param index
          * @return 
          */
-        typename Point<T>::ptr at(const size_t& index) const;
+        typename Point<T>::ptr at(const size_t &index) const;
 
         /** Clears the point list. 
          * 

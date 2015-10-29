@@ -30,25 +30,29 @@
 #include <meanie3D/featurespace.h>
 #include <meanie3D/index.h>
 
-namespace m3D { 
+namespace m3D {
 
     /** Abstract base class for Operations on FeatureSpace
      */
-    template <typename T> 
+    template <typename T>
     class Operation
     {
     protected:
 
-        FeatureSpace<T>  *feature_space;
+        FeatureSpace<T> *feature_space;
 
-        PointIndex<T>    *point_index;
+        PointIndex<T> *point_index;
 
     public:
 
-        Operation( FeatureSpace<T> *fs, PointIndex<T> *index ) : feature_space(fs),point_index(index) {}
+        Operation(FeatureSpace<T> *fs, PointIndex<T> *index) : feature_space(fs), point_index(index)
+        {
+        }
 
-        virtual ~Operation() {};
-    };   
+        virtual ~Operation()
+        {
+        };
+    };
 }
-    
+
 #endif

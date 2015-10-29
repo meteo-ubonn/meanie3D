@@ -32,19 +32,18 @@
 #include <set>
 #include <vector>
 
-extern "C"
-{
+extern "C" {
     namespace m3D {
 
         /** Data type for object identifiers
          */
-        typedef unsigned long           id_t;
+        typedef unsigned long id_t;
 
-        typedef std::set<id_t>          id_set_t;
+        typedef std::set<id_t> id_set_t;
 
-        typedef std::vector<id_t>       id_vec_t;
+        typedef std::vector<id_t> id_vec_t;
 
-        typedef std::map<id_t,id_set_t> id_map_t;
+        typedef std::map<id_t, id_set_t> id_map_t;
 
         // Constants
 
@@ -62,12 +61,9 @@ extern "C"
          */
         m3D::id_t next_id(m3D::id_t &current)
         {
-            if (current >= m3D::MAX_ID)
-            {
+            if (current >= m3D::MAX_ID) {
                 current = m3D::MIN_ID;
-            }
-            else
-            {
+            } else {
                 current++;
             }
 

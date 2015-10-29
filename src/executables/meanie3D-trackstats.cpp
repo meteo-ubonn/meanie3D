@@ -94,13 +94,15 @@ void parse_commmandline(program_options::variables_map vm,
     include_degenerates = vm["exclude-degenerates"].as<bool>();
 
     // Default is the dimensions
-    if (vm.count("vtk-dimensions") > 0)  {
+    if (vm.count("vtk-dimensions") > 0)
+    {
         // parse dimension list
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
         boost::char_separator<char> sep(",");
         string str_value = vm["vtk-dimensions"].as<string>();
         tokenizer dim_tokens(str_value, sep);
-        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
+        {
             string name = *tok_iter;
             vtk_dim_names.push_back(name);
         }
@@ -230,7 +232,7 @@ void write_values(const std::string &filename,
     ofstream file(filename.c_str());
     file << "track length  number of tracks" << endl;
     typename map<T, size_t>::const_iterator si;
-    for (si = values.begin(); si != values.end(); si++) 
+    for (si = values.begin(); si != values.end(); si++)
     {
         file << si->first << "  " << si->second << endl;
     }
@@ -242,7 +244,7 @@ double average(const vector<FS_TYPE> &v)
 {
     // calculate the mean value
     double sum = 0.0;
-    for (size_t i = 0; i < v.size(); i++) 
+    for (size_t i = 0; i < v.size(); i++)
     {
         sum += boost::numeric_cast<double>(v[i]);
     }
@@ -454,7 +456,7 @@ int main(int argc, char** argv)
         cerr << "FATAL:" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
-    
+
     bool needsClusterData = write_cumulated_tracks_as_vtk;
 
     // initialize values
@@ -483,7 +485,7 @@ int main(int argc, char** argv)
     std::string coords_filename;
 
     cout << "Collecting track data from NetCDF files: " << endl;
-    
+
     // This file should not be closed until the code has
     // run through, or netCDF will upchuck exceptions when
     // accessing coordinate system
@@ -511,16 +513,16 @@ int main(int argc, char** argv)
         fs::directory_iterator end;
 
         // Iterate over the "-clusters.nc" - files in sourcepath
-        
+
         while (dir_iter != end)
         {
-//            double time_reading = 0;
-//            double time_searching = 0;
-//            double time_inserting = 0;
-//            double time_pushing_clusters = 0;
-//            double time_constructing_clusters = 0;
-//            double time_deleting = 0;
-//            double time_constructing = 0;
+            //            double time_reading = 0;
+            //            double time_searching = 0;
+            //            double time_inserting = 0;
+            //            double time_pushing_clusters = 0;
+            //            double time_constructing_clusters = 0;
+            //            double time_deleting = 0;
+            //            double time_constructing = 0;
 
             size_t average_cluster_size = 0;
             size_t number_of_clusters = 0;
@@ -544,14 +546,14 @@ int main(int argc, char** argv)
                 {
                     coords_filename = f.generic_string();
                     coords_file = new NcFile(coords_filename, NcFile::read);
-                    
+
                     // Read "featurespace_dimensions"
                     cout << "Constructing coordinate system from file " << coords_filename << endl;
 
                     string fs_dimensions;
                     coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
                     dim_names = vectors::from_string<string>(fs_dimensions);
-                    
+
                     string fs_vars;
                     coords_file->getAtt("featurespace_variables").getValues(fs_vars);
 
@@ -561,10 +563,10 @@ int main(int argc, char** argv)
                         var_names.push_back(all_var_names[i]);
                     }
 
-                    #if WITH_VTK
+#if WITH_VTK
                     cout << "Setting VTK dimensions:" << vtk_dim_names << endl;
                     VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(dim_names, vtk_dim_names);
-                    #endif
+#endif
                 }
 
                 try
@@ -574,16 +576,18 @@ int main(int argc, char** argv)
                     // TODO: check if the actual dimensions and their 
                     // order remain constant
 
-//                    start_timer();
+                    //                    start_timer();
                     ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read(f.generic_string());
-//                    time_reading += stop_timer();
+                    //                    time_reading += stop_timer();
 
                     cout << "Processing " << f.filename().generic_string()
-                        << " (" << cluster_list->size() << " clusters) ... ";
+                            << " (" << cluster_list->size() << " clusters) ... ";
 
-                    if (spatial_rank == 0) {
+                    if (spatial_rank == 0)
+                    {
                         spatial_rank = cluster_list->dimensions.size();
-                    } else if (spatial_rank != cluster_list->dimensions.size()) {
+                    } else if (spatial_rank != cluster_list->dimensions.size())
+                    {
                         cerr << "FATAL:spatial range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
@@ -592,9 +596,11 @@ int main(int argc, char** argv)
                     // remain constant
 
                     size_t v_rank = cluster_list->feature_variables.size() - spatial_rank;
-                    if (value_rank == 0) {
+                    if (value_rank == 0)
+                    {
                         value_rank = v_rank;
-                    } else if (v_rank != value_rank) {
+                    } else if (v_rank != value_rank)
+                    {
                         cerr << "FATAL:value range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
@@ -608,18 +614,20 @@ int main(int argc, char** argv)
                         Track<FS_TYPE>::ptr tm = NULL;
                         Track<FS_TYPE>::trackmap::const_iterator ti;
 
-//                        start_timer();
+                        //                        start_timer();
                         ti = track_map.find(id);
-//                        time_searching += stop_timer();
-                            
-                        if (ti == track_map.end()) {
+                        //                        time_searching += stop_timer();
+
+                        if (ti == track_map.end())
+                        {
                             // new entry
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
-//                            start_timer();
+                            //                            start_timer();
                             track_map[id] = tm;
-//                            time_inserting += stop_timer();
-                        } else {
+                            //                            time_inserting += stop_timer();
+                        } else
+                        {
                             tm = ti->second;
                         }
 
@@ -630,18 +638,18 @@ int main(int argc, char** argv)
                         // has facilities of writing it's point list to disk and read
                         // it back on demand, saving memory.
 
-//                        start_timer();
+                        //                        start_timer();
                         TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster, need_points);
-//                        time_constructing_clusters += stop_timer();
+                        //                        time_constructing_clusters += stop_timer();
                         average_cluster_size += cluster->size();
                         number_of_clusters++;
-                        
+
                         // Call these to cache before disposing of points
                         // tc->geometrical_center(spatial_rank);
 
-//                        start_timer();
+                        //                        start_timer();
                         tm->clusters.push_back(tc);
-//                        time_pushing_clusters += stop_timer();
+                        //                        time_pushing_clusters += stop_timer();
 
                         vector<FS_TYPE> min, max, median;
                         cluster->variable_ranges(min, max, median);
@@ -650,15 +658,15 @@ int main(int argc, char** argv)
                         cluster_median[cluster->id] = median;
 
                         // dispose of the points in the original cluster
-//                        start_timer();
+                        //                        start_timer();
                         cluster->clear(true);
-//                        time_deleting += stop_timer();
+                        //                        time_deleting += stop_timer();
                     }
-                    
-//                    start_timer();
+
+                    //                    start_timer();
                     delete cluster_list;
-//                    time_deleting += stop_timer();
-                    
+                    //                    time_deleting += stop_timer();
+
                     // cout << "tracking map has " << track_map.size() << " tracks" << endl;
 
                 } catch (netCDF::exceptions::NcException &e)
@@ -672,18 +680,18 @@ int main(int argc, char** argv)
                 cout << "done." << endl;
             }
 
-//            cout << "Clusters processed:" << endl;
-//            cout << "\t number:" << number_of_clusters << endl;
-//            cout << "\t average size:" << ((double)average_cluster_size) / ((double)number_of_clusters) << endl;
-//            cout << endl;
-//            
-//            cout << "Time spend:" << endl;
-//            cout << "\t reading:" << time_reading << endl;
-//            cout << "\t searching:" << time_searching << endl;
-//            cout << "\t inserting:" << time_inserting << endl;
-//            cout << "\t constructing clusters:" << time_constructing_clusters << endl;
-//            cout << "\t pushing clusters:" << time_pushing_clusters << endl;
-//            cout << "\t deleting:" << time_deleting << endl;
+            //            cout << "Clusters processed:" << endl;
+            //            cout << "\t number:" << number_of_clusters << endl;
+            //            cout << "\t average size:" << ((double)average_cluster_size) / ((double)number_of_clusters) << endl;
+            //            cout << endl;
+            //            
+            //            cout << "Time spend:" << endl;
+            //            cout << "\t reading:" << time_reading << endl;
+            //            cout << "\t searching:" << time_searching << endl;
+            //            cout << "\t inserting:" << time_inserting << endl;
+            //            cout << "\t constructing clusters:" << time_constructing_clusters << endl;
+            //            cout << "\t pushing clusters:" << time_pushing_clusters << endl;
+            //            cout << "\t deleting:" << time_deleting << endl;
 
             dir_iter++;
         }
@@ -736,12 +744,14 @@ int main(int argc, char** argv)
         cout << "Keying up tracks: " << endl;
 
         Track<FS_TYPE>::trackmap::iterator tmi;
-        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi) {
+        for (tmi = track_map.begin(); tmi != track_map.end(); ++tmi)
+        {
             Track<FS_TYPE>::ptr track = tmi->second;
             size_t i = 0;
             std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
-            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
-                TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) *ti;
+            for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
+            {
+                TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) * ti;
                 c->clear(true);
             }
         }
@@ -792,9 +802,10 @@ int main(int argc, char** argv)
                 track->min.resize(value_rank, std::numeric_limits<FS_TYPE>::max());
                 track->max.resize(value_rank, std::numeric_limits<FS_TYPE>::min());
 
-                size_t i=0;
+                size_t i = 0;
                 std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
-                for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
+                for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
+                {
 
                     TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) (*ti);
                     vector<FS_TYPE> min, max, median;
@@ -825,7 +836,7 @@ int main(int argc, char** argv)
 
                     // Dispose of the points again to free up memory.
                     c->clear(true);
-                    
+
                     i++;
                 }
 
@@ -912,16 +923,17 @@ int main(int argc, char** argv)
 
             std::list<Cluster<FS_TYPE>::ptr>::iterator ti;
             TrackCluster<FS_TYPE> *previous_cluster = NULL;
-            
+
             // Create an array index. Start with empty index.
             ArrayIndex<FS_TYPE> *index = NULL;
-            if (create_cumulated_size_statistics) {
+            if (create_cumulated_size_statistics)
+            {
                 index = new ArrayIndex<FS_TYPE>(coord_system->get_dimension_sizes(), false);
             }
 
             for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
             {
-                TrackCluster<FS_TYPE> *cluster = (TrackCluster<FS_TYPE> *) *ti;
+                TrackCluster<FS_TYPE> *cluster = (TrackCluster<FS_TYPE> *) * ti;
 
                 if (create_cluster_statistics)
                 {
@@ -1104,7 +1116,8 @@ int main(int argc, char** argv)
 
                 // Skip the rest if cumulative size statistics are off
 
-                if (create_cumulated_size_statistics) {
+                if (create_cumulated_size_statistics)
+                {
                     // Iterate over the points of the cluster and add points
                     // to the array index. If the point exists, add it's values
                     // to the existing one. If not, add a new point. In the end
@@ -1150,8 +1163,9 @@ int main(int argc, char** argv)
             }
 #endif
             // Delete the index to save memory
-            if (create_cumulated_size_statistics) {
-                
+            if (create_cumulated_size_statistics)
+            {
+
                 index->clear(true);
                 delete index;
 
@@ -1171,7 +1185,7 @@ int main(int argc, char** argv)
                 add_value_to_histogram(size_histogram_classes, size_histogram, track_size, exceeded_max_class);
                 cout << "  (processed " << points_processed << " points)" << endl;
             }
-            
+
             delete track;
         }
 

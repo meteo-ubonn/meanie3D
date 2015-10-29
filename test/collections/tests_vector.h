@@ -20,7 +20,8 @@ using namespace testing;
 using namespace m3D::utils::vectors;
 
 template <typename T>
-class VectorTest : public testing::Test {
+class VectorTest : public testing::Test
+{
 public:
 };
 
@@ -28,7 +29,8 @@ typedef testing::Types< float, double > VectorDataTypes;
 
 TYPED_TEST_CASE(VectorTest, VectorDataTypes);
 
-TYPED_TEST(VectorTest, VectorDataTypes) {
+TYPED_TEST(VectorTest, VectorDataTypes)
+{
     // T vector_norm( vector<T> *v )
     vector<TypeParam> v1, v2, v3;
     TypeParam s1;
@@ -198,7 +200,8 @@ TYPED_TEST(VectorTest, VectorDataTypes) {
     EXPECT_EQ(v1, from_string<TypeParam>("(1,2,3)"));
 }
 
-TEST(VectorTest, Double) {
+TEST(VectorTest, Double)
+{
     typedef double TypeParam;
 }
 

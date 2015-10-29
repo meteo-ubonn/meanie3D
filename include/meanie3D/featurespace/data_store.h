@@ -37,19 +37,18 @@
 #include <vector>
 #include <netcdf>
 
-namespace m3D { 
+namespace m3D {
 
     /** The DataStore represents a set of input data for the method.
      */
     template <typename T>
     class DataStore
     {
-        
     public:
-        
+
 #pragma mark -
 #pragma mark Typedefs
-        
+
         typedef DataStore<T> * ptr;
 
 #pragma mark -
@@ -61,21 +60,25 @@ namespace m3D {
             virtual
             void
             operator()(DataStore<T> *store,
-                       const size_t variable_index,
-                       vector<int> &gridpoint,
-                       T& value,
-                       bool &is_valid) = 0;
+                    const size_t variable_index,
+                    vector<int> &gridpoint,
+                    T& value,
+                    bool &is_valid) = 0;
         };
 
 #pragma mark -
 #pragma mark Consctructor/Destructor
 
-        DataStore() {};
+        DataStore()
+        {
+        };
 
         /** Destructor
          */
 
-        virtual ~DataStore() {};
+        virtual ~DataStore()
+        {
+        };
 
 #pragma mark -
 #pragma mark Public methods
@@ -90,17 +93,17 @@ namespace m3D {
          */
         virtual
         T get(size_t variable_index,
-              const vector<int> &gridpoint,
-              bool &is_valid) const = 0;
+                const vector<int> &gridpoint,
+                bool &is_valid) const = 0;
 
         /** Gets a point by it's linear index. The index may run
          * from 0 ... (N-1) where N is the total number of points
          * in the grid.
          */
-        virtual 
+        virtual
         T get(size_t variable_index,
-              size_t index,
-              bool &is_valid) const = 0;
+                size_t index,
+                bool &is_valid) const = 0;
 
         /** @return number of variables in the data store
          */
@@ -110,7 +113,7 @@ namespace m3D {
         /** @return number of total points in the grid. 
          * (basically the product of dimension sizes)
          */
-        virtual 
+        virtual
         const size_t size() const = 0;
 
         /** @return extent in the dimensions

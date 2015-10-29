@@ -30,7 +30,7 @@
 
 #include <vector>
 
-namespace m3D { 
+namespace m3D {
 
     /** Abstract factory pattern coupled with a singleton pattern
      * to solve the problem of feature-space being able to produce
@@ -77,9 +77,9 @@ namespace m3D {
          * @param coordinates
          * @param value
          */
-        virtual 
-        Point<T> * 
-        create( vector<int> &gridpoint, vector<T> &coord, vector<T> &value ) = 0;
+        virtual
+        Point<T> *
+        create(vector<int> &gridpoint, vector<T> &coord, vector<T> &value) = 0;
 
         /** This is an abstract method used to create new instances of Point.
          * @param coordinates
@@ -88,7 +88,7 @@ namespace m3D {
          */
         virtual
         Point<T> *
-        create( vector<T> &coord, vector<T> &value ) = 0;
+        create(vector<T> &coord, vector<T> &value) = 0;
 
 
         /** Copy 
@@ -97,7 +97,7 @@ namespace m3D {
          */
         virtual
         Point<T> *
-        copy( const Point<T> *p) = 0;
+        copy(const Point<T> *p) = 0;
     };
 
     // initialize with default factory

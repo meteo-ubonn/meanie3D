@@ -34,7 +34,8 @@ using namespace std;
 typedef double FS_TYPE;
 
 /** Verbosity */
-typedef enum {
+typedef enum
+{
     FileTypeClusters,
     FileTypeComposite,
     FileTypeUnknown
@@ -48,41 +49,49 @@ void parse_commmandline(program_options::variables_map vm,
         FileType &type,
         bool &extract_skin,
         bool &write_as_xml,
-        bool &write_displacement_vectors) {
+        bool &write_displacement_vectors)
+{
     // Version
 
-    if (vm.count("version") != 0) {
+    if (vm.count("version") != 0)
+    {
         cout << m3D::VERSION << endl;
         exit(EXIT_SUCCESS);
     }
 
     // filename
 
-    if (vm.count("file") == 0) {
+    if (vm.count("file") == 0)
+    {
         cerr << "Missing 'file' argument" << endl;
         exit(EXIT_FAILURE);
-    } else {
+    } else
+    {
         filename = vm["file"].as<string>();
     }
 
     // destination
 
-    if (vm.count("destination") != 0) {
+    if (vm.count("destination") != 0)
+    {
         destination = vm["destination"].as<string>();
     }
 
     // variable
 
-    if (vm.count("variable") == 0) {
+    if (vm.count("variable") == 0)
+    {
         cerr << "Missing 'variable' argument" << endl;
         exit(1);
-    } else {
+    } else
+    {
         variable = vm["variable"].as<string>();
     }
 
     // figure out file type
 
-    if (vm.count("type") == 0) {
+    if (vm.count("type") == 0)
+    {
         cerr << "Missing 'type' argument" << endl;
         exit(EXIT_FAILURE);
     }
@@ -91,11 +100,14 @@ void parse_commmandline(program_options::variables_map vm,
 
     boost::algorithm::to_lower(type_str);
 
-    if (type_str == string("cluster")) {
+    if (type_str == string("cluster"))
+    {
         type = FileTypeClusters;
-    } else if (type_str == string("composite")) {
+    } else if (type_str == string("composite"))
+    {
         type = FileTypeComposite;
-    } else {
+    } else
+    {
         type = FileTypeUnknown;
     }
 
@@ -104,26 +116,30 @@ void parse_commmandline(program_options::variables_map vm,
 
     // xml?
     write_as_xml = vm.count("write-as-xml") > 0;
-    
+
     // write-displacement-vectors?
     write_displacement_vectors = vm.count("write-displacement-vectors");
 
     // VTK dimension mapping
 
-    if (vm.count("vtk-dimensions") > 0) {
+    if (vm.count("vtk-dimensions") > 0)
+    {
         // parse dimension list
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
         boost::char_separator<char> sep(",");
         string str_value = vm["vtk-dimensions"].as<string>();
         tokenizer dim_tokens(str_value, sep);
-        try {
+        try
+        {
             NcFile *file = new NcFile(filename, NcFile::read);
             vector<NcDim> dimensions = file->getVar(variable).getDims();
-            for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+            for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
+            {
                 const char* name = (*tok_iter).c_str();
                 NcDim dim = file->getDim(name);
                 vector<NcDim>::const_iterator fi = find(dimensions.begin(), dimensions.end(), dim);
-                if (fi == dimensions.end()) {
+                if (fi == dimensions.end())
+                {
                     cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of " << variable << "'s dimensions" << endl;
                     exit(EXIT_FAILURE);
                 }
@@ -131,27 +147,33 @@ void parse_commmandline(program_options::variables_map vm,
                 vtk_dimension_indexes.push_back(index);
             }
 
-            if (vtk_dimension_indexes.size() != dimensions.size()) {
+            if (vtk_dimension_indexes.size() != dimensions.size())
+            {
                 cerr << "The number of vtk-dimensions must be identical to the number of dimensions of " << variable << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
 
             delete file;
-        } catch (const netCDF::exceptions::NcException &e) {
+        } catch (const netCDF::exceptions::NcException &e)
+        {
             cerr << e.what() << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
-    } else {
+    } else
+    {
         cerr << "Missing parameter --vtk-dimensions" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 }
 
 void convert_clusters(const string &filename,
-                      const string &destination,
-                      bool extract_skin,
-                      bool write_as_xml,
-                      bool write_displacement_vectors) 
+        const string &destination,
+        bool extract_skin,
+        bool write_as_xml,
+        bool write_displacement_vectors)
 {
     boost::filesystem::path path(filename);
     CoordinateSystem<FS_TYPE> *cs = NULL;
@@ -159,15 +181,18 @@ void convert_clusters(const string &filename,
 
     //::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(list, cs, list->source_file, true, false, true);
     // ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
-    
+
     ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu_wholesale(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
-    
-    if (write_displacement_vectors) {
+
+    if (write_displacement_vectors)
+    {
         vector< vector<FS_TYPE> > origins;
-        vector< vector<FS_TYPE> > displacements; 
-        for (size_t i=0; i < list->size(); i++) {
+        vector< vector<FS_TYPE> > displacements;
+        for (size_t i = 0; i < list->size(); i++)
+        {
             Cluster<FS_TYPE>::ptr c = list->clusters.at(i);
-            if (!c->displacement.empty()) {
+            if (!c->displacement.empty())
+            {
                 origins.push_back(c->geometrical_center());
                 displacements.push_back(c->displacement);
             }
@@ -185,8 +210,10 @@ void convert_clusters(const string &filename,
 
 void convert_composite(const string &filename,
         const string& variable_name,
-        const string &destination) {
-    try {
+        const string &destination)
+{
+    try
+    {
 
         // construct the destination path
         std::string filename_noext;
@@ -199,7 +226,8 @@ void convert_composite(const string &filename,
         NcFile *file = new NcFile(filename, NcFile::read);
         vector<NcDim> dimensions = file->getVar(variable_name).getDims();
         vector<NcVar> dim_vars;
-        for (size_t i = 0; i < dimensions.size(); i++) {
+        for (size_t i = 0; i < dimensions.size(); i++)
+        {
             NcVar var = file->getVar(dimensions[i].getName());
             dim_vars.push_back(var);
         }
@@ -240,11 +268,13 @@ void convert_composite(const string &filename,
         delete fs;
         delete file;
         delete dataStore;
-        
-    } catch (const netCDF::exceptions::NcException &e) {
+
+    } catch (const netCDF::exceptions::NcException &e)
+    {
         cerr << e.what() << endl;
 
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 }
 
@@ -252,7 +282,8 @@ void convert_composite(const string &filename,
  *
  *
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     // Declare the supported options.
 
     program_options::options_description desc("Options");
@@ -272,26 +303,34 @@ int main(int argc, char** argv) {
             ;
 
     program_options::variables_map vm;
-    try {
+    try
+    {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    } catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e)
+    {
         cerr << "NetCDF exception:" << e.what() << endl;
-        exit(EXIT_FAILURE);;
-    } catch (std::exception &e) {
+        exit(EXIT_FAILURE);
+        ;
+    } catch (std::exception &e)
+    {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-cfm2vtk --help for command line options" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Version
 
-    if (vm.count("version") != 0) {
+    if (vm.count("version") != 0)
+    {
         cout << m3D::VERSION << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
-    if (vm.count("help") == 1 || argc < 2) {
+    if (vm.count("help") == 1 || argc < 2)
+    {
         cout << desc << "\n";
         return 1;
     }
@@ -307,7 +346,8 @@ int main(int argc, char** argv) {
     bool write_as_xml = false;
     bool write_displacement_vectors = false;
 
-    try {
+    try
+    {
         parse_commmandline(vm, filename, destination, variable, vtk_dimension_indexes, type, extract_skin, write_as_xml, write_displacement_vectors);
 
         // Make the mapping known to the visualization routines
@@ -317,7 +357,8 @@ int main(int argc, char** argv) {
         // Select the correct point factory
         PointFactory<FS_TYPE>::set_instance(new PointDefaultFactory<FS_TYPE>());
 
-        switch (type) {
+        switch (type)
+        {
             case FileTypeClusters:
                 convert_clusters(filename, destination, extract_skin, write_as_xml, write_displacement_vectors);
                 break;
@@ -330,13 +371,17 @@ int main(int argc, char** argv) {
                 cerr << "Unknown file type" << endl;
                 break;
         }
-    } catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e)
+    {
         cerr << "NetCDF exception:" << e.what() << endl;
-        exit(EXIT_FAILURE);;
-    } catch (const std::exception &e) {
+        exit(EXIT_FAILURE);
+        ;
+    } catch (const std::exception &e)
+    {
         cerr << "std::exception:" << e.what() << endl;
         cerr << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     return 0;

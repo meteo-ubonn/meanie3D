@@ -29,52 +29,53 @@
 #include <meanie3D/array.h>
 #include <meanie3D/clustering.h>
 
-namespace m3D { namespace utils {
+namespace m3D {
+    namespace utils {
 
-    template <typename T>
-    struct ClusterIndex
-    {
+        template <typename T>
+        struct ClusterIndex
+        {
+        public:
 
-    public:
+            typedef MultiArray<m3D::id_t> index_t;
 
-        typedef MultiArray<m3D::id_t> index_t;
+        private:
 
-    private:
+            index_t *m_index;
 
-        index_t *m_index;
+        public:
 
-    public:
+            ClusterIndex(typename Cluster<T>::list &list,
+                    const vector<size_t> &dimensions);
 
-        ClusterIndex(typename Cluster<T>::list &list,
-                     const vector<size_t> &dimensions);
+            ~ClusterIndex();
 
-        ~ClusterIndex();
+            // Accessors
 
-        // Accessors
+            index_t *data();
 
-        index_t *data();
+            // Static functions
 
-        // Static functions
+            /** Iterates over the other array, finds all point
+             */
+            static size_t count_common_points(const ClusterIndex<T> *a,
+                    const ClusterIndex<T> *b,
+                    ::m3D::id_t id);
 
-        /** Iterates over the other array, finds all point
-         */
-        static size_t count_common_points(const ClusterIndex<T> *a,
-                                          const ClusterIndex<T> *b,
-                                          ::m3D::id_t id);
+            /** What is the ratio of gridpoints in cluster A that
+             * are also occupied by points from cluster B? 
+             *
+             * Important: cluster B must have been indexed by this 
+             * index prior to calling.
+             *
+             * @param cluster A
+             * @param cluster B
+             */
+            double occupation_ratio(const Cluster<T> *cluster_a,
+                    const Cluster<T> *cluster_b) const;
 
-        /** What is the ratio of gridpoints in cluster A that
-         * are also occupied by points from cluster B? 
-         *
-         * Important: cluster B must have been indexed by this 
-         * index prior to calling.
-         *
-         * @param cluster A
-         * @param cluster B
-         */
-        double occupation_ratio(const Cluster<T> *cluster_a,
-                                const Cluster<T> *cluster_b) const;
-
-    };
-}}
+        };
+    }
+}
 
 #endif

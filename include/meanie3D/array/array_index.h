@@ -33,82 +33,81 @@
 #include <vector>
 #include <netcdf>
 
-namespace m3D { 
-    
+namespace m3D {
+
     using std::vector;
 
     template <class T>
     class ArrayIndex
     {
-
     protected:
 
-        typedef vector<void*>   array_t;
-        typedef array_t*        array_t_ptr;
+        typedef vector<void*> array_t;
+        typedef array_t* array_t_ptr;
 
 #pragma mark -
 #pragma mark Attributes
 
     private:
 
-        vector<size_t>              m_dimensions;
-        array_t                     *m_data;
-        bool                        m_make_copies;
+        vector<size_t> m_dimensions;
+        array_t *m_data;
+        bool m_make_copies;
 
         /** Called by build_index, copy constructor
          */
         void
         construct_array_recursive(size_t dim_index,
-                                  array_t **array,
-                                  vector<int> &gridpoint,
-                                  ArrayIndex<T> *other = NULL);
+                array_t **array,
+                vector<int> &gridpoint,
+                ArrayIndex<T> *other = NULL);
 
         /** Called by destructor.
          */
         void
         destroy_array_recursive(size_t dim_index,
-                                array_t **array,
-                                vector<int> &gridpoint);
+                array_t **array,
+                vector<int> &gridpoint);
 
         /** Copy all points from the final dimension into the list provided
          */
         void
         add_points_to_list(typename Point<T>::list &points,
-                           vector<int> &gridpoint);
+                vector<int> &gridpoint);
 
         /** Called by replace_points.
          */
         void
         replace_points_recursive(typename Point<T>::list &points,
-                                 size_t dim_index,
-                                 vector<int> &gridpoint);
+                size_t dim_index,
+                vector<int> &gridpoint);
 
         void
         get_points_from_index(ArrayIndex<T> *otherIndex,
-                              vector<int> &gridpoint);
+                vector<int> &gridpoint);
         void
         copy_points_recursive(ArrayIndex<T> *otherIndex,
-                              size_t dim_index,
-                              vector<int> &gridpoint);
+                size_t dim_index,
+                vector<int> &gridpoint);
 
         void
         count_recursive(size_t dim_index,
-                        array_t *array,
-                        vector<int> &gridpoint,
-                        size_t &count,
-                        bool originalPointsOnly=false);
+                array_t *array,
+                vector<int> &gridpoint,
+                size_t &count,
+                bool originalPointsOnly = false);
 
         void
         clear_recursive(size_t dim_index,
-                        array_t *array,
-                        vector<int> &gridpoint,
-                        bool delete_points);
-        
+                array_t *array,
+                vector<int> &gridpoint,
+                bool delete_points);
+
         void
         find_neighbours_recursive(vector<int> &gridpoint,
-                                  size_t dim_index,
-                                  typename Point<T>::list &list,
-                                  size_t reach);
+                size_t dim_index,
+                typename Point<T>::list &list,
+                size_t reach);
 
 #pragma mark -
 #pragma mark Constructors/Destructors
@@ -122,7 +121,7 @@ namespace m3D {
          *        references
          */
         ArrayIndex(const vector<size_t> &dimensions,
-                   bool make_copies);
+                bool make_copies);
 
         /** Constructs an array index vor the given dimensions
          * and indexes the point list.
@@ -133,8 +132,8 @@ namespace m3D {
          *        references
          */
         ArrayIndex(const vector<size_t> &dimensions,
-                   const typename Point<T>::list &points,
-                   bool make_copies);
+                const typename Point<T>::list &points,
+                bool make_copies);
 
         /** Copy constructor on pointer
          * @param pointer to array index
@@ -175,8 +174,8 @@ namespace m3D {
          */
         void
         set(const vector<int> &gp,
-            typename Point<T>::ptr p,
-            bool copy=true);
+                typename Point<T>::ptr p,
+                bool copy = true);
 
         /** @return the rank (# of dimensions) of this array index
          */
@@ -205,15 +204,15 @@ namespace m3D {
         /** Iterates over the structure and counts the number of non-null
          * entries in the index.
          */
-        size_t count(bool originalPointsOnly=false);
-        
+        size_t count(bool originalPointsOnly = false);
+
         /** Find the points in the neighborhood of the given gridpoint.
          * @param grid point
          * @param neighborhood size (in #grid points)
          * @return list of pointers to points (no copies)
          */
         typename Point<T>::list
-        find_neighbours(const vector<int> &gridpoint, size_t reach=1);
+        find_neighbours(const vector<int> &gridpoint, size_t reach = 1);
 
     };
 }

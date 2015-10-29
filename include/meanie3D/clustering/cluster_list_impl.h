@@ -48,15 +48,15 @@ namespace m3D {
     using namespace std;
     using namespace netCDF;
     using namespace utils;
-    #if WITH_VTK
+#if WITH_VTK
     using utils::VisitUtils;
-    #endif
+#endif
 
 #pragma mark -
 #pragma mark Macros
 
-        #define sup( v1,v2 ) (v1 > v2 ? v1:v2)
-        #define inf( v1,v2 ) (v1 < v2 ? v1:v2)
+#define sup( v1,v2 ) (v1 > v2 ? v1:v2)
+#define inf( v1,v2 ) (v1 < v2 ? v1:v2)
 
 #pragma mark -
 #pragma mark Accessing the list
@@ -70,18 +70,17 @@ namespace m3D {
 
     template <typename T>
     typename Cluster<T>::ptr
-    ClusterList<T>::operator[] (size_t index)
+    ClusterList<T>::operator[](size_t index)
     {
         return clusters.at(index);
     }
-    
+
     template <typename T>
-    void 
+    void
     ClusterList<T>::clear(bool deletion_flag)
     {
         typename Cluster<T>::list::const_iterator ci;
-        for (ci = clusters.begin(); ci != clusters.end(); ++ci)
-        {
+        for (ci = clusters.begin(); ci != clusters.end(); ++ci) {
             typename Cluster<T>::ptr c = *ci;
             c->clear(deletion_flag);
             delete c;
@@ -94,12 +93,11 @@ namespace m3D {
 
     template <typename T>
     void
-    ClusterList<T>::apply_size_threshold( unsigned int min_cluster_size, const bool& show_progress )
+    ClusterList<T>::apply_size_threshold(unsigned int min_cluster_size, const bool& show_progress)
     {
         boost::progress_display *progress = NULL;
 
-        if ( show_progress )
-        {
+        if (show_progress) {
             cout << endl << "Applying size threshold of " << min_cluster_size << " ... ";
 
             start_timer();
@@ -109,67 +107,56 @@ namespace m3D {
 
         size_t axe_count = 0;
 
-        if ( min_cluster_size > 1 )
-        {
+        if (min_cluster_size > 1) {
             typename Cluster<T>::list::iterator it;
 
-            for ( it = clusters.begin(); it != clusters.end(); )
-            {
+            for (it = clusters.begin(); it != clusters.end();) {
                 progress->operator++();
 
                 typename Cluster<T>::ptr sc = *it;
 
-                if ( sc->size() < min_cluster_size )
-                {
-                    it = clusters.erase( it );
+                if (sc->size() < min_cluster_size) {
+                    it = clusters.erase(it);
 
                     axe_count++;
-                }
-                else
-                {
+                } else {
                     it++;
                 }
             }
         }
 
-        if ( show_progress )
-        {
+        if (show_progress) {
             cout << "done. (Removed " << axe_count << " objects in " << stop_timer() << "s)" << endl;
 
             delete progress;
         }
     }
 
-
     template <typename T>
     void
     ClusterList<T>::save()
     {
-        if (this->filename.empty())
-        {
+        if (this->filename.empty()) {
             throw std::runtime_error("Can not use save() because cluster list was not written or read before.");
         }
 
         this->write(this->filename);
     }
 
-
     template <typename T>
-    void 
-    ClusterList<T>::write( const std::string& path )
+    void
+    ClusterList<T>::write(const std::string& path)
     {
-        try
-        {
+        try {
             NcFile *file = NULL;
 
             this->filename = std::string(path);
 
             bool file_existed = boost::filesystem::exists(path);
 
-            std::string filename = file_existed ? path+"-new" : path;
+            std::string filename = file_existed ? path + "-new" : path;
 
-            try
-            {
+            try {
                 // Be aware of the fact that this->ncFile is probably
                 // open from the tracking at this point. It also needs
                 // to be open, because the dimensions etc. are referencing
@@ -178,37 +165,33 @@ namespace m3D {
                 // it off and finally deleting the original when done, replacing
                 // the original in that way.
 
-                file = new NcFile(filename,NcFile::replace);
-            }
-            catch ( const netCDF::exceptions::NcException &e )
-            {
+                file = new NcFile(filename, NcFile::replace);
+            }            catch (const netCDF::exceptions::NcException &e) {
                 cerr << "FATAL:exception opening file " << filename << " for writing : " << e.what() << endl;
                 exit(EXIT_FAILURE);
             }
 
             // Create dimensions
 
-            NcDim dim,spatial_dim;
+            NcDim dim, spatial_dim;
 
-            dim = file->addDim("featurespace_dim", (int) this->feature_variables.size() );
+            dim = file->addDim("featurespace_dim", (int) this->feature_variables.size());
 
-            spatial_dim = file->addDim("spatial_dim", (int) this->dimensions.size() );
+            spatial_dim = file->addDim("spatial_dim", (int) this->dimensions.size());
 
             // write featurespace_dimensions attribute
 
             vector<string> fs_dims;
 
-            for (size_t di=0; di<this->dimensions.size(); di++)
-            {
+            for (size_t di = 0; di<this->dimensions.size(); di++) {
                 fs_dims.push_back(this->dimensions[di].getName());
             }
 
-            file->putAtt("featurespace_dimensions", to_string(fs_dims) );
+            file->putAtt("featurespace_dimensions", to_string(fs_dims));
 
             // copy dimensions
 
-            for (size_t di=0; di<this->dimensions.size(); di++)
-            {
+            for (size_t di = 0; di<this->dimensions.size(); di++) {
                 NcDim d = this->dimensions[di];
 
                 file->addDim(d.getName(), d.getSize());
@@ -216,9 +199,9 @@ namespace m3D {
 
             // Create dummy variables, attributes and other meta-info
 
-            file->putAtt( "num_clusters", ncInt, (int) clusters.size() );
+            file->putAtt("num_clusters", ncInt, (int) clusters.size());
 
-            file->putAtt( "source", this->source_file );
+            file->putAtt("source", this->source_file);
 
             // Save highest ID
 
@@ -228,37 +211,35 @@ namespace m3D {
             // Record IDs in attribute
 
             id_set_t cluster_ids;
-            for ( size_t ci = 0; ci < clusters.size(); ci++ )
+            for (size_t ci = 0; ci < clusters.size(); ci++)
                 cluster_ids.insert(clusters[ci]->id);
 
-            file->putAtt( "cluster_ids", to_string(cluster_ids) );
+            file->putAtt("cluster_ids", to_string(cluster_ids));
 
             // Add tracking meta-info
 
-            if ( this->tracking_performed )
-            {
-                file->putAtt( "tracking_performed", "yes" );
-                file->putAtt( "tracking_time_difference", ncInt, this->tracking_time_difference);
-                file->putAtt( "tracked_ids", sets::to_string( this->tracked_ids ) );
-                file->putAtt( "new_ids", sets::to_string( this->new_ids ) );
-                file->putAtt( "dropped_ids", sets::to_string( this->dropped_ids ) );
-                file->putAtt( "merges", maps::id_map_to_string(this->merges));
-                file->putAtt( "splits", maps::id_map_to_string(this->splits));
+            if (this->tracking_performed) {
+                file->putAtt("tracking_performed", "yes");
+                file->putAtt("tracking_time_difference", ncInt, this->tracking_time_difference);
+                file->putAtt("tracked_ids", sets::to_string(this->tracked_ids));
+                file->putAtt("new_ids", sets::to_string(this->new_ids));
+                file->putAtt("dropped_ids", sets::to_string(this->dropped_ids));
+                file->putAtt("merges", maps::id_map_to_string(this->merges));
+                file->putAtt("splits", maps::id_map_to_string(this->splits));
             }
 
 
             // Add 'time'
 
-            netcdf::add_time(file,this->timestamp,true);
+            netcdf::add_time(file, this->timestamp, true);
 
             // feature variables
-            
-            NcFile *sourcefile = file_existed 
-                    ? new NcFile(path.c_str(),NcFile::read) 
-                    : new NcFile(this->source_file.c_str(),NcFile::read); 
 
-            for ( size_t i=0; i < this->feature_variables.size(); i++ )
-            {
+            NcFile *sourcefile = file_existed
+                    ? new NcFile(path.c_str(), NcFile::read)
+                    : new NcFile(this->source_file.c_str(), NcFile::read);
+
+            for (size_t i = 0; i < this->feature_variables.size(); i++) {
                 NcVar var = sourcefile->getVar(this->variable_names[i]);
 
                 // cout << "Copying " << var.getName() << endl;
@@ -269,8 +250,7 @@ namespace m3D {
                 // exploiting once more the fact, that dimension variables
                 // have by convention the same name as the dimension
 
-                for (size_t di=0; di<this->dimensions.size() && dim==NULL; di++)
-                {
+                for (size_t di = 0; di<this->dimensions.size() && dim == NULL; di++) {
                     NcDim d = this->dimensions[di];
                     dim = (d.getName() == var.getName()) ? &d : NULL;
                 }
@@ -279,33 +259,30 @@ namespace m3D {
 
                 NcVar dummyVar;
 
-                if (dim != NULL)
-                {
+                if (dim != NULL) {
                     nc_redef(file->getId());
-                    dummyVar = file->addVar( var.getName(), var.getType(), *dim);
-                    dummyVar.setCompression(false,true,3);
+                    dummyVar = file->addVar(var.getName(), var.getType(), *dim);
+                    dummyVar.setCompression(false, true, 3);
                     nc_enddef(file->getId());
 
                     //cout << "\tadded variable " << dummyVar.getName() << " (status=" << dummyVar.isNull() << ")" << endl;
 
-                    T *data = (T*)malloc(sizeof(T) * dim->getSize());
+                    T *data = (T*) malloc(sizeof (T) * dim->getSize());
                     var.getVar(data);
 
                     //cout << "\tread variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
 
-//                    array::print_array(data, dim->getSize());
+                    //                    array::print_array(data, dim->getSize());
 
                     dummyVar.putVar(data);
 
                     //cout << "\twrote variable data: " << sizeof(T) * dim->getSize() << " bytes" << endl;
 
                     delete data;
-                }
-                else
-                {
+                } else {
                     nc_redef(file->getId());
-                    dummyVar = file->addVar( var.getName(), var.getType(), dimensions );
-                    dummyVar.setCompression(false,true,3);
+                    dummyVar = file->addVar(var.getName(), var.getType(), dimensions);
+                    dummyVar.setCompression(false, true, 3);
                     nc_enddef(file->getId());
                 }
 
@@ -317,22 +294,20 @@ namespace m3D {
 
                 nc_redef(file->getId());
 
-                for ( at = attributes.begin(); at != attributes.end(); at++ )
-                {
+                for (at = attributes.begin(); at != attributes.end(); at++) {
                     NcVarAtt a = at->second;
 
                     //cout << "\tcopying attribute " << a.getName() << endl;
 
                     size_t size = a.getAttLength();
 
-                    void *data = (void *)malloc( size );
+                    void *data = (void *) malloc(size);
 
-                    a.getValues( data );
+                    a.getValues(data);
 
-                    NcVarAtt copy = dummyVar.putAtt( a.getName(), a.getType(), size, data );
+                    NcVarAtt copy = dummyVar.putAtt(a.getName(), a.getType(), size, data);
 
-                    if (copy.isNull())
-                    {
+                    if (copy.isNull()) {
                         cerr << "ERROR: could not write attribute " << a.getName() << endl;
                     }
 
@@ -349,19 +324,18 @@ namespace m3D {
             // Enter define mode
             nc_redef(file->getId());
 
-            file->putAtt("featurespace_variables", fvarnames );
+            file->putAtt("featurespace_variables", fvarnames);
 
             // Add cluster dimensions and variables
 
-            for ( size_t ci = 0; ci < clusters.size(); ci++ )
-            {
+            for (size_t ci = 0; ci < clusters.size(); ci++) {
                 typename Cluster<T>::ptr cluster = clusters.at(ci);
-                
+
                 // NOTE: some problem exists with the normal id_t used
                 // everywhere else and NetCDF. Using unsigned long long
                 // produces a compiler warning but also correct results.
                 unsigned long long cid = (unsigned long long) cluster->id;
-                
+
                 // Create a dimension
 
                 stringstream dim_name(stringstream::in | stringstream::out);
@@ -370,15 +344,12 @@ namespace m3D {
 
                 NcDim cluster_dim;
 
-                try
-                {
-                    cluster_dim = file->addDim( dim_name.str(), cluster->size() );
-                }
-                catch (const netCDF::exceptions::NcException &e)
-                {
+                try {
+                    cluster_dim = file->addDim(dim_name.str(), cluster->size());
+                }                catch (const netCDF::exceptions::NcException &e) {
                     cerr << "ERROR:exception creating dimension " << dim_name.str()
-                         << ":" << e.what() << endl;
-                    
+                            << ":" << e.what() << endl;
+
                     continue;
                 }
 
@@ -394,85 +365,76 @@ namespace m3D {
 
                 NcVar var;
 
-                try
-                {
-                    var = file->addVar( var_name.str(), ncDouble, dims );
-                    var.setCompression(false,true,3);
-                }
-                catch (const netCDF::exceptions::NcException &e)
-                {
+                try {
+                    var = file->addVar(var_name.str(), ncDouble, dims);
+                    var.setCompression(false, true, 3);
+                }                catch (const netCDF::exceptions::NcException &e) {
                     cerr << "ERROR:exception creating dimension " << var_name.str()
-                         << ":" << e.what() << endl;
-                    
+                            << ":" << e.what() << endl;
+
                     continue;
                 }
 
                 // size
-                var.putAtt( "size", ncInt, (int) cluster->size() );
-                
+                var.putAtt("size", ncInt, (int) cluster->size());
+
                 // margin flag
                 std::string flag = (cluster->has_margin_points() ? "Y" : "N");
-                var.putAtt( "has_margin_points", flag); 
+                var.putAtt("has_margin_points", flag);
 
                 // check if there's any merge
                 id_map_t::iterator mi = this->merges.find(cluster->id);
 
-                if (mi != this->merges.end())
-                {
+                if (mi != this->merges.end()) {
                     std::string merged_from = utils::sets::to_string(mi->second);
 
-                    var.putAtt( "merged_from", merged_from );
+                    var.putAtt("merged_from", merged_from);
                 }
 
                 // check if there's any split
-                for (mi = this->splits.begin(); mi != this->splits.end(); mi++)
-                {
+                for (mi = this->splits.begin(); mi != this->splits.end(); mi++) {
                     id_set_t csplits = mi->second;
 
-                    if (csplits.find(cluster->id) != csplits.end())
-                    {
+                    if (csplits.find(cluster->id) != csplits.end()) {
                         std::string split_from = boost::lexical_cast<string>(mi->first);
 
-                        var.putAtt( "split_from", split_from );
+                        var.putAtt("split_from", split_from);
 
                         break;
                     }
                 }
 
                 // id
-                var.putAtt( "id", boost::lexical_cast<string>(cid) );
+                var.putAtt("id", boost::lexical_cast<string>(cid));
 
                 // mode
-                string mode = to_string( cluster->mode );
-                var.putAtt( "mode", mode );
-                
+                string mode = to_string(cluster->mode);
+                var.putAtt("mode", mode);
+
                 // displacement
-                string displacement = to_string( cluster->displacement );
-                var.putAtt( "displacement", displacement );
-                
+                string displacement = to_string(cluster->displacement);
+                var.putAtt("displacement", displacement);
+
                 // Write cluster away
-                
+
                 size_t numElements = cluster->size() * cluster->rank();
-                T *data = (T*) malloc(sizeof(T) * numElements);
-                if (data == NULL)
-                {
+                T *data = (T*) malloc(sizeof (T) * numElements);
+                if (data == NULL) {
                     cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
-                
-                for (size_t pi = 0; pi < cluster->size(); pi++)
-                {
+
+                for (size_t pi = 0; pi < cluster->size(); pi++) {
                     typename Point<T>::ptr p = cluster->at(pi);
 
-                    for (size_t di = 0; di < dim.getSize(); di++)
-                    {
+                    for (size_t di = 0; di < dim.getSize(); di++) {
                         size_t index = pi * cluster->rank() + di;
                         data[index] = p->values.at(di);
                     }
                 }
-                
+
                 var.putVar(data);
-                
+
                 delete data;
 
                 // Enter define mode
@@ -482,28 +444,22 @@ namespace m3D {
             // exit define mode
             nc_enddef(file->getId());
 
-            if (file_existed)
-            {
+            if (file_existed) {
                 // close the original and delete it
 
-                if (this->ncFile != NULL)
-                {
+                if (this->ncFile != NULL) {
                     delete this->ncFile;
                     this->ncFile = NULL;
                 }
 
-                if (boost::filesystem::remove(path))
-                {
+                if (boost::filesystem::remove(path)) {
                     boost::system::error_code ec;
-                    boost::filesystem::rename(path+"-new", path, ec);
-                    if (ec.value() != boost::system::errc::success)
-                    {
-                        cerr << "ERROR: could not rename " << (path+"-new") 
+                    boost::filesystem::rename(path + "-new", path, ec);
+                    if (ec.value() != boost::system::errc::success) {
+                        cerr << "ERROR: could not rename " << (path + "-new")
                                 << " to " << path << ":" << ec.message() << endl;
                     }
-                }
-                else
-                {
+                } else {
                     // for some reason, the old file could not be removed. In
                     // this case, just move it aside and try again
                     cerr << "ERROR: could not delete " << path << endl;
@@ -511,67 +467,60 @@ namespace m3D {
                     std::string moved_path = path + "-moved";
                     cerr << "renaming " << path << " to " << moved_path << endl;
                     boost::system::error_code ec;
-                    boost::filesystem::rename(path,moved_path,ec);
+                    boost::filesystem::rename(path, moved_path, ec);
 
-                    if (ec.value() == boost::system::errc::success)
-                    {
-                        boost::filesystem::rename(path+"-new", path, ec);
-                        if (ec.value() != boost::system::errc::success)
-                        {
-                            cerr << "ERROR: could not rename " << (path+"-new") << " to " << path<< endl;
+                    if (ec.value() == boost::system::errc::success) {
+                        boost::filesystem::rename(path + "-new", path, ec);
+                        if (ec.value() != boost::system::errc::success) {
+                            cerr << "ERROR: could not rename " << (path + "-new") << " to " << path << endl;
                             cerr << "REASON: " << ec.message() << endl;
                         }
 
-                    }
-                    else
-                    {
+                    } else {
                         cerr << "ERROR: could not move " << path << " to " << moved_path << endl;
                         cerr << "REASON: " << ec.message() << endl;
                     }
                 }
             }
-        }
-        catch (const std::exception &e)
-        {
+        }        catch (const std::exception &e) {
             std::cerr << "ERROR:exception while writing cluster file: " << e.what() << endl;
             throw e;
         }
     }
 
-    template <typename T> 
+    template <typename T>
     typename ClusterList<T>::ptr
     ClusterList<T>::read(const std::string& path, CoordinateSystem<T> **cs_ptr)
     {
         // meta-info
 
-        vector<string>              feature_variable_names;
-        vector<NcVar>               feature_variables;
-        vector<NcVar>               dimension_variables;
-        vector<NcDim>               dimensions;
-        string                      source_file;
-        id_set_t                    cluster_ids;
-        typename Cluster<T>::list   list;
-        NcFile                      *file = NULL;
+        vector<string> feature_variable_names;
+        vector<NcVar> feature_variables;
+        vector<NcVar> dimension_variables;
+        vector<NcDim> dimensions;
+        string source_file;
+        id_set_t cluster_ids;
+        typename Cluster<T>::list list;
+        NcFile *file = NULL;
 
-        bool        tracking_performed = false;
-        id_set_t    tracked_ids;
-        id_set_t    new_ids;
-        id_set_t    dropped_ids;
-        id_map_t    merges;
-        id_map_t    splits;
-        int         tracking_time_difference = NO_TIME;
+        bool tracking_performed = false;
+        id_set_t tracked_ids;
+        id_set_t new_ids;
+        id_set_t dropped_ids;
+        id_map_t merges;
+        id_map_t splits;
+        int tracking_time_difference = NO_TIME;
         timestamp_t timestamp = 0;
-        m3D::id_t   highest_id = NO_ID;
+        m3D::id_t highest_id = NO_ID;
 
         // TODO: let this exception go up
 
-        file = new NcFile( path, NcFile::read );
+        file = new NcFile(path, NcFile::read);
 
-        try
-        {
+        try {
             // Read the dimensions
 
-            NcDim fs_dim = file->getDim( "featurespace_dim" );
+            NcDim fs_dim = file->getDim("featurespace_dim");
 
             // Read the dimensions attribute
 
@@ -583,8 +532,7 @@ namespace m3D {
 
             vector<string> fs_dim_names = vectors::from_string<string>(dim_str);
 
-            for (size_t di=0; di < fs_dim_names.size(); di++)
-            {
+            for (size_t di = 0; di < fs_dim_names.size(); di++) {
                 NcDim d = file->getDim(fs_dim_names[di]);
 
                 dimensions.push_back(d);
@@ -600,11 +548,11 @@ namespace m3D {
 
             // Read global attributes
 
-            file->getAtt("source").getValues( source_file );
+            file->getAtt("source").getValues(source_file);
 
             int number_of_clusters;
 
-            file->getAtt("num_clusters").getValues( &number_of_clusters );
+            file->getAtt("num_clusters").getValues(&number_of_clusters);
 
             std::string value;
 
@@ -613,18 +561,15 @@ namespace m3D {
 
             // Tracking-related
 
-            try
-            {
+            try {
                 NcGroupAtt tracked = file->getAtt("tracking_performed");
 
-                if (!tracked.isNull())
-                {
-                        tracked.getValues(value);
-                        tracking_performed = (value == "yes");
+                if (!tracked.isNull()) {
+                    tracked.getValues(value);
+                    tracking_performed = (value == "yes");
                 }
 
-                if (tracking_performed)
-                {
+                if (tracking_performed) {
                     file->getAtt("tracked_ids").getValues(value);
                     tracked_ids = sets::from_string<id_t>(value);
 
@@ -642,13 +587,11 @@ namespace m3D {
 
                     file->getAtt("highest_id").getValues(value);
                     //unsigned long long hid = boost::lexical_cast<unsigned long long>(value);
-                   highest_id = boost::lexical_cast<m3D::id_t>(value);
+                    highest_id = boost::lexical_cast<m3D::id_t>(value);
 
                     file->getAtt("tracking_time_difference").getValues(&tracking_time_difference);
                 }
-            }
-            catch (netCDF::exceptions::NcException &e)
-            {
+            }            catch (netCDF::exceptions::NcException &e) {
             }
 
             // Read the feature-variables
@@ -656,11 +599,9 @@ namespace m3D {
             file->getAtt("featurespace_variables").getValues(value);
             feature_variable_names = vectors::from_string<string>(value);
 
-            for (size_t i=0; i<feature_variable_names.size(); i++)
-            {
+            for (size_t i = 0; i < feature_variable_names.size(); i++) {
                 NcVar var = file->getVar(feature_variable_names[i]);
-                if (var.isNull())
-                {
+                if (var.isNull()) {
                     cerr << "FATAL: could not find featurespace variable " << feature_variable_names[i] << endl;
                     exit(EXIT_FAILURE);
                 }
@@ -668,36 +609,34 @@ namespace m3D {
             }
 
             // Coordinate system wanted?
-            CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions,dimension_variables);
-            if (cs_ptr != NULL)
-            {
+            CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions, dimension_variables);
+            if (cs_ptr != NULL) {
                 *cs_ptr = cs;
             }
 
             // Read clusters one by one
             id_set_t::iterator cid_iter;
 
-            for ( cid_iter = cluster_ids.begin(); cid_iter != cluster_ids.end(); cid_iter++ )
-            {
+            for (cid_iter = cluster_ids.begin(); cid_iter != cluster_ids.end(); cid_iter++) {
                 // Identifier
                 m3D::id_t cid = *cid_iter;
 
                 // cluster dimension
                 stringstream dim_name(stringstream::in | stringstream::out);
                 dim_name << "cluster_dim_" << cid;
-                NcDim cluster_dim = file->getDim( dim_name.str().c_str() );
+                NcDim cluster_dim = file->getDim(dim_name.str().c_str());
                 size_t cluster_size = cluster_dim.getSize();
 
                 // Read the variable
                 stringstream var_name(stringstream::in | stringstream::out);
                 var_name << "cluster_" << cid;
-                NcVar var = file->getVar( var_name.str().c_str() );
+                NcVar var = file->getVar(var_name.str().c_str());
 
                 // mode
                 std::string mode_str;
                 var.getAtt("mode").getValues(mode_str);
                 vector<T> mode = vectors::from_string<T>(mode_str);
-                
+
                 // displacement
                 vector<T> displacement;
                 std::string displacement_str;
@@ -713,70 +652,61 @@ namespace m3D {
                 bool margin_flag = margin_char == "Y";
 
                 // Create a cluster object
-                typename Cluster<T>::ptr cluster = new Cluster<T>( mode, dimensions.size() );
+                typename Cluster<T>::ptr cluster = new Cluster<T>(mode, dimensions.size());
 
                 cluster->id = cid;
                 cluster->mode = mode;
                 cluster->displacement = displacement;
                 cluster->set_has_margin_points(margin_flag);
-                
+
                 // Read the cluster
                 size_t numElements = cluster_size * cluster->rank();
-                T *data = (T*) malloc(sizeof(T) * numElements);
-                if (data == NULL)
-                {
+                T *data = (T*) malloc(sizeof (T) * numElements);
+                if (data == NULL) {
                     cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
-                
+
                 var.getVar(data);
-                for (size_t pi = 0; pi < cluster_size; pi++)
-                {
-                    vector<T> values(cluster->rank(),0.0);
+                for (size_t pi = 0; pi < cluster_size; pi++) {
+                    vector<T> values(cluster->rank(), 0.0);
 
                     // copy point from data
-                    for (size_t di = 0; di < cluster->rank(); di++)
-                    {
+                    for (size_t di = 0; di < cluster->rank(); di++) {
                         values [di] = data[pi * cluster->rank() + di];
                     }
-                    
+
                     // get coordinate subvector
-                    vector<T> coordinate(values.begin(),values.begin() + cs->rank());
-                    
+                    vector<T> coordinate(values.begin(), values.begin() + cs->rank());
+
                     // transform to gridpoint
-                    try
-                    {
-                        vector<int> gp(cs->rank(),0);
-                        cs->reverse_lookup(coordinate,gp);
-                        
+                    try {
+                        vector<int> gp(cs->rank(), 0);
+                        cs->reverse_lookup(coordinate, gp);
+
                         // only when this succeeds do we have the complete
                         // set of data for the point
-                        
+
                         typename Point<T>::ptr p = PointFactory<T>::get_instance()->create();
                         p->values = values;
                         p->coordinate = coordinate;
                         p->gridpoint = gp;
-                       
+
                         // add to cluster
                         cluster->add_point(p);
-                    }
-                    catch (std::out_of_range& e)
-                    {
+                    }                    catch (std::out_of_range& e) {
                         cerr << "ERROR:reverse coordinate transformation failed for coordinate=" << coordinate << endl;
                     }
                 }
 
                 delete data;
-                list.push_back( cluster );
+                list.push_back(cluster);
             }
 
-            if (cs_ptr == NULL)
-            {
+            if (cs_ptr == NULL) {
                 delete cs;
             }
-        }
-        catch (const std::exception &e)
-        {
+        }        catch (const std::exception &e) {
             cerr << "ERROR:exception " << e.what() << endl;
         }
 
@@ -784,16 +714,15 @@ namespace m3D {
         // path so that the timestamp can be read. Set the real
         // source path up afterwards.
         ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, path, false);
-        
+
         cl->source_file = source_file;
 
-        cl->clusters  = list;
+        cl->clusters = list;
         cl->ncFile = file;
         cl->timestamp = timestamp;
         cl->highest_id = highest_id;
 
-        if (tracking_performed)
-        {
+        if (tracking_performed) {
             cl->tracked_ids = tracked_ids;
             cl->new_ids = new_ids;
             cl->dropped_ids = dropped_ids;
@@ -810,8 +739,7 @@ namespace m3D {
     void
     ClusterList<T>::print(bool includePoints)
     {
-        for ( size_t ci = 0; ci < clusters.size(); ci++ )
-        {
+        for (size_t ci = 0; ci < clusters.size(); ci++) {
             typename Cluster<T>::ptr c = clusters[ci];
 
             c->print(includePoints);
@@ -832,14 +760,12 @@ namespace m3D {
 
         size_t originalPoints = 0;
 
-        for (ci=clusters.begin(); ci!=clusters.end(); ci++)
-        {
+        for (ci = clusters.begin(); ci != clusters.end(); ci++) {
             typename Cluster<T>::ptr c1 = *ci;
 
             typename Point<T>::list::iterator pi;
 
-            for (pi = c1->points.begin(); pi != c1->points.end(); pi++)
-            {
+            for (pi = c1->points.begin(); pi != c1->points.end(); pi++) {
                 Point<T> *p = *pi;
 
                 if (p->isOriginalPoint) originalPoints++;
@@ -852,40 +778,37 @@ namespace m3D {
     template <typename T>
     T
     ClusterList<T>::weight_function_tendency(typename Point<T>::ptr p,
-                                             const WeightFunction<T> *weight_function,
-                                             const typename Point<T>::list &neighbours,
-                                             ArrayIndex<T> &index)
+            const WeightFunction<T> *weight_function,
+            const typename Point<T>::list &neighbours,
+            ArrayIndex<T> &index)
     {
         T result = 0;
 
-        if ( !neighbours.empty() )
-        {
+        if (!neighbours.empty()) {
             T wx = weight_function->operator()(p);
 
-            for (size_t ni = 0; ni < neighbours.size(); ni++)
-            {
+            for (size_t ni = 0; ni < neighbours.size(); ni++) {
                 Point<T> *n = neighbours.at(ni);
 
                 if (n == p) continue;
 
-                result += ( weight_function->operator()(n) - wx );
+                result += (weight_function->operator()(n) - wx);
             }
         }
 
         return result;
     }
 
-
     template <typename T>
     void
     ClusterList<T>::aggregate_zeroshifts(FeatureSpace<T> *fs,
-                                         const WeightFunction<T> *weight_function,
-                                         ArrayIndex<T> &index,
-                                         bool coalesceWithStrongestNeighbour,
-                                         bool show_progress)
+            const WeightFunction<T> *weight_function,
+            ArrayIndex<T> &index,
+            bool coalesceWithStrongestNeighbour,
+            bool show_progress)
     {
         using namespace utils::vectors;
-        
+
         boost::progress_display *progress = NULL;
 
         // find the zero-shift points
@@ -894,11 +817,10 @@ namespace m3D {
 
         pset_t zeroshifts;
 
-        #if WITH_OPENMP
-        #pragma omp parallel for schedule(dynamic)
-        #endif
-        for ( size_t i = 0; i < fs->points.size(); i++ )
-        {
+#if WITH_OPENMP
+#pragma omp parallel for schedule(dynamic)
+#endif
+        for (size_t i = 0; i < fs->points.size(); i++) {
             Point<T> *current_point = fs->points[i];
 
 #if REPLACE_ZEROSHIFT_VECTORS
@@ -908,24 +830,22 @@ namespace m3D {
             //
             // replace the zero-shift vectors with the average of their neighbours
 
-            typename Point<T>::list neighbours = find_neighbours(current_point->gridpoint,index);
+            typename Point<T>::list neighbours = find_neighbours(current_point->gridpoint, index);
 
-            if ( !neighbours.empty() )
-            {
-                vector<T>   m(current_point->values.size(), 0.0);
+            if (!neighbours.empty()) {
+                vector<T> m(current_point->values.size(), 0.0);
 
-                for (size_t ni = 0; ni < neighbours.size(); ni++)
-                {
+                for (size_t ni = 0; ni < neighbours.size(); ni++) {
                     M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
 
-                    if (n==current_point) continue;
+                    if (n == current_point) continue;
 
                     m += n->shift;
                 }
 
                 // average, rounded to grid
 
-                m /= ((T)neighbours.size());
+                m /= ((T) neighbours.size());
 
                 current_point->shift = fs->coordinate_system->round_to_grid(m);
 
@@ -936,26 +856,22 @@ namespace m3D {
 #endif
             // If the vector is (still) zero, add to the list of zeroshift points
 
-            if (vector_norm(fs->spatial_component(current_point->shift)) == 0)
-            {
-                #if WITH_OPENMP
-                #pragma omp critical
-                #endif
+            if (vector_norm(fs->spatial_component(current_point->shift)) == 0) {
+#if WITH_OPENMP
+#pragma omp critical
+#endif
                 zeroshifts.insert(current_point);
             }
         }
 
-        if (show_progress)
-        {
+        if (show_progress) {
             cout << endl << "Clustering zero-shift areas ...";
             progress = new boost::progress_display(zeroshifts.size());
             start_timer();
         }
 
-        for (typename pset_t::iterator pi=zeroshifts.begin(); pi!=zeroshifts.end(); pi++)
-        {
-            if (show_progress)
-            {
+        for (typename pset_t::iterator pi = zeroshifts.begin(); pi != zeroshifts.end(); pi++) {
+            if (show_progress) {
                 progress->operator++();
             }
 
@@ -963,63 +879,54 @@ namespace m3D {
 
             typename Point<T>::list neighbours = index.find_neighbours(current_point->gridpoint);
 
-//            // only consider points with negative or inconclusive weight
-//            // function tendency (aka uphill)
-//            
-//            T tendency = weight_function_tendency(current_point, weight_function, neighbours, index);
-//            
-//            if (tendency > 0)
-//            {
-//                continue;
-//            }
+            //            // only consider points with negative or inconclusive weight
+            //            // function tendency (aka uphill)
+            //            
+            //            T tendency = weight_function_tendency(current_point, weight_function, neighbours, index);
+            //            
+            //            if (tendency > 0)
+            //            {
+            //                continue;
+            //            }
 
-            for (size_t ni = 0; ni < neighbours.size(); ni++)
-            {
+            for (size_t ni = 0; ni < neighbours.size(); ni++) {
                 Point<T> *n = neighbours.at(ni);
 
-                if (n==current_point) continue;
+                if (n == current_point) continue;
 
                 // only consider neighbours that are zero-shift themselves
 
-                if (vector_norm(fs->spatial_component(n->shift)) == 0)
-                {
-                    if ( current_point->cluster == NULL && n->cluster == NULL )
-                    {
+                if (vector_norm(fs->spatial_component(n->shift)) == 0) {
+                    if (current_point->cluster == NULL && n->cluster == NULL) {
                         // Neither current point nor neighbour have cluster
                         // => create new cluster
 
                         size_t spatial_dims = fs->coordinate_system->rank();
 
-                        typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,spatial_dims);
+                        typename Cluster<T>::ptr c = new Cluster<T>(current_point->values, spatial_dims);
 
                         c->add_point(current_point);
 
                         c->add_point(n);
 
                         clusters.push_back(c);
-                    }
-                    else if ( current_point->cluster == NULL && n->cluster != NULL )
-                    {
+                    } else if (current_point->cluster == NULL && n->cluster != NULL) {
                         // neighbour has cluster
                         // => add current point to neighbour's cluster
                         n->cluster->add_point(current_point);
-                    }
-                    else if (current_point->cluster !=NULL && n->cluster == NULL)
-                    {
+                    } else if (current_point->cluster != NULL && n->cluster == NULL) {
                         // current point has cluster
                         // => add neighbour to current point's cluster
                         current_point->cluster->add_point(n);
-                    }
-                    else if ((current_point->cluster !=NULL && n->cluster != NULL)
-                             && (current_point->cluster != n->cluster ))
-                    {
+                    } else if ((current_point->cluster != NULL && n->cluster != NULL)
+                            && (current_point->cluster != n->cluster)) {
                         // current point's cluster and neighbour's cluster
                         // => merge current point's cluster into neighbour's cluster
                         typename Cluster<T>::ptr c = current_point->cluster;
 
-                        n->cluster->add_points(c->get_points(),false);
+                        n->cluster->add_points(c->get_points(), false);
 
-                        clusters.erase(find(clusters.begin(),clusters.end(),c));
+                        clusters.erase(find(clusters.begin(), clusters.end(), c));
 
                         delete c;
                     }
@@ -1034,8 +941,7 @@ namespace m3D {
         // to the zero-shift cluster as 'crystallization' points
         // TODO: if it works, incorporate into above loop to save time
 
-        for (size_t i=0; i < clusters.size(); i++)
-        {
+        for (size_t i = 0; i < clusters.size(); i++) {
             typename Cluster<T>::ptr c = clusters.at(i);
 
             typename Point<T>::list::iterator pi;
@@ -1046,39 +952,34 @@ namespace m3D {
 
             typename Point<T>::ptr strongest_point = NULL;
 
-            for (pi = c->points.begin(); pi != c->points.end(); pi++)
-            {
+            for (pi = c->points.begin(); pi != c->points.end(); pi++) {
                 typename Point<T>::ptr p = *pi;
 
                 // track own response
 
                 T own_response = weight_function->operator()(p);
 
-                if (own_response > strongest_own_response)
-                {
+                if (own_response > strongest_own_response) {
                     strongest_own_response = own_response;
                 }
 
                 // Find the neighbour with the strongest response
 
-                typename Point<T>::list neighbours = find_neighbours(p->gridpoint,index);
+                typename Point<T>::list neighbours = find_neighbours(p->gridpoint, index);
 
-                for (size_t ni = 0; ni < neighbours.size(); ni++)
-                {
+                for (size_t ni = 0; ni < neighbours.size(); ni++) {
                     M3DPoint<T> *n = (M3DPoint<T> *) neighbours.at(ni);
 
                     T response = weight_function->operator()(n);
 
-                    if (response > strongest_response)
-                    {
+                    if (response > strongest_response) {
                         strongest_response = response;
                         strongest_point = n;
                     }
                 }
             }
 
-            if (strongest_response > strongest_own_response && strongest_point != NULL)
-            {
+            if (strongest_response > strongest_own_response && strongest_point != NULL) {
                 // found a higher point in the vicinity
                 c->add_point(strongest_point);
             }
@@ -1088,8 +989,7 @@ namespace m3D {
 
         // Assign ID
 
-        if (show_progress)
-        {
+        if (show_progress) {
             cout << "done (found " << clusters.size() << " zero-shift clusters in " << stop_timer() << "s)." << endl;
             delete progress;
         }
@@ -1098,69 +998,62 @@ namespace m3D {
     template <typename T>
     void
     ClusterList<T>::aggregate_cluster_graph(FeatureSpace<T> *fs,
-                                            const WeightFunction<T> *weight_function,
-                                            bool coalesceWithStrongestNeighbour,
-                                            bool show_progress)
+            const WeightFunction<T> *weight_function,
+            bool coalesceWithStrongestNeighbour,
+            bool show_progress)
     {
         using namespace utils::vectors;
-        
+
         // PointIndex<T>::write_index_searches = true;
 
         boost::progress_display *progress = NULL;
 
-        #if DEBUG_GRAPH_AGGREGATION
-            for ( size_t i = 0; i < fs->points.size(); i++ )
-            {
-                Point<T> *p = fs->points[i];
-                if (p->coordinate.size() != p->gridpoint.size() || p->gridpoint.size() > 5)
-                {
-                    cerr << "ERROR: bogus point " << p << endl;
-                }
-
-
+#if DEBUG_GRAPH_AGGREGATION
+        for (size_t i = 0; i < fs->points.size(); i++) {
+            Point<T> *p = fs->points[i];
+            if (p->coordinate.size() != p->gridpoint.size() || p->gridpoint.size() > 5) {
+                cerr << "ERROR: bogus point " << p << endl;
             }
-        #endif
+
+
+        }
+#endif
 
         vector<size_t> dimensions = fs->coordinate_system->get_dimension_sizes();
 
-        ArrayIndex<T> index(dimensions,fs->points,false);
+        ArrayIndex<T> index(dimensions, fs->points, false);
 
-        #if DEBUG_GRAPH_AGGREGATION
-                for ( size_t i = 0; i < fs->points.size(); i++ )
-                {
-                    Point<T> *p = fs->points[i];
-                    if (p->coordinate.size() != p->gridpoint.size())
-                    {
-                        cerr << "ERROR: bogus point " << p << endl;
-                    }
-                }
-        #endif
+#if DEBUG_GRAPH_AGGREGATION
+        for (size_t i = 0; i < fs->points.size(); i++) {
+            Point<T> *p = fs->points[i];
+            if (p->coordinate.size() != p->gridpoint.size()) {
+                cerr << "ERROR: bogus point " << p << endl;
+            }
+        }
+#endif
 
-        this->aggregate_zeroshifts(fs,weight_function,index,coalesceWithStrongestNeighbour,show_progress);
+        this->aggregate_zeroshifts(fs, weight_function, index, coalesceWithStrongestNeighbour, show_progress);
 
-        #if DEBUG_GRAPH_AGGREGATION
-                for ( size_t i = 0; i < fs->points.size(); i++ )
-                {
-                    Point<T> *p = fs->points[i];
-                    if (p->coordinate.size() != p->gridpoint.size())
-                    {
-                        cerr << "ERROR: bogus point " << p << endl;
-                    }
-                }
-        #endif
+#if DEBUG_GRAPH_AGGREGATION
+        for (size_t i = 0; i < fs->points.size(); i++) {
+            Point<T> *p = fs->points[i];
+            if (p->coordinate.size() != p->gridpoint.size()) {
+                cerr << "ERROR: bogus point " << p << endl;
+            }
+        }
+#endif
 
 #if WRITE_ZEROSHIFT_CLUSTERS
         typename Cluster<T>::list::iterator ci;
         size_t id = 0;
-        for (ci=clusters.begin(); ci!=clusters.end(); ci++)
-        {
+        for (ci = clusters.begin(); ci != clusters.end(); ci++) {
             typename Cluster<T>::ptr c = *ci;
             c->id = id++;
         }
-        
+
         NetCDFDataStore<T> *ds = (NetCDFDataStore<T> *) fs->data_store();
         boost::filesystem::path path(ds->filename());
-        
+
         std::string basename = path.generic_string() + "-zeroshift_";
         VisitUtils<T>::write_clusters_vtu(this, fs->coordinate_system, basename);
 #endif
@@ -1170,23 +1063,20 @@ namespace m3D {
 
         size_t cluster_id = this->clusters.size();
 
-        if (show_progress)
-        {
+        if (show_progress) {
             cout << endl << "Analysing meanshift vector graph ...";
             start_timer();
-            progress = new boost::progress_display( fs->points.size() );
+            progress = new boost::progress_display(fs->points.size());
         }
 
-//        #if WITH_OPENMP
-//        #pragma omp parallel for schedule(dynamic)
-//        #endif
-        for ( size_t i = 0; i < fs->points.size(); i++ )
-        {
-            if (show_progress)
-            {
-//                #if WITH_OPENMP
-//                #pragma omp critical
-//                #endif
+        //        #if WITH_OPENMP
+        //        #pragma omp parallel for schedule(dynamic)
+        //        #endif
+        for (size_t i = 0; i < fs->points.size(); i++) {
+            if (show_progress) {
+                //                #if WITH_OPENMP
+                //                #pragma omp critical
+                //                #endif
                 progress->operator++();
             }
 
@@ -1203,24 +1093,20 @@ namespace m3D {
 
             Point<T> *predecessor = NULL;
 
-            try
-            {
+            try {
                 predecessor = index.get(gridpoint);
-            }
-            catch (std::invalid_argument &e)
-            {
-                #if DEBUG_GRAPH_AGGREGATION
-                        cout << "gridpoint=" << current_point->gridpoint 
-                                << " + gridded_shift = " << current_point->gridded_shift
-                                << " = " << gridpoint
-                                << " which caused exception " << e.what() << endl;
-                #endif
+            }            catch (std::invalid_argument &e) {
+#if DEBUG_GRAPH_AGGREGATION
+                cout << "gridpoint=" << current_point->gridpoint
+                        << " + gridded_shift = " << current_point->gridded_shift
+                        << " = " << gridpoint
+                        << " which caused exception " << e.what() << endl;
+#endif
             }
 
             // Start testing
 
-            if (predecessor != NULL)
-            {
+            if (predecessor != NULL) {
                 // we're pointing to somebody?
                 current_point->isBoundary = true;
 
@@ -1228,71 +1114,64 @@ namespace m3D {
                 // not a boundary point.
                 predecessor->isBoundary = false;
 
-                #if DEBUG_GRAPH_AGGREGATION
-                    cout << endl;
-                    cout << "current point : " << current_point << " @ " << current_point->gridpoint << " (" << current_point->cluster << ")" << endl;
-                    cout << "predecessor   : " << predecessor << " @ " << predecessor->gridpoint << " (" << predecessor->cluster << ")" << endl;
-                    // cout << "(reverse lookup of " << x << " = " << gp << ")" << endl;
-                #endif
+#if DEBUG_GRAPH_AGGREGATION
+                cout << endl;
+                cout << "current point : " << current_point << " @ " << current_point->gridpoint << " (" << current_point->cluster << ")" << endl;
+                cout << "predecessor   : " << predecessor << " @ " << predecessor->gridpoint << " (" << predecessor->cluster << ")" << endl;
+                // cout << "(reverse lookup of " << x << " = " << gp << ")" << endl;
+#endif
 
-                if (current_point->cluster == NULL && predecessor->cluster == NULL)
-                {
+                if (current_point->cluster == NULL && predecessor->cluster == NULL) {
                     // Neither point has a cluster
                     // => create new one
 
-//                    #if WITH_OPENMP
-//                    #pragma omp critical
-//                    #endif
+                    //                    #if WITH_OPENMP
+                    //                    #pragma omp critical
+                    //                    #endif
                     {
-                        typename Cluster<T>::ptr c = new Cluster<T>(current_point->values,fs->coordinate_system->rank());
+                        typename Cluster<T>::ptr c = new Cluster<T>(current_point->values, fs->coordinate_system->rank());
                         c->id = cluster_id++;
                         c->add_point(current_point);
                         c->add_point(predecessor);
                         clusters.push_back(c);
 
-                        #if DEBUG_GRAPH_AGGREGATION
-                            cout << "created new cluster " << c 
-                                    << " (" << c->size() 
-                                    << " points)" << endl;
-                        #endif
+#if DEBUG_GRAPH_AGGREGATION
+                        cout << "created new cluster " << c
+                                << " (" << c->size()
+                                << " points)" << endl;
+#endif
                     }
-                }
-                else if (current_point->cluster == NULL && predecessor->cluster != NULL)
-                {
+                } else if (current_point->cluster == NULL && predecessor->cluster != NULL) {
                     // current point has no cluster, but predecessor has one
                     // => add current point to predecessor's cluster
 
-//                    #if WITH_OPENMP
-//                    #pragma omp critical
-//                    #endif
+                    //                    #if WITH_OPENMP
+                    //                    #pragma omp critical
+                    //                    #endif
                     predecessor->cluster->add_point(current_point);
 
-                    #if DEBUG_GRAPH_AGGREGATION
-                        cout << "added current point to cluster " 
-                                << predecessor->cluster << " (" 
-                                << predecessor->cluster->size() 
-                                << " points)" << endl;
-                    #endif
-                }
-                else if (current_point->cluster != NULL && predecessor->cluster == NULL)
-                {
+#if DEBUG_GRAPH_AGGREGATION
+                    cout << "added current point to cluster "
+                            << predecessor->cluster << " ("
+                            << predecessor->cluster->size()
+                            << " points)" << endl;
+#endif
+                } else if (current_point->cluster != NULL && predecessor->cluster == NULL) {
                     // current point has a cluster, but predecessor has none
                     // => add predecessor to current point's cluster
 
-//                    #if WITH_OPENMP
-//                    #pragma omp critical
-//                    #endif
+                    //                    #if WITH_OPENMP
+                    //                    #pragma omp critical
+                    //                    #endif
                     current_point->cluster->add_point(predecessor);
 
-                    #if DEBUG_GRAPH_AGGREGATION
-                        cout << "added predecessor to cluster " 
-                                << current_point->cluster 
-                                << " (" << current_point->cluster->size() 
-                                << " points)" << endl;
-                    #endif
-                }
-                else if (current_point->cluster != predecessor->cluster)
-                {
+#if DEBUG_GRAPH_AGGREGATION
+                    cout << "added predecessor to cluster "
+                            << current_point->cluster
+                            << " (" << current_point->cluster->size()
+                            << " points)" << endl;
+#endif
+                } else if (current_point->cluster != predecessor->cluster) {
                     // both points have different clusters
                     // => merge current cluster's points to predecessor's cluster
                     //    and delete current cluster
@@ -1302,66 +1181,57 @@ namespace m3D {
                     typename Cluster<T>::ptr merged;
                     typename Cluster<T>::ptr mergee;
 
-                    if ( current_point->cluster->size() >= predecessor->cluster->size())
-                    {
+                    if (current_point->cluster->size() >= predecessor->cluster->size()) {
                         merged = current_point->cluster;
                         mergee = predecessor->cluster;
-                    }
-                    else
-                    {
+                    } else {
                         merged = predecessor->cluster;
                         mergee = current_point->cluster;
                     }
 
-                    #if DEBUG_GRAPH_AGGREGATION
-                        cout << "merging cluster " << mergee << " (" << mergee->size() << " points)"
-                             << "into " << merged << " (" << merged->size() << " points)"
-                             << endl;
-                    #endif
+#if DEBUG_GRAPH_AGGREGATION
+                    cout << "merging cluster " << mergee << " (" << mergee->size() << " points)"
+                            << "into " << merged << " (" << merged->size() << " points)"
+                            << endl;
+#endif
 
-//                    #if WITH_OPENMP
-//                    #pragma omp critical
-//                    #endif
+                    //                    #if WITH_OPENMP
+                    //                    #pragma omp critical
+                    //                    #endif
                     {
                         // absorb predecessor
-                        merged->add_points(mergee->get_points(),false);
+                        merged->add_points(mergee->get_points(), false);
 
                         // remove it
-                        typename Cluster<T>::list::iterator fi = find(clusters.begin(),clusters.end(),mergee);
+                        typename Cluster<T>::list::iterator fi = find(clusters.begin(), clusters.end(), mergee);
                         clusters.erase(fi);
                         delete mergee;
                     }
-                }
-                else
-                {
+                } else {
                     // both points are already part of the same cluster
                     // => do nothing
 
-                    #if DEBUG_GRAPH_AGGREGATION
-                        cout << "Both points are part of the same cluster. Skip." << endl;
-                    #endif
+#if DEBUG_GRAPH_AGGREGATION
+                    cout << "Both points are part of the same cluster. Skip." << endl;
+#endif
                 }
             }
         }
 
-        if ( show_progress )
-        {
+        if (show_progress) {
             cout << "done. (Found " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
             delete progress;
         }
 
         // TODO: parallelize
 
-        if (coalesceWithStrongestNeighbour)
-        {
-            if ( show_progress )
-            {
+        if (coalesceWithStrongestNeighbour) {
+            if (show_progress) {
                 cout << endl << "Running coalescence post-procesing ";
                 start_timer();
             }
 
-            for (size_t i=0; i < clusters.size(); i++)
-            {
+            for (size_t i = 0; i < clusters.size(); i++) {
                 typename Cluster<T>::ptr c = clusters.at(i);
 
                 T strongest_response = numeric_limits<T>::min();
@@ -1372,16 +1242,14 @@ namespace m3D {
 
                 typename Point<T>::list::iterator pi;
 
-                for (pi = c->get_points().begin(); pi != c->get_points().end(); pi++)
-                {
+                for (pi = c->get_points().begin(); pi != c->get_points().end(); pi++) {
                     typename Point<T>::ptr p = *pi;
 
                     // track own response
 
                     T own_response = weight_function->operator()(p);
 
-                    if (own_response > strongest_own_response)
-                    {
+                    if (own_response > strongest_own_response) {
                         strongest_own_response = own_response;
                     }
 
@@ -1389,14 +1257,12 @@ namespace m3D {
 
                     typename Point<T>::list neighbours = index.find_neighbours(p->gridpoint);
 
-                    for (size_t ni = 0; ni < neighbours.size(); ni++)
-                    {
+                    for (size_t ni = 0; ni < neighbours.size(); ni++) {
                         Point<T> *n = neighbours.at(ni);
 
                         // only interested in different clusters here
 
-                        if (n->cluster == c)
-                        {
+                        if (n->cluster == c) {
                             continue;
                         }
 
@@ -1404,25 +1270,22 @@ namespace m3D {
 
                         T response = weight_function->operator()(n);
 
-                        if (response > strongest_response)
-                        {
+                        if (response > strongest_response) {
                             strongest_response = response;
                             strongest_cluster = n->cluster;
                         }
                     }
                 }
 
-                if (strongest_response >= strongest_own_response && strongest_cluster != NULL)
-                {
+                if (strongest_response >= strongest_own_response && strongest_cluster != NULL) {
                     // found a higher ranking cluster in the direct
                     // vicinity. Merge!
 
-                    c->add_points(strongest_cluster->get_points(),false);
+                    c->add_points(strongest_cluster->get_points(), false);
 
-                    typename Cluster<T>::list::iterator cfi = find(clusters.begin(),clusters.end(),strongest_cluster);
+                    typename Cluster<T>::list::iterator cfi = find(clusters.begin(), clusters.end(), strongest_cluster);
 
-                    if (cfi != clusters.end())
-                    {
+                    if (cfi != clusters.end()) {
                         clusters.erase(cfi);
                         delete strongest_cluster;
                     }
@@ -1435,13 +1298,12 @@ namespace m3D {
 
                     cout << ".";
 
-                    i=0;
+                    i = 0;
                 }
 
             }
 
-            if ( show_progress )
-            {
+            if (show_progress) {
                 cout << "done. (Coalesced " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
             }
         }
@@ -1450,25 +1312,22 @@ namespace m3D {
         // not part of the original data set, as well as make their
         // modes the arithmetic mean of the remaining points
 
-        if ( show_progress )
-        {
+        if (show_progress) {
             cout << endl << "Erasing non-original points ...";
             start_timer();
-            progress = new boost::progress_display( clusters.size() );
+            progress = new boost::progress_display(clusters.size());
         }
-        
+
         size_t running_id = 0;
 
-        for (typename Cluster<T>::list::iterator clit = clusters.begin(); clit != clusters.end();)
-        {
-            if (show_progress)
-            {
+        for (typename Cluster<T>::list::iterator clit = clusters.begin(); clit != clusters.end();) {
+            if (show_progress) {
                 progress->operator++();
             }
 
             typename Cluster<T>::ptr c = *clit;
 
-            vector<T> mode = vector<T>( fs->rank(), 0.0);
+            vector<T> mode = vector<T>(fs->rank(), 0.0);
 
             typename Point<T>::list keepers;
 
@@ -1481,25 +1340,20 @@ namespace m3D {
 
             // Iterate over the unique set
 
-            for (typename point_set_t::iterator si = point_set.begin(); si != point_set.end(); ++si)
-            {
+            for (typename point_set_t::iterator si = point_set.begin(); si != point_set.end(); ++si) {
                 typename Point<T>::ptr p = *si;
 
-                if (p->isOriginalPoint)
-                {
+                if (p->isOriginalPoint) {
                     keepers.push_back(p);
                     mode += p->values;
                 }
             }
 
-            if (keepers.empty())
-            {
+            if (keepers.empty()) {
                 // removed them all? Kill cluster
                 clusters.erase(clit);
                 delete c;
-            }
-            else
-            {
+            } else {
                 mode /= ((T) keepers.size());
                 c->set_points(keepers);
                 c->mode = mode;
@@ -1509,8 +1363,7 @@ namespace m3D {
             }
         }
 
-        if ( show_progress )
-        {
+        if (show_progress) {
             cout << "done. (Result: " << clusters.size() << " clusters in " << stop_timer() << "s)" << endl;
             delete progress;
         }
@@ -1521,37 +1374,33 @@ namespace m3D {
     template <typename T>
     typename Cluster<T>::list
     ClusterList<T>::neighbours_of(typename Cluster<T>::ptr cluster,
-                                  ArrayIndex<T> &index)
+            ArrayIndex<T> &index)
     {
         typename Cluster<T>::list neighbouring_clusters;
 
         typename Point<T>::list::const_iterator pi;
 
-        for ( pi = cluster->points.begin(); pi != cluster->points.end(); pi++ )
-        {
+        for (pi = cluster->points.begin(); pi != cluster->points.end(); pi++) {
             typename Point<T>::ptr p = *pi;
 
-            typename Point<T>::list neighbours = this->find_neighbours(index,p->gridpoint);
+            typename Point<T>::list neighbours = this->find_neighbours(index, p->gridpoint);
 
             typename Point<T>::list::const_iterator ni;
 
-            for ( ni = neighbours->begin(); ni != neighbours->end(); ni++ )
-            {
+            for (ni = neighbours->begin(); ni != neighbours->end(); ni++) {
                 Point<T> *n = *ni;
 
                 // Exclude points, that have not been clustered.
                 // This can happen because scale-space filtering
                 // creates new points, but those are not associated
                 // with clusters in later steps
-                if ( n->cluster == NULL ) continue;
+                if (n->cluster == NULL) continue;
 
-                if ( n->cluster != p->cluster )
-                {
-                    typename Cluster<T>::list::const_iterator fi = find( neighbouring_clusters.begin(), neighbouring_clusters.end(), n->cluster );
+                if (n->cluster != p->cluster) {
+                    typename Cluster<T>::list::const_iterator fi = find(neighbouring_clusters.begin(), neighbouring_clusters.end(), n->cluster);
 
-                    if ( fi == neighbouring_clusters.end() )
-                    {
-                        neighbouring_clusters.push_back( n->cluster );
+                    if (fi == neighbouring_clusters.end()) {
+                        neighbouring_clusters.push_back(n->cluster);
                     }
                 }
             }
@@ -1563,87 +1412,76 @@ namespace m3D {
     template <typename T>
     typename Point<T>::list
     ClusterList<T>::get_boundary_points(typename Cluster<T>::ptr c1,
-                                        typename Cluster<T>::ptr c2,
-                                        ArrayIndex<T> &index)
+            typename Cluster<T>::ptr c2,
+            ArrayIndex<T> &index)
     {
         typename Point<T>::list boundary_points;
 
         typename Point<T>::list::const_iterator pi;
 
-        for ( pi = c1->points.begin(); pi != c1->points.end(); pi++ )
-        {
+        for (pi = c1->points.begin(); pi != c1->points.end(); pi++) {
             typename Point<T>::ptr p = *pi;
 
             typename Point<T>::list neighbours = find_neighbours(index, p->gridpoint);
 
             typename Point<T>::list::const_iterator ni;
 
-            for ( ni = neighbours->begin(); ni != neighbours->end(); ni++ )
-            {
+            for (ni = neighbours->begin(); ni != neighbours->end(); ni++) {
                 typename Point<T>::ptr n = *ni;
 
-                if ( n->cluster == c2 )
-                {
+                if (n->cluster == c2) {
                     // check every time to avoid double adding
 
-                    typename Point<T>::list::const_iterator fi = find( boundary_points.begin(), boundary_points.end(), n );
+                    typename Point<T>::list::const_iterator fi = find(boundary_points.begin(), boundary_points.end(), n);
 
-                    if ( fi == boundary_points.end() )
-                    {
-                        boundary_points.push_back( n );
+                    if (fi == boundary_points.end()) {
+                        boundary_points.push_back(n);
                     }
 
-                    fi = find( boundary_points.begin(), boundary_points.end(), p );
+                    fi = find(boundary_points.begin(), boundary_points.end(), p);
 
-                    if ( fi == boundary_points.end() )
-                    {
-                        boundary_points.push_back( p );
+                    if (fi == boundary_points.end()) {
+                        boundary_points.push_back(p);
                     }
                 }
             }
         }
 
-        for ( pi = c2->points.begin(); pi != c2->points.end(); pi++ )
-        {
+        for (pi = c2->points.begin(); pi != c2->points.end(); pi++) {
             typename Point<T>::ptr p = *pi;
 
             typename Point<T>::list neighbours = find_neighbours(index, p->gridpoint);
 
             typename Point<T>::list::const_iterator ni;
 
-            for ( ni = neighbours->begin(); ni != neighbours->end(); ni++ )
-            {
+            for (ni = neighbours->begin(); ni != neighbours->end(); ni++) {
                 typename Point<T>::ptr n = *ni;
 
-                if ( n->cluster == c1 )
-                {
+                if (n->cluster == c1) {
                     // check every time to avoid double adding
 
-                    typename Point<T>::list::const_iterator fi = find( boundary_points.begin(), boundary_points.end(), n );
+                    typename Point<T>::list::const_iterator fi = find(boundary_points.begin(), boundary_points.end(), n);
 
-                    if ( fi == boundary_points.end() )
-                    {
-                        boundary_points.push_back( n );
+                    if (fi == boundary_points.end()) {
+                        boundary_points.push_back(n);
                     }
 
-                    fi = find( boundary_points.begin(), boundary_points.end(), p );
+                    fi = find(boundary_points.begin(), boundary_points.end(), p);
 
-                    if ( fi == boundary_points.end() )
-                    {
-                        boundary_points.push_back( p );
+                    if (fi == boundary_points.end()) {
+                        boundary_points.push_back(p);
                     }
                 }
             }
         }
     }
 
-
     template <typename T>
     void
     ClusterList<T>::write_boundaries(const WeightFunction<T> *weight_function,
-                                     FeatureSpace<T> *fs,
-                                     PointIndex<T> *index,
-                                     const vector<T> &resolution )
+            FeatureSpace<T> *fs,
+            PointIndex<T> *index,
+            const vector<T> &resolution)
     {
         // collate the data
 
@@ -1661,54 +1499,50 @@ namespace m3D {
 
         vector<T> range_factor_c1, range_factor_c2;
 
-        vector< typename Cluster<T>::id_t >  cluster_index_1, cluster_index_2;
+        vector< typename Cluster<T>::id_t > cluster_index_1, cluster_index_2;
 
         typename Cluster<T>::list::const_iterator ci;
 
-        for ( ci = clusters.begin(); ci != clusters.end(); ci++ )
-        {
+        for (ci = clusters.begin(); ci != clusters.end(); ci++) {
             typename Cluster<T>::ptr c = *ci;
 
-            typename Cluster<T>::list neighbours = neighbours_of( c, index, resolution, weight_function );
+            typename Cluster<T>::list neighbours = neighbours_of(c, index, resolution, weight_function);
 
-            if ( neighbours.size() > 0 )
-            {
+            if (neighbours.size() > 0) {
                 // go over the list of neighbours and find candidates for merging
 
                 typename Cluster<T>::list::const_iterator ni;
 
-                for ( ni = neighbours.begin(); ni != neighbours.end(); ni++ )
-                {
+                for (ni = neighbours.begin(); ni != neighbours.end(); ni++) {
                     typename Cluster<T>::ptr n = *ni;
 
-                    std::string key = boost::lexical_cast<string>(inf(c->id,n->id)) + "-" + boost::lexical_cast<string>(sup(c->id,n->id));
+                    std::string key = boost::lexical_cast<string>(inf(c->id, n->id)) + "-" + boost::lexical_cast<string>(sup(c->id, n->id));
 
-                    typename boundary_key_t::const_iterator fi = find( boundary_keys.begin(), boundary_keys.end(), key );
+                    typename boundary_key_t::const_iterator fi = find(boundary_keys.begin(), boundary_keys.end(), key);
 
-                    if ( fi == boundary_keys.end() )
-                    {
-                        boundary_keys.push_back( key );
+                    if (fi == boundary_keys.end()) {
+                        boundary_keys.push_back(key);
 
                         typename Point<T>::list boundary_points;
 
-                        this->get_boundary_points( c, n, boundary_points, index, resolution );
+                        this->get_boundary_points(c, n, boundary_points, index, resolution);
 
-                        if ( boundary_points.size() == 0 ) continue;
-
-
-                        boundaries.push_back( boundary_points );
+                        if (boundary_points.size() == 0) continue;
 
 
-                        var_boundary.push_back( relative_variability( weight_function, boundary_points ) );
-
-                        var_c1.push_back( relative_variability( weight_function, c->points ) );
-
-                        var_c2.push_back( relative_variability( weight_function, n->points ) );
+                        boundaries.push_back(boundary_points);
 
 
-                        range_factor_c1.push_back( dynamic_range_factor( c, boundary_points, weight_function ) );
+                        var_boundary.push_back(relative_variability(weight_function, boundary_points));
 
-                        range_factor_c2.push_back( dynamic_range_factor( n, boundary_points, weight_function ) );
+                        var_c1.push_back(relative_variability(weight_function, c->points));
+
+                        var_c2.push_back(relative_variability(weight_function, n->points));
+
+
+                        range_factor_c1.push_back(dynamic_range_factor(c, boundary_points, weight_function));
+
+                        range_factor_c2.push_back(dynamic_range_factor(n, boundary_points, weight_function));
 
 
                         cluster_index_1.push_back(c->id);
@@ -1719,58 +1553,54 @@ namespace m3D {
             }
         }
 
-        #if WITH_VTK
-        for ( size_t index = 0; index < boundaries.size(); index++ )
-        {
+#if WITH_VTK
+        for (size_t index = 0; index < boundaries.size(); index++) {
             typename Point<T>::list b = boundaries[index];
             std::string fn = fs->filename() + "_boundary_" + boost::lexical_cast<string>(index) + ".vtk";
-            boost::replace_all( fn, "/", "_" );
-            boost::replace_all( fn, "..", "" );
+            boost::replace_all(fn, "/", "_");
+            boost::replace_all(fn, "..", "");
             VisitUtils<T>::write_pointlist_vtk(fn, &b, fs->coordinate_system->rank());
         }
-        #endif
+#endif
 
         std::string fn = fs->filename() + "_boundary_correlations.txt";
-        std::ofstream f( fn.c_str() );
+        std::ofstream f(fn.c_str());
         f << "#\t"
-        << "c1\t"
-        << "c2\t"
-//        << "var_c1\t"
-//        << "var_c2\t"
-//        << "var_b\t"
-        << "drf_1\t"
-        << "drf_2\t"
-          << std::endl;
-        for ( size_t index = 0; index < boundaries.size(); index++ )
-        {
+                << "c1\t"
+                << "c2\t"
+                //        << "var_c1\t"
+                //        << "var_c2\t"
+                //        << "var_b\t"
+                << "drf_1\t"
+                << "drf_2\t"
+                << std::endl;
+        for (size_t index = 0; index < boundaries.size(); index++) {
             f << index << "\t"
-            << cluster_index_1[index] << "\t"
-            << cluster_index_2[index] << "\t"
-//            << var_c1[index] << "\t"
-//            << var_c2[index] << "\t"
-//            << var_boundary[index] << "\t"
-            << range_factor_c1[index] << "\t"
-              << range_factor_c2[index] << std::endl;
+                    << cluster_index_1[index] << "\t"
+                    << cluster_index_2[index] << "\t"
+                    //            << var_c1[index] << "\t"
+                    //            << var_c2[index] << "\t"
+                    //            << var_boundary[index] << "\t"
+                    << range_factor_c1[index] << "\t"
+                    << range_factor_c2[index] << std::endl;
         }
     }
 
-
     template <typename T>
     typename Cluster<T>::ptr
-    ClusterList<T>::merge_clusters( typename Cluster<T>::ptr c1, typename Cluster<T>::ptr c2 )
+    ClusterList<T>::merge_clusters(typename Cluster<T>::ptr c1, typename Cluster<T>::ptr c2)
     {
-        vector<T> merged_mode = (T)0.5 * ( c1->mode + c2->mode );
+        vector<T> merged_mode = (T) 0.5 * (c1->mode + c2->mode);
 
-        typename Cluster<T>::ptr merged_cluster = new Cluster<T>( merged_mode, this->dimensions.size() );
+        typename Cluster<T>::ptr merged_cluster = new Cluster<T>(merged_mode, this->dimensions.size());
 
-        merged_cluster->add_points( c1->points );
+        merged_cluster->add_points(c1->points);
 
-        merged_cluster->add_points( c2->points );
+        merged_cluster->add_points(c2->points);
 
         merged_cluster->id = c1->id;
 
-        if (c1->m_weight_range_calculated && c2->m_weight_range_calculated)
-        {
+        if (c1->m_weight_range_calculated && c2->m_weight_range_calculated) {
             merged_cluster->m_min_weight = inf(c1->m_min_weight, c2->m_min_weight);
             merged_cluster->m_max_weight = sup(c1->m_max_weight, c2->m_max_weight);
             merged_cluster->m_weight_range_calculated = true;
@@ -1779,13 +1609,11 @@ namespace m3D {
         return merged_cluster;
     }
 
-
     template <typename T>
     void
     ClusterList<T>::erase_identifiers()
     {
-        for ( size_t i=0; i < clusters.size(); i++ )
-        {
+        for (size_t i = 0; i < clusters.size(); i++) {
             clusters[i]->id = m3D::NO_ID;
         }
     }
@@ -1796,8 +1624,7 @@ namespace m3D {
     {
         m3D::id_t cid = m3D::MIN_ID;
 
-        for ( size_t i=0; i < clusters.size(); i++ )
-        {
+        for (size_t i = 0; i < clusters.size(); i++) {
             clusters[i]->id = next_id(cid);
 
             this->highest_id = clusters[i]->id;
@@ -1807,32 +1634,31 @@ namespace m3D {
     template <typename T>
     struct clear_cluster
     {
-        void operator() (void *p)
+
+        void operator()(void *p)
         {
-            static_cast< typename Point<T>::ptr >(p)->cluster = NULL;
+            static_cast<typename Point<T>::ptr> (p)->cluster = NULL;
         };
     };
 
-
     template <typename T>
     void
-    ClusterList<T>::reset_clustering( FeatureSpace<T> *fs )
+    ClusterList<T>::reset_clustering(FeatureSpace<T> *fs)
     {
-        for_each( fs->points.begin(), fs->points.end(), clear_cluster<T>() );
+        for_each(fs->points.begin(), fs->points.end(), clear_cluster<T>());
     }
 
     template <typename T>
     void
-    ClusterList<T>::sanity_check( const FeatureSpace<T> *fs )
+    ClusterList<T>::sanity_check(const FeatureSpace<T> *fs)
     {
         size_t point_count = 0;
 
-        for ( size_t i=0; i < clusters.size(); i++ )
-        {
+        for (size_t i = 0; i < clusters.size(); i++) {
             point_count += clusters[i]->points.size();
         }
 
-        assert( point_count == fs->size() );
+        assert(point_count == fs->size());
     }
 
 #pragma mark -
@@ -1841,27 +1667,24 @@ namespace m3D {
     template <typename T>
     bool
     ClusterList<T>::are_neighbours(const Cluster<T> *c1,
-                                   const Cluster<T> *c2,
-                                   ArrayIndex<T> &index)
+            const Cluster<T> *c2,
+            ArrayIndex<T> &index)
     {
         bool isNeighbour = false;
 
         typename Point<T>::list::const_iterator pi;
 
-        for ( pi = c1->points.begin(); pi != c1->points.end(); pi++ )
-        {
+        for (pi = c1->points.begin(); pi != c1->points.end(); pi++) {
             typename Point<T>::ptr p = *pi;
 
-            typename Point<T>::list neighbours = this->find_neighbours(c1,index);
+            typename Point<T>::list neighbours = this->find_neighbours(c1, index);
 
             typename Point<T>::list::const_iterator ni;
 
-            for ( ni = neighbours->begin(); ni != neighbours->end(); ni++ )
-            {
+            for (ni = neighbours->begin(); ni != neighbours->end(); ni++) {
                 Point<T> *n = *ni;
 
-                if ( n->cluster == c2 )
-                {
+                if (n->cluster == c2) {
                     isNeighbour = true;
                     break;
                 }
@@ -1879,13 +1702,18 @@ namespace m3D {
     private:
         const WeightFunction<T> *m_weight;
     public:
-        ModalWeightComparator(const WeightFunction<T> *w) {m_weight=w;}
+
+        ModalWeightComparator(const WeightFunction<T> *w)
+        {
+            m_weight = w;
+        }
 
         bool
-        operator() (const Cluster<T> *c1, const Cluster<T> *c2)
+        operator()(const Cluster<T> *c1, const Cluster<T> *c2)
         {
             T w1 = c1->modal_weight_response(m_weight);
-            T w2 = c2->modal_weight_response(m_weight);            return w1 < w2;
+            T w2 = c2->modal_weight_response(m_weight);
+            return w1 < w2;
         }
     };
 

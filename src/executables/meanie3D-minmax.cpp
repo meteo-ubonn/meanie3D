@@ -43,7 +43,8 @@ typedef double T;
 
 /** Filename formats 
  */
-typedef enum {
+typedef enum
+{
     TimestampFormatRadolan,
     TimestampFormatOASE2D,
     TimestampFormatOASE3D,
@@ -58,8 +59,10 @@ typedef enum {
 
 void parse_commmandline(program_options::variables_map vm,
         string &filename,
-        bool &force) {
-    if (vm.count("file") == 0) {
+        bool &force)
+{
+    if (vm.count("file") == 0)
+    {
         cerr << "Missing 'file' argument" << endl;
 
         exit(1);
@@ -91,7 +94,7 @@ T* allocate(size_t n)
 }
 
 template <typename T>
-void get_limits(NcVar variable, T& min, T& max) 
+void get_limits(NcVar variable, T& min, T& max)
 {
     min = std::numeric_limits<T>::max();
     max = std::numeric_limits<T>::min();
@@ -100,43 +103,43 @@ void get_limits(NcVar variable, T& min, T& max)
 
     bool have_fill_value = false;
 
-    try 
+    try
     {
         NcVarAtt fillValue = variable.getAtt("_FillValue");
 
-        if (!fillValue.isNull()) 
+        if (!fillValue.isNull())
         {
             fillValue.getValues(&fill_value);
 
             have_fill_value = true;
         }
-    }    
-    catch (::netCDF::exceptions::NcException &e) {}
+    } catch (::netCDF::exceptions::NcException &e)
+    {
+    }
 
     T *values = NULL;
     size_t numElements = 0;
-    
-    if (variable.getDimCount() == 1) 
+
+    if (variable.getDimCount() == 1)
     {
         // 1D
 
         numElements = variable.getDim(0).getSize();
         values = allocate<T>(numElements);
         variable.getVar(values);
-    } 
-    else if (variable.getDimCount() == 2) 
+    }
+    else if (variable.getDimCount() == 2)
     {
         // 2D
 
         size_t N = variable.getDim(0).getSize();
         size_t M = variable.getDim(1).getSize();
-        numElements = N * M; 
+        numElements = N * M;
 
         values = allocate<T>(numElements);
         variable.getVar(values);
-        
-    }
-    else if (variable.getDimCount() == 3) 
+
+    } else if (variable.getDimCount() == 3)
     {
         // 3D
 
@@ -158,36 +161,35 @@ void get_limits(NcVar variable, T& min, T& max)
         start[2] = 0;
 
         variable.getVar(start, count, values);
-    }
-    else 
+    } else
     {
-        cerr << "ERROR:Variables with " << variable.getDimCount() 
+        cerr << "ERROR:Variables with " << variable.getDimCount()
                 << " dimensions are not currently handled" << endl;
         return;
     }
-    
-    #if WITH_OPENMP
-    #pragma omp parallel for 
-    #endif
-    for (size_t j = 0; j < numElements; j++) 
+
+#if WITH_OPENMP
+#pragma omp parallel for 
+#endif
+    for (size_t j = 0; j < numElements; j++)
     {
         T value = values[j];
 
         if (have_fill_value && value == fill_value) continue;
 
-        if (value < min) 
+        if (value < min)
         {
-            #if WITH_OPENMP
-            #pragma omp critical
-            #endif
+#if WITH_OPENMP
+#pragma omp critical
+#endif
             min = value;
         }
-        
-        if (value > max) 
+
+        if (value > max)
         {
-            #if WITH_OPENMP
-            #pragma omp critical
-            #endif
+#if WITH_OPENMP
+#pragma omp critical
+#endif
             max = value;
         }
     }
@@ -196,65 +198,90 @@ void get_limits(NcVar variable, T& min, T& max)
 }
 
 template <typename T>
-void add_limits(NcFile &file, NcVar variable, bool have_min, bool have_max, bool force) {
+void add_limits(NcFile &file, NcVar variable, bool have_min, bool have_max, bool force)
+{
     T min, max;
 
     get_limits<T>(variable, min, max);
 
     nc_redef(file.getId());
 
-    if (!have_min || force) {
+    if (!have_min || force)
+    {
         cout << "\t\tadding valid_min = " << min << endl;
 
-        if (typeid (min) == typeid (Byte)) {
+        if (typeid (min) == typeid (Byte))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (Byte) min);
         }
-        if (typeid (min) == typeid (short)) {
+        if (typeid (min) == typeid (short))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (short) min);
-        } else if (typeid (min) == typeid (int)) {
+        } else if (typeid (min) == typeid (int))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (int) min);
-        } else if (typeid (min) == typeid (long)) {
+        } else if (typeid (min) == typeid (long))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (long) min);
-        } else if (typeid (min) == typeid (float)) {
+        } else if (typeid (min) == typeid (float))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (float) min);
-        } else if (typeid (min) == typeid (double)) {
+        } else if (typeid (min) == typeid (double))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (double) min);
-        } else if (typeid (min) == typeid (unsigned short)) {
+        } else if (typeid (min) == typeid (unsigned short))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (unsigned short) min);
-        } else if (typeid (min) == typeid (unsigned int)) {
+        } else if (typeid (min) == typeid (unsigned int))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (unsigned int) min);
-        } else if (typeid (min) == typeid (unsigned long long)) {
+        } else if (typeid (min) == typeid (unsigned long long))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (unsigned long long) min);
-        } else if (typeid (min) == typeid (long long)) {
+        } else if (typeid (min) == typeid (long long))
+        {
             NcVarAtt att = variable.putAtt("valid_min", variable.getType(), (long long) min);
-        } else {
+        } else
+        {
             cout << "ERROR: type " << typeid (min).name() << " not handled " << endl;
         }
     }
 
-    if (!have_max || force) {
+    if (!have_max || force)
+    {
         cout << "\t\tadding valid_max = " << max << endl;
-        if (typeid (max) == typeid (Byte)) {
+        if (typeid (max) == typeid (Byte))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (Byte) max);
-        } else if (typeid (max) == typeid (short)) {
+        } else if (typeid (max) == typeid (short))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (short) max);
-        } else if (typeid (max) == typeid (int)) {
+        } else if (typeid (max) == typeid (int))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (int) max);
-        } else if (typeid (max) == typeid (long)) {
+        } else if (typeid (max) == typeid (long))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (long) max);
-        } else if (typeid (max) == typeid (float)) {
+        } else if (typeid (max) == typeid (float))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (float) max);
-        } else if (typeid (max) == typeid (double)) {
+        } else if (typeid (max) == typeid (double))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (double) max);
-        } else if (typeid (max) == typeid (unsigned short)) {
+        } else if (typeid (max) == typeid (unsigned short))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (unsigned short) max);
-        } else if (typeid (max) == typeid (unsigned int)) {
+        } else if (typeid (max) == typeid (unsigned int))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (unsigned int) max);
-        } else if (typeid (max) == typeid (unsigned long long)) {
+        } else if (typeid (max) == typeid (unsigned long long))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (unsigned long long) max);
-        } else if (typeid (max) == typeid (long long)) {
+        } else if (typeid (max) == typeid (long long))
+        {
             NcVarAtt att = variable.putAtt("valid_max", variable.getType(), (long long) max);
-        } else {
+        } else
+        {
             cout << "ERROR: type " << typeid (max).name() << " not handled " << endl;
         }
     }
@@ -262,30 +289,36 @@ void add_limits(NcFile &file, NcVar variable, bool have_min, bool have_max, bool
     nc_enddef(file.getId());
 }
 
-void define_min_max(NcFile &file, NcVar &variable, bool force) {
+void define_min_max(NcFile &file, NcVar &variable, bool force)
+{
     // check valid_min
 
     cout << "\tChecking variable " << variable.getName() << " (" << variable.getType().getName() << ")" << endl;
 
     bool have_valid_min = false;
 
-    try {
+    try
+    {
         NcVarAtt valid_min = variable.getAtt("valid_min");
 
         have_valid_min = !valid_min.isNull();
-    }    catch (::netCDF::exceptions::NcException e) {
+    } catch (::netCDF::exceptions::NcException e)
+    {
     }
 
     bool have_valid_max = false;
 
-    try {
+    try
+    {
         NcVarAtt valid_max = variable.getAtt("valid_max");
 
         have_valid_max = !valid_max.isNull();
-    }    catch (::netCDF::exceptions::NcException e) {
+    } catch (::netCDF::exceptions::NcException e)
+    {
     }
 
-    if (!(have_valid_min || have_valid_max) || force) {
+    if (!(have_valid_min || have_valid_max) || force)
+    {
         cout << "\t\textracting limits ..." << endl;
 
         /*!
@@ -304,39 +337,54 @@ void define_min_max(NcFile &file, NcVar &variable, bool force) {
          - NcString String returned is "string".
          */
 
-        if (strcmp(variable.getType().getName().c_str(), "byte") == 0) {
+        if (strcmp(variable.getType().getName().c_str(), "byte") == 0)
+        {
             add_limits<short>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "ubyte") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "ubyte") == 0)
+        {
             add_limits<unsigned short>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "short") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "short") == 0)
+        {
             add_limits<short>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "ushort") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "ushort") == 0)
+        {
             add_limits<unsigned short>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "int") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "int") == 0)
+        {
             add_limits<int>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "uint") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "uint") == 0)
+        {
             add_limits<unsigned int>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "int64") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "int64") == 0)
+        {
             add_limits<long int>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "uint64") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "uint64") == 0)
+        {
             add_limits<unsigned long int>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "float") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "float") == 0)
+        {
             add_limits<float>(file, variable, have_valid_min, have_valid_max, force);
-        } else if (strcmp(variable.getType().getName().c_str(), "double") == 0) {
+        } else if (strcmp(variable.getType().getName().c_str(), "double") == 0)
+        {
             add_limits<double>(file, variable, have_valid_min, have_valid_max, force);
-        } else {
+        } else
+        {
             cout << "ERROR: data type " << variable.getType().getName() << " is not handled " << endl;
         }
-    } else {
+    } else
+    {
         cout << "\t\tvalid_min and valid_max exist" << endl;
     }
 }
 
-void adjust_file(std::string filename, bool force) {
-    try {
+void adjust_file(std::string filename, bool force)
+{
+    try
+    {
         NcFile file(filename, NcFile::write);
 
-        if (!file.isNull()) {
+        if (!file.isNull())
+        {
             NcDim time_dim;
             NcVar time_var;
 
@@ -346,7 +394,8 @@ void adjust_file(std::string filename, bool force) {
 
             std::multimap< std::string, NcVar >::iterator vi;
 
-            for (vi = vars.begin(); vi != vars.end(); vi++) {
+            for (vi = vars.begin(); vi != vars.end(); vi++)
+            {
                 NcVar var = vi->second;
 
                 if (var.getId() == time_var.getId()) continue;
@@ -355,7 +404,8 @@ void adjust_file(std::string filename, bool force) {
             }
 
         }
-    }    catch (::netCDF::exceptions::NcException e) {
+    } catch (::netCDF::exceptions::NcException e)
+    {
         cerr << "ERROR:exception " << e.what() << endl;
     }
 }
@@ -365,7 +415,8 @@ void adjust_file(std::string filename, bool force) {
 
 /* MAIN
  */
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     using namespace m3D;
 
     // Declare the supported options.
@@ -379,24 +430,28 @@ int main(int argc, char** argv) {
 
     program_options::variables_map vm;
 
-    try {
+    try
+    {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    }    catch (std::exception &e) {
-        cerr << "FATAL:parsing command line caused exception: " << e.what() 
-             << ": check meanie3D-minmax --help for command line options" 
-             << endl;
+    } catch (std::exception &e)
+    {
+        cerr << "FATAL:parsing command line caused exception: " << e.what()
+                << ": check meanie3D-minmax --help for command line options"
+                << endl;
         exit(EXIT_FAILURE);
     }
 
     // Version
 
-    if (vm.count("version") != 0) {
+    if (vm.count("version") != 0)
+    {
         cout << m3D::VERSION << endl;
         exit(EXIT_SUCCESS);
     }
 
-    if (vm.count("help") == 1 || argc < 2) {
+    if (vm.count("help") == 1 || argc < 2)
+    {
         cout << desc << "\n";
         exit(EXIT_SUCCESS);
     }
@@ -408,52 +463,57 @@ int main(int argc, char** argv) {
 
     namespace fs = boost::filesystem;
 
-    try {
+    try
+    {
         parse_commmandline(vm, source_path, force);
-    }    catch (const std::exception &e) {
+    } catch (const std::exception &e)
+    {
         cerr << "ERROR:exception " << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     typedef set<fs::path> fset_t;
 
     fset_t files;
 
-    if (fs::is_directory(source_path)) {
+    if (fs::is_directory(source_path))
+    {
         fs::directory_iterator dir_iter(source_path);
         fs::directory_iterator end;
 
-        while (dir_iter != end) 
-	{
-	    fs::path f = dir_iter->path();
-	    std::string fn = f.filename().generic_string();
+        while (dir_iter != end)
+        {
+            fs::path f = dir_iter->path();
+            std::string fn = f.filename().generic_string();
 
             if (fs::is_regular_file(f) && boost::algorithm::ends_with(fn, ".nc"))
-	    {
+            {
                 //cout << "Adding " << f.generic_string() << endl;
                 files.insert(f);
-            } else {
+            } else
+            {
                 cout << "Skipping " << f.generic_string() << endl;
             }
 
             dir_iter++;
         }
-    } 
-    else 
+    }
+    else
     {
         fs::path f = fs::path(source_path);
 
         // there is a bug in boost 1.56 that causes this to crash
         // on linux. Replace it with a simpler method based on the
         // string alone
-        
+
         //        std::string extension = fs::extension(f);
         //        if (fs::is_regular_file(f) && extension == ".nc") {
         //            files.insert(f);
         //        }
-        
-        if (fs::is_regular_file(f) 
-            && boost::algorithm::ends_with(source_path, ".nc")) 
+
+        if (fs::is_regular_file(f)
+                && boost::algorithm::ends_with(source_path, ".nc"))
         {
             files.insert(f);
         }
@@ -461,7 +521,8 @@ int main(int argc, char** argv) {
 
     fset_t::iterator it;
 
-    for (it = files.begin(); it != files.end(); ++it) {
+    for (it = files.begin(); it != files.end(); ++it)
+    {
         fs::path path = *it;
 
         cout << path.generic_string() << endl;
