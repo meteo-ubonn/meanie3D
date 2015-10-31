@@ -4,15 +4,18 @@ __version__ = '${PACKAGE_VERSION}'
 __url__ = '${PROJECT_URL}'
 __all__ = ['app', 'visualisation']
 
-##
-# \return meanie3D package version
-#
+import os.path
+
 def getVersion():
+    '''
+    :return:meanie3D package version
+    '''
     from . import __version__
     return __version__
 
-##
-# \return meanie3D package location
-#
 def getHome():
-    return meanie3D.__file__
+    '''
+    meanie3D package location
+    :return:
+    '''
+    return os.path.abspath(os.path.dirname(__file__))

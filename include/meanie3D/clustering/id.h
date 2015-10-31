@@ -34,6 +34,11 @@
 
 extern "C" {
     namespace m3D {
+        
+        /**
+         * Unique cluster id (in one tracking run)
+         */
+        typedef unsigned long uuid_t;
 
         /** Data type for object identifiers
          */

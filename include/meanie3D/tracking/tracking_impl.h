@@ -468,7 +468,7 @@ namespace m3D {
                 for (int m = 0; m < old_count; m++) {
                     if (run.constraints_satisified[n][m] || run.coverOldByNew[n][m] > 0.0 || run.coverNewByOld[n][m] > 0.0) {
                         typename Cluster<T>::ptr oldCluster = run.previous->clusters[m];
-                        printf("\t<ID#%4lu>:\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                        printf("\t<#%4lu>:\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                                 oldCluster->id,
                                 oldCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max)->sum(),
                                 run.midDisplacement[n][m].get(),
@@ -604,7 +604,7 @@ namespace m3D {
         }
 
         run.averageVelocity = velocitySum / boost::numeric_cast<T>(velocityClusterCount);
-
+        
         // Tag unmatched clusters
 
         if (m_verbosity >= VerbosityDetails)
@@ -663,18 +663,15 @@ namespace m3D {
     void
     Tracking<T>::handleMerges(typename Tracking<T>::tracking_run_t &run)
     {
-        if (m_verbosity >= VerbosityDetails) {
+        if (m_verbosity >= VerbosityDetails)  
             cout << endl << "-- Merges --" << endl;
-        }
-
+        
         bool had_merges = false;
-
         size_t n, m;
-
         for (n = 0; n < run.current->clusters.size(); n++) {
             vector<int> candidates;
             typename Cluster<T>::ptr new_cluster = run.current->clusters[n];
-
+            
             // keep track of the largest candidate, that is: the cluster from
             // the previous series, that covers most of the area of the current
             // cluster
@@ -688,18 +685,6 @@ namespace m3D {
                 if (percentCovered >= this->m_ms_threshold) {
                     typename Cluster<T>::ptr c = run.previous->clusters[m];
 
-                    // check if this candidate was already used in a 
-                    // merging earlier
-                    id_set_t::iterator fi = run.merged_cluster_ids.find(c->id);
-                    if (fi != run.merged_cluster_ids.end()) {
-                        continue;
-                    }
-
-                    //                        fi = tracked_ids.find(c->id);
-                    //                        if (fi != tracked_ids.end() {
-                    //                            continue;
-                    //                        }
-
                     // add to the list of candidates 
                     candidates.push_back(m);
 
@@ -712,7 +697,6 @@ namespace m3D {
             }
 
             if (candidates.size() > 1) {
-
                 had_merges = true;
 
                 // collect merged cluster ids
@@ -724,49 +708,52 @@ namespace m3D {
                     merged_from.insert(c->id);
                 }
                 if (m_verbosity >= VerbosityNormal)
-                    cout << "clusters " << merged_from << " seem to have merged into cluster " << new_cluster->id << endl;
-
-                // store in attributes
-                run.current->merges[new_cluster->id] = merged_from;
+                    cout << "Previous clusters " << merged_from << " have merged into new cluster " << new_cluster->id << endl;
 
                 // store the given ID
                 size_t the_id = new_cluster->id;
 
-                // check if the ID was new?
-                id_set_t::const_iterator it = run.current->new_ids.find(the_id);
+                // if the biggest congruence is at least m_msc_threshold, continue the track
+                // Otherwise dish out a fresh tag and add to new IDs
+                bool continueId = run.coverNewByOld[n][largestCandidateIndex] 
+                    > this->m_msc_threshold && m_continueIDs;
 
-                if (it == run.current->new_ids.end()) {
-                    if (run.coverNewByOld[n][largestCandidateIndex] > this->m_msc_threshold && m_continueIDs) {
-                        // if the biggest congruence is at least 75%, continue the track
-                        typename Cluster<T>::ptr c = run.previous->clusters[largestCandidateIndex];
-                        new_cluster->id = c->id;
-                        run.current->tracked_ids.insert(new_cluster->id);
-                        run.continued_merged_ids.insert(new_cluster->id);
-
-                        if (m_verbosity >= VerbosityNormal)
-                            printf("\ttrack ID#%lu continues\n", new_cluster->id);
-                    } else {
-                        // Otherwise dish out a fresh tag and add to new IDs
-                        new_cluster->id = next_id(run.highestId);
-                        run.current->new_ids.insert(new_cluster->id);
-
-                        // as well as remove from tracked IDs
-                        id_set_t::iterator fi = run.current->tracked_ids.find(the_id);
-                        if (fi != run.current->tracked_ids.end()) {
-                            run.current->tracked_ids.erase(the_id);
-                        }
-
-                        if (m_verbosity >= VerbosityNormal)
-                            printf("\ttrack ID#%lu ends. new track ID#%lu begins\n", the_id, new_cluster->id);
-                    }
-                } else {
+                if (continueId) {
+                    // continue the id
+                    typename Cluster<T>::ptr c = run.previous->clusters[largestCandidateIndex];
+                    new_cluster->id = c->id;
                     if (m_verbosity >= VerbosityNormal)
-                        printf("\ttrack ID#%lu continues\n", new_cluster->id);
+                        cout << "\tTrack #" << c->id << " continues." << endl;
+
+                    // keep track
+                    run.current->tracked_ids.insert(new_cluster->id);
+                    // TODO: check if this one is still necessary
+                    run.continued_merged_ids.insert(new_cluster->id);
+                } else {
+                    // new id for the merged cluster
+                    new_cluster->id = next_id(run.highestId);
+                    if (m_verbosity >= VerbosityNormal)
+                        cout << "\tTrack #" << new_cluster->id << " begins." << endl;
+                    run.current->new_ids.insert(new_cluster->id);
+                }
+                
+                // store in attributes
+                run.current->merges[new_cluster->id] = merged_from;
+
+                // Remove the merged clusters (except the continued)
+                id_set_t::iterator fi;
+                for (fi = merged_from.begin(); fi != merged_from.end(); ++fi) {
+                    id_t id = *fi;
+                    if (!continueId || (continueId && id != new_cluster->id)) {
+                        run.scheduled_for_removal.insert(id);
+                        if (m_verbosity >= VerbosityNormal)
+                            cout << "\tTrack #" << id << " ends." << endl;
+                    }
                 }
             }
         }
-
-        if (m_verbosity >= VerbosityDetails && !had_merges)
+        
+        if (m_verbosity >= VerbosityDetails && !had_merges) 
             cout << "none." << endl;
     }
 
@@ -774,83 +761,97 @@ namespace m3D {
     void
     Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t &run)
     {
-        if (m_verbosity >= VerbosityDetails)
+        if (m_verbosity >= VerbosityDetails) 
             cout << endl << "-- Splits --" << endl;
-
+        
         bool had_splits = false;
         size_t n, m;
         for (m = 0; m < run.previous->clusters.size(); m++) {
-            typename Cluster<T>::ptr old_cluster = run.previous->clusters[m];
+            vector<int> candidates;
+            typename Cluster<T>::ptr old_cluster = run.previous->clusters.at(m);
+            
+            // keep track of the largest candidate, that is: the 
+            // cluster from the current series, that covers most 
+            // of the area of the old cluster
 
-            // check if the id was already continued in a merge
-            id_set_t::iterator fi = run.continued_merged_ids.find(old_cluster->id);
-            if (fi != run.continued_merged_ids.end()) continue;
-
-            // collect candidates
-            vector<float> candidates;
-            T maxCover = 0.0;
+            size_t maxSize = 0;
             size_t largestCandidateIndex = 0;
 
             for (n = 0; n < run.current->clusters.size(); n++) {
-                if (run.constraints_satisified[n][m]) {
-                    T overlap = run.coverNewByOld[n][m];
-                    if (overlap > this->m_ms_threshold) {
-                        // add to split candidates and record the candidate
-                        // with the most coverage
-                        candidates.push_back(n);
-
-                        if (run.coverOldByNew[n][m] > maxCover) {
-                            maxCover = run.coverOldByNew[n][m];
-                            largestCandidateIndex = n;
-                        }
+                T percentCovered = run.coverNewByOld[n][m];
+                if (percentCovered >= this->m_ms_threshold) {
+                    typename Cluster<T>::ptr c = run.current->clusters[n];
+                    // add to the list of candidates 
+                    candidates.push_back(n);
+                    // track the largest candidate
+                    if (c->size() > maxSize) {
+                        maxSize = c->size();
+                        largestCandidateIndex = n;
                     }
                 }
             }
 
             if (candidates.size() > 1) {
                 had_splits = true;
+
+                // collect split cluster ids
                 id_set_t split_into;
-
-                for (int i = 0; i < candidates.size(); i++)
-                    split_into.insert(run.current->clusters[candidates[i]]->id);
-
-                if (m_verbosity >= VerbosityNormal)
-                    cout << "cluster " << old_cluster->id << " seems to have split into clusters " << split_into << endl;
-
                 for (int i = 0; i < candidates.size(); i++) {
-                    typename Cluster<T>::ptr c = run.current->clusters[ candidates[i] ];
-
-                    // check if the tracked id's contains c->id
-                    m3D::id_t the_id = c->id;
-                    id_set_t::iterator it = run.current->tracked_ids.find(the_id);
-
-                    // If the largest one of the new clusters is at least 75% of the
-                    // size of new previous cluster, the ID of the previous cluster
-                    // is continued in the largest candidate
-                    bool continueID = (candidates[i] == largestCandidateIndex) && (maxCover > this->m_msc_threshold);
-                    if (continueID && m_continueIDs) {
-                        c->id = old_cluster->id;
-                        run.current->tracked_ids.insert(c->id);
-                        if (m_verbosity >= VerbosityNormal)
-                            printf("\ttrack ID#%lu continues\n", c->id);
-                    } else {
-                        if (it != run.current->tracked_ids.end()) {
-                            // remove from tracked id's, re-tag and add to new IDs
-                            run.current->tracked_ids.erase(it);
-                            c->id = next_id(run.highestId);
-                            if (m_verbosity >= VerbosityNormal)
-                                printf("\tnew track ID#%lu begins\n", c->id);
-                            run.current->new_ids.insert(c->id);
-                        }
-                    }
+                    typename Cluster<T>::ptr c = run.current->clusters[candidates[i]];
+                    split_into.insert(c->id);
                 }
+                
+                if (m_verbosity >= VerbosityNormal)
+                    cout << "Previous cluster #" << old_cluster->id 
+                            << " split into clusters " << split_into
+                            << endl;
 
+                // if the biggest congruence is at least m_msc_threshold, 
+                // continue the track. Otherwise dish out a fresh tag and 
+                // add to new IDs
+                bool continueId = run.coverOldByNew[largestCandidateIndex][m] 
+                    > this->m_msc_threshold && m_continueIDs;
+
+                typename Cluster<T>::ptr largestCandidate = run.current->clusters[largestCandidateIndex];
+                if (continueId) {
+                    // continue the id
+                    largestCandidate->id = old_cluster->id;
+                    if (m_verbosity >= VerbosityNormal)
+                        cout << "\tTrack #" << largestCandidate->id << " continues." << endl;
+                    run.current->tracked_ids.insert(largestCandidate->id);
+                } else {
+                    // new id for the merged cluster
+                    largestCandidate->id = next_id(run.highestId);
+                    if (m_verbosity >= VerbosityNormal)
+                        cout << "\tTrack #" << largestCandidate->id << " begins." << endl;
+                    run.current->new_ids.insert(largestCandidate->id);
+                }
+                
+                // store in attributes
                 run.current->splits[old_cluster->id] = split_into;
             }
         }
-
+        
         if (m_verbosity >= VerbosityDetails && !had_splits)
             cout << "none." << endl;
+    }
+    
+    template <typename T>
+    void
+    Tracking<T>::removeScheduled(const tracking_run_t &run) {
+        id_set_t::const_iterator si;
+        for (si=run.scheduled_for_removal.begin(); si != run.scheduled_for_removal.end(); ++si) {
+            m3D::id_t id = *si;
+            run.current->tracked_ids.erase(id);
+            typename Cluster<T>::list::iterator ci;
+            for (ci = run.current->clusters.begin(); ci != run.current->clusters.end(); ++ci) 
+            {
+                typename Cluster<T>::ptr c = (*ci);
+                if (c->id == id) {
+                    run.current->clusters.erase(ci);
+                }
+            }
+        }
     }
 
     template <typename T>
@@ -903,9 +904,13 @@ namespace m3D {
         if (m_verbosity >= VerbosityNormal) stop_timer("done");
 
         if (m_verbosity >= VerbosityNormal) start_timer("-- Merging and splitting ... ");
+        // Calculate merges and splits
         handleMerges(run);
         handleSplits(run);
         if (m_verbosity >= VerbosityNormal) stop_timer("done");
+        
+        // Remove clusters that are marked for removal
+        removeScheduled(run);
 
         // Restore save precision
         std::cout.precision(prec);

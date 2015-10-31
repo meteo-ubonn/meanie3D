@@ -30,6 +30,9 @@
 
 #include <meanie3D/meanie3D.h>
 #include <radolan/radolan.h>
+#include <set>
+#include <list>
+#include <algorithm>
 
 using namespace std;
 using namespace boost;
@@ -46,6 +49,31 @@ typedef double FS_TYPE;
 typedef vector<float> fvec_t;
 typedef vector<size_t> bin_t;
 typedef vector<string> svec_t;
+
+typedef enum {
+    Continue, Split, Merge
+} link_type_t;
+
+/**
+ * Node in a track graph.
+ */
+typedef struct {
+    m3D::uuid_t     uuid;
+    m3D::id_t       id;
+    unsigned int    step;
+    unsigned int    size;
+} node_t;
+
+/**
+ * Link in a track graph.
+ */
+typedef struct {
+    m3D::uuid_t source; // source uuid
+    m3D::uuid_t target; // target uuid
+    m3D::id_t   id;     // target id 
+    link_type_t type;   // split, merge, continue?
+} link_t;
+
 
 #pragma mark -
 #pragma mark comand line parsing
@@ -71,8 +99,6 @@ void parse_commmandline(program_options::variables_map vm,
         bool &write_gnuplot_files,
         bool &write_track_dictionary)
 {
-    // Version
-
     sourcepath = vm["sourcepath"].as<string>();
 
     if (vm.count("basename") == 0)
@@ -84,13 +110,9 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     write_center_tracks_as_vtk = vm.count("write-center-tracks-as-vtk") > 0;
-
     write_gnuplot_files = vm.count("write-gnuplot-files") > 0;
-
     write_cumulated_tracks_as_vtk = vm.count("write-cumulated-tracks-as-vtk") > 0;
-
     write_track_dictionary = vm.count("write-track-dictionary") > 0;
-
     include_degenerates = vm["exclude-degenerates"].as<bool>();
 
     // Default is the dimensions
@@ -319,6 +341,137 @@ void get_memory(double &free_memory, double &used_memory)
 }
 #endif
 
+
+#pragma mark -
+#pragma mark Tree utensils
+
+/**
+ * Compare two nodes by uuid.
+ * @param a
+ * @param b
+ * @return 
+ */
+bool compareNodesByUuid(const node_t &a, const node_t &b) {
+    return (a.uuid >= b.uuid) ? true : false;
+}
+
+bool compareNodesByStep(const node_t &a, const node_t &b) {
+    return (a.step < b.step) ? true : false;
+}
+
+/**
+ * Finds all nodes with the given id in the node list and returns
+ * them in ascending order of step
+ * 
+ * @param nodes
+ * @param id
+ * @param only include nodes in this step
+ * @return 
+ */
+bool 
+findNode(const vector<node_t> &nodes, const m3D::id_t &id, const unsigned int &step, node_t &node) {
+    bool found = false;
+    for (size_t i=0; i<nodes.size() && !found; i++) {
+        node_t n = nodes[i];
+        if (n.id == id && n.step == step) {
+            node.id = n.id;
+            node.step = n.step;
+            node.uuid = n.uuid;
+            found = true;
+        }
+    }
+    return found;
+}
+
+void printNodes(const vector<node_t> &nodes) {
+    for (size_t i=0; i<nodes.size(); i++) {
+        node_t node = nodes[i];
+        cout << "step=" << node.step 
+                << " id=" << node.id 
+                << " uuid=" << node.uuid 
+                << endl;
+    }
+}
+
+void 
+addGraphNode(const node_t node,
+            std::vector<node_t> &nodes, 
+            std::vector<link_t> &links, 
+            const id_set_t &tracked_ids,
+            const id_map_t &merges,
+            const id_map_t &splits) 
+{
+    // Construct a new node for the tree data
+    nodes.push_back(node);
+
+    // check for split event
+    for (id_map_t::const_iterator mi = splits.begin(); mi != splits.end(); ++mi) {
+        // splits record: previous id split into a list of ids
+        node_t source;
+        if (findNode(nodes, mi->first, node.step-1, source)) {
+            // Now search all nodes up to the current step for
+            // those in the destinations list and add links
+            id_set_t::const_iterator si;
+            for (si = mi->second.begin(); si != mi->second.end(); si++) {
+                m3D::id_t targetId = (*si);
+                if (node.id==targetId) {
+                    link_t link;
+                    link.source = source.uuid;
+                    link.target = node.uuid;
+                    link.id = source.id;
+                    link.type = Split;
+                    links.push_back(link);
+                }
+            }
+        }
+    }
+
+    // check for merge events
+    for (id_map_t::const_iterator mi = merges.begin(); mi != merges.end(); ++mi) {
+        if (mi->first == node.id) {
+            node_t targetNode;
+            // Now search all nodes in the previous step for
+            // those in the destinations list and add links
+            id_set_t::const_iterator si;
+            for (si =  mi->second.begin(); si!= mi->second.end(); si++) {
+                node_t sourceNode;
+                if (findNode(nodes, (*si), node.step-1, sourceNode)) {
+                    link_t link;
+                    link.source = sourceNode.uuid;
+                    link.target = node.uuid;
+                    link.id = node.id;
+                    link.type = Merge;
+                    links.push_back(link);
+                }
+            }
+        }
+    }
+    
+    // check for continuation event
+    id_set_t::const_iterator ti = find(tracked_ids.begin(), tracked_ids.end(), node.id);
+    if (ti != tracked_ids.end()) {
+        node_t source;
+        if (findNode(nodes, node.id, node.step-1, source)) {
+
+            // Figure out if there is a link for this already. This can
+            // happen as the result of a split or link with continued id
+            bool haveLink = false;
+            for (int li=0; li < links.size() && !haveLink; li++) {
+                link_t link = links[li];
+                haveLink = (link.source == source.uuid  && link.target == node.uuid);
+            }
+            if (!haveLink) {
+                link_t link;
+                link.source = source.uuid;
+                link.target = node.uuid;
+                link.id = node.id;
+                link.type = Continue;
+                links.push_back(link);
+            }
+        }
+    }
+}
+
 #pragma mark -
 #pragma mark main
 
@@ -427,7 +580,7 @@ int main(int argc, char** argv)
 
     bool write_gnuplot_files = false;
     bool write_track_dictionary = false;
-
+    
     try
     {
         parse_commmandline(vm,
@@ -468,6 +621,10 @@ int main(int argc, char** argv)
     bin_t speed_histogram(speed_histogram_classes.size(), 0);
     bin_t direction_histogram(direction_histogram_classes.size(), 0);
 
+    // Tree data
+    vector<node_t> nodes;
+    vector<link_t> links;
+
     // This map contains a mapping from the id type to lists of clusters.
 
     Track<FS_TYPE>::trackmap track_map;
@@ -505,14 +662,16 @@ int main(int argc, char** argv)
     bool need_points = create_cumulated_size_statistics
             || write_cumulated_tracks_as_vtk;
 
-    size_t c_id = 0;
-
+    m3D::uuid_t uuid = 0;
+    
     if (fs::is_directory(source_path))
     {
         fs::directory_iterator dir_iter(source_path);
         fs::directory_iterator end;
 
         // Iterate over the "-clusters.nc" - files in sourcepath
+        
+        unsigned int step = 0;
 
         while (dir_iter != end)
         {
@@ -576,13 +735,13 @@ int main(int argc, char** argv)
                     // TODO: check if the actual dimensions and their 
                     // order remain constant
 
-                    //                    start_timer();
+                    // start_timer();
                     ClusterList<FS_TYPE>::ptr cluster_list = ClusterList<FS_TYPE>::read(f.generic_string());
-                    //                    time_reading += stop_timer();
+                    // time_reading += stop_timer();
 
                     cout << "Processing " << f.filename().generic_string()
                             << " (" << cluster_list->size() << " clusters) ... ";
-
+                    
                     if (spatial_rank == 0)
                     {
                         spatial_rank = cluster_list->dimensions.size();
@@ -591,9 +750,6 @@ int main(int argc, char** argv)
                         cerr << "FATAL:spatial range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
-
-                    // TODO: check if the actual variables and their order
-                    // remain constant
 
                     size_t v_rank = cluster_list->feature_variables.size() - spatial_rank;
                     if (value_rank == 0)
@@ -604,28 +760,28 @@ int main(int argc, char** argv)
                         cerr << "FATAL:value range must remain identical across the track" << endl;
                         return EXIT_FAILURE;
                     }
-
+                    
                     // Iterate over the clusters in the list we just read
                     Cluster<FS_TYPE>::list::const_iterator ci;
                     for (ci = cluster_list->clusters.begin(); ci != cluster_list->clusters.end(); ++ci)
                     {
                         Cluster<FS_TYPE>::ptr cluster = (*ci);
-                        m3D::id_t id = cluster->id;
+                        m3D::id_t id = id;
                         Track<FS_TYPE>::ptr tm = NULL;
                         Track<FS_TYPE>::trackmap::const_iterator ti;
 
-                        //                        start_timer();
+                        // start_timer();
                         ti = track_map.find(id);
-                        //                        time_searching += stop_timer();
+                        // time_searching += stop_timer();
 
                         if (ti == track_map.end())
                         {
                             // new entry
                             tm = new Track<FS_TYPE>();
                             tm->id = id;
-                            //                            start_timer();
+                            // start_timer();
                             track_map[id] = tm;
-                            //                            time_inserting += stop_timer();
+                            // time_inserting += stop_timer();
                         } else
                         {
                             tm = ti->second;
@@ -638,34 +794,49 @@ int main(int argc, char** argv)
                         // has facilities of writing it's point list to disk and read
                         // it back on demand, saving memory.
 
-                        //                        start_timer();
-                        TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(c_id++, cluster, need_points);
-                        //                        time_constructing_clusters += stop_timer();
+                        // start_timer();
+                        TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(uuid, cluster, need_points);
+                        // time_constructing_clusters += stop_timer();
+
+                        node_t node;
+                        node.uuid = uuid;
+                        node.id = cluster->id;
+                        node.step = step;
+                        node.size = cluster->size();
+                        
+                        addGraphNode(node, nodes, links, 
+                                cluster_list->tracked_ids, 
+                                cluster_list->merges, 
+                                cluster_list->splits);
+
+                        // Increment unique id
+                        uuid++;
+
+                        // Keep track to calculate average cluster size
                         average_cluster_size += cluster->size();
                         number_of_clusters++;
-
-                        // Call these to cache before disposing of points
-                        // tc->geometrical_center(spatial_rank);
-
-                        //                        start_timer();
+                        
+                        // start_timer();
                         tm->clusters.push_back(tc);
-                        //                        time_pushing_clusters += stop_timer();
+                        // time_pushing_clusters += stop_timer();
 
+                        // Pre-empt calculations based on points 
+                        // and dispose of the data if possible
+
+                        tc->geometrical_center();
                         vector<FS_TYPE> min, max, median;
                         cluster->variable_ranges(min, max, median);
                         cluster_min[cluster->id] = min;
                         cluster_max[cluster->id] = max;
                         cluster_median[cluster->id] = median;
-
-                        // dispose of the points in the original cluster
-                        //                        start_timer();
+                        // start_timer();
                         cluster->clear(true);
-                        //                        time_deleting += stop_timer();
+                        // time_deleting += stop_timer();
                     }
 
-                    //                    start_timer();
+                    // start_timer();
                     delete cluster_list;
-                    //                    time_deleting += stop_timer();
+                    // time_deleting += stop_timer();
 
                     // cout << "tracking map has " << track_map.size() << " tracks" << endl;
 
@@ -680,20 +851,21 @@ int main(int argc, char** argv)
                 cout << "done." << endl;
             }
 
-            //            cout << "Clusters processed:" << endl;
-            //            cout << "\t number:" << number_of_clusters << endl;
-            //            cout << "\t average size:" << ((double)average_cluster_size) / ((double)number_of_clusters) << endl;
-            //            cout << endl;
+            // cout << "Clusters processed:" << endl;
+            // cout << "\t number:" << number_of_clusters << endl;
+            // cout << "\t average size:" << ((double)average_cluster_size) / ((double)number_of_clusters) << endl;
+            // cout << endl;
             //            
-            //            cout << "Time spend:" << endl;
-            //            cout << "\t reading:" << time_reading << endl;
-            //            cout << "\t searching:" << time_searching << endl;
-            //            cout << "\t inserting:" << time_inserting << endl;
-            //            cout << "\t constructing clusters:" << time_constructing_clusters << endl;
-            //            cout << "\t pushing clusters:" << time_pushing_clusters << endl;
-            //            cout << "\t deleting:" << time_deleting << endl;
+            // cout << "Time spend:" << endl;
+            // cout << "\t reading:" << time_reading << endl;
+            // cout << "\t searching:" << time_searching << endl;
+            // cout << "\t inserting:" << time_inserting << endl;
+            // cout << "\t constructing clusters:" << time_constructing_clusters << endl;
+            // cout << "\t pushing clusters:" << time_pushing_clusters << endl;
+            // cout << "\t deleting:" << time_deleting << endl;
 
             dir_iter++;
+            step++;
         }
 
         cout << endl;
@@ -787,15 +959,12 @@ int main(int argc, char** argv)
             {
                 Track<FS_TYPE>::ptr track = tmi->second;
                 if (track->clusters.size() == 1 && exclude_degenerates) continue;
-
+                
                 dict << "    {" << endl;
-
                 // Identifier
                 dict << "      \"id\":" << track->id << "," << endl;
-
                 // Length
                 dict << "      \"length\":" << track->clusters.size() << "," << endl;
-
                 // Clusters
                 dict << "      \"clusters\":[" << endl;
 
@@ -806,13 +975,12 @@ int main(int argc, char** argv)
                 std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
                 for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti)
                 {
-
                     TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) (*ti);
                     vector<FS_TYPE> min, max, median;
                     min = cluster_min[c->id];
                     max = cluster_max[c->id];
                     median = cluster_median[c->id];
-
+                    
                     dict << "        {" << endl;
                     dict << "          \"size\":" << c->size() << "," << endl;
                     dict << "          \"sourcefile\":\"" << track->sourcefiles[i] << "\"," << endl;
@@ -820,8 +988,8 @@ int main(int argc, char** argv)
                     dict << "          \"mode\":" << to_json(c->mode) << "," << endl;
                     dict << "          \"min\":" << to_json(min) << "," << endl;
                     dict << "          \"max\":" << to_json(max) << "," << endl;
-                    dict << "          \"median\":" << to_json(median) << endl;
-                    dict << "          \"has_margin_points\":" << (c->has_margin_points() ? "Y" : "N") << endl;
+                    dict << "          \"median\":" << to_json(median) << "," << endl;
+                    dict << "          \"has_margin_points\":" << (c->has_margin_points() ? "true" : "false") << endl;
                     dict << "        }";
 
                     // min/max
@@ -854,8 +1022,50 @@ int main(int argc, char** argv)
 
                 track_index++;
             }
+            // end tracks
+            dict << "  ],";
 
-            dict << "  ]";
+            // begin tree data
+            dict << "  " << "\"tree\":{" << endl;
+
+            // begin nodes
+            dict << "    " << "\"nodes\":[" << endl;
+            for (size_t ni=0; ni < nodes.size(); ni++) {
+                node_t node = nodes[ni];
+                dict << "      {" << endl;
+                dict << "        \"uuid\":" << node.uuid << "," << endl;
+                dict << "        \"id\":" << node.id << "," << endl;
+                dict << "        \"size\":" << node.size << "," << endl;
+                dict << "        \"step\":" << node.step << endl;
+                dict << "      }";
+                if (ni < (nodes.size()-1)) {
+                    dict << "," << endl;
+                }
+            }
+            // end nodes
+            dict << "    " << "]," << endl;
+
+            // begin links
+            dict << "    " << "\"links\":[" << endl;
+            for (size_t ni=0; ni < links.size(); ni++) {
+                link_t link = links[ni];
+                dict << "      {" << endl;
+                dict << "        \"source\":" << link.source << "," << endl;
+                dict << "        \"target\":" << link.target << "," << endl;
+                dict << "        \"type\":" << link.type << "," << endl;
+                dict << "        \"id\":" << link.id << endl;
+                dict << "      }";
+                if (ni < (links.size()-1)) {
+                    dict << "," << endl;
+                }
+            }
+            // end links
+            dict << "    " << "]" << endl;
+            
+            // end tree data
+            dict << "  " << "}" << endl;
+
+            // end dictionary
             dict << "}" << endl;
             dict.close();
         }

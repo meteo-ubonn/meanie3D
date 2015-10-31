@@ -206,8 +206,6 @@ namespace m3D {
             m_verbosity = verbosity;
         }
 
-
-
     protected:
 
         typedef pair<size_t, T> match_t;
@@ -246,7 +244,8 @@ namespace m3D {
             id_set_t matched_ids;
 
             id_set_t merged_cluster_ids;
-            id_set_t continued_merged_ids;
+            id_set_t continued_merged_ids;      
+            id_set_t scheduled_for_removal;     // Set of ids to be removed at the end of the run.
 
             ::units::values::meters_per_second averageVelocity;
             // Correlation data
@@ -306,6 +305,12 @@ namespace m3D {
          * @param run
          */
         void handleSplits(typename Tracking<T>::tracking_run_t &run);
+        
+        /**
+         * 
+         * @param run
+         */
+        void removeScheduled(const tracking_run_t &run);
 
     };
 }

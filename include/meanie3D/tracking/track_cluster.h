@@ -34,6 +34,8 @@
 #include <boost/lexical_cast.hpp>
 
 namespace m3D {
+    
+
 
     /** A subclass of Cluster that facilitates storing and reading
      * individual clusters from a NetCDF file. Used to make tracking
@@ -68,7 +70,7 @@ namespace m3D {
         size_t m_size;
 
         std::vector<T> m_geometrical_center;
-
+        
 #pragma mark -
 #pragma mark Private member functions
 
@@ -209,6 +211,10 @@ namespace m3D {
         size_t size()
         {
             return this->m_size;
+        }
+        
+        unsigned long getUuid() {
+            return this->m_cid;
         }
     };
 };
