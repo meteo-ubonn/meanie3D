@@ -21,7 +21,6 @@
  * SOFTWARE.
  */
 
-
 #ifndef M3D_OPERATION_CLUSTER_TASK_H
 #define M3D_OPERATION_CLUSTER_TASK_H
 
@@ -42,16 +41,12 @@ namespace m3D {
         PointIndex<T> *m_index;
         ClusterOperation<T> *m_op;
         ClusterList<T> *m_cluster_list;
-
         const Kernel<T> *m_kernel;
         const WeightFunction<T> *m_weight_function;
         const double m_drf_threshold;
-
         const SearchParameters *m_search_params;
-
         const size_t m_start_index;
         const size_t m_end_index;
-
         const bool m_show_progress;
 
     public:
@@ -68,8 +63,7 @@ namespace m3D {
                 const Kernel<T> *kernel,
                 const WeightFunction<T> *weight_function,
                 const double &drf_threshold,
-                const bool show_progress = true) :
-        m_fs(fs),
+                const bool show_progress = true) : m_fs(fs),
         m_index(index),
         m_op(op),
         m_cluster_list(cs),
@@ -84,8 +78,7 @@ namespace m3D {
         };
 
         /** Copy contructor */
-        ClusterTask(const ClusterTask &other)
-        : m_fs(other.m_fs),
+        ClusterTask(const ClusterTask &other) : m_fs(other.m_fs),
         m_index(other.m_index),
         m_op(other.m_op),
         m_cluster_list(other.m_cluster_list),
@@ -101,63 +94,12 @@ namespace m3D {
 
 #if WITH_TBB
 
-        /** Constructor for TBB
-         */
-        ClusterTask(FeatureSpace<T> *fs,
-                PointIndex<T> *index,
-                ClusterOperation<T> *op,
-                ClusterList<T> *cs,
-                const SearchParameters *params,
-                const Kernel<T> *kernel,
-                const WeightFunction<T> *weight_function,
-                const double &drf_threshold,
-                const bool show_progress = true) :
-        m_fs(fs),
-        m_index(index),
-        m_op(op),
-        m_cluster_list(cs),
-        m_start_index(0),
-        m_end_index(0),
-        m_search_params(params),
-        m_kernel(kernel),
-        m_weight_function(weight_function),
-        m_drf_threshold(drf_threshold),
-        m_show_progress(show_progress)
-        {
-        };
-
-        void
-        operator()(const tbb::blocked_range<size_t>& r) const
-        {
-            MeanshiftOperation<T> ms_op(m_fs, m_index);
-
-            for (size_t index = r.begin(); index != r.end(); index++) {
-                if (m_show_progress) {
-                    m_op->increment_cluster_progress();
-                }
-
-                typename Point<T>::ptr x = m_fs->points[ index ];
-
-                bool normalize = !(GRID_ROUNDING_METHOD_NONE == 1);
-
-                x->shift = ms_op.meanshift(x->values, m_search_params, m_kernel, m_weight_function, normalize);
-
-                vector<T> spatial_shift = m_fs->spatial_component(x->shift);
-
-                if (normalize) {
-                    x->gridded_shift = m_fs->coordinate_system->rounded_gridpoint(spatial_shift);
-                }
-            }
-
-            m_op->report_done();
-        }
 #endif
 
         void
         operator()()
         {
             MeanshiftOperation<T> ms_op(m_fs, m_index);
-
 
 #if WITH_OPENMP
             // Prime the index
@@ -172,16 +114,11 @@ namespace m3D {
 #endif
                     m_op->increment_cluster_progress();
                 }
-
                 typename Point<T>::ptr x = m_fs->points[ index ];
-
                 x->shift = ms_op.meanshift(x->values, m_search_params, m_kernel, m_weight_function);
-
                 vector<T> spatial_shift = m_fs->spatial_component(x->shift);
-
                 x->gridded_shift = m_fs->coordinate_system->to_gridpoints(spatial_shift);
             }
-
             m_op->report_done();
         }
     };

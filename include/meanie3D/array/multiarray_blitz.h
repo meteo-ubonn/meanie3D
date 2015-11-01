@@ -178,35 +178,35 @@ for(int i1=0;i1<dim[0];i1++){ \
                     m_a1.resize(A1(this->m_dims));
                     FILL_A1(this->m_dims, m_a1, default_value);
                 }
-                break;
+                    break;
 
                 case 2:
                 {
                     m_a2.resize(A2(this->m_dims));
                     FILL_A2(this->m_dims, m_a2, default_value);
                 }
-                break;
+                    break;
 
                 case 3:
                 {
                     m_a3.resize(A3(this->m_dims));
                     FILL_A3(this->m_dims, m_a3, default_value);
                 }
-                break;
+                    break;
 
                 case 4:
                 {
                     m_a4.resize(A4(this->m_dims));
                     FILL_A4(this->m_dims, m_a4, default_value);
                 }
-                break;
+                    break;
 
                 case 5:
                 {
                     m_a5.resize(A5(this->m_dims));
                     FILL_A5(this->m_dims, m_a5, default_value);
                 }
-                break;
+                    break;
 
                 default:
                     throw std::out_of_range("only 5 dimensions are currently supported");

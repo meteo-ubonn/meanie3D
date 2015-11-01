@@ -86,6 +86,14 @@ namespace m3D {
         void obtain_margin_flag(ClusterList<T> &list,
                 typename FeatureSpace<T>::ptr fs);
 
+        /**
+         * Tags the clusters in the list with ids.
+         * @param list 
+         * @param uuid Contains the highest previous uuid at the beginning
+         * and contains the highest updated uuid after the call.
+         */
+        static
+        void provideUuids(ClusterList<T> &list, uuid_t &uuid);
     };
 }
 

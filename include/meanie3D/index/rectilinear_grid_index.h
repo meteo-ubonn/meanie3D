@@ -155,7 +155,7 @@ namespace m3D {
                 this->m_fs->coordinate_system->reverse_lookup(x_spatial, gp);
 
                 result = this->search(x, gp, h, distances);
-            }            catch (std::out_of_range& e) {
+            } catch (std::out_of_range& e) {
                 cerr << "ERROR:reverse coordinate transformation failed for coordinate=" << x_spatial << endl;
             }
 

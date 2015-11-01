@@ -34,8 +34,6 @@
 #include <boost/lexical_cast.hpp>
 
 namespace m3D {
-    
-
 
     /** A subclass of Cluster that facilitates storing and reading
      * individual clusters from a NetCDF file. Used to make tracking
@@ -48,9 +46,6 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Private members
-
-        // A running number unique for each cluster 
-        unsigned long m_cid;
 
         // The file containing the actual data
         std::string m_filename;
@@ -70,7 +65,7 @@ namespace m3D {
         size_t m_size;
 
         std::vector<T> m_geometrical_center;
-        
+
 #pragma mark -
 #pragma mark Private member functions
 
@@ -145,57 +140,40 @@ namespace m3D {
          * @param c_id this id must be unique.
          * @param cluster 
          */
-        TrackCluster(unsigned long c_id,
-                typename Cluster<T>::ptr cluster,
+        TrackCluster(typename Cluster<T>::ptr cluster,
                 bool write_points_to_disk = false)
-        : m_cid(c_id)
-        , m_writes_points_to_disk(write_points_to_disk)
+        : m_writes_points_to_disk(write_points_to_disk)
         , m_needs_reading(true)
-
         {
             this->id = cluster->id;
+            this->uuid = cluster->uuid;
             this->mode = cluster->mode;
             this->m_rank = cluster->rank();
             this->m_spatial_rank = cluster->spatial_rank();
             this->m_size = cluster->size();
             this->m_geometrical_center = cluster->geometrical_center();
-            // cout << "TrackingCluster::Constructor @" << this << " [" << this->m_geometrical_center << "]" << endl;
-
-            std::string num_postfix = boost::lexical_cast<string>(c_id);
-
+            std::string num_postfix = boost::lexical_cast<string>(cluster->uuid);
             // name of the external 'memory'
             m_filename = "/tmp/cluster_" + num_postfix + ".txt";
-
             // write out to external memory
             if (m_writes_points_to_disk) {
                 this->write_points(cluster->get_points());
-            } else {
-                // Add a copy of the points
-                //                    for (size_t i=0; i<cluster->size(); i++) {
-                //                        typename Point<T>::ptr original = cluster->get_points().at(i);
-                //                        typename Point<T>::ptr copy = PointFactory<T>::get_instance()->copy(original);
-                //                        this->get_points().push_back(copy);
-                //                    }
-                //                    cluster->clear(true);
             }
         }
 
-        ~TrackCluster()
-        {
+        ~TrackCluster() {
             this->clear(true);
         }
 
 #pragma mark -
 #pragma mark Public member functions
 
-        virtual void clear(bool deletion_flag = false)
-        {
+        virtual void clear(bool deletion_flag = false) {
             Cluster<T>::clear(deletion_flag);
             this->m_needs_reading = true;
         }
 
-        typename Point<T>::list &get_points()
-        {
+        typename Point<T>::list &get_points() {
             if (m_writes_points_to_disk && this->m_needs_reading) {
                 this->read_points();
                 this->m_needs_reading = false;
@@ -203,18 +181,12 @@ namespace m3D {
             return Cluster<T>::get_points();
         }
 
-        vector<T> geometrical_center()
-        {
+        vector<T> geometrical_center() {
             return this->m_geometrical_center;
         }
 
-        size_t size()
-        {
+        size_t size() {
             return this->m_size;
-        }
-        
-        unsigned long getUuid() {
-            return this->m_cid;
         }
     };
 };

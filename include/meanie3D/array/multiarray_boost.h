@@ -172,35 +172,35 @@ for(int i1=0;i1<dim[0];i1++){ \
                     typename boost::multi_array<T, 1>::extent_gen e;
                     m_a1.resize(e[this->m_dims[0]]);
                 }
-                break;
+                    break;
 
                 case 2:
                 {
                     typename boost::multi_array<T, 2>::extent_gen e;
                     m_a2.resize(e[this->m_dims[0]][this->m_dims[1]]);
                 }
-                break;
+                    break;
 
                 case 3:
                 {
                     typename boost::multi_array<T, 1>::extent_gen e;
                     m_a3.resize(e[this->m_dims[0]][this->m_dims[1]][this->m_dims[2]]);
                 }
-                break;
+                    break;
 
                 case 4:
                 {
                     typename boost::multi_array<T, 1>::extent_gen e;
                     m_a4.resize(e[this->m_dims[0]][this->m_dims[1]][this->m_dims[2]][this->m_dims[3]]);
                 }
-                break;
+                    break;
 
                 case 5:
                 {
                     typename boost::multi_array<T, 1>::extent_gen e;
                     m_a5.resize(e[this->m_dims[0]][this->m_dims[1]][this->m_dims[2]][this->m_dims[3]][this->m_dims[4]]);
                 }
-                break;
+                    break;
 
                 default: throw std::out_of_range("only dimensions 1 .. 5 are supported");
             }
@@ -216,7 +216,7 @@ for(int i1=0;i1<dim[0];i1++){ \
                     m_a1.resize(BOOST_A1(extend, this->m_dims));
                     BOOST_FILL_A1(this->m_dims, m_a1, default_value);
                 }
-                break;
+                    break;
 
                 case 2:
                 {
@@ -224,7 +224,7 @@ for(int i1=0;i1<dim[0];i1++){ \
                     m_a2.resize(BOOST_A2(extend, this->m_dims));
                     BOOST_FILL_A2(this->m_dims, m_a2, default_value);
                 }
-                break;
+                    break;
 
                 case 3:
                 {
@@ -232,7 +232,7 @@ for(int i1=0;i1<dim[0];i1++){ \
                     m_a3.resize(BOOST_A3(extend, this->m_dims));
                     BOOST_FILL_A3(this->m_dims, m_a3, default_value);
                 }
-                break;
+                    break;
 
                 case 4:
                 {
@@ -240,7 +240,7 @@ for(int i1=0;i1<dim[0];i1++){ \
                     m_a4.resize(BOOST_A4(extend, this->m_dims));
                     BOOST_FILL_A4(this->m_dims, m_a4, default_value);
                 }
-                break;
+                    break;
 
                 case 5:
                 {
@@ -248,7 +248,7 @@ for(int i1=0;i1<dim[0];i1++){ \
                     m_a5.resize(BOOST_A5(extend, this->m_dims));
                     BOOST_FILL_A5(this->m_dims, m_a5, default_value);
                 }
-                break;
+                    break;
 
                 default: throw std::out_of_range("only dimensions 1 .. 5 are supported");
             }
@@ -335,35 +335,35 @@ for(int i1=0;i1<dim[0];i1++){ \
                     typename boost::multi_array<T, 1>::extent_gen extend;
                     m_a1.resize(BOOST_A1(extend, this->m_dims));
                 }
-                break;
+                    break;
 
                 case 2:
                 {
                     typename boost::multi_array<T, 2>::extent_gen extend;
                     m_a2.resize(BOOST_A2(extend, this->m_dims));
                 }
-                break;
+                    break;
 
                 case 3:
                 {
                     typename boost::multi_array<T, 1>::extent_gen extend;
                     m_a3.resize(BOOST_A3(extend, this->m_dims));
                 }
-                break;
+                    break;
 
                 case 4:
                 {
                     typename boost::multi_array<T, 1>::extent_gen extend;
                     m_a4.resize(BOOST_A4(extend, this->m_dims));
                 }
-                break;
+                    break;
 
                 case 5:
                 {
                     typename boost::multi_array<T, 1>::extent_gen extend;
                     m_a5.resize(BOOST_A5(extend, this->m_dims));
                 }
-                break;
+                    break;
 
                 default: throw std::out_of_range("only dimensions 1 .. 5 are supported");
             }

@@ -52,7 +52,7 @@ namespace m3D {
             }
 
             this->construct();
-        }        catch (const exceptions::NcException &e) {
+        } catch (const exceptions::NcException &e) {
             cerr << "FATAL:could not create coordinate system from file "
                     << file->getName() << " :" << e.what() << endl;
             exit(EXIT_FAILURE);
@@ -139,7 +139,7 @@ namespace m3D {
                         cerr << "WARNING:variable " << var.getName() << " has units'" << unit_string << "' which is currently not handled. It will be assumed to be in meters [m]" << endl;
                         m_dimension_units.push_back("m");
                     }
-                }                catch (netCDF::exceptions::NcException &e) {
+                } catch (netCDF::exceptions::NcException &e) {
                     cerr << "WARNING:variable " << var.getName() << " has no 'units' attribute. It will be assumed to be in meters [m]" << endl;
                     m_dimension_units.push_back("m");
                 }
@@ -175,7 +175,7 @@ namespace m3D {
             }
 
             m_resolution_norm = utils::vectors::vector_norm<T>(m_resolution);
-        }        catch (const exceptions::NcException &e) {
+        } catch (const exceptions::NcException &e) {
             cerr << "FATAL:could not construct coordinate system:"
                     << e.what() << endl;
             exit(EXIT_FAILURE);

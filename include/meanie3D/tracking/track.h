@@ -60,7 +60,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Public properties
 
-        /** the cluster's identifier
+        /** the track identifier
          */
         m3D::id_t id;
 

@@ -29,6 +29,7 @@ ENDIF()
 # Python packaging
 # ------------------------------------------------------------- #
 IF (PYTHONINTERP_FOUND)
+    # TODO: this needs to be enhanced a bit. The copy step needs to happen at compile time.
 
     # Configure package file
     FILE(COPY meanie3D DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

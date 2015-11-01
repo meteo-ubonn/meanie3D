@@ -50,19 +50,12 @@ namespace m3D {
     private:
 
         typedef map<size_t, typename Histogram<T>::ptr> histogram_map_t;
-
         typename Point<T>::list m_points;
-
         bool m_has_margin_points;
-
         histogram_map_t m_histograms;
-
         vector<T> m_geometrical_center;
-
         map<size_t, vector<T> > m_weighed_centers;
-
         ::units::values::m m_radius;
-
         PointIndex<T> *m_index;
 
     protected:
@@ -80,7 +73,6 @@ namespace m3D {
 #pragma mark Type definitions / Constants
 
         typedef Cluster<T> *ptr;
-
         typedef std::vector<ptr> list;
 
 #pragma mark -
@@ -96,9 +88,13 @@ namespace m3D {
          */
         vector<T> displacement;
 
-        /** Unique cluster ID. Used for tracking.
+        /** Cluster ID - tagging clusters in tracks.
          */
         m3D::id_t id;
+
+        /** Unique identifier across a whole tracking run.
+         */
+        m3D::uuid_t uuid;
 
         size_t
         value_rank()

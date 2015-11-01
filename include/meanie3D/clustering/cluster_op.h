@@ -46,7 +46,7 @@ namespace m3D {
 
     /** Encapsulates all steps needed for a complete
      * clustering operation. 
-     * 
+     *
      * TODO: decouple from NetCDF specific code.
      */
     template <typename T>
@@ -55,7 +55,6 @@ namespace m3D {
     private:
 
         NetCDFDataStore<T> *m_data_store;
-
         boost::progress_display *m_progress_bar;
         size_t m_cluster_threadcount;
 
@@ -85,7 +84,7 @@ namespace m3D {
         , m_progress_bar(NULL)
         , m_data_store(data_store)
         {
-        };
+        }
 
         virtual ~ClusterOperation()
         {

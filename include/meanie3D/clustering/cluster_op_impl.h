@@ -21,7 +21,6 @@
  * SOFTWARE.
  */
 
-
 #ifndef M3D_OPERATION_CLUSTER_IMPL_H
 #define M3D_OPERATION_CLUSTER_IMPL_H
 
@@ -37,7 +36,6 @@
 namespace m3D {
 
 #if WRITE_MODES
-
     static size_t s_pass_counter = 0;
 
     template <typename T>
@@ -60,7 +58,6 @@ namespace m3D {
     {
         s_pass_counter++;
     }
-
 #endif
 
     template <typename T>
@@ -85,13 +82,13 @@ namespace m3D {
         m_cluster_threadcount++;
     }
 
-
 #pragma mark -
 #pragma mark Clustering Code
 
     template <typename T>
     ClusterList<T>
-    ClusterOperation<T>::cluster(const SearchParameters *params,
+    ClusterOperation<T>::cluster(
+            const SearchParameters *params,
             const Kernel<T> *kernel,
             const WeightFunction<T> *weight_function,
             const bool coalesceWithStrongestNeighbour,
@@ -99,18 +96,13 @@ namespace m3D {
             const bool show_progress_bar)
     {
         using namespace m3D::utils::vectors;
-
         vector<T> resolution;
-
         if (params->search_type() == SearchTypeRange) {
             RangeSearchParams<T> *p = (RangeSearchParams<T> *) params;
-
             // Physical grid resolution in the
             // spatial range
             resolution = this->feature_space->coordinate_system->resolution();
-
             resolution = ((T) 4.0) * resolution;
-
             // Supplement with bandwidth values for
             // the value range
             for (size_t i = resolution.size(); i < p->bandwidth.size(); i++) {
@@ -127,34 +119,27 @@ namespace m3D {
 
         if (show_progress_bar) {
             cout << endl << "Creating meanshift vector graph ...";
-
             start_timer();
-
             m_progress_bar = new boost::progress_display(this->feature_space->size());
         }
 
         // Compile list of dimension names
 
         const CoordinateSystem<T> *cs = this->feature_space->coordinate_system;
-
         NcFile file(m_data_store->filename(), NcFile::read);
-
         vector<NcVar> vars(cs->dimension_variables());
 
         for (size_t i = 0; i < m_data_store->rank(); i++) {
             NcVar variable = file.getVar(m_data_store->variable_names()[i]);
             vars.push_back(variable);
         }
-
         ClusterList<T> cluster_list(vars, cs->dimensions(),
                 m_data_store->filename(),
                 m_data_store->get_time_index());
 
         // Guard against empty feature-space
-
         if (this->feature_space->points.size() == 0) {
             cout << "Feature space is empty" << endl;
-
             return cluster_list;
         }
 
@@ -188,7 +173,6 @@ namespace m3D {
 
 #else
         // Single threaded execution (or OpenMP)
-
         ClusterTask<T> ct(this->feature_space,
                 this->point_index,
                 this, &cluster_list,
@@ -211,25 +195,19 @@ namespace m3D {
 
         if (show_progress_bar) {
             cout << "done. (" << stop_timer() << "s)" << endl;
-
             delete m_progress_bar;
-
             m_progress_bar = NULL;
         }
 
         // Analyse the graph and create clusters
-
         cluster_list.aggregate_cluster_graph(this->feature_space, weight_function, coalesceWithStrongestNeighbour, show_progress_bar);
         this->feature_space->sanity_check();
 
         // Replace points with original data ()
-
         ClusterUtils<T>::replace_points_from_datastore(cluster_list, m_data_store);
         this->feature_space->sanity_check();
 
         // Find margin points (#325)
-
-
         ClusterUtils<T>::obtain_margin_flag(cluster_list, this->feature_space);
 
 #if WRITE_BOUNDARIES
@@ -258,7 +236,6 @@ namespace m3D {
         VisitUtils<T>::write_cluster_modes_vtk(fn, cluster_list.clusters);
 #endif
 #endif
-
         return cluster_list;
     }
 }

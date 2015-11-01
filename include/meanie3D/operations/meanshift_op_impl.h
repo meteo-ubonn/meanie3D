@@ -210,8 +210,7 @@ namespace m3D {
 #endif
                 }
             }
-        }
-            // KNN
+        }            // KNN
 
         else {
             throw "Not Implemented";

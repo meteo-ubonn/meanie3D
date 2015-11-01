@@ -283,7 +283,7 @@ namespace m3D {
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
                     }
-                    break;
+                        break;
 
                     case netCDF::NcType::nc_CHAR:
                     {
@@ -291,7 +291,7 @@ namespace m3D {
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
                     }
-                    break;
+                        break;
 
                     case netCDF::NcType::nc_DOUBLE:
                     {
@@ -299,7 +299,7 @@ namespace m3D {
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
                     }
-                    break;
+                        break;
 
                     case netCDF::NcType::nc_FLOAT:
                     {
@@ -307,7 +307,7 @@ namespace m3D {
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
                     }
-                    break;
+                        break;
 
                     case netCDF::NcType::nc_INT:
                     {
@@ -315,7 +315,7 @@ namespace m3D {
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
                     }
-                    break;
+                        break;
 
                     case netCDF::NcType::nc_SHORT:
                     {
@@ -323,7 +323,7 @@ namespace m3D {
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
                     }
-                    break;
+                        break;
 
                     default:
                     {

@@ -795,11 +795,11 @@ int main(int argc, char** argv)
                         // it back on demand, saving memory.
 
                         // start_timer();
-                        TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(uuid, cluster, need_points);
+                        TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(cluster, need_points);
                         // time_constructing_clusters += stop_timer();
 
                         node_t node;
-                        node.uuid = uuid;
+                        node.uuid = cluster->uuid;
                         node.id = cluster->id;
                         node.step = step;
                         node.size = cluster->size();

@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import os.path
+import pdb
 import shutil
 import sys
 
@@ -79,6 +80,7 @@ def removeOutputDirectories(config,scales):
     :param scales:
     :return:
     '''
+
     dirsExist = False
     output_dir = config['output_dir']
     if scales:

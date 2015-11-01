@@ -31,6 +31,7 @@
 #include <meanie3D/clustering/cluster.h>
 #include <meanie3D/clustering/cluster_list.h>
 #include <meanie3D/clustering/cluster_op.h>
+#include <meanie3D/clustering/cluster_utils.h>
 #include <meanie3D/weights/weight_function.h>
 #include <meanie3D/utils.h>
 #include <meanie3D/tracking.h>
@@ -195,7 +196,7 @@ namespace m3D {
                         }
                     }
                 }
-            }            catch (netCDF::exceptions::NcException &e) {
+            } catch (netCDF::exceptions::NcException &e) {
                 cerr << "FATAL: can not read from netcdf file " << filename << endl;
                 exit(EXIT_FAILURE);
             }
@@ -213,7 +214,7 @@ namespace m3D {
                 for (size_t i = 0; i < PROTOCLUSTER_NUM_VARS; i++) {
                     m_protocluster_variables.push_back(std::string(PROTOCLUSTER_VARS[i]));
                 }
-            }            catch (netCDF::exceptions::NcException &e) {
+            } catch (netCDF::exceptions::NcException &e) {
                 cerr << "FATAL: can not read from netcdf file " << m_ci_comparison_data_store->filename() << endl;
                 exit(EXIT_FAILURE);
             }
@@ -406,7 +407,8 @@ namespace m3D {
 
             m_protoclusters.apply_size_threshold(size_threshold);
 
-            m_protoclusters.retag_identifiers();
+            m3D::uuid_t uuid = m3D::MIN_UUID;
+            ClusterUtils<T>::provideUuids(m_protoclusters,uuid);
 
             // Write protoclusters out
 
@@ -415,7 +417,6 @@ namespace m3D {
             m_protoclusters.write(proto_filename);
 
             // clean up
-
             delete proto_store;
             delete proto_fs;
             delete proto_kernel;
@@ -447,7 +448,6 @@ namespace m3D {
                 // histograms
 
                 proto_tracker.track(m_previous_protoclusters, &m_protoclusters, m_coordinate_system);
-
                 m_protoclusters.save();
 
                 // Find object pairs and shift the all data from
@@ -462,20 +462,17 @@ namespace m3D {
                 std::vector< std::vector<T> > origins, vectors;
 
                 // initialize storage for shifted data
-
                 typedef std::map< size_t, MultiArray<T> * > data_map_t;
-
                 data_map_t shifted_data;
-
                 for (size_t var_index = 0; var_index < m_ci_comparison_data_store->rank(); var_index++) {
                     T NOT_SET = m_ci_comparison_data_store->fill_value(var_index);
                     shifted_data[var_index] = new MultiArrayBlitz<T>(dims, NOT_SET);
                 }
 
-                // ::m3D::utils::opencv::display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
-                //                ::m3D::utils::opencv::display_array(m_ci_comparison_data_store->get_data(msevi_l15_ir_108),
-                //                                                    m_ci_comparison_data_store->min(msevi_l15_ir_108),
-                //                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
+//                ::m3D::utils::opencv::display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
+//                ::m3D::utils::opencv::display_array(m_ci_comparison_data_store->get_data(msevi_l15_ir_108),
+//                                                    m_ci_comparison_data_store->min(msevi_l15_ir_108),
+//                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
 
                 // iterate over clusters
 
@@ -483,15 +480,12 @@ namespace m3D {
                     typename Cluster<T>::ptr pc = m_previous_protoclusters->clusters.at(pi);
 
                     // find the matched candidate
-
                     for (size_t ci = 0; ci < m_protoclusters.size(); ci++) {
                         typename Cluster<T>::ptr cc = m_protoclusters.clusters.at(ci);
 
                         if (pc->id == cc->id) {
                             // Calculate average displacement
-
                             typedef std::vector<T> vec_t;
-
                             vec_t center_p = pc->geometrical_center();
                             vec_t center_c = cc->geometrical_center();
                             vec_t displacement = center_c - center_p;
@@ -500,39 +494,29 @@ namespace m3D {
                             vectors.push_back(displacement);
 
                             // Move previous data by displacement vector
-
                             typename Point<T>::list::iterator point_iter;
 
                             for (point_iter = pc->get_points().begin(); point_iter != pc->get_points().end(); point_iter++) {
                                 typename Point<T>::ptr p = *point_iter;
-
                                 vector<T> x = p->coordinate + displacement;
-
                                 vector<int> source_gridpoint = p->gridpoint;
-
                                 vector<int> dest_gridpoint = m_coordinate_system->newGridPoint();
-
                                 try {
                                     m_coordinate_system->reverse_lookup(x, dest_gridpoint);
-
                                     for (size_t var_index = 0; var_index < m_ci_comparison_data_store->rank(); var_index++) {
                                         bool is_valid = false;
-
                                         T value = m_ci_comparison_data_store->get(var_index, source_gridpoint, is_valid);
-
                                         if (is_valid) {
                                             // we are manipulating raw data in the NetCDFDataStore, which
                                             // keeps the values in 'packed' format internally. When calling
                                             // the get method above, the value is unpacked for convencience.
                                             // This means we need to pack the value again before writing it
                                             // out or the value range will be messed up.
-
                                             T packed_value = m_ci_comparison_data_store->packed_value(var_index, value);
-
                                             shifted_data[var_index]->set(dest_gridpoint, packed_value);
                                         }
                                     }
-                                }                                catch (std::out_of_range &e) {
+                                } catch (std::out_of_range &e) {
                                 }
                             }
                         }
@@ -544,17 +528,13 @@ namespace m3D {
                 //                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
 
                 // replace the original data with the shifted data
-
                 for (size_t var_index = 0; var_index < m_ci_comparison_data_store->rank(); var_index++) {
                     MultiArray<T> *dest = shifted_data[var_index];
-
                     m_ci_comparison_data_store->set_data(var_index, dest);
                 }
 
                 //::m3D::utils::opencv:: display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
-
                 boost::filesystem::path ppath(m_previous_protoclusters->source_file);
-
                 std::string fn = ppath.filename().stem().generic_string() + "-shifted.nc";
                 m_ci_comparison_data_store->save_as(fn);
 #if WITH_VTK
@@ -570,21 +550,16 @@ namespace m3D {
         calculate_overlap()
         {
             vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
-
             m_overlap = new MultiArrayBlitz<bool>(dims, false);
             m_prev_cluster_area = new MultiArrayBlitz<bool>(dims, false);
             m_curr_cluster_area = new MultiArrayBlitz<bool>(dims, false);
 
             // Mark area occupied by all protoclusters from previous set
-
             for (size_t pi = 0; pi < m_previous_protoclusters->size(); pi++) {
                 typename Cluster<T>::ptr c = m_previous_protoclusters->clusters.at(pi);
-
                 typename Point<T>::list::iterator point_iter;
-
                 for (point_iter = c->get_points().begin(); point_iter != c->get_points().end(); point_iter++) {
                     typename Point<T>::ptr p = *point_iter;
-
                     m_prev_cluster_area->set(p->gridpoint, true);
                 }
             }
@@ -593,12 +568,9 @@ namespace m3D {
 
             for (size_t pi = 0; pi < m_protoclusters.size(); pi++) {
                 typename Cluster<T>::ptr c = m_protoclusters.clusters.at(pi);
-
                 typename Point<T>::list::iterator point_iter;
-
                 for (point_iter = c->get_points().begin(); point_iter != c->get_points().end(); point_iter++) {
                     typename Point<T>::ptr p = *point_iter;
-
                     m_curr_cluster_area->set(p->gridpoint, true);
                 }
             }
@@ -611,7 +583,6 @@ namespace m3D {
 
                 MultiArray<bool> *m_overlap;
                 MultiArray<bool> *m_curr_cluster_area;
-
                 OverlapFunctor(MultiArray<bool> *overlap, MultiArray<bool> *curr_cluster_area)
                 : m_overlap(overlap), m_curr_cluster_area(curr_cluster_area)
                 {
@@ -623,13 +594,11 @@ namespace m3D {
                 operator()(const vector<int> &index, const bool have_previous)
                 {
                     bool have_current = m_curr_cluster_area->get(index);
-
                     m_overlap->set(index, have_current && have_previous);
                 }
             };
 
             OverlapFunctor f(m_overlap, m_curr_cluster_area);
-
             m_prev_cluster_area->for_each(&f);
 
             delete m_prev_cluster_area;
@@ -649,56 +618,38 @@ namespace m3D {
             float percentage = 0.25;
 
             // calculate bandwidth in pixels
-
             vector<int> bandwidth;
             vector<T> resolution = ds->coordinate_system()->resolution();
             for (size_t i = 0; i < m_bandwidth.size(); i++)
                 bandwidth.push_back((int) round(m_bandwidth[i] / resolution[i]));
 
             // use linear mapping to parallelize the operation
-
             LinearIndexMapping mapping(ds->get_dimension_sizes());
-
             for (size_t var_index = 0; var_index < ds->rank(); var_index++) {
                 // excempt radar and lightning from this
-
                 if (var_index == cband_radolan_rx || var_index == linet_oase_tl) continue;
-
                 MultiArray<T> *data = ds->get_data(var_index);
-
                 MultiArray<T> *result = new MultiArrayBlitz<T>(data->get_dimensions());
-
                 result->copy_from(data);
-
 #if WITH_OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
                 for (size_t i = 0; i < mapping.size(); i++) {
                     vector<int> gridpoint = mapping.linear_to_grid(i);
-
                     vector<T> values;
-
                     data->values_around(gridpoint, bandwidth, values);
-
                     // sort the data in ascending order
                     std::sort(values.begin(), values.end());
-
                     // calculate the number of values that make up
                     // the required percentage
-
                     int num_values = round(values.size() * percentage);
-
                     // obtain the average of the last num_values values
                     T sum = 0.0;
-
                     for (int i = 0; i < num_values; i++)
                         sum += values[i];
-
                     T average = sum / ((T) num_values);
-
                     // replace the value in the result array
                     // with the average
-
                     result->set(gridpoint, average);
                 }
 
@@ -729,12 +680,9 @@ namespace m3D {
 
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
-
                 bool have_overlap = (m_overlap == NULL || m_overlap->get(p->gridpoint) == true);
-
                 if (have_overlap) {
                     T saliency = this->compute_weight(p);
-
                     m_weight->set(p->gridpoint, saliency);
                 }
             }
@@ -798,11 +746,8 @@ namespace m3D {
         T brightness_temperature(const size_t var_index, const T &radiance)
         {
             T wavenum = m_wavenumber[var_index];
-
             T Tbb = m_c2[var_index] * wavenum / log(1 + wavenum * wavenum * wavenum * m_c1[var_index] / radiance);
-
             T Tb = (Tbb - m_beta[var_index]) / m_alpha[var_index];
-
             return Tb - 273.15;
         }
 
@@ -815,9 +760,7 @@ namespace m3D {
         T spectral_radiance(const size_t var_index, const T &temperature)
         {
             T wavenum = m_wavenumber[var_index];
-
             T Tbb = (temperature + 273.15) * m_alpha[var_index] + m_beta[var_index];
-
             return wavenum * wavenum * wavenum * m_c1[var_index] / (exp(m_c2[var_index] * wavenum / Tbb) - 1);
         }
 
@@ -830,21 +773,17 @@ namespace m3D {
         {
             // Silke's suggestion: when radar is present, use max score to
             // make sure objects are tracked.
-
             T max_score = (this->m_ci_comparison_file != NULL) ? 8 : 6;
 
             // If only satellite data is used, subtract lightning
             // and radar from max score
-
             if (m_satellite_only)
                 max_score -= 2;
 
             vector<int> g = p->gridpoint;
-
             bool isValid = false;
 
             // TODO: validity checks
-
             T ir_108_radiance = this->m_data_store->get(msevi_l15_ir_108, g, isValid);
             T ir_108_temp = brightness_temperature(msevi_l15_ir_108, ir_108_radiance);
 
@@ -859,19 +798,15 @@ namespace m3D {
             T ir_134_temp = brightness_temperature(msevi_l15_ir_134, ir_134_rad);
 
             // Calculate score
-
             int score = 0;
 
             // IR 10.7 critical value
-
             if (ir_108_temp <= 0.0) {
                 score++;
             }
 
             // IR 0.65 - IR 10.7
-
             T delta_wv_062_ir_108 = wv_062_temp - ir_108_temp;
-
 
 #if DEBUG_CI_SCORE
             m_score_62_108->set(g, delta_wv_062_ir_108);
@@ -886,7 +821,6 @@ namespace m3D {
             }
 
             // IR 13.3 - IR 10.7
-
             T delta_ir_134_ir_108 = ir_134_temp - ir_108_temp;
 
 #if DEBUG_CI_SCORE
@@ -995,7 +929,6 @@ namespace m3D {
                 if (has_radar) {
                     score = max_score;
                 }
-
             }
 
             return score;

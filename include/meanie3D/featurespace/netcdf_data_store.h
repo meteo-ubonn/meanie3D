@@ -147,7 +147,7 @@ namespace m3D {
                         cerr << "FATAL: no variable " + variable_names[i] + " found in file " + filename << endl;
                         exit(EXIT_FAILURE);
                     }
-                }                catch (netCDF::exceptions::NcException &e) {
+                } catch (netCDF::exceptions::NcException &e) {
                     cerr << "FATAL: can't access variable " + variable_names[i] + " in file " + filename << endl;
                     exit(EXIT_FAILURE);
                 }
@@ -371,8 +371,7 @@ namespace m3D {
                 // Clean up
 
                 delete[] values;
-            }
-            else if (spatial_dims == 3) {
+            } else if (spatial_dims == 3) {
                 // 3D
 
                 int N, M, K;
@@ -580,8 +579,7 @@ namespace m3D {
                 // Clean up
 
                 delete[] values;
-            }
-            else if (spatial_dims == 3) {
+            } else if (spatial_dims == 3) {
                 // 3D
 
                 int N, M, K;
@@ -766,8 +764,7 @@ namespace m3D {
         {
             if (filename.empty()) {
                 throw std::runtime_error("no available filename");
-            }
-            else if (!m_filename.empty() && filename.empty()) {
+            } else if (!m_filename.empty() && filename.empty()) {
                 this->save();
             } else if (!m_filename.empty()) {
                 // If filename changed, copy the old file to the

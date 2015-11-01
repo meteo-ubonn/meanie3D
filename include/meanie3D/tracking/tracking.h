@@ -225,6 +225,9 @@ namespace m3D {
             const CoordinateSystem<T> *cs; // Coordinate system (for transformations)
             LinearIndexMapping mapping; // maps i <-> (n,m)
 
+            m3D::id_t highestId;        // Stores the highest used ID
+            m3D::uuid_t highestUuid;    // Stores the highest used UUID
+
             std::string tracking_variable;
             int tracking_var_index;
             T valid_min;
@@ -238,14 +241,13 @@ namespace m3D {
             ::units::values::m overlap_constraint_radius;
             ::units::values::meters_per_second overlap_constraint_velocity;
 
-            m3D::id_t highestId; // Stores the highest used ID
-            set< typename Cluster<T>::ptr > used_clusters;
-            matchlist_t matches;
-            id_set_t matched_ids;
+            id_set_t matched_uuids; // uuid of new clusters that were matched
+
+            matchlist_t matches;    // final matching result
 
             id_set_t merged_cluster_ids;
-            id_set_t continued_merged_ids;      
-            id_set_t scheduled_for_removal;     // Set of ids to be removed at the end of the run.
+            id_set_t continued_merged_ids;
+            id_set_t scheduled_for_removal; // Set of ids to be removed at the end of the run.
 
             ::units::values::meters_per_second averageVelocity;
             // Correlation data
@@ -256,7 +258,6 @@ namespace m3D {
             typename SimpleMatrix<T>::matrix_t coverOldByNew;
             typename SimpleMatrix<T>::matrix_t coverNewByOld;
             typename SimpleMatrix<T>::flag_matrix_t constraints_satisified;
-
 
         } tracking_run_t;
 
@@ -305,7 +306,7 @@ namespace m3D {
          * @param run
          */
         void handleSplits(typename Tracking<T>::tracking_run_t &run);
-        
+
         /**
          * 
          * @param run
