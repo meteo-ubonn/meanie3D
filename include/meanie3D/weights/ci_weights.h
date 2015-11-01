@@ -408,7 +408,7 @@ namespace m3D {
             m_protoclusters.apply_size_threshold(size_threshold);
 
             m3D::uuid_t uuid = m3D::MIN_UUID;
-            ClusterUtils<T>::provideUuids(m_protoclusters,uuid);
+            ClusterUtils<T>::provideUuids(&m_protoclusters,uuid);
 
             // Write protoclusters out
 

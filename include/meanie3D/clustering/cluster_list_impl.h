@@ -276,6 +276,7 @@ namespace m3D {
                 // everywhere else and NetCDF. Using unsigned long long
                 // produces a compiler warning but also correct results.
                 unsigned long long cid = (unsigned long long) cluster->id;
+                unsigned long long uuid = (unsigned long long) cluster->uuid;
 
                 // Create a dimension
                 stringstream dim_name(stringstream::in | stringstream::out);
@@ -334,6 +335,9 @@ namespace m3D {
 
                 // id
                 var.putAtt("id", boost::lexical_cast<string>(cid));
+
+                // uuid
+                var.putAtt("uuid", boost::lexical_cast<string>(uuid));
 
                 // mode
                 string mode = to_string(cluster->mode);
@@ -494,11 +498,12 @@ namespace m3D {
                     file->getAtt("highest_id").getValues(value);
                     highest_id = boost::lexical_cast<m3D::id_t>(value);
 
-                    file->getAtt("highest_uuid").getValues(value);
-                    highest_uuid = boost::lexical_cast<m3D::uuid_t>(value);
-
                     file->getAtt("tracking_time_difference").getValues(&tracking_time_difference);
                 }
+                
+                file->getAtt("highest_uuid").getValues(value);
+                highest_uuid = boost::lexical_cast<m3D::uuid_t>(value);
+
             } catch (netCDF::exceptions::NcException &e) {
             }
 
@@ -543,6 +548,9 @@ namespace m3D {
                 std::string mode_str;
                 var.getAtt("mode").getValues(mode_str);
                 vector<T> mode = vectors::from_string<T>(mode_str);
+                
+                var.getAtt("uuid").getValues(value);
+                m3D::uuid_t uuid = boost::lexical_cast<m3D::uuid_t>(value);
 
                 // displacement
                 vector<T> displacement;
@@ -562,6 +570,7 @@ namespace m3D {
                 typename Cluster<T>::ptr cluster = new Cluster<T>(mode, dimensions.size());
 
                 cluster->id = cid;
+                cluster->uuid = uuid;
                 cluster->mode = mode;
                 cluster->displacement = displacement;
                 cluster->set_has_margin_points(margin_flag);
@@ -1143,8 +1152,6 @@ namespace m3D {
             progress = new boost::progress_display(clusters.size());
         }
 
-        size_t running_id = 0;
-
         for (typename Cluster<T>::list::iterator clit = clusters.begin(); clit != clusters.end();) {
             if (show_progress) {
                 progress->operator++();
@@ -1176,8 +1183,6 @@ namespace m3D {
                 mode /= ((T) keepers.size());
                 c->set_points(keepers);
                 c->mode = mode;
-                c->id = running_id;
-                running_id++;
                 clit++;
             }
         }

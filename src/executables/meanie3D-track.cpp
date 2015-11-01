@@ -54,44 +54,37 @@ void parse_commmandline(program_options::variables_map vm,
         FS_TYPE &mergeSplitContinuationThreshold,
         vector<size_t> &vtk_dimension_indexes,
         bool &useDisplacementVectors,
-        Verbosity &verbosity)
-{
+        Verbosity &verbosity) {
     // Version
 
-    if (vm.count("version") != 0)
-    {
+    if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
         exit(EXIT_FAILURE);
         ;
     }
 
-    if (vm.count("previous") == 0)
-    {
+    if (vm.count("previous") == 0) {
         cerr << "Missing previous cluster file argument --previous" << endl;
 
         exit(1);
     }
 
-    try
-    {
+    try {
         previous_filename = vm["previous"].as<string>();
 
         NcFile previous_cluster_file(previous_filename, NcFile::read);
-    } catch (const netCDF::exceptions::NcException &e)
-    {
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << "Exception opening file " << previous_filename << ":" << endl;
 
         cerr << "FATAL:" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
 
-    try
-    {
+    try {
         current_filename = vm["current"].as<string>();
 
         NcFile current_cluster_file(current_filename, NcFile::write);
-    } catch (const netCDF::exceptions::NcException &e)
-    {
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << "FATAL:exception opening file " << current_filename << ":" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
@@ -100,12 +93,10 @@ void parse_commmandline(program_options::variables_map vm,
 
     unsigned short vb = vm["verbosity"].as<unsigned short>();
 
-    if (vb > VerbosityAll)
-    {
+    if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
         exit(EXIT_FAILURE);
-    } else
-    {
+    } else {
         verbosity = (Verbosity) vb;
     }
 
@@ -143,8 +134,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     // tracking variable
 
-    if (vm.count("tracking-variable") > 0)
-    {
+    if (vm.count("tracking-variable") > 0) {
         tracking_variable_name = vm["tracking-variable"].as<string>();
     }
 
@@ -156,8 +146,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     // VTK dimension mapping
 
-    if (vm.count("vtk-dimensions") > 0)
-    {
+    if (vm.count("vtk-dimensions") > 0) {
         // Open the file for reading once more
 
         NcFile *file = new NcFile(current_filename, NcFile::read);
@@ -181,8 +170,7 @@ void parse_commmandline(program_options::variables_map vm,
 
         tokenizer dim_tokens(str_value, sep);
 
-        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
-        {
+        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
             string name = *tok_iter;
 
             // Boost::tokenizer has a horrible bug that only hits when
@@ -191,20 +179,17 @@ void parse_commmandline(program_options::variables_map vm,
 
             bool found_it = false;
 
-            for (size_t pi = 0; pi < fs_dim_names.size(); pi++)
-            {
+            for (size_t pi = 0; pi < fs_dim_names.size(); pi++) {
                 std::string dim_name = fs_dim_names[pi];
 
-                if (name.compare(dim_name) == 0)
-                {
+                if (name.compare(dim_name) == 0) {
                     vtk_dimension_indexes.push_back((size_t) pi);
                     found_it = true;
                     break;
                 }
             }
 
-            if (!found_it)
-            {
+            if (!found_it) {
                 cerr << "FATAL:invalid dimension '" << name << "'. Check parameter --vtk-dimensions" << endl;
                 exit(EXIT_FAILURE);
             }
@@ -219,8 +204,7 @@ void parse_commmandline(program_options::variables_map vm,
  *
  *
  */
-int main(int argc, char** argv)
-{
+int main(int argc, char** argv) {
     // Declare the supported options.
 
     program_options::options_description desc("Options");
@@ -248,18 +232,15 @@ int main(int argc, char** argv)
 
     program_options::variables_map vm;
 
-    try
-    {
+    try {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    } catch (std::exception &e)
-    {
+    } catch (std::exception &e) {
         cerr << "FATAL:error parsing command line: " << e.what() << endl;
         exit(EXIT_FAILURE);
     }
 
-    if (vm.count("help") == 1 || argc < 2)
-    {
+    if (vm.count("help") == 1 || argc < 2) {
         cout << desc << "\n";
         return 1;
     }
@@ -280,8 +261,7 @@ int main(int argc, char** argv)
     FS_TYPE mergeSplitThreshold = 0.66;
     FS_TYPE mergeSplitContinuationThreshold = 0.66;
 
-    try
-    {
+    try {
         parse_commmandline(vm,
                 previous_filename,
                 current_filename,
@@ -299,8 +279,7 @@ int main(int argc, char** argv)
                 useDisplacementVectors,
                 verbosity
                 );
-    } catch (const std::exception &e)
-    {
+    } catch (const std::exception &e) {
         cerr << "FATAL:" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
@@ -309,8 +288,7 @@ int main(int argc, char** argv)
     VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
 #endif        
 
-    if (verbosity > VerbositySilent)
-    {
+    if (verbosity > VerbositySilent) {
         cout << "----------------------------------------------------" << endl;
         cout << "meanie3D-track" << endl;
         cout << "----------------------------------------------------" << endl;
@@ -335,8 +313,7 @@ int main(int argc, char** argv)
         cout << endl;
     }
 
-    if (verbosity >= VerbosityNormal)
-    {
+    if (verbosity >= VerbosityNormal) {
         cout << "Reading " << previous_filename << " ... " << flush;
         ;
         start_timer();
@@ -349,8 +326,7 @@ int main(int argc, char** argv)
     if (verbosity >= VerbosityNormal)
         cout << " done (" << stop_timer() << "s)" << endl;
 
-    if (verbosity >= VerbosityAll)
-    {
+    if (verbosity >= VerbosityAll) {
         cout << endl << "-- previous clusters --" << endl;
         previous->print();
     }
@@ -359,8 +335,7 @@ int main(int argc, char** argv)
 
     CoordinateSystem<FS_TYPE> *cs;
 
-    if (verbosity >= VerbosityNormal)
-    {
+    if (verbosity >= VerbosityNormal) {
         cout << "Reading " << current_filename << " ... " << flush;
         ;
         start_timer();
@@ -371,16 +346,14 @@ int main(int argc, char** argv)
     if (verbosity >= VerbosityNormal)
         cout << " done (" << stop_timer() << "s)" << endl;
 
-    if (verbosity >= VerbosityAll)
-    {
+    if (verbosity >= VerbosityAll) {
         cout << endl << "-- current clusters --" << endl;
         current->print();
     }
 
     // Check if the feature variables match
 
-    if (previous->feature_variables != current->feature_variables)
-    {
+    if (previous->feature_variables != current->feature_variables) {
         cerr << "FATAL:Incompatible feature variables in the cluster files:" << endl;
         exit(EXIT_FAILURE);
     }
@@ -389,34 +362,26 @@ int main(int argc, char** argv)
 
     NcVar tracking_var;
 
-    if (tracking_variable_name == "__default__")
-    {
+    if (tracking_variable_name == "__default__") {
         tracking_var = current->feature_variables[current->dimensions.size()];
-    } else
-    {
+    } else {
         bool found_tracking_var = false;
 
-        for (size_t i = 0; i < current->feature_variables.size(); i++)
-        {
+        for (size_t i = 0; i < current->feature_variables.size(); i++) {
             NcVar v = current->feature_variables[i];
 
-            try
-            {
-                if (v.getName() == tracking_variable_name)
-                {
+            try {
+                if (v.getName() == tracking_variable_name) {
                     found_tracking_var = true;
-
                     tracking_var = v;
                 }
-            } catch (const std::exception &e)
-            {
+            } catch (const std::exception &e) {
                 cerr << "FATAL:" << e.what() << endl;
                 exit(EXIT_FAILURE);
             }
         }
 
-        if (!found_tracking_var)
-        {
+        if (!found_tracking_var) {
             cerr << "FATAL:tracking variable " << tracking_var.getName()
                     << " is not part of the feature variables" << endl;
             exit(EXIT_FAILURE);
@@ -436,8 +401,7 @@ int main(int argc, char** argv)
     tracking.track(previous, current, cs, &tracking_variable_name);
 
 #if WITH_VTK
-    if (write_vtk)
-    {
+    if (write_vtk) {
         m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(current, cs, current->source_file);
         boost::filesystem::path path(current_filename);
 
@@ -451,8 +415,7 @@ int main(int argc, char** argv)
 
     // Write results back
 
-    if (verbosity >= VerbosityNormal)
-    {
+    if (verbosity >= VerbosityNormal) {
         cout << "Writing " << current_filename << " ... " << flush;
         ;
         start_timer();

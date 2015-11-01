@@ -383,19 +383,12 @@ void parse_commmandline(program_options::variables_map vm,
     // VTK output?
 
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
-
     write_cluster_modes = vm.count("write-cluster-modes") > 0;
-
     write_cluster_centers = vm.count("write-cluster-centers") > 0;
-
     write_weight_response = vm.count("write-cluster-weight-response") > 0;
-
     write_weight_function = vm.count("write-weight-function") > 0;
-
     write_meanshift_vectors = vm.count("write-meanshift-vectors") > 0;
-
     ci_satellite_only = vm.count("ci-satellite-only") > 0;
-
     include_weight = vm.count("include-weight-function-in-results") > 0;
 
     // VTK dimension mapping
@@ -1048,14 +1041,26 @@ int main(int argc, char** argv) {
     ClusterOperation<FS_TYPE> cop(fs, data_store, index);
     ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, write_meanshift_vectors, show_progress);
 
-    // Number the result sequentially to make it easier to follow
-    // previous results in comparison
-
     // Axe weenies
     clusters.apply_size_threshold(min_cluster_size);
 
-    // Give UUIDs
+    // The survivors are now eligible for an actual id
+    // TODO: we need to move away from doing this as part
+    // of the detection process. The id is something only
+    // to be assigned/changed in tracking!
+    m3D::id_t id = m3D::MIN_ID;
+    ClusterUtils<FS_TYPE>::provideIds(&clusters,id);
+    clusters.highest_id = id;
+
+    // Give (provisional) universal identifiers
+    // TODO: store the uuid in a place that can be accessed 
+    // between the runs, so that the uuid becomes a true
+    // uuid from the point of detection. At this time, only
+    // the tracking can provide this by getting the highest_uuid
+    // from the previous file.
     m3D::uuid_t uuid = m3D::MIN_UUID;
+    ClusterUtils<FS_TYPE>::provideUuids(&clusters,uuid);
+    clusters.highest_uuid = uuid;
 
     if (verbosity >= VerbosityDetails)
         clusters.print();
@@ -1071,11 +1076,6 @@ int main(int argc, char** argv) {
             if (verbosity >= VerbosityNormal)
                 cout << "Comparing " << clusters.clusters.size() << " new clusters to "
                 << previous->clusters.size() << " clusters" << endl;
-
-            // We have to assign new uuid to the new clusters to be able to
-            // properly distinguish previous and present clusters
-            uuid = previous->highest_uuid;
-            ClusterUtils<FS_TYPE>::provideUuids(clusters,uuid);
 
             if (verbosity >= VerbosityDetails) {
                 cout << "List of new clusters:" << endl;
@@ -1095,9 +1095,8 @@ int main(int argc, char** argv) {
             clusters.print();
     } else {
         // No previous file? Provide UUIDs from scratch
-        ClusterUtils<FS_TYPE>::provideUuids(clusters,uuid);
     }
-
+    
     // Announce final results
     if (verbosity > VerbositySilent)
         cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
@@ -1135,9 +1134,8 @@ int main(int argc, char** argv) {
         cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;
 
     // Before writing, set the timestamp!!
-
     clusters.timestamp = timestamp;
-
+    
     clusters.write(output_filename);
 
     if (include_weight_in_result) {

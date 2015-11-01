@@ -33,20 +33,18 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     ClusterUtils<T>::ClusterUtils(float merge_threshold)
-    : m_merge_threshold(merge_threshold)
-    {
+            : m_merge_threshold(merge_threshold) {
     }
 
-    template <typename T>
+    template<typename T>
     void
     ClusterUtils<T>::filter_with_previous_clusters(typename ClusterList<T>::ptr previous,
-            typename ClusterList<T>::ptr current,
-            CoordinateSystem<T> *coord_system,
-            WeightFunction<T> *weight_function,
-            const Verbosity verbosity)
-    {
+                                                   typename ClusterList<T>::ptr current,
+                                                   CoordinateSystem <T> *coord_system,
+                                                   WeightFunction <T> *weight_function,
+                                                   const Verbosity verbosity) {
         using utils::SimpleMatrix;
         using namespace utils::vectors;
 
@@ -110,7 +108,7 @@ namespace m3D {
 
         // for each new blob check coverage of old blobs
 
-        typedef set< typename Cluster<T>::ptr > cset_t;
+        typedef set<typename Cluster<T>::ptr> cset_t;
 
         cset_t erased, merged;
 
@@ -161,7 +159,7 @@ namespace m3D {
                     bool have_boundary = true;
 
                     if (have_boundary) {
-                        typename Cluster<T>::ptr c = current->clusters[ candidates[i] ];
+                        typename Cluster<T>::ptr c = current->clusters[candidates[i]];
 
                         merged_cluster->add_points(c->get_points());
 
@@ -204,17 +202,17 @@ namespace m3D {
         }
 
         if (verbosity >= VerbosityNormal) {
-            cout << " done. (Found " << current->clusters.size() << " clusters in " << stop_timer() << " seconds)" << endl;
+            cout << " done. (Found " << current->clusters.size() << " clusters in " << stop_timer() << " seconds)" <<
+            endl;
 
             delete progress;
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ClusterUtils<T>::replace_points_from_datastore(ClusterList<T> &list,
-            typename DataStore<T>::ptr dataStore)
-    {
+    ClusterUtils<T>::replace_points_from_datastore(ClusterList <T> &list,
+                                                   typename DataStore<T>::ptr dataStore) {
         //        #if WITH_OPENMP
         //        #pragma omp parallel for
         //        #endif
@@ -240,11 +238,10 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ClusterUtils<T>::obtain_margin_flag(ClusterList<T> &list,
-            typename FeatureSpace<T>::ptr fs)
-    {
+    ClusterUtils<T>::obtain_margin_flag(ClusterList <T> &list,
+                                        typename FeatureSpace<T>::ptr fs) {
         // Create an array index of the points in the featurespace
         vector<size_t> dims = fs->coordinate_system->get_dimension_sizes();
         ArrayIndex<T> index(dims, fs->points, false);
@@ -269,18 +266,27 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ClusterUtils<T>::provideUuids(ClusterList<T> &list, uuid_t &uuid)
-    {
+    ClusterUtils<T>::provideUuids(ClusterList <T> *list, uuid_t &uuid) {
         typename Cluster<T>::list::iterator ci;
-        for (ci = list.clusters.begin(); ci != list.clusters.end(); ++ci) {
+        for (ci = list->clusters.begin(); ci != list->clusters.end(); ++ci) {
             typename Cluster<T>::ptr c = *ci;
             uuid = m3D::nextUuid(uuid);
             c->uuid = uuid;
         }
     }
 
+    template<typename T>
+    void
+    ClusterUtils<T>::provideIds(ClusterList <T> *list, id_t &id) {
+        typename Cluster<T>::list::iterator ci;
+        for (ci = list->clusters.begin(); ci != list->clusters.end(); ++ci) {
+            typename Cluster<T>::ptr c = *ci;
+            id = m3D::nextId(id);
+            c->id = id;
+        }
+    }
 }
 
 #endif

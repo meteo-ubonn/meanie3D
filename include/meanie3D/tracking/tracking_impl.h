@@ -95,6 +95,9 @@ namespace m3D {
                 }
             }
         }
+        if (m_verbosity >= VerbosityDetails) {
+            cout << "Highest used ID is " << run.highestId << endl;
+        }
 
         // Find out the highest uuid from the previous list
         run.highestUuid = run.previous->highest_uuid;
@@ -107,9 +110,8 @@ namespace m3D {
                 }
             }
         }
-
         if (m_verbosity >= VerbosityDetails) {
-            cout << "Highest used ID is " << run.highestId << endl;
+            cout << "Highest used uuid is " << run.highestUuid << endl;
         }
 
         if (!skip_tracking) {
@@ -190,6 +192,9 @@ namespace m3D {
             index_dims.push_back(run.current->clusters.size());
             index_dims.push_back(run.previous->clusters.size());
             run.mapping = LinearIndexMapping(index_dims);
+            
+            // Bestow the current cluster list with fresh uuids
+            ClusterUtils<T>::provideUuids(run.current, run.highestUuid);
         }
 
         return skip_tracking;

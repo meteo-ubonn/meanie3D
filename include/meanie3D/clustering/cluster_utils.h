@@ -87,13 +87,23 @@ namespace m3D {
                 typename FeatureSpace<T>::ptr fs);
 
         /**
-         * Tags the clusters in the list with ids.
+         * Provides the clusters in the list with uuids.
          * @param list 
          * @param uuid Contains the highest previous uuid at the beginning
          * and contains the highest updated uuid after the call.
          */
         static
-        void provideUuids(ClusterList<T> &list, uuid_t &uuid);
+        void provideUuids(ClusterList<T> *list, uuid_t &uuid);
+
+        /**
+         * Tags the clusters in the list with ids.
+         * @param list
+         * @param uuid Contains the highest previous id at the beginning
+         * and contains the highest updated uuid after the call.
+         */
+        static
+        void provideIds(ClusterList<T> *list, id_t &id);
+
     };
 }
 
