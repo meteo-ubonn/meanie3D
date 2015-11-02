@@ -553,13 +553,9 @@ namespace m3D {
                 m3D::uuid_t uuid = boost::lexical_cast<m3D::uuid_t>(value);
 
                 // displacement
-                vector<T> displacement;
                 std::string displacement_str;
-                try {
-                    var.getAtt("displacement").getValues(displacement_str);
-                    displacement = vectors::from_string<T>(displacement_str);
-                } catch (netCDF::exceptions::NcException &e) {
-                }
+                var.getAtt("displacement").getValues(displacement_str);
+                vector<T> displacement = vectors::from_string<T>(displacement_str);
 
                 // margin flag
                 std::string margin_char;
@@ -637,6 +633,7 @@ namespace m3D {
         cl->timestamp = timestamp;
         cl->highest_id = highest_id;
         cl->highest_uuid = highest_uuid;
+        cl->tracking_time_difference = tracking_time_difference;
         if (tracking_performed) {
             cl->tracked_ids = tracked_ids;
             cl->new_ids = new_ids;
