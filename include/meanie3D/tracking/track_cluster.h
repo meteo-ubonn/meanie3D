@@ -53,6 +53,9 @@ namespace m3D {
         // name of the cluster's variable in external memory
         std::string m_variable_name;
 
+        // copied from the cluster list
+        int m_tracking_time_difference;
+
         // Flag indicating if points need writing off
         // or whether they can remain in memory]
         bool m_writes_points_to_disk;
@@ -138,16 +141,20 @@ namespace m3D {
         /** Constructor
          * 
          * @param c_id this id must be unique.
+         * @param tracking time difference from cluster list
          * @param cluster 
          */
         TrackCluster(typename Cluster<T>::ptr cluster,
-                bool write_points_to_disk = false)
+                     int timeDifference,
+                     bool write_points_to_disk = false)
         : m_writes_points_to_disk(write_points_to_disk)
         , m_needs_reading(true)
+        , m_tracking_time_difference(timeDifference)
         {
             this->id = cluster->id;
             this->uuid = cluster->uuid;
             this->mode = cluster->mode;
+            this->displacement = cluster->displacement;
             this->m_rank = cluster->rank();
             this->m_spatial_rank = cluster->spatial_rank();
             this->m_size = cluster->size();
@@ -187,6 +194,14 @@ namespace m3D {
 
         size_t size() {
             return this->m_size;
+        }
+
+        int tracking_time_difference() const {
+            return m_tracking_time_difference;
+        }
+
+        void set_tracking_time_difference(int tracking_time_difference) {
+            TrackCluster::m_tracking_time_difference = tracking_time_difference;
         }
     };
 };
