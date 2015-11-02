@@ -44,10 +44,11 @@ extern "C" {
          */
         typedef unsigned long id_t;
 
-        // Various types to aid with ids
+        // Various types to aid handling ids/uuids
         typedef std::set<id_t> id_set_t;
         typedef std::vector<id_t> id_vec_t;
         typedef std::map<id_t, id_set_t> id_map_t;
+        typedef std::set<uuid_t> uuid_set_t;
 
         // Constants
 

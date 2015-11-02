@@ -821,16 +821,18 @@ namespace m3D {
                 had_splits = true;
 
                 // collect split cluster ids
-                id_set_t split_into;
+                
+                uuid_set_t split_into;
+                
                 for (int i = 0; i < candidates.size(); i++) {
                     typename Cluster<T>::ptr c = run.current->clusters[candidates[i]];
-                    split_into.insert(c->id);
+                    split_into.insert(c->uuid);
                 }
 
                 if (m_verbosity >= VerbosityNormal) {
                     cout << "Previous cluster uuid:" << old_cluster->uuid
                             << " id:" << old_cluster->id
-                            << " split into ids:" << split_into
+                            << " split into uuids:" << split_into
                             << endl;
                 }
 
@@ -840,10 +842,12 @@ namespace m3D {
                 bool continueId = run.coverOldByNew[largestCandidateIndex][m]
                         > this->m_msc_threshold && m_continueIDs;
 
+                id_set_t split_ids;
                 typename Cluster<T>::ptr largestCandidate = run.current->clusters[largestCandidateIndex];
                 if (continueId) {
                     // continue the id
                     largestCandidate->id = old_cluster->id;
+                    split_ids.insert(largestCandidate->id);
 
                     if (m_verbosity >= VerbosityNormal) {
                         cout << "\tRetagged uuid:" << largestCandidate->uuid
@@ -873,11 +877,12 @@ namespace m3D {
                             }
                             cout << "\tTrack id:" << c->id << " begins." << endl;
                         }
+                        split_ids.insert(c->id);
                     }
                 }
 
                 // store in attributes
-                run.current->splits[old_cluster->id] = split_into;
+                run.current->splits[old_cluster->id] = split_ids;
             }
         }
 
