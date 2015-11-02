@@ -87,8 +87,8 @@ typedef map< m3D::id_t, vector<FS_TYPE> > val_map_t;
 
 typedef struct
 {
-    std::string basename;
     std::string sourcepath;
+    std::string basename;
     svec_t vtk_dim_names;
     bool create_length_stats;
     bin_t length_histogram_bins;
@@ -166,14 +166,44 @@ typedef struct
 
 } trackstats_context_t;
 
+/**
+ * Prepare the stats context.
+ */
+trackstats_context_t initialiseContext(parameter_t params) {
+    trackstats_context_t ctx;
+    ctx.spatial_rank = 0;
+    ctx.value_rank = 0;
+    ctx.cluster_list = NULL;
+    ctx.track = NULL;
+    ctx.track_index = NULL;
+    ctx.cluster = NULL;
+    ctx.previous_cluster = NULL;
+    ctx.points_processed = 0;
+    ctx.coord_system = NULL;
+    ctx.number_of_degenerates = 0;
+    ctx.length_histogram = bin_t(params.length_histogram_bins.size(), 0);
+    ctx.size_histogram = bin_t(ctx.params.size_histogram_bins.size(), 0);
+    ctx.cluster_histogram = bin_t(params.cluster_histogram_bins.size(), 0);
+    ctx.speed_histogram = bin_t(params.speed_histogram_bins.size(), 0);
+    ctx.direction_histogram = bin_t(params.direction_histogram_bins.size(), 0);
+    ctx.coords_file = NULL;
+    ctx.need_points = params.create_cumulated_size_stats
+                      || params.write_cumulated_tracks_as_vtk;
+    ctx.step = 0;
+    ctx.average_cluster_size = 0;
+    ctx.number_of_clusters = 0;
+    ctx.params = params;
+    return ctx;
+}
 
 #pragma mark -
-#pragma mark comand line parsing
+#pragma mark Comand line parsing
 
-void parse_commmandline(program_options::variables_map vm, parameter_t p) {
+void parse_commmandline(program_options::variables_map vm, parameter_t &p) {
     p.sourcepath = vm["sourcepath"].as<string>();
     if (vm.count("basename") == 0) {
-        p.basename = ::m3D::utils::common_component(p.sourcepath, ".nc");
+        fs::path sourcePath(p.sourcepath);
+        p.basename = ::m3D::utils::common_component(sourcePath.generic_string(), ".nc");
     } else {
         p.basename = vm["basename"].as<string>();
     }
@@ -208,7 +238,7 @@ void parse_commmandline(program_options::variables_map vm, parameter_t p) {
 }
 
 #pragma mark -
-#pragma mark histogram helpers
+#pragma mark Histogram helpers
 
 /** updates the size histogram
  * @param classes
@@ -458,7 +488,7 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
 }
 
 #pragma mark -
-#pragma mark reading cluster data
+#pragma mark Reading cluster data
 
 /**
  * Constructs coordinate system, gets dimension- and variable names
@@ -469,7 +499,6 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
  */
 void getFeaturespaceInfo(trackstats_context_t &ctx, const std::string &filename) {
     if (ctx.coord_system == NULL) {
-
         cout << "Constructing coordinate system from file " << filename << endl;
         ctx.coords_file = new NcFile(filename, NcFile::read);
         string fs_dimensions;
@@ -485,37 +514,26 @@ void getFeaturespaceInfo(trackstats_context_t &ctx, const std::string &filename)
         cout << "Setting VTK dimensions:" << ctx.params.vtk_dim_names << endl;
         VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(ctx.dim_names, ctx.params.vtk_dim_names);
 #endif
-
-        cout << "Collating dimensions and dimension data ..." << endl;
-
         // Construct coordinate system
-        cout << "Spatial range variables (dimensions): " << ctx.dim_names << endl;
-        cout << "Value range variables: " << ctx.var_names << endl;
-
         multimap<string, NcVar> vars = ctx.coords_file->getVars();
         multimap<string, NcVar>::iterator vi;
-
-        // Only use dimensions, that have a variable of the
-        // exact same name
-
+        cout << "Collating dimensions and dimension data ..." << endl;
         for (size_t di = 0; di < ctx.dim_names.size(); di++) {
             NcDim dim = ctx.coords_file->getDim(ctx.dim_names[di]);
-
             if (dim.isNull()) {
                 cerr << "FATAL: dimension " << ctx.dim_names[di] << " does not exist " << endl;
                 exit(EXIT_FAILURE);
             }
-
             NcVar var = ctx.coords_file->getVar(ctx.dim_names[di]);
             if (var.isNull()) {
                 cerr << "FATAL: variable " << ctx.dim_names[di] << " does not exist " << endl;
                 exit(EXIT_FAILURE);
             }
-
             ctx.dimensions.push_back(dim);
             ctx.dimension_vars.push_back(var);
         }
-
+        cout << "Spatial range variables (dimensions): " << ctx.dim_names << endl;
+        cout << "Value range variables: " << ctx.var_names << endl;
         ctx.coord_system = new CoordinateSystem<FS_TYPE>(ctx.dimensions, ctx.dimension_vars);
     }
 }
@@ -546,6 +564,7 @@ void readTrackingData(trackstats_context_t &ctx) {
             try {
                 // start_timer();
                 ctx.cluster_list = ClusterList<FS_TYPE>::read(path);
+                int timeDifference = ctx.cluster_list->tracking_time_difference;
                 // time_reading += stop_timer();
 
                 cout << "Processing " << filename << " (" << ctx.cluster_list->size() << " clusters) ... ";
@@ -569,7 +588,7 @@ void readTrackingData(trackstats_context_t &ctx) {
                 Cluster<FS_TYPE>::list::const_iterator ci;
                 for (ci = ctx.cluster_list->clusters.begin(); ci != ctx.cluster_list->clusters.end(); ++ci) {
                     Cluster<FS_TYPE>::ptr cluster = (*ci);
-                    m3D::id_t id = id;
+                    m3D::id_t id = id = cluster->id;
                     Track<FS_TYPE>::ptr tm = NULL;
                     Track<FS_TYPE>::trackmap::const_iterator ti;
 
@@ -596,7 +615,7 @@ void readTrackingData(trackstats_context_t &ctx) {
                     // it back on demand, saving memory.
 
                     // start_timer();
-                    TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(cluster, ctx.need_points);
+                    TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(cluster,timeDifference,ctx.need_points);
                     // time_constructing_clusters += stop_timer();
 
                     node_t node;
@@ -660,10 +679,237 @@ void readTrackingData(trackstats_context_t &ctx) {
         dir_iter++;
         ctx.step++;
     }
+    
+    // Clear out all point data
+    Track<FS_TYPE>::trackmap::iterator tmi;
+    for (tmi = ctx.track_map.begin(); tmi != ctx.track_map.end(); ++tmi) {
+        Track<FS_TYPE>::ptr track = tmi->second;
+        size_t i = 0;
+        std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
+        for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
+            TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) * ti;
+            c->clear(true);
+        }
+    }
 }
 
 #pragma mark -
-#pragma mark writing tracking dictionary
+#pragma mark Data collation
+
+/**
+ * Gets the speed histogram data from the currently
+ * processed track.
+ * 
+ * @param ctx
+ */
+void getSpeedHistogramData(trackstats_context_t &ctx) {
+    FS_TYPE dS = boost::numeric_cast<FS_TYPE>(1000.0) * vector_norm(ctx.cluster->displacement);
+    if (dS == 0) return;
+    FS_TYPE dT = boost::numeric_cast<FS_TYPE>(ctx.cluster->tracking_time_difference());
+    FS_TYPE speed = dS / dT;
+    bool exceeded_max_class = false;
+    add_value_to_histogram<float>(ctx.params.speed_histogram_bins,
+            ctx.speed_histogram,
+            speed,
+            exceeded_max_class);
+    if (exceeded_max_class) {
+        cout << "Cluster uuid:" << ctx.cluster->uuid
+             << " id:" << ctx.cluster->id
+             << " (speed " << speed << " m/s)"
+             << " exceeded max speed "
+             << ctx.params.speed_histogram_bins.back() << " m/s"
+             << endl;
+    }
+    map<float, size_t>::iterator si = ctx.speeds.find(speed);
+    if (si == ctx.speeds.end()) {
+        ctx.speeds[speed] = 1;
+    } else {
+        ctx.speeds[speed] = (si->second + 1);
+    }
+}
+
+/**
+ * Gets the direction histogram data from the currently
+ * processed track.
+ * 
+ * TODO: This code is using the standard nationwide composite here
+ * and so is dependant on libradolan and fixed to the RADOLAN
+ * coordinate system which is BAD. Find a more generic way!!
+ * 
+ * @param ctx
+ */
+void getDirectionHistogramData(trackstats_context_t &ctx) {
+    RDCoordinateSystem *rcs = new RDCoordinateSystem(RD_RX);
+
+    // calculate speed in m/s. All vectors 2D at this time
+    vector<FS_TYPE> dP = reinterpret_cast<Cluster<FS_TYPE>::ptr>(ctx.cluster)->displacement;
+    if (vector_norm(dP) == 0) return;
+
+    // Assuming --vtk-dimensions=x,y
+    RDCartesianPoint p;
+    p.x = ctx.cluster->displacement.at(1);
+    p.y = ctx.cluster->displacement.at(0);
+
+    // Obtain geographical coordinate
+    RDGeographicalPoint c = rcs->geographicalCoordinate(p);
+
+    // move north 1 degree
+    RDGeographicalPoint cn = c;
+    cn.latitude = cn.latitude + 1.0;
+
+    // Transform back
+    RDCartesianPoint pn = rcs->cartesianCoordinate(cn);
+
+    // obtain difference vector and normalize it.
+    // this will point north
+    vector<FS_TYPE> n(2);
+    n[0] = pn.x - p.x;
+    n[1] = pn.y - p.y;
+    n = n / vector_norm(n);
+
+    // obtain the angle beta between the radolan grid
+    // and north at the distance vector's origin
+    vector<FS_TYPE> ey(2);
+    ey[0] = 0;
+    ey[1] = 1;
+    float beta = acos(ey * n);
+
+    // calculate angle alpha between the distance vector
+    // and the grid
+    float alpha = acos((ey * dP) / vector_norm(dP));
+
+    // the direction with north is the sum of the two angles
+    // in DEG
+    float direction = 180.0 * (alpha + beta) / M_PI_2;
+    if (direction > 360.0) {
+        direction -= 360.0;
+    }
+
+    bool exceeded_max_class = false;
+    add_value_to_histogram<float>(ctx.params.direction_histogram_bins,
+            ctx.direction_histogram,
+            direction,
+            exceeded_max_class);
+    map<float, size_t>::iterator si = ctx.directions.find(direction);
+    if (si == ctx.directions.end()) {
+        ctx.directions[direction] = 1;
+    } else {
+        ctx.directions[direction] = (si->second + 1);
+    }
+}
+
+/**
+ * Gets the size histogram data from the currently
+ * processed track.
+ * 
+ * @param ctx
+ */
+void getSizeHistogramData(trackstats_context_t &ctx) {
+    size_t cluster_size = ctx.cluster->size();
+    bool exceeded_max_class = false;
+    add_value_to_histogram(ctx.params.cluster_histogram_bins, 
+            ctx.cluster_histogram, 
+            cluster_size, 
+            exceeded_max_class);
+    if (exceeded_max_class) {
+        cout << "Cluster uuid:" << ctx.cluster->uuid
+                << " id:" << ctx.cluster->id
+                << " (size " << cluster_size << ")"
+                << " exceeded max cluster size"
+                << ctx.params.cluster_histogram_bins.back() << endl;
+    }
+    map<size_t, size_t>::iterator csfi = ctx.cluster_sizes.find(cluster_size);
+    if (csfi == ctx.cluster_sizes.end()) {
+        ctx.cluster_sizes[cluster_size] = 1;
+    } else {
+        ctx.cluster_sizes[cluster_size] = (csfi->second + 1);
+    }
+}
+
+/**
+ * Iterate over the points of the cluster and add points to the 
+ * array index. If the point exists, add it's values to the existing 
+ * one. If not, add a new point. In the end the index contains all 
+ * points that all clusters in the track occupied at any time
+ *
+ * @param ctx
+ */
+void addToCumulativeStats(trackstats_context_t &ctx) {
+    Point<FS_TYPE>::list::iterator pi;
+    for (pi = ctx.cluster->get_points().begin(); 
+            pi != ctx.cluster->get_points().end(); ++pi) 
+    {
+        Point<FS_TYPE>::ptr p = *pi;
+        Point<FS_TYPE>::ptr indexed = ctx.track_index->get(p->gridpoint);
+        if (indexed == NULL) {
+            // this makes a copy of the point in the index
+            ctx.track_index->set(p->gridpoint, p);
+            // get the copied point
+            indexed = ctx.track_index->get(p->gridpoint);
+        }
+        // only add up the value range
+        for (size_t k = 0; k < ctx.value_rank; k++) {
+            indexed->values[ctx.spatial_rank + k] += p->values[ctx.spatial_rank + k];
+        }
+        
+        ctx.points_processed++;
+    }
+}
+
+/**
+ * Gets the size histogram data from the currently
+ * processed track.
+ * 
+ * @param ctx
+ */
+void getLengthHistogramData(trackstats_context_t &ctx) {
+    size_t track_length = ctx.track->size();
+    bool exceeded_max_class = false;
+    add_value_to_histogram(ctx.params.length_histogram_bins, 
+            ctx.length_histogram, 
+            track_length, 
+            exceeded_max_class);
+    if (exceeded_max_class) {
+        cout << "Track id:" << ctx.track->id
+        << " (track length " << track_length << " m/s)"
+        << " exceeded max speed "
+        << ctx.params.speed_histogram_bins.back() << " m/s"
+        << endl;
+    }
+
+    map<size_t, size_t>::iterator tlfi = ctx.track_lengths.find(track_length);
+    if (tlfi == ctx.track_lengths.end())
+        ctx.track_lengths[track_length] = 1;
+    else
+        ctx.track_lengths[track_length] = (tlfi->second + 1);
+}
+
+void getCumulatedStatsData(trackstats_context_t& ctx) {
+    size_t cumulatedSize = ctx.track_index->count();
+    bool exceeded_max_class = false;
+    add_value_to_histogram(ctx.params.size_histogram_bins, 
+            ctx.size_histogram, 
+            cumulatedSize, 
+            exceeded_max_class);
+
+    if (exceeded_max_class) {
+        cout << "Track id:" << ctx.track->id
+        << " (cumulative size " << cumulatedSize
+        << " exceeded max cumulated size class: "
+        << ctx.params.size_histogram_bins.back()
+        << endl;
+    }
+
+    map<size_t, size_t>::iterator tlfi = ctx.track_sizes.find(cumulatedSize);
+    if (tlfi == ctx.track_sizes.end()) {
+        ctx.track_sizes[cumulatedSize] = 1;
+    } else {
+        ctx.track_sizes[cumulatedSize] = (tlfi->second + 1);
+    }
+}
+
+#pragma mark -
+#pragma mark Writing outputs
 
 void writeTrackDictionary(const trackstats_context_t &ctx) {
     ofstream dict("track-dictionary.json");
@@ -784,257 +1030,6 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
     // end dictionary
     dict << "}" << endl;
     dict.close();
-}
-
-/**
- * Prepare the stats context.
- */
-trackstats_context_t initialiseContext(parameter_t params) {
-    trackstats_context_t ctx;
-    ctx.cluster_list = NULL;
-    ctx.track = NULL;
-    ctx.track_index = NULL;
-    ctx.cluster = NULL;
-    ctx.previous_cluster = NULL;
-    ctx.points_processed = 0;
-    ctx.coord_system = NULL;
-    ctx.number_of_degenerates = 0;
-    ctx.length_histogram = bin_t(params.length_histogram_bins.size(), 0);
-    ctx.size_histogram = bin_t(ctx.params.size_histogram_bins.size(), 0);
-    ctx.cluster_histogram = bin_t(params.cluster_histogram_bins.size(), 0);
-    ctx.speed_histogram = bin_t(params.speed_histogram_bins.size(), 0);
-    ctx.direction_histogram = bin_t(params.direction_histogram_bins.size(), 0);
-    ctx.coords_file = NULL;
-    ctx.need_points = params.create_cumulated_size_stats
-            || params.write_cumulated_tracks_as_vtk;
-    ctx.step = 0;
-    ctx.average_cluster_size = 0;
-    ctx.number_of_clusters = 0;
-    ctx.params = params;
-    return ctx;
-}
-
-/**
- * Gets the speed histogram data from the currently
- * processed track.
- * 
- * @param ctx
- */
-void getSpeedHistogramData(trackstats_context_t &ctx) {
-    if (ctx.previous_cluster != NULL) {
-
-        // calculate speed in m/s. All vectors 2D at this time
-        vector<FS_TYPE> p1 = ctx.previous_cluster->geometrical_center();
-        vector<FS_TYPE> p2 = ctx.cluster->geometrical_center();
-
-        // RADOLAN is in km. -> Tranform to meters
-        FS_TYPE dS = vector_norm(p2 - p1) * 1000;
-
-        // TODO: this information must come from somewhere!!
-        // => Cluster files need dT info! See ticket #227
-        FS_TYPE dT = 300.0;
-
-        // Average speed
-        FS_TYPE speed = dS / dT;
-
-        bool exceeded_max_class = false;
-
-        add_value_to_histogram<float>(ctx.params.speed_histogram_bins, 
-                ctx.speed_histogram, 
-                speed, 
-                exceeded_max_class);
-
-        if (exceeded_max_class) {
-            cout << "Cluster #" << ctx.cluster->id
-                    << " (speed " << speed << " m/s)"
-                    << " exceeded max speed "
-                    << ctx.params.speed_histogram_bins.back() << " m/s"
-                    << endl;
-        }
-
-        map<float, size_t>::iterator si = ctx.speeds.find(speed);
-        if (si == ctx.speeds.end()) {
-            ctx.speeds[speed] = 1;
-        } else {
-            ctx.speeds[speed] = (si->second + 1);
-        }
-    }
-}
-
-/**
- * Gets the direction histogram data from the currently
- * processed track.
- * 
- * TODO: This code is using the standard nationwide composite here
- * and so is dependant on libradolan and fixed to the RADOLAN
- * coordinate system which is BAD. Find a more generic way!!
- * 
- * @param ctx
- */
-void getDirectionHistogramData(trackstats_context_t &ctx) {
-    if (ctx.previous_cluster != NULL) {
-        RDCoordinateSystem *rcs = new RDCoordinateSystem(RD_RX);
-
-        // calculate speed in m/s. All vectors 2D at this time
-        vector<FS_TYPE> p1 = ctx.previous_cluster->geometrical_center();
-        vector<FS_TYPE> p2 = ctx.cluster->geometrical_center();
-        vector<FS_TYPE> dP = p2 - p1;
-
-        // Assuming --vtk-dimensions=x,y
-        RDCartesianPoint p;
-    #if WITH_VTK
-        if (!::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.empty()) {
-            p.x = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(0));
-            p.y = p1.at(::m3D::utils::VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES.at(1));
-        } else {
-    #endif
-        // traditionally the coordinates in NetCDF files
-        // come in the z,y,x order. Thus pick the default
-        // indexes accordingly
-        p.x = p1.at(1);
-        p.y = p1.at(0);
-    #if WITH_VTK
-        }
-    #endif                        
-        // Obtain geographical coordinate
-        RDGeographicalPoint c = rcs->geographicalCoordinate(p);
-
-        // move north 1 degree
-        RDGeographicalPoint cn = c;
-        cn.latitude = cn.latitude + 1.0;
-
-        // Transform back
-        RDCartesianPoint pn = rcs->cartesianCoordinate(cn);
-
-        // obtain difference vector and normalize it.
-        // this will point north
-        vector<FS_TYPE> n(2);
-        n[0] = pn.x - p.x;
-        n[1] = pn.y - p.y;
-        n = n / vector_norm(n);
-
-        // obtain the angle beta between the radolan grid
-        // and north at the distance vector's origin
-        vector<FS_TYPE> ey(2);
-        ey[0] = 0;
-        ey[1] = 1;
-        float beta = acos(ey * n);
-
-        // calculate angle alpha between the distance vector
-        // and the grid
-        float alpha = acos((ey * dP) / vector_norm(dP));
-
-        // the direction with north is the sum of the two angles
-        // in DEG
-        float direction = 180.0 * (alpha + beta) / M_PI_2;
-        if (direction > 360.0) {
-            direction -= 360.0;
-        }
-
-        bool exceeded_max_class = false;
-        add_value_to_histogram<float>(ctx.params.direction_histogram_bins, 
-                ctx.direction_histogram, 
-                direction, 
-                exceeded_max_class);
-        map<float, size_t>::iterator si = ctx.directions.find(direction);
-        if (si == ctx.directions.end()) {
-            ctx.directions[direction] = 1;
-        } else {
-            ctx.directions[direction] = (si->second + 1);
-        }
-    }
-}
-
-/**
- * Gets the size histogram data from the currently
- * processed track.
- * 
- * @param ctx
- */
-void getSizeHistogramData(trackstats_context_t &ctx) {
-    size_t cluster_size = ctx.cluster->size();
-    bool exceeded_max_class = false;
-    add_value_to_histogram(ctx.params.cluster_histogram_bins, 
-            ctx.cluster_histogram, 
-            cluster_size, 
-            exceeded_max_class);
-    if (exceeded_max_class) {
-        cout << "Cluster #" << ctx.cluster->id
-                << " (size " << cluster_size << ")"
-                << " exceeded max cluster size"
-                << ctx.params.cluster_histogram_bins.back() << endl;
-    }
-    map<size_t, size_t>::iterator csfi = ctx.cluster_sizes.find(cluster_size);
-    if (csfi == ctx.cluster_sizes.end()) {
-        ctx.cluster_sizes[cluster_size] = 1;
-    } else {
-        ctx.cluster_sizes[cluster_size] = (csfi->second + 1);
-    }
-}
-
-/**
- * Iterate over the points of the cluster and add points to the 
- * array index. If the point exists, add it's values to the existing 
- * one. If not, add a new point. In the end the index contains all 
- * points that all clusters in the track occupied at any time
- *
- * @param ctx
- */
-void addToCumulativeStats(trackstats_context_t &ctx) {
-    Point<FS_TYPE>::list::iterator pi;
-    for (pi = ctx.cluster->get_points().begin(); 
-            pi != ctx.cluster->get_points().end(); ++pi) 
-    {
-        Point<FS_TYPE>::ptr p = *pi;
-        Point<FS_TYPE>::ptr indexed = ctx.track_index->get(p->gridpoint);
-        if (indexed == NULL) {
-            // this makes a copy of the point in the index
-            ctx.track_index->set(p->gridpoint, p);
-            // get the copied point
-            indexed = ctx.track_index->get(p->gridpoint);
-        }
-        // only add up the value range
-        for (size_t k = 0; k < ctx.value_rank; k++) {
-            indexed->values[ctx.spatial_rank + k] += p->values[ctx.spatial_rank + k];
-        }
-        
-        ctx.points_processed++;
-    }
-}
-
-/**
- * Gets the size histogram data from the currently
- * processed track.
- * 
- * @param ctx
- */
-void getLengthHistogramData(trackstats_context_t &ctx) {
-    size_t track_length = ctx.track->size();
-    bool exceeded_max_class = false;
-    add_value_to_histogram(ctx.params.length_histogram_bins, 
-            ctx.length_histogram, 
-            track_length, 
-            exceeded_max_class);
-    map<size_t, size_t>::iterator tlfi = ctx.track_lengths.find(track_length);
-    if (tlfi == ctx.track_lengths.end())
-        ctx.track_lengths[track_length] = 1;
-    else
-        ctx.track_lengths[track_length] = (tlfi->second + 1);
-}
-
-void getCumulatedStatsData(trackstats_context_t& ctx) {
-    size_t cumulatedSize = ctx.track_index->count();
-    bool exceeded_max_class = false;
-    add_value_to_histogram(ctx.params.size_histogram_bins, 
-            ctx.size_histogram, 
-            cumulatedSize, 
-            exceeded_max_class);
-    map<size_t, size_t>::iterator tlfi = ctx.track_sizes.find(cumulatedSize);
-    if (tlfi == ctx.track_sizes.end()) {
-        ctx.track_sizes[cumulatedSize] = 1;
-    } else {
-        ctx.track_sizes[cumulatedSize] = (tlfi->second + 1);
-    }
 }
 
 void writeStats(trackstats_context_t &ctx) {
@@ -1325,6 +1320,9 @@ void writeStats(trackstats_context_t &ctx) {
     }
 }
 
+# pragma mark -
+# pragma mark Processing control
+
 /**
  * Processes the entire track map.
  * 
@@ -1332,6 +1330,8 @@ void writeStats(trackstats_context_t &ctx) {
  */
 void processTracks(trackstats_context_t &ctx) {
     
+    cout << endl << "Keying up tracks: " << endl;
+
     // Iterate over the collated tracks
     Track<FS_TYPE>::trackmap::iterator tmi;
     for (tmi = ctx.track_map.begin(); tmi != ctx.track_map.end(); ++tmi) {
@@ -1362,7 +1362,7 @@ void processTracks(trackstats_context_t &ctx) {
         for (ti = ctx.track->clusters.begin(); 
                 ti != ctx.track->clusters.end(); ++ti) 
         {
-            ctx.cluster = (TrackCluster<FS_TYPE> *) * ti;
+            ctx.cluster = (TrackCluster<FS_TYPE> *) *ti;
 
             if (ctx.params.create_cluster_stats) {
                 getSizeHistogramData(ctx);
@@ -1409,15 +1409,8 @@ void processTracks(trackstats_context_t &ctx) {
         }
         delete ctx.track;
     }
-
     cout << "done." << endl;
-
-    // Write out statistical data in file file(s)
-    writeStats(ctx);
 }
-
-#pragma mark -
-#pragma mark main
 
 int main(int argc, char** argv) {
     using namespace m3D;
@@ -1503,28 +1496,13 @@ int main(int argc, char** argv) {
     // run through, or netCDF will upchuck exceptions when
     // accessing coordinate system
     if (!fs::is_directory(ctx.params.sourcepath)) {
-        cerr << "Argument --sourcepath does not point to a directory (sourcepath=" + ctx.params.sourcepath + ")" << endl;
+        cerr << "Argument --sourcepath does not point to a directory "
+                "(--sourcepath=" << ctx.params.sourcepath << ")" 
+                << endl;
         return EXIT_FAILURE;
     }
 
-    // Collect all files at sourcepath that start with basename and
-    // end with -clusters.nc
     readTrackingData<FS_TYPE>(ctx);
-
-    // Now we have a cluster map. Let's print it for debug purposes
-    cout << endl;
-    cout << "Keying up tracks: " << endl;
-
-    Track<FS_TYPE>::trackmap::iterator tmi;
-    for (tmi = ctx.track_map.begin(); tmi != ctx.track_map.end(); ++tmi) {
-        Track<FS_TYPE>::ptr track = tmi->second;
-        size_t i = 0;
-        std::list<Cluster<FS_TYPE>::ptr>::const_iterator ti;
-        for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
-            TrackCluster<FS_TYPE> *c = (TrackCluster<FS_TYPE> *) * ti;
-            c->clear(true);
-        }
-    }
 
 #if WITH_VTK
     if (ctx.params.write_center_tracks_as_vtk) {
@@ -1537,16 +1515,16 @@ int main(int argc, char** argv) {
 #endif        
     // dictionary?
 
-    if (ctx.params.write_track_dictionary)
+    if (ctx.params.write_track_dictionary) {
         writeTrackDictionary(ctx);
-
-
-    // Write cumulated tracks as netcdf and vtk files
-    cout << "Cumulating track data: " << endl;
+    }
 
     processTracks(ctx);
+    writeStats(ctx);
 
+    // Clean up
     delete ctx.coords_file;
 
+    // Done.
     return EXIT_SUCCESS;
 };
