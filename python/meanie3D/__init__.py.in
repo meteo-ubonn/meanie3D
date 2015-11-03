@@ -2,7 +2,7 @@ __author__ = '${PROJECT_AUTHOR}'
 __email__ = '${PROJECT_AUTHOR_EMAIL}'
 __version__ = '${PACKAGE_VERSION}'
 __url__ = '${PROJECT_URL}'
-__all__ = ['app', 'visualisation']
+__all__ = ['app', 'visualisation', 'resources']
 
 import os.path
 

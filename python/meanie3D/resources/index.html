@@ -3,14 +3,17 @@
     <head>
         <meta charset="utf-8">
         <title>D3 Page Template</title>
+		<!--<script src="d3.js" charset="utf-8"></script>-->
+		<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>-->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.js" charset="utf-8"></script>
+		<script src="meanie3d.js" charset="utf-8"/></script>
 		<style>
 			.container {
 			    overflow:scroll;
 			}
 			svg {
-			    width: 150%;
-			    height: 150%;
+			    width: 100%;
+			    height: 100%;
 			}
 		</style>
     </head>
@@ -18,74 +21,45 @@
 		<div class="container" id="svg-container"></div>
 		<script type="text/javascript">
 
-			var width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
-			var height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
-
 			var radius = 12;
 			var fontSize = 9;
 
-			var filterById = getQueryVariable('id');
+			var filterById = M3D.getUrlParameter('id');
+			var filterIds = new Set();
 
 			var color = d3.scale.category20();
+			
+			var viewport = {
+				width: Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
+				height: Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
+			}
+			
+			var width = filterById ? viewport.width / 2 : viewport.width;  
+			var height = filterById ? viewport.height / 2 : viewport.height;  
 
 			var force = d3.layout.force()
-				.charge(-100)
+				.charge(-150)
 				.linkDistance(50)
 				.size([width, height]);
 
 			var svg = d3.select("body").select("div#svg-container").append("svg");
-			resizeSvg();
+			M3D.resizeSvg();
 
 			d3.json("track-dictionary.json", function(error, dictionary) {
 				if (error) throw error;
 
-				var nodes = dictionary.tree.nodes;
-				var links = dictionary.tree.links;
-				var filteredLinks = links;
+				var graph = new M3D.TrackingGraph(dictionary,filterById);
 
-				if (filterById) {
-					function matchesId(element,index,array) {
-						return element.id == filterById;
-					}
-					filteredLinks = links.filter(matchesId);
-				}
-			
-				// Filter nodes only to what is needed by links
-				function isLinked(node) {
-					for (var i=0; i < filteredLinks.length; i++) {
-						var link = filteredLinks[i];
-						if (link.source.uuid == node.uuid || link.target.uuid == node.uuid) {
-							return true;
-						}
-					}
-					return false;
-				}
-			
-				var steps = new Array();
-				var ids = new Array();
-				nodes.forEach(function(node) {
-					if (steps.indexOf(node.step) < 0) 
-						steps.push(node.step);
-					if (ids.indexOf(node.id) < 0) 
-						ids.push(node.id);
-				});
-		
-				ids.sort(function(a,b) {
-					return parseInt(a.id) < parseInt(b.id);
-				});
-				steps.sort(function(a,b) {
-					return parseInt(a.step) < parseInt(b.step);
-				});
-
-				force.nodes(nodes)
-					.links(links)
+				force
+					.nodes(graph.nodes)
+					.links(graph.links)
 					.start();
 				
 				var link = svg.selectAll(".link")
-					.data(links)
+					.data(graph.links)
 					.enter().append("line")
 					.filter(function(d) {
-						return filterById ? (d.id == filterById) : true;
+						return graph.linkFilter(d);
 					})
 					.attr("class", "link")
 					.style("stroke", function(d) { 
@@ -102,23 +76,26 @@
 					});
 			
 				var node = svg.selectAll(".node")
-					.data(nodes)
+					.data(graph.nodes)
 					.enter().append("circle")
 					.filter(function(d) {
-						return isLinked(d);
+						return graph.nodeFilter(d);
 					})
 					.attr("class", "node")
 					.attr("r", function(d) { 
 						return 2.0 * Math.log(1.0 + d.size);
 					})
 					.style("fill", function(d) { return color(d.id); })
+					.on("dblclick", function(d) {
+						M3D.navigateTo(d);
+					})
 					.call(force.drag);
 			
 				var label = svg.selectAll("text")
-					.data(nodes)
+					.data(graph.nodes)
 					.enter().append("text")
 					.filter(function(d) {
-						return isLinked(d);
+						return graph.nodeFilter(d);
 					})
 					.text(function(d) {
 						return d.id;
@@ -136,9 +113,11 @@
 
 				node.append("title")
 					.filter(function(d) {
-						return isLinked(d);
+						return graph.nodeFilter(d);
 					})
-					.text(function(d) { return d.name; });
+					.text(function(d) {
+						return d.name;
+					});
 
 				force.on("tick", function() {
 					link
@@ -147,7 +126,7 @@
 						.attr("x2", function(d) { return d.target.x; })
 						.attr("y2", function(d) { return d.target.y; })
 						.attr("opacity", function(d) {
-							return 0.25 + 0.75 * (d.source.step / steps.length);
+							return 0.25 + 0.75 * (d.source.step / graph.steps.length);
 						});
 					
 
@@ -155,7 +134,7 @@
 						.attr("cx", function(d) { return d.x; })
 						.attr("cy", function(d) { return d.y; })
 						.attr("opacity", function(d) {
-							return 0.25 + 0.75 * (d.step / steps.length);
+							return 0.25 + 0.75 * (d.step / graph.steps.length);
 						});
 
 					label
@@ -167,29 +146,7 @@
 						});
 				});
 			});
-		
-			/**
-			 * Courtesy of https://css-tricks.com/snippets/javascript/get-url-variables/
-			 */
-			function getQueryVariable(variable)
-			{
-			       var query = window.location.search.substring(1);
-			       var vars = query.split("&");
-			       for (var i=0;i<vars.length;i++) {
-			               var pair = vars[i].split("=");
-			               if(pair[0] == variable){return pair[1];}
-			       }
-			       return(false);
-			}
-		
-			function resizeSvg() {
-				var width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
-				var height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
-				d3.select("svg")
-					.attr("width", width)
-					.attr("height", height);
-			}
 
 		</script>
 	</body>
-</html>
+</html>l
