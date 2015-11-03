@@ -8,59 +8,131 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.js" charset="utf-8"></script>
 		<script src="meanie3d.js" charset="utf-8"/></script>
 		<style>
+			#menu {
+				float: top;
+				width: 1024px;
+				height: 200px;
+				background-color:lightgrey;
+				text-align:center;
+				vertical-align: center;
+				padding-top: 30px;
+			}
 			.container {
 			    overflow:scroll;
+			    height : 824px;
+			    width: 1024px;
 			}
 			svg {
 			    width: 100%;
 			    height: 100%;
 			}
-		</style>
+
+			div.bar {
+				display: inline-block;
+				width: 20px;
+				height: 75px;
+				margin-right: 2px;
+				background-color: blue;
+			}
+
+				</style>
     </head>
     <body>
-		<div class="container" id="svg-container"></div>
+    	<div id="menu"></div>
+		<div id="graph" class="container" >
+		</div>
 		<script type="text/javascript">
-
-			var radius = 12;
-			var fontSize = 9;
-
-			var filterById = M3D.getUrlParameter('id');
-			var filterIds = new Set();
-
-			var color = d3.scale.category20();
-			
 			var viewport = {
 				width: Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
 				height: Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
 			}
-			
-			var width = filterById ? viewport.width / 2 : viewport.width;  
-			var height = filterById ? viewport.height / 2 : viewport.height;  
+
+			// Track length menu
+			var lengthMenu = d3.select("body")
+				.select("div#track-length")
+				.append("svg");
+
+			var filterById = M3D.getUrlParameter('id');
+			var filterByTrackLength = M3D.getUrlParameter('tracklength');
+
+			var radius = 12;
+			var fontSize = 9;
+			var color = d3.scale.category20();
+
+			//var width = filterById ? viewport.width / 2 : viewport.width;
+			//var height = filterById ? viewport.height / 2 : viewport.height;
+			var w = 1024;
+			var h = 224;
+			var width = 1024;
+			var height = 800;
 
 			var force = d3.layout.force()
-				.charge(-150)
+				.charge(-100)
 				.linkDistance(50)
 				.size([width, height]);
 
-			var svg = d3.select("body").select("div#svg-container").append("svg");
-			M3D.resizeSvg();
+			var svg = d3.select("body").select("div#graph").append("svg");
+			var menu = d3.select("body").select("div#menu").append("div");
+			// resizeSvg();
 
 			d3.json("track-dictionary.json", function(error, dictionary) {
 				if (error) throw error;
 
-				var graph = new M3D.TrackingGraph(dictionary,filterById);
+				var graph = new M3D.TrackingGraph(dictionary, filterById, filterByTrackLength);
 
+				// Draw menu
+				var barPadding = 5;
+				var dataset = graph.trackLengthIndex.values;
+
+				menu.selectAll("div")
+					.data(dataset)
+					.enter()
+					.append("div")
+					.attr("class", "bar")
+					.style("height", function(d) {
+						var barHeight = d * 5;
+						return barHeight + "px";
+					})
+					.on("click", function(d) {
+						M3D.filterByTrackLength(d);
+					});
+
+
+				svg.selectAll("text")
+   					.data(dataset)
+   					.enter()
+   					.append("text")
+				  	.text(function(d) {
+        				return d;
+   					})
+					.attr("x", function(d, i) {
+        				return i * (w / dataset.length);
+   					})
+   					.attr("y", function(d) {
+        				return h - (d * 4);
+   					})
+    				.attr("font-family", "sans-serif")
+   					.attr("font-size", "11px")
+   					.attr("fill", "white")
+    				.attr("text-anchor", "middle")
+				    .attr("x", function(d, i) {
+        				return i * (w / dataset.length) + (w / dataset.length - barPadding) / 2;
+    				})
+					.attr("y", function(d) {
+        				return h - (d * 4) + 14;
+    				});
+
+
+				var nodes = graph.filteredNodes();
+				var links = graph.filteredLinks();
 				force
-					.nodes(graph.nodes)
-					.links(graph.links)
+					.nodes(nodes)
+					.links(links)
 					.start();
 				
 				var link = svg.selectAll(".link")
-					.data(graph.links)
+					.data(links)
 					.enter().append("line")
-					.filter(function(d) {
-						return graph.linkFilter(d);
-					})
 					.attr("class", "link")
 					.style("stroke", function(d) { 
 						if (d.type == 0) {
@@ -76,27 +148,21 @@
 					});
 			
 				var node = svg.selectAll(".node")
-					.data(graph.nodes)
+					.data(nodes)
 					.enter().append("circle")
-					.filter(function(d) {
-						return graph.nodeFilter(d);
-					})
 					.attr("class", "node")
 					.attr("r", function(d) { 
 						return 2.0 * Math.log(1.0 + d.size);
 					})
 					.style("fill", function(d) { return color(d.id); })
 					.on("dblclick", function(d) {
-						M3D.navigateTo(d);
+						M3D.filterById(d.id);
 					})
 					.call(force.drag);
 			
 				var label = svg.selectAll("text")
-					.data(graph.nodes)
+					.data(nodes)
 					.enter().append("text")
-					.filter(function(d) {
-						return graph.nodeFilter(d);
-					})
 					.text(function(d) {
 						return d.id;
 						// return d.uuid + "/" + d.id;
@@ -112,9 +178,6 @@
 					.attr("font-weight", "bold");
 
 				node.append("title")
-					.filter(function(d) {
-						return graph.nodeFilter(d);
-					})
 					.text(function(d) {
 						return d.name;
 					});
@@ -146,6 +209,15 @@
 						});
 				});
 			});
+
+		function resizeSvg() {
+        	var width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
+        	var height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
+        	d3.select("svg")
+            	.attr("width", width)
+            	.attr("height", height);
+        }
+
 
 		</script>
 	</body>

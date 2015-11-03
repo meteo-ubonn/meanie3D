@@ -8,7 +8,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
      * helper methods for filtering by id and methods to
      * index or key up the data along criteria.
      */
-	function TrackingGraph(dictionary, filterById) {
+	function TrackingGraph(dictionary, filterById, filterByTrackLength) {
 	    // Data
 	    this.dictionary = dictionary;
 	    this.id = false;
@@ -18,9 +18,12 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
 		this.linkedNodes = new Set();
 		this.steps = new Array();
 		this.ids = new Array();
-		this.tracksByLength = new Map();
-		this.clustersBySize = new Map();
-		this.clustersByFilenane = new Map();
+
+		this.trackLengthIndex = {
+		    values : new Array(),
+		    map : new Map()
+		}
+		this.selectedTrackLength = false;
 
         /**
          * Sets the id to filter by.
@@ -28,9 +31,30 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
          */
         this.setId = function(filterById) {
             this.id = filterById;
-            this.linkedNodes = new Set();
             if (filterById) {
                 this.linkedNodes = this.getLinkedNodesByID(parseInt(filterById));
+            }
+        }
+
+        /**
+         * Sets the track length to filter by
+         * @param {number} id
+         */
+        this.setTrackLength = function(length) {
+            var self = this;
+            this.selectedTrackLength = length;
+            if (length) {
+                var len = parseInt(this.selectedTrackLength);
+                var ids = this.trackLengthIndex.map.get(len);
+                if (ids) {
+                    // Add all linked nodes of all tracks of the selected length
+                    ids.forEach(function(id) {
+                        var li = self.getLinkedNodesByID(parseInt(id));
+                        li.forEach(function(n) {
+                            self.linkedNodes.add(n);
+                        });
+                    });
+                }
             }
         }
 
@@ -38,13 +62,40 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
 
         /** @return a function to filter nodes. */
         this.nodeFilter = function(node) {
-		    return this.id ? this.linkedNodes.has(node) : true;
+            if (this.id || this.selectedTrackLength) {
+		        return this.linkedNodes.has(node);
+            }
+            return true;
         }
 
         /** @return a function to filter links. */
 	    this.linkFilter = function(link) {
-            return this.id ? this.linkedNodes.has(link.source)
-            || this.linkedNodes.has(link.target) : true;
+	        if (this.id || this.selectedTrackLength) {
+                return this.linkedNodes.has(link.source) || this.linkedNodes.has(link.target);
+            }
+            return true;
+        }
+
+        this.filteredNodes = function() {
+            var self = this;
+            var fn = new Array();
+            this.nodes.forEach(function(node) {
+                if (self.nodeFilter(node)) {
+                    fn.push(node);
+                }
+            });
+            return fn;
+        }
+
+        this.filteredLinks = function() {
+            var self = this;
+            var fl = new Array();
+            this.links.forEach(function(link) {
+                if (self.linkFilter(link)) {
+                    fl.push(link);
+                }
+            });
+            return fl;
         }
 
         // Indexing and Searching
@@ -69,28 +120,6 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
                 });
             });
         };
-
-        /**
-         * Indexes the whole tracking dictionary into a few
-         * indexes used for navigation.
-         */
-        this.index = function() {
-            var self = this;
-            var ids = this.ids;
-            self.nodes.forEach(function(node) {
-                if (self.steps.indexOf(node.step) < 0)
-                    self.steps.push(node.step);
-                if (self.ids.indexOf(node.id) < 0)
-                    self.ids.push(node.id);
-                });
-            this.ids.sort(function(a,b) {
-                return parseInt(a.id) < parseInt(b.id);
-            });
-            this.steps.sort(function(a,b) {
-                return parseInt(a.step) < parseInt(b.step);
-            });
-        };
-
 
         /**
          * Gets all nodes with the matching id
@@ -150,10 +179,50 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             });
         }
 
+        /**
+         * Indexes the whole tracking dictionary into a few
+         * indexes used for navigation.
+         */
+        this.index = function() {
+            var self = this;
+            // Index ids/steps
+            var ids = this.ids;
+            self.nodes.forEach(function(node) {
+                if (self.steps.indexOf(node.step) < 0)
+                    self.steps.push(node.step);
+                if (self.ids.indexOf(node.id) < 0)
+                    self.ids.push(node.id);
+                });
+            this.ids.sort(function(a,b) {
+                return parseInt(a.id) < parseInt(b.id);
+            });
+            this.steps.sort(function(a,b) {
+                return parseInt(a.step) < parseInt(b.step);
+            });
+            // index track dictionary
+            this.dictionary.tracks.forEach(function(track) {
+                if (self.trackLengthIndex.values.indexOf(track.length) < 0) {
+                    self.trackLengthIndex.values.push(track.length);
+                }
+                var trackIds = self.trackLengthIndex.map.get(track.length);
+                if (!trackIds) {
+                    trackIds = new Set();
+                    self.trackLengthIndex.map.set(track.length,trackIds);
+                }
+                trackIds.add(track.id);
+            });
+            // Sort descending
+            this.trackLengthIndex.values.sort(function(a,b) {
+                return (a > b);
+            });
+            console.log(this.trackLengthIndex.values);
+        };
+
         // Finally index the data
         this.resolveLinks();
 		this.index();
 		this.setId(filterById);
+		this.setTrackLength(filterByTrackLength)
     }
     M3D.TrackingGraph = TrackingGraph;
 
@@ -175,20 +244,21 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
      * Reloads the current page with an id for filtering.
      * @param A node or link or any other object with property 'id'.
      */
-    M3D.navigateTo = function(d) {
+    M3D.filterById = function(d) {
         var location = window.location.toString();
         var i = location.indexOf("?");
         if ( i > 0) {
             location = location.substring(0,i);
         }
-        window.location = location + "?id=" + d.id;
+        window.location = location + "?id=" + d;
     }
 
-    M3D.resizeSvg = function () {
-        var width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
-        var height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
-        d3.select("svg")
-            .attr("width", width)
-            .attr("height", height);
+    M3D.filterByTrackLength = function(d) {
+        var location = window.location.toString();
+        var i = location.indexOf("?");
+        if ( i > 0) {
+            location = location.substring(0,i);
+        }
+        window.location = location + "?tracklength=" + d;
     }
 }
