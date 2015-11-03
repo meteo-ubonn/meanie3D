@@ -98,7 +98,7 @@ typedef struct
     fvec_t direction_histogram_bins;
     bool create_cluster_stats;
     bin_t cluster_histogram_bins;
-    bool include_degenerates;
+    bool exclude_degenerates;
     bool create_cumulated_size_stats;
     bin_t size_histogram_bins;
     bool create_cumulated_tracking_stats;
@@ -211,7 +211,7 @@ void parse_commmandline(program_options::variables_map vm, parameter_t &p) {
     p.write_gnuplot_files = vm.count("write-gnuplot-files") > 0;
     p.write_cumulated_tracks_as_vtk = vm.count("write-cumulated-tracks-as-vtk") > 0;
     p.write_track_dictionary = vm.count("write-track-dictionary") > 0;
-    p.include_degenerates = vm["exclude-degenerates"].as<bool>();
+    p.exclude_degenerates = vm["exclude-degenerates"].as<bool>();
     // Default is the dimensions
     if (vm.count("vtk-dimensions") > 0) {
         // parse dimension list
@@ -410,6 +410,42 @@ void printNodes(const vector<node_t> &nodes) {
     }
 }
 
+/**
+ * Adds the link if no link with the same source->target and type exists.
+ * 
+ * @param ctx
+ * @param source
+ * @param target
+ */
+void
+addUniqueLink(trackstats_context_t &ctx, node_t source, node_t target, link_type_t type) {
+    // Figure out if there is a link for this already. This can
+    // happen as the result of a split or link with continued id
+    bool haveLink = false;
+    for (int li = 0; li < ctx.links.size() && !haveLink; li++) {
+        link_t link = ctx.links[li];
+        haveLink = (link.source == source.uuid 
+                && link.target == target.uuid
+                && link.type == type);
+    }
+    if (!haveLink) {
+        link_t link;
+        link.source = source.uuid;
+        link.target = target.uuid;
+        link.type = type;
+        switch(type) {
+            case Split:
+            case Continue:
+                link.id = source.id;
+                break;
+            case Merge:
+                link.id = target.id;
+                break;
+        }
+        ctx.links.push_back(link);
+    }
+}
+
 void
 addGraphNode(trackstats_context_t &ctx, const node_t &node) {
 
@@ -419,21 +455,14 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
     // check for split event
     for (id_map_t::const_iterator mi = ctx.cluster_list->splits.begin();
             mi != ctx.cluster_list->splits.end(); ++mi) {
-        // splits record: previous id split into a list of ids
         node_t source;
         if (findNode(ctx.nodes, mi->first, node.step - 1, source)) {
-            // Now search all nodes up to the current step for
-            // those in the destinations list and add links
+            // Add all split clusters at once
             id_set_t::const_iterator si;
             for (si = mi->second.begin(); si != mi->second.end(); si++) {
-                m3D::id_t targetId = (*si);
-                if (node.id == targetId) {
-                    link_t link;
-                    link.source = source.uuid;
-                    link.target = node.uuid;
-                    link.id = source.id;
-                    link.type = Split;
-                    ctx.links.push_back(link);
+                node_t target;
+                if (findNode(ctx.nodes, node.step, *si, target)) {
+                    addUniqueLink(ctx,source,target,Split);
                 }
             }
         }
@@ -443,19 +472,12 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
     for (id_map_t::const_iterator mi = ctx.cluster_list->merges.begin();
             mi != ctx.cluster_list->merges.end(); ++mi) {
         if (mi->first == node.id) {
-            node_t targetNode;
-            // Now search all nodes in the previous step for
-            // those in the destinations list and add links
             id_set_t::const_iterator si;
+            // Add all merged clusters at once
             for (si = mi->second.begin(); si != mi->second.end(); si++) {
-                node_t sourceNode;
-                if (findNode(ctx.nodes, (*si), node.step - 1, sourceNode)) {
-                    link_t link;
-                    link.source = sourceNode.uuid;
-                    link.target = node.uuid;
-                    link.id = node.id;
-                    link.type = Merge;
-                    ctx.links.push_back(link);
+                node_t source;
+                if (findNode(ctx.nodes, (*si), node.step - 1, source)) {
+                    addUniqueLink(ctx,source,node,Merge);
                 }
             }
         }
@@ -467,22 +489,7 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
     if (ti != ctx.cluster_list->tracked_ids.end()) {
         node_t source;
         if (findNode(ctx.nodes, node.id, node.step - 1, source)) {
-
-            // Figure out if there is a link for this already. This can
-            // happen as the result of a split or link with continued id
-            bool haveLink = false;
-            for (int li = 0; li < ctx.links.size() && !haveLink; li++) {
-                link_t link = ctx.links[li];
-                haveLink = (link.source == source.uuid && link.target == node.uuid);
-            }
-            if (!haveLink) {
-                link_t link;
-                link.source = source.uuid;
-                link.target = node.uuid;
-                link.id = node.id;
-                link.type = Continue;
-                ctx.links.push_back(link);
-            }
+            addUniqueLink(ctx,source,node,Continue);
         }
     }
 }
@@ -925,7 +932,11 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
     Track<FS_TYPE>::trackmap::const_iterator tmi;
     for (tmi = ctx.track_map.begin(); tmi != ctx.track_map.end(); ++tmi) {
         Track<FS_TYPE>::ptr track = tmi->second;
-        if (track->clusters.size() == 1 && !ctx.params.include_degenerates) continue;
+        
+        if (track->clusters.size() == 1 && ctx.params.exclude_degenerates) {
+            track_index++;
+            continue;
+        }
 
         dict << "    {" << endl;
         // Identifier
@@ -949,6 +960,7 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
 
             dict << "        {" << endl;
             dict << "          \"size\":" << c->size() << "," << endl;
+            dict << "          \"uuid\":" << c->uuid << "," << endl;
             dict << "          \"sourcefile\":\"" << track->sourcefiles[i] << "\"," << endl;
             dict << "          \"geometrical_center\":" << to_json(c->geometrical_center()) << "," << endl;
             dict << "          \"mode\":" << to_json(c->mode) << "," << endl;
@@ -1040,8 +1052,8 @@ void writeStats(trackstats_context_t &ctx) {
     file << "Tracking report for basename " + ctx.params.basename << endl;
     cout << "Tracking report for basename " + ctx.params.basename << endl;
 
-    file << "(degenerates are excluded: " << (ctx.params.include_degenerates ? "no" : "yes") << ")" << endl;
-    cout << "(degenerates are excluded: " << (ctx.params.include_degenerates ? "no" : "yes") << ")" << endl;
+    file << "(degenerates are excluded: " << (ctx.params.exclude_degenerates ? "no" : "yes") << ")" << endl;
+    cout << "(degenerates are excluded: " << (ctx.params.exclude_degenerates ? "no" : "yes") << ")" << endl;
 
     file << endl;
     cout << endl;
@@ -1341,7 +1353,7 @@ void processTracks(trackstats_context_t &ctx) {
         // Handle degenerate tracks?
         if (ctx.track->clusters.size() == 1) {
             ctx.number_of_degenerates++;
-            if (!ctx.params.include_degenerates) continue;
+            if (ctx.params.exclude_degenerates) continue;
         }
 
         cout << "Processing track #" << tmi->first 
@@ -1510,7 +1522,7 @@ int main(int argc, char** argv) {
         VisitUtils<FS_TYPE>::write_center_tracks_vtk(ctx.track_map,
                 ctx.params.basename,
                 ctx.spatial_rank,
-                !ctx.params.include_degenerates);
+                ctx.params.exclude_degenerates);
     }
 #endif        
     // dictionary?
