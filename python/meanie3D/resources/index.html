@@ -8,217 +8,148 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.js" charset="utf-8"></script>
 		<script src="meanie3d.js" charset="utf-8"/></script>
 		<style>
-			#menu {
-				float: top;
-				width: 1024px;
-				height: 200px;
-				background-color:lightgrey;
-				text-align:center;
-				vertical-align: center;
-				padding-top: 30px;
-			}
-			.container {
-			    overflow:scroll;
-			    height : 824px;
-			    width: 1024px;
-			}
-			svg {
-			    width: 100%;
-			    height: 100%;
-			}
+		    #menu {
+                color: #555555;
+		        margin-left:1em;
+                font-family: sans-serif;
+                font-size: smaller;
+		        float: left;
+		        width: 15%;
+		        overflow-x: auto;
+		        overflow-y: auto;
+		    }
 
-			div.bar {
-				display: inline-block;
-				width: 20px;
-				height: 75px;
-				margin-right: 2px;
-				background-color: blue;
-			}
+            #menu #top {
+                float: top;
+                padding-bottom: 10px;
+            }
 
-				</style>
+            #menu #top #search-box {
+            }
+
+            #menu #top #trackinfo {
+		        margin-top: 1em;
+		        font-size: large;
+		        font-family: sans-serif;
+		        border: 2pt solid red;
+		        float: top;
+		    }
+
+            #menu #barchart-legend {
+                padding-bottom: 1em;
+            }
+
+		    #graph {
+		        width: 80%;
+		        float: right;
+		        overflow: auto;
+		    }
+
+			text {
+                 font: 10px sans-serif;
+            }
+
+            .bar {
+                font-weight: bold;
+                height: 20px;
+                margin: 2px;
+                padding: 2px;
+                background-color: #DDDDDD;
+            }
+
+            .selected {
+                border: 2pt solid red;
+            }
+
+            #node-overlay {
+                position: absolute;
+                left: 300px;
+                top: 100px;
+                border: 1pt solid black;
+                color: white;
+                font-family: sans-serif;
+                font-weight: bold;
+                font-size: smaller;
+                display: none;
+                padding: 0px 10px 10px 10px;
+            }
+
+            #node-overlay ul {
+                display: inline;
+                list-style-type: none;
+            }
+
+        </style>
     </head>
     <body>
-    	<div id="menu"></div>
-		<div id="graph" class="container" >
-		</div>
+        <!-- navigation -->
+        <div id="menu">
+            <div id="top">
+                <h3 class="title">Meanie3D Track Graph</h3>
+                <div id="search-box">
+                    <form method="post">
+                        Enter id of a track or uuid of a cluster:
+                        <input type="text" id="_id" value="" placeholder="id" size="5"/> or
+                        <input type="text" id="_uuid" value="" placeholder="uuid" size="5"/>
+                        <input type="submit" value="go" onclick="return M3D.search(window.graph, this.form._id.value, this.form._uuid.value);">
+                    </form>
+                </div>
+                <div id="barchart-legend">
+                    <h4>How to read bars</h4>
+                    The length of the bar is proportional to track length. The labels
+                    signify the length, followed by the number of tracks of that length
+                    in brackets. Click on a bar to restrict the graph to tracks of that length.
+                </div>
+                <div id="barchart"></div>
+            </div>
+            <div id="legend">
+                Try the following actions:
+                <ul>
+                    <li>Drag nodes around</li>
+                    <li>Double-click on a node to restrict the graph the node's track</li>
+                    <li>Hover over a node to get more info</li>
+                 </ul>
+                <h4>How to read nodes</h4>
+                Nodes are colored by track id. Older nodes are lighter in color,
+                newer nodes are darker.
+                <h4>How to read lines</h4>
+                <span style="color:gray">Gray lines</span> are continuations</br>
+                <span style="color:blue">Blue lines</span> are merges</br>
+                <span style="color:red">Red lines</span> are splits</br>
+            </div>
+        </div>
+
+        <!-- tracking graph -->
+        <div id="graph"></div>
+
+        <!-- node overlay -->
+        <div id="node-overlay">
+            <ul id="node-data"><ul>
+        </div>
+
 		<script type="text/javascript">
 			var viewport = {
 				width: Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
 				height: Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
 			}
 
-			// Track length menu
-			var lengthMenu = d3.select("body")
-				.select("div#track-length")
-				.append("svg");
-
 			var filterById = M3D.getUrlParameter('id');
 			var filterByTrackLength = M3D.getUrlParameter('tracklength');
-
-			var radius = 12;
-			var fontSize = 9;
-			var color = d3.scale.category20();
-
-			//var width = filterById ? viewport.width / 2 : viewport.width;
-			//var height = filterById ? viewport.height / 2 : viewport.height;
-			var w = 1024;
-			var h = 224;
-			var width = 1024;
-			var height = 800;
-
-			var force = d3.layout.force()
-				.charge(-100)
-				.linkDistance(50)
-				.size([width, height]);
-
-			var svg = d3.select("body").select("div#graph").append("svg");
-			var menu = d3.select("body").select("div#menu").append("div");
-			// resizeSvg();
-
+			var graph;
 			d3.json("track-dictionary.json", function(error, dictionary) {
 				if (error) throw error;
-
 				var graph = new M3D.TrackingGraph(dictionary, filterById, filterByTrackLength);
 
-				// Draw menu
-				var barPadding = 5;
-				var dataset = graph.trackLengthIndex.values;
+				// make this globally available for search form. Admittedly a litle crude.
+				window.graph = graph;
 
-				menu.selectAll("div")
-					.data(dataset)
-					.enter()
-					.append("div")
-					.attr("class", "bar")
-					.style("height", function(d) {
-						var barHeight = d * 5;
-						return barHeight + "px";
-					})
-					.on("click", function(d) {
-						M3D.filterByTrackLength(d);
-					});
-
-
-				svg.selectAll("text")
-   					.data(dataset)
-   					.enter()
-   					.append("text")
-				  	.text(function(d) {
-        				return d;
-   					})
-					.attr("x", function(d, i) {
-        				return i * (w / dataset.length);
-   					})
-   					.attr("y", function(d) {
-        				return h - (d * 4);
-   					})
-    				.attr("font-family", "sans-serif")
-   					.attr("font-size", "11px")
-   					.attr("fill", "white")
-    				.attr("text-anchor", "middle")
-				    .attr("x", function(d, i) {
-        				return i * (w / dataset.length) + (w / dataset.length - barPadding) / 2;
-    				})
-					.attr("y", function(d) {
-        				return h - (d * 4) + 14;
-    				});
-
-
-				var nodes = graph.filteredNodes();
-				var links = graph.filteredLinks();
-				force
-					.nodes(nodes)
-					.links(links)
-					.start();
-				
-				var link = svg.selectAll(".link")
-					.data(links)
-					.enter().append("line")
-					.attr("class", "link")
-					.style("stroke", function(d) { 
-						if (d.type == 0) {
-							return "lightgrey"
-						} else if (d.type == 1) {
-							return "red";
-						} else {
-							return "blue";
-						}
-					})
-					.style("stroke-width", function(d) { 
-						return 2; 
-					});
-			
-				var node = svg.selectAll(".node")
-					.data(nodes)
-					.enter().append("circle")
-					.attr("class", "node")
-					.attr("r", function(d) { 
-						return 2.0 * Math.log(1.0 + d.size);
-					})
-					.style("fill", function(d) { return color(d.id); })
-					.on("dblclick", function(d) {
-						M3D.filterById(d.id);
-					})
-					.call(force.drag);
-			
-				var label = svg.selectAll("text")
-					.data(nodes)
-					.enter().append("text")
-					.text(function(d) {
-						return d.id;
-						// return d.uuid + "/" + d.id;
-					})
-					.attr("fill","black")
-					.attr("text-anchor", "middle")
-					.attr("text-align", "center")
-					.attr("alignment-baseline","central")
-					.attr("font-family", "sans-serif")
-					.attr("font-size", function() {
-						return fontSize + "px";
-					})
-					.attr("font-weight", "bold");
-
-				node.append("title")
-					.text(function(d) {
-						return d.name;
-					});
-
-				force.on("tick", function() {
-					link
-						.attr("x1", function(d) { return d.source.x; })
-						.attr("y1", function(d) { return d.source.y; })
-						.attr("x2", function(d) { return d.target.x; })
-						.attr("y2", function(d) { return d.target.y; })
-						.attr("opacity", function(d) {
-							return 0.25 + 0.75 * (d.source.step / graph.steps.length);
-						});
-					
-
-					node
-						.attr("cx", function(d) { return d.x; })
-						.attr("cy", function(d) { return d.y; })
-						.attr("opacity", function(d) {
-							return 0.25 + 0.75 * (d.step / graph.steps.length);
-						});
-
-					label
-						.attr("x", function(d, i) {
-							return d.x;
-						})
-						.attr("y", function(d, i) {
-							return d.y;
-						});
-				});
-			});
-
-		function resizeSvg() {
-        	var width = Math.max(document.documentElement.clientWidth, window.innerWidth || 0)
-        	var height = Math.max(document.documentElement.clientHeight, window.innerHeight || 0)
-        	d3.select("svg")
-            	.attr("width", width)
-            	.attr("height", height);
-        }
-
+                // M3D.addBubbleMenu(graph);
+                M3D.addBarchartMenu(graph);
+                M3D.resize();
+                M3D.addTrackingGraph(graph);
+                M3D.resize();
+            });
 
 		</script>
 	</body>
-</html>l
+</html>
