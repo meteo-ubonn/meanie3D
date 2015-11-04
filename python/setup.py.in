@@ -2,7 +2,8 @@ from setuptools import find_packages, setup
 setup(
     name='meanie3D',
     version='${PACKAGE_VERSION}',
-    packages=["meanie3D","meanie3D.app", "meanie3D.visualisation", "meanie3D.visualisation.templates"],
+    packages=["meanie3D","meanie3D.app", "meanie3D.visualisation", "meanie3D.resources"],
+    include_package_data=True,
     url='${PROJECT_URL}',
     license='${PROJECT_LICENSE}',
     author='${PROJECT_AUTHOR}',

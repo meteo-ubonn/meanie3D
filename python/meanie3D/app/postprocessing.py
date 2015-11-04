@@ -303,6 +303,8 @@ def copy_html_files(configuration,directory):
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
     indexPath = home + os.path.sep + os.path.sep.join(("meanie3D","resources","index.html"))
     shutil.copy(indexPath,os.path.abspath(directory))
+    jsPath = home + os.path.sep + os.path.sep.join(("meanie3D","resources","meanie3d.js"))
+    shutil.copy(jsPath,os.path.abspath(directory))
     return
 
 # ----------------------------------------------------------------------------
