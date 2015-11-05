@@ -426,10 +426,29 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             .links(links)
             .start();
 
-        var link = svg.selectAll(".link")
-            .data(links)
-            .enter().append("line")
+        // build the arrow.
+        svg.append("svg:defs").selectAll("marker")
+            .data(["end"])      // Different link/path types can be defined here
+            .enter()
+            .append("svg:marker")    // This section adds in the arrows
+                .attr("id", String)
+                .attr("viewBox", "0 -5 10 10")
+                .attr("refX", 40)
+                .attr("refY", 0)
+                .attr("markerWidth", 5)
+                .attr("markerHeight", 5)
+                .attr("orient", "auto")
+                .attr("fill", "#555555")
+                .attr("opacity", 0.5)
+            .append("svg:path")
+                .attr("d", "M0,-5L10,0L0,5");
+
+        var link = svg.append("svg:g").selectAll("path")
+            .data(force.links())
+            .enter()
+            .append("line")
             .attr("class", "link")
+            .attr("marker-end", "url(#end)")
             .style("stroke", function(d) {
                 if (d.type == 0) {
                     return "lightgrey"
@@ -442,6 +461,12 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             .style("stroke-width", function(d) {
                 return 2;
             });
+
+        var path = svg.append("svg:g").selectAll("path")
+            .data(force.links())
+            .enter().append("svg:path")
+            .attr("class", "link")
+            .attr("marker-end", "url(#end)");
 
         var node = svg.selectAll(".node")
             .data(nodes)
