@@ -433,7 +433,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             .append("svg:marker")    // This section adds in the arrows
                 .attr("id", String)
                 .attr("viewBox", "0 -5 10 10")
-                .attr("refX", 40)
+                .attr("refX", 25)
                 .attr("refY", 0)
                 .attr("markerWidth", 5)
                 .attr("markerHeight", 5)
