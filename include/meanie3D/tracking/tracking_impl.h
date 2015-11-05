@@ -730,13 +730,18 @@ namespace m3D {
                 // store the given ID
                 size_t the_id = new_cluster->id;
 
+                // was the cluster already matched with one of the candidates?
+                id_set_t::const_iterator ti = run.current->tracked_ids.find(new_cluster->id);
+                bool alreadyMatched = ti != run.current->tracked_ids.end();
+                if (alreadyMatched) continue;
+
                 // If the largest candidate covers at least msc_threshold percent
                 // of the merged cluster, continue it's id. Otherwise give
-                // it a fresh id. Always false if this behavior is switched 
+                // it a fresh id. Always false if this behavior is switched
                 // off through m_continueIDs.
-                bool continueId = run.coverNewByOld[n][largestCandidateIndex]
-                        > this->m_msc_threshold && m_continueIDs;
-                
+                bool continueId = (run.coverNewByOld[n][largestCandidateIndex] > this->m_msc_threshold)
+                                  && m_continueIDs;
+
                 if (continueId) {
                     // continue the id
                     typename Cluster<T>::ptr c = run.previous->clusters[largestCandidateIndex];
