@@ -320,48 +320,32 @@ int main(int argc, char** argv) {
     }
 
     // Read previous clusters
-
+    if (verbosity >= VerbosityNormal) start_timer("Reading " + previous_filename+ " ... ");
     ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_filename);
-
-    if (verbosity >= VerbosityNormal)
-        cout << " done (" << stop_timer() << "s)" << endl;
-
+    if (verbosity >= VerbosityNormal) stop_timer("done");
     if (verbosity >= VerbosityAll) {
         cout << endl << "-- previous clusters --" << endl;
         previous->print();
     }
 
     // Read current clusters
-
     CoordinateSystem<FS_TYPE> *cs;
-
-    if (verbosity >= VerbosityNormal) {
-        cout << "Reading " << current_filename << " ... " << flush;
-        ;
-        start_timer();
-    }
-
+    if (verbosity >= VerbosityNormal) start_timer("Reading " + current_filename + " ... ");
     ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read(current_filename, &cs);
-
-    if (verbosity >= VerbosityNormal)
-        cout << " done (" << stop_timer() << "s)" << endl;
-
+    if (verbosity >= VerbosityNormal) stop_timer("done");
     if (verbosity >= VerbosityAll) {
         cout << endl << "-- current clusters --" << endl;
         current->print();
     }
 
     // Check if the feature variables match
-
     if (previous->feature_variables != current->feature_variables) {
         cerr << "FATAL:Incompatible feature variables in the cluster files:" << endl;
         exit(EXIT_FAILURE);
     }
 
     // get the tracking variable
-
     NcVar tracking_var;
-
     if (tracking_variable_name == "__default__") {
         tracking_var = current->feature_variables[current->dimensions.size()];
     } else {
@@ -389,7 +373,6 @@ int main(int argc, char** argv) {
     }
 
     // Perform tracking
-
     Tracking<FS_TYPE> tracking(range_weight, size_weight, correlation_weight);
     tracking.setMaxTrackingSpeed(max_speed);
     tracking.setMaxDeltaT(max_time);
@@ -397,7 +380,6 @@ int main(int argc, char** argv) {
     tracking.setMergeSplitContinuationThreshold(mergeSplitContinuationThreshold);
     tracking.setUseDisplacementVectors(useDisplacementVectors);
     tracking.setVerbosity(verbosity);
-
     tracking.track(previous, current, cs, &tracking_variable_name);
 
 #if WITH_VTK
@@ -415,21 +397,14 @@ int main(int argc, char** argv) {
 
     // Write results back
 
-    if (verbosity >= VerbosityNormal) {
-        cout << "Writing " << current_filename << " ... " << flush;
-        ;
-        start_timer();
-    }
-
+    if (verbosity >= VerbosityNormal) start_timer("-- Writing " + current_filename + " ... ");
     current->write(current_filename);
-
-    if (verbosity >= VerbosityNormal)
-        cout << " done (" << stop_timer() << "s)" << endl;
+    if (verbosity >= VerbosityNormal) stop_timer("done");
 
     // Clean up
-
     delete previous;
     delete current;
+    delete cs;
 
     return 0;
 }

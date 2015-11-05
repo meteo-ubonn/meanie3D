@@ -75,11 +75,15 @@ namespace m3D {
     Tracking<T>::calculatePreliminaries(typename Tracking<T>::tracking_run_t &run)
     {
         bool skip_tracking = false;
+        bool logDetails = m_verbosity >= VerbosityDetails;
 
+        if (logDetails) {
+            cout << endl;
+        }
         // Check if there is anything to do
         if (run.current->clusters.size() == 0) {
-            if (m_verbosity >= VerbosityNormal) {
-                cout << endl << "No current clusters. Skipping tracking." << endl;
+            if (logDetails) {
+                cout << "\tNo current clusters. Skipping tracking." << endl;
             }
             return true;
         }
@@ -95,9 +99,6 @@ namespace m3D {
                 }
             }
         }
-        if (m_verbosity >= VerbosityDetails) {
-            cout << "Highest used ID is " << run.highestId << endl;
-        }
 
         // Find out the highest uuid from the previous list
         run.highestUuid = run.previous->highest_uuid;
@@ -110,8 +111,9 @@ namespace m3D {
                 }
             }
         }
-        if (m_verbosity >= VerbosityDetails) {
-            cout << "Highest used uuid is " << run.highestUuid << endl;
+        if (logDetails) {
+            cout << "\thighest used id is " << run.highestId << endl;
+            cout << "\thighest used uuid is " << run.highestUuid << endl;
         }
 
         if (!skip_tracking) {
@@ -170,11 +172,10 @@ namespace m3D {
             run.current->tracking_time_difference = run.deltaT.get();
             run.maxDisplacement = this->m_maxVelocity * run.deltaT;
 
-            if (m_verbosity >= VerbosityDetails) {
-                cout << "Max velocity constraint at "
-                        << this->m_maxVelocity.get() << "m/s"
-                        << " and dT=" << run.deltaT.get()
-                        << " results in dRmax=" << run.maxDisplacement.get()
+            if (logDetails) {
+                cout << "\tmax velocity constraint:" << this->m_maxVelocity
+                        << " and dT:" << run.deltaT
+                        << " results in dR_max:" << run.maxDisplacement
                         << endl;
             }
 
@@ -183,9 +184,13 @@ namespace m3D {
             // Minimum object radius for overlap constraint
             // TODO: this point needs to be replaced with velocity
             // vectors from SMV/RMV estimates
-
             run.overlap_constraint_velocity = m_maxVelocity;
             run.overlap_constraint_radius = 0.5 * run.deltaT * run.overlap_constraint_velocity;
+            if (logDetails) {
+                cout << "\toverlap constraint velocity:" << run.overlap_constraint_velocity
+                     << " overlap constraint radius:" << run.overlap_constraint_radius
+                     << endl;
+            }
 
             // Provide a mapping
             vector<size_t> index_dims;
@@ -204,9 +209,13 @@ namespace m3D {
     void
     Tracking<T>::calculateCorrelationData(typename Tracking<T>::tracking_run_t &run)
     {
-
+        bool logDetails = m_verbosity >= VerbosityAll;
         size_t old_count = run.previous->clusters.size();
         size_t new_count = run.current->clusters.size();
+
+        if (logDetails) {
+            cout << endl;
+        }
 
         // Allocate the correlation data
         run.rank_correlation = SimpleMatrix<T>::create_matrix(new_count, old_count);
@@ -232,7 +241,6 @@ namespace m3D {
 
         // Employ a mapping to parallelize
 
-
         //            #if WITH_OPENMP
         //            #pragma omp parallel for schedule(dynamic)
         //            #endif
@@ -247,6 +255,12 @@ namespace m3D {
 
             typename Cluster<T>::ptr newCluster = run.current->clusters[n];
             typename Cluster<T>::ptr oldCluster = run.previous->clusters[m];
+
+            if (logDetails) {
+                cout << "\tmatch uuid:" << oldCluster->uuid
+                    << " id:" << oldCluster->id
+                    << " with uuid:" << newCluster->uuid << " ";
+            }
 
             //
             // Overlap Constraint
@@ -299,12 +313,10 @@ namespace m3D {
                 }
             }
 
-            if (!overlap_constraint_satisfied && m_verbosity > VerbosityNormal) {
-                cout << "Pairing uuid:" << oldCluster->uuid
-                        << " id:" << oldCluster->id
-                        << " with new cluster uuid:" << newCluster->uuid
-                        << " rejected: violation of overlap constraint."
-                        << endl;
+            if (!overlap_constraint_satisfied) {
+                if (logDetails) {
+                    cout << "precluded: violation of overlap constraint." << endl;
+                }
                 continue;
             }
 
@@ -313,15 +325,11 @@ namespace m3D {
             //
 
             if (run.midDisplacement[n][m] > run.maxDisplacement) {
-                if (m_verbosity > VerbosityNormal) {
-                    cout << "Pairing uuid:" << oldCluster->uuid
-                            << " id:" << oldCluster->id
-                            << " with new cluster uuid:" << newCluster->uuid
-                            << " rejected: of violation of max displacement"
-                            << " (dR=" << run.midDisplacement[n][m]
-                            << " ,dR_max=" << run.maxDisplacement
-                            << ")."
-                            << endl;
+                if (logDetails) {
+                    cout << "precluded: violation of max displacement"
+                         << " (dR:" << run.midDisplacement[n][m] << "m"
+                         << " dR_max:" << run.maxDisplacement << "m"
+                         << ")." << endl;
                 }
                 continue;
             }
@@ -366,14 +374,12 @@ namespace m3D {
 
                 // if the deviation is too big, exclude this match
                 if (size_deviation > m_max_size_deviation) {
-                    cout << "Pairing uuid:" << oldCluster->uuid
-                            << " id:" << oldCluster->id
-                            << " with new cluster uuid:" << newCluster->uuid
-                            << " rejected: violation of max histogram size restraint"
-                            << " (dH=" << size_deviation
-                            << " ,dH_max=" << m_max_size_deviation << ")."
-                            << endl;
-
+                    if (logDetails) {
+                        cout << "precluded: violation of max histogram size restraint"
+                             << " (dH:" << size_deviation << " values"
+                             << " ,dH_max:" << m_max_size_deviation << " values)."
+                             << endl;
+                    }
                     continue;
                 }
 
@@ -396,12 +402,16 @@ namespace m3D {
                 if (run.midDisplacement[n][m] > run.maxMidD) {
                     run.maxMidD = run.midDisplacement[n][m];
                 }
+
+                if (logDetails) {
+                    cout << "possible." << endl;
+                }
+
             }
         } // done finishing correlation table
 
-        if (m_verbosity >= VerbosityNormal) {
-            cout << " done. (" << stop_timer() << "s)" << endl;
-        }
+        // Now re-tag new clusters with no id
+        run.current->erase_identifiers();
 
         // Can't have zeros here
         if (run.maxHistD == 0) {
@@ -409,15 +419,17 @@ namespace m3D {
         }
     }
 
-#pragma mark -
-#pragma mark Calculate probabilities
-
     template <typename T>
     void
     Tracking<T>::calculateProbabilities(typename Tracking<T>::tracking_run_t & run)
     {
+        bool logDetails = m_verbosity >= VerbosityAll;
         size_t old_count = run.previous->clusters.size();
         size_t new_count = run.current->clusters.size();
+
+        if (logDetails) {
+            cout << endl;
+        }
 
         //            #if WITH_OPENMP
         //            #pragma omp parallel for schedule(dynamic)
@@ -471,16 +483,21 @@ namespace m3D {
             for (int n = 0; n < new_count; n++) {
                 typename Cluster<T>::ptr newCluster = run.current->clusters[n];
 
-                cout << endl
-                        << "Calculating correlation for new cluster uuid:" << newCluster->uuid
-                        << " (histogram size " << newCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max)->sum() << ")"
-                        << " at " << newCluster->mode
-                        << endl;
+                if (logDetails) {
+                    size_t histSize = newCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max)->sum();
+                    cout << "\tcluster uuid:" << newCluster->uuid << " ("
+                        << " |H|:" << histSize << ")"
+                        << " mode:" << newCluster->mode
+                        << ")" << endl;
+                }
 
                 for (int m = 0; m < old_count; m++) {
-                    if (run.constraints_satisified[n][m] || run.coverOldByNew[n][m] > 0.0 || run.coverNewByOld[n][m] > 0.0) {
+                    if (run.constraints_satisified[n][m]
+                            || run.coverOldByNew[n][m] > 0.0
+                            || run.coverNewByOld[n][m] > 0.0)
+                    {
                         typename Cluster<T>::ptr oldCluster = run.previous->clusters[m];
-                        printf("\tuuid:%4llu \tid:%4lu\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
+                        printf("\t\tuuid:%4llu \tid:%4lu\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                                 oldCluster->uuid,
                                 oldCluster->id,
                                 oldCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max)->sum(),
@@ -494,13 +511,6 @@ namespace m3D {
                 }
             }
         }
-
-        // Prior to matchmaking, set all ids in the current set
-        // back to NO_ID
-        // index them, otherwise the area calculations will be nonsense
-        for (size_t n = 0; n < run.current->clusters.size(); n++) {
-            run.current->clusters[n]->id = m3D::NO_ID;
-        }
     }
 
     template <typename T>
@@ -510,16 +520,18 @@ namespace m3D {
         size_t old_count = run.previous->clusters.size();
         size_t new_count = run.current->clusters.size();
 
+        bool logAll = m_verbosity >= VerbosityAll;
+        bool logDetails = m_verbosity >= VerbosityDetails;
+        if (logDetails) {
+            cout << endl;
+        }
+
         int n, m;
         ::units::values::meters_per_second velocitySum = ::units::values::meters_per_second(0);
         int velocityClusterCount = 0;
         float currentMaxProb = numeric_limits<float>::max();
         int maxIterations = new_count * old_count;
         int iterations = 0;
-
-        if (m_verbosity >= VerbosityDetails) {
-            cout << endl << "-- Matching Results --" << endl;
-        }
 
         // put the matches in a special data structure
         for (size_t idx = 0; idx < run.mapping.size(); idx++) {
@@ -542,8 +554,8 @@ namespace m3D {
         run.current->new_ids.clear();
         run.current->dropped_ids.clear();
 
-        if (m_verbosity >= VerbosityDetails) {
-            cout << "Examining prospective matches:" << endl;
+        if (logDetails) {
+            cout << "\tmatches:" << endl;
         }
 
         for (size_t mi = 0; mi < run.matches.size(); mi++) {
@@ -557,17 +569,13 @@ namespace m3D {
             typename Cluster<T>::ptr new_cluster = run.current->clusters[n];
             typename Cluster<T>::ptr old_cluster = run.previous->clusters[m];
 
-            if (m_verbosity >= VerbosityNormal) {
-                cout << "Match of uuid:" << old_cluster->uuid
-                        << " id:" << old_cluster->id
-                        << " with uuid:" << new_cluster->uuid << ": ";
-            }
-
             // if the old cluster was matched already in a match
             // with higher probability, then skip this one
             id_set_t::iterator fi = run.current->tracked_ids.find(old_cluster->id);
             if (fi != run.current->tracked_ids.end()) {
-                if (m_verbosity >= VerbosityNormal) {
+                if (logAll) {
+                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
+                         << " with uuid:" << new_cluster->uuid << " ";
                     cout << "rejected: previous cluster already matched." << endl;
                 }
                 continue;
@@ -576,7 +584,9 @@ namespace m3D {
             // Or if the NEW cluster was matched earlier, skip as well 
             fi = run.matched_uuids.find(new_cluster->uuid);
             if (fi != run.matched_uuids.end()) {
-                if (m_verbosity >= VerbosityNormal) {
+                if (logAll) {
+                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
+                         << " with uuid:" << new_cluster->uuid << " ";
                     cout << "rejected: new cluster already matched." << endl;
                 }
                 continue;
@@ -603,62 +613,59 @@ namespace m3D {
             velocitySum += velocity;
             velocityClusterCount++;
 
-            if (m_verbosity >= VerbosityNormal) {
-                cout << "accepted (velocity " << velocity.get() << " m/s"
-                        << ",displacement=" << new_cluster->displacement << ")."
-                        << endl;
+            if (logDetails) {
+                cout << "\t\tMatching uuid:" << old_cluster->uuid << " id:" << old_cluster->id
+                     << " with uuid:" << new_cluster->uuid << " ("
+                     << "velocity: " << velocity.get() << " m/s"
+                     << " displacement: " << new_cluster->displacement
+                     << ")." << endl;
             }
         }
 
         run.averageVelocity = velocitySum / boost::numeric_cast<T>(velocityClusterCount);
 
         // Tag unmatched clusters
-
-        if (m_verbosity >= VerbosityDetails)
-            printf("\n-- New ID assignments --\n");
-
-        // for all new clusters that have not been assigned 
+        bool hadFreshIds = false;
+        if (logDetails) {
+            cout << "\tnew track ids:" << endl;
+        }
+        // for all new clusters that have not been assigned
         // an id from one of the previous clusters, pick a 
         // fresh one now
         for (int n = 0; n < run.current->clusters.size(); n++) {
             typename Cluster<T>::ptr c = run.current->clusters[n];
             if (c->id == m3D::NO_ID) {
-
                 // Get a fresh ID
                 c->id = nextId(run.highestId);
-
-                // Remember fresh ids
-                run.current->new_ids.insert(c->id);
-
-                if (m_verbosity >= VerbosityNormal) {
-                    cout << "id: " << c->id << " (uuid:" << c->uuid << ")" << endl;
+                if (logDetails) {
+                    cout << "\t\tuuid: " << c->uuid << " id:" << c->id << "."  << endl;
                 }
+                run.current->new_ids.insert(c->id);
+                hadFreshIds = true;
             }
+        }
+        if (logDetails && !hadFreshIds) {
+            cout << "\t\tnone." << endl;
         }
 
         //Determine drop-outs
         bool hadGoners = false;
         typename Cluster<T>::list::iterator ci;
-        if (m_verbosity >= VerbosityDetails) {
-            cout << "\n-- Discontinued IDs --" << endl;
+        if (logDetails) {
+            cout << "\tterminated track ids:" << endl;
         }
-
         for (ci = run.previous->clusters.begin(); ci != run.previous->clusters.end(); ci++) {
             typename Cluster<T>::ptr c = *ci;
-
             id_set_t::const_iterator f = run.current->tracked_ids.find(c->id);
             if (f != run.current->tracked_ids.end()) continue;
-
-            if (m_verbosity >= VerbosityDetails) {
-                cout << "id: " << c->id << endl;
+            if (logDetails) {
+                cout << "\t\tid: " << c->id << endl;
             }
-
             run.current->dropped_ids.insert(c->id);
             hadGoners = true;
         }
-
-        if (!hadGoners && m_verbosity >= VerbosityDetails) {
-            cout << "none." << endl;
+        if (!hadGoners && logDetails) {
+            cout << "\t\tnone." << endl;
         }
     }
 
@@ -666,8 +673,10 @@ namespace m3D {
     void
     Tracking<T>::handleMerges(typename Tracking<T>::tracking_run_t &run)
     {
-        if (m_verbosity >= VerbosityDetails)
-            cout << endl << "-- Merges --" << endl;
+        bool logDetails = m_verbosity >= VerbosityDetails;
+        if (logDetails) {
+            cout << endl << "\t-- Merges" << endl;
+        }
 
         bool had_merges = false;
         size_t n, m;
@@ -703,92 +712,91 @@ namespace m3D {
                 had_merges = true;
 
                 // collect merged cluster ids
-                id_set_t merged_from;
-
+                id_set_t merged_ids;
+                uuid_set_t merged_uuids;
                 for (int i = 0; i < candidates.size(); i++) {
                     typename Cluster<T>::ptr c = run.previous->clusters[candidates[i]];
                     run.merged_cluster_ids.insert(c->id);
-                    merged_from.insert(c->id);
+                    merged_ids.insert(c->id);
                 }
 
-                if (m_verbosity >= VerbosityNormal) {
-                    cout << "Previous cluster ids:" << merged_from
-                            << " have merged into cluster"
+                if (logDetails) {
+                    cout << "\t\tprevious ids:" << merged_ids
+                            << " have merged into "
                             << " uuid:" << new_cluster->uuid
-                            << " id:" << new_cluster->id
-                            << "." << endl;
+                            << " id:" << new_cluster->id << "." 
+                            << endl;
                 }
                 // store the given ID
                 size_t the_id = new_cluster->id;
 
-                // if the biggest congruence is at least m_msc_threshold, continue the track
-                // Otherwise dish out a fresh tag and add to new IDs
+                // If the largest candidate covers at least msc_threshold percent
+                // of the merged cluster, continue it's id. Otherwise give
+                // it a fresh id. Always false if this behavior is switched 
+                // off through m_continueIDs.
                 bool continueId = run.coverNewByOld[n][largestCandidateIndex]
                         > this->m_msc_threshold && m_continueIDs;
-
+                
                 if (continueId) {
                     // continue the id
                     typename Cluster<T>::ptr c = run.previous->clusters[largestCandidateIndex];
                     new_cluster->id = c->id;
-                    if (m_verbosity >= VerbosityNormal) {
-                        cout << "\tRe-tagged uuid:" << new_cluster->uuid
+                    if (logDetails) {
+                        cout << "\t\tre-tagged uuid:" << new_cluster->uuid
                                 << " with id:" << new_cluster->id
+                                << "\t\ttrack id:" << c->id << " continues."
                                 << endl;
-                        cout << "\tTrack id:" << c->id << " continues." << endl;
                     }
-
                     // keep track
                     run.current->tracked_ids.insert(new_cluster->id);
-                    // TODO: check if this one is still necessary
-                    run.continued_merged_ids.insert(new_cluster->id);
                 } else {
-
-                    // If the cluster was not already tagged with a 
-                    // fresh id, give it a fresh id now
+                    // If the cluster was not already tagged with a  fresh 
+                    // id, give it a fresh id now.
                     id_set_t::const_iterator fi = run.current->new_ids.find(new_cluster->id);
                     if (fi != run.current->new_ids.end()) {
                         new_cluster->id = nextId(run.highestId);
                         run.current->new_ids.insert(new_cluster->id);
-                        if (m_verbosity >= VerbosityNormal) {
-                            cout << "\tRe-tagged uuid:" << new_cluster->uuid
+                        if (logDetails) {
+                            cout << "\t\tre-tagged uuid:" << new_cluster->uuid
                                     << " with id:" << new_cluster->id
                                     << endl;
-                        }
+                        }                            
                     }
-
-                    if (m_verbosity >= VerbosityNormal) {
-                        cout << "\tTrack id:" << new_cluster->id << " begins." << endl;
+                    if (logDetails) {
+                        cout << "\t\ttrack id:" << new_cluster->id << " begins." << endl;
                     }
-
                 }
 
                 // store in attributes
-                run.current->merges[new_cluster->id] = merged_from;
+                run.current->merges[new_cluster->id] = merged_ids;
 
                 // Remove the merged clusters (except the continued)
                 id_set_t::iterator fi;
-                for (fi = merged_from.begin(); fi != merged_from.end(); ++fi) {
+                for (fi = merged_ids.begin(); fi != merged_ids.end(); ++fi) {
                     id_t id = *fi;
                     if (!continueId || (continueId && id != new_cluster->id)) {
                         run.scheduled_for_removal.insert(id);
-                        if (m_verbosity >= VerbosityNormal) {
-                            cout << "\tTrack id:" << id << " ends." << endl;
+                        if (logDetails) {
+                            cout << "\t\ttrack id:" << id << " ends." << endl;
                         }
                     }
                 }
             }
         }
 
-        if (m_verbosity >= VerbosityDetails && !had_merges)
-            cout << "none." << endl;
+        if (logDetails && !had_merges) {
+            cout << "\tnone." << endl;
+        }
     }
 
     template <typename T>
     void
     Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t & run)
     {
-        if (m_verbosity >= VerbosityDetails)
-            cout << endl << "-- Splits --" << endl;
+        bool logDetails = m_verbosity >= VerbosityDetails;
+        if (logDetails) {
+            cout << endl << "\t-- Splits" << endl;
+        }
 
         bool had_splits = false;
         size_t n, m;
@@ -829,31 +837,32 @@ namespace m3D {
                     split_into.insert(c->uuid);
                 }
 
-                if (m_verbosity >= VerbosityNormal) {
-                    cout << "Previous cluster uuid:" << old_cluster->uuid
+                if (logDetails) {
+                    cout << "\t\tuuid:" << old_cluster->uuid
                             << " id:" << old_cluster->id
                             << " split into uuids:" << split_into
                             << endl;
                 }
-
-                // if the biggest congruence is at least m_msc_threshold, 
-                // continue the track. Otherwise dish out a fresh tag and 
-                // add to new IDs
+                
+                // If the largest splinter covers at least msc_threshold percent
+                // of the split cluster, continue the split's id. Otherwise give
+                // it a fresh id. Always false if this behavior is switched 
+                // off through m_continueIDs.
                 bool continueId = run.coverOldByNew[largestCandidateIndex][m]
                         > this->m_msc_threshold && m_continueIDs;
 
                 id_set_t split_ids;
                 typename Cluster<T>::ptr largestCandidate = run.current->clusters[largestCandidateIndex];
-                if (continueId) {
+                if (continueId ) {
                     // continue the id
                     largestCandidate->id = old_cluster->id;
                     split_ids.insert(largestCandidate->id);
 
-                    if (m_verbosity >= VerbosityNormal) {
-                        cout << "\tRetagged uuid:" << largestCandidate->uuid
+                    if (logDetails) {
+                        cout << "\t\tre-tagged uuid:" << largestCandidate->uuid
                                 << " with id:" << largestCandidate->id
                                 << endl;
-                        cout << "\tTrack #" << largestCandidate->id << " continues." << endl;
+                        cout << "\t\ttrack #" << largestCandidate->id << " continues." << endl;
                     }
 
                     run.current->tracked_ids.insert(largestCandidate->id);
@@ -870,14 +879,17 @@ namespace m3D {
                         if (fi != run.current->new_ids.end()) {
                             c->id = nextId(run.highestId);
                             run.current->new_ids.insert(c->id);
-                            if (m_verbosity >= VerbosityNormal) {
-                                cout << "\tRe-tagged uuid:" << c->uuid
+                            if (logDetails) {
+                                cout << "\t\tre-tagged uuid:" << c->uuid
                                         << " with id:" << c->id
                                         << endl;
                             }
-                            cout << "\tTrack id:" << c->id << " begins." << endl;
                         }
                         split_ids.insert(c->id);
+
+                        if (logDetails) {
+                            cout << "\t\ttrack id:" << c->id << " begins." << endl;
+                        }
                     }
                 }
 
@@ -886,8 +898,9 @@ namespace m3D {
             }
         }
 
-        if (m_verbosity >= VerbosityDetails && !had_splits)
-            cout << "none." << endl;
+        if (logDetails && !had_splits) {
+            cout << "\tnone." << endl;
+        }
     }
 
     template <typename T>
@@ -898,13 +911,6 @@ namespace m3D {
         for (si = run.scheduled_for_removal.begin(); si != run.scheduled_for_removal.end(); ++si) {
             m3D::id_t id = *si;
             run.current->tracked_ids.erase(id);
-            typename Cluster<T>::list::iterator ci;
-            for (ci = run.current->clusters.begin(); ci != run.current->clusters.end(); ++ci) {
-                typename Cluster<T>::ptr c = (*ci);
-                if (c->id == id) {
-                    run.current->clusters.erase(ci);
-                }
-            }
         }
     }
 
@@ -916,20 +922,24 @@ namespace m3D {
             const std::string * tracking_variable_name)
     {
 #pragma mark -
-#pragma mark Preliminaries        
-        if (m_verbosity >= VerbosityNormal) cout << "Tracking:" << endl;
+#pragma mark Preliminaries
+        bool logNormal = m_verbosity >= VerbosityNormal;
+
+        if (logNormal) cout << "Tracking:" << endl;
 
         tracking_run_t run;
         run.previous = previous;
         run.current = current;
         run.cs = cs;
 
+        if (logNormal) start_timer("-- Calculating preliminaries ... ");
         bool skip_tracking = calculatePreliminaries(run);
+        if (logNormal) stop_timer("done");
         if (skip_tracking) {
             return;
         }
 
-        // set precision for outputting correlation tables
+        // set precision for outputting floating point numbers
         std::streamsize prec = std::cout.precision();
         std::cout.precision(2);
         cout << setiosflags(ios::fixed);
@@ -938,33 +948,34 @@ namespace m3D {
         // vectors to make the results more accurate
         // utils::VisitUtils<T>::write_clusters_vtu_wholesale(previous, cs, "unshifted");
         if (this->m_useDisplacementVectors) {
-            if (m_verbosity >= VerbosityNormal) start_timer("-- Shifting clusters ... ");
+            if (logNormal) start_timer("-- Shifting clusters ... ");
             this->advectClusters(run);
-            if (m_verbosity >= VerbosityNormal) stop_timer("done");
+            if (logNormal) stop_timer("done");
 
         }
         // utils::VisitUtils<T>::write_clusters_vtu_wholesale(previous, cs, "shifted");
 
-        if (m_verbosity >= VerbosityNormal) start_timer("-- Calculating correlation data ... ");
+        // Set all ids in the current set back to NO_ID
+        current->erase_identifiers();
+
+        if (logNormal) start_timer("-- Calculating correlation data ... ");
         calculateCorrelationData(run);
-        if (m_verbosity >= VerbosityNormal) stop_timer("done");
+        if (logNormal) stop_timer("done");
 
-        if (m_verbosity >= VerbosityNormal) start_timer("-- Calculating match probabilities ... ");
+        if (logNormal) start_timer("-- Calculating match probabilities ... ");
         calculateProbabilities(run);
-        if (m_verbosity >= VerbosityNormal) stop_timer("done");
+        if (logNormal) stop_timer("done");
 
-        if (m_verbosity >= VerbosityNormal) start_timer("-- Matchmaking ... ");
+        if (logNormal) start_timer("-- Matchmaking ... ");
         matchmaking(run);
-        if (m_verbosity >= VerbosityNormal) stop_timer("done");
+        if (logNormal) stop_timer("done");
 
-        if (m_verbosity >= VerbosityNormal) start_timer("-- Merging and splitting ... ");
+        if (logNormal) start_timer("-- Merging and splitting ... ");
         // Calculate merges and splits
         handleMerges(run);
         handleSplits(run);
-        if (m_verbosity >= VerbosityNormal) stop_timer("done");
-
-        // Remove clusters that are marked for removal
         removeScheduled(run);
+        if (logNormal) stop_timer("done");
 
         // Restore save precision
         std::cout.precision(prec);

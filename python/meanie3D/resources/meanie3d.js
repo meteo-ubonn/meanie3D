@@ -379,7 +379,8 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
                 return d.length == graph.selectedTrackLength ? "bar selected" : "bar";
             })
             .style("width", function(d) {
-                var width = size.width * (maxCount - d.count) / maxCount - 20;
+                var minWidth = 80;
+                var width = minWidth + (size.width - minWidth) * (maxCount - d.count) / maxCount - 20;
                 return width + "px";
             })
             .style("opacity", function(d) {

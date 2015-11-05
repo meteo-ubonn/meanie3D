@@ -246,7 +246,6 @@ namespace m3D {
             matchlist_t matches;    // final matching result
 
             id_set_t merged_cluster_ids;
-            id_set_t continued_merged_ids;
             id_set_t scheduled_for_removal; // Set of ids to be removed at the end of the run.
 
             ::units::values::meters_per_second averageVelocity;
