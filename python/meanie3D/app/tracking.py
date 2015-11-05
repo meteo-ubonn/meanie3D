@@ -112,12 +112,18 @@ def run(config,time_index):
             
         if utils.getSafe(tracking,'histogramWeight'):
             tracking_params = "%s --wt %s" % (tracking_params, tracking['histogramWeight'])
+        else:
+            tracking_params = "%s --wt 0" % tracking_params
             
         if utils.getSafe(tracking,'positionWeight'):
             tracking_params = "%s --wr %s" % (tracking_params, tracking['positionWeight'])
+        else:
+            tracking_params = "%s --wr 0" % tracking_params
             
         if utils.getSafe(tracking,'sizeWeight'):
             tracking_params = "%s --ws %s" % (tracking_params, tracking['sizeWeight'])
+        else:
+            tracking_params = "%s --ws 0" % tracking_params
             
         if utils.getSafe(tracking,'maxSpeed'):
             tracking_params = "%s --max-speed %f" % (tracking_params, tracking['maxSpeed'])
@@ -126,7 +132,7 @@ def run(config,time_index):
             tracking_params = "%s --max-time %d" % (tracking_params, tracking['maxTime'])
             
         if utils.getSafe(tracking,'useDisplacementVectors'):
-            tracking_params = "%s -v"
+            tracking_params = "%s -v"  % tracking_params
 
     resume_at_index = 0;
 

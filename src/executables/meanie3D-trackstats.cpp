@@ -15,24 +15,23 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <map>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <fstream>
+#include <algorithm>
 #include <exception>
-#include <locale>
+#include <fstream>
 #include <limits>
-#include <stdlib.h>
-#include <string>
+#include <list>
+#include <locale>
+#include <map>
 #include <netcdf>
 #include <unistd.h>
+#include <set>
+#include <stdlib.h>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include <meanie3D/meanie3D.h>
 #include <radolan/radolan.h>
-#include <set>
-#include <list>
-#include <algorithm>
 
 using namespace std;
 using namespace boost;
@@ -453,31 +452,33 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
     ctx.nodes.push_back(node);
 
     // check for split event
-    for (id_map_t::const_iterator mi = ctx.cluster_list->splits.begin();
-            mi != ctx.cluster_list->splits.end(); ++mi) {
+    id_map_t::const_iterator mi;
+    for (mi = ctx.cluster_list->splits.begin(); mi != ctx.cluster_list->splits.end(); ++mi) {
+        m3D::id_t sourceId = mi->first;
         node_t source;
-        if (findNode(ctx.nodes, mi->first, node.step - 1, source)) {
-            // Add all split clusters at once
+        if (findNode(ctx.nodes, sourceId, node.step-1, source)) {
             id_set_t::const_iterator si;
             for (si = mi->second.begin(); si != mi->second.end(); si++) {
-                node_t target;
-                if (findNode(ctx.nodes, node.step, *si, target)) {
-                    addUniqueLink(ctx,source,target,Split);
+                m3D::id_t targetId = *si;
+                if (targetId == node.id) {
+                    addUniqueLink(ctx, source, node, Split);
                 }
             }
         }
     }
 
     // check for merge events
-    for (id_map_t::const_iterator mi = ctx.cluster_list->merges.begin();
-            mi != ctx.cluster_list->merges.end(); ++mi) {
+    for (mi = ctx.cluster_list->merges.begin(); mi != ctx.cluster_list->merges.end(); ++mi) {
         if (mi->first == node.id) {
             id_set_t::const_iterator si;
-            // Add all merged clusters at once
+            // Add all merged clusters at once, since those
+            // should all have been added by the time this
+            // is called (processed in the order of steps)
             for (si = mi->second.begin(); si != mi->second.end(); si++) {
                 node_t source;
-                if (findNode(ctx.nodes, (*si), node.step - 1, source)) {
-                    addUniqueLink(ctx,source,node,Merge);
+                m3D::id_t sourceId = (*si);
+                if (findNode(ctx.nodes, sourceId, node.step-1, source)) {
+                    addUniqueLink(ctx, source, node, Merge);
                 }
             }
         }
@@ -488,8 +489,8 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
             ctx.cluster_list->tracked_ids.end(), node.id);
     if (ti != ctx.cluster_list->tracked_ids.end()) {
         node_t source;
-        if (findNode(ctx.nodes, node.id, node.step - 1, source)) {
-            addUniqueLink(ctx,source,node,Continue);
+        if (findNode(ctx.nodes, node.id, node.step-1, source)) {
+            addUniqueLink(ctx, source, node, Continue);
         }
     }
 }
@@ -928,22 +929,23 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
 
     dict << "  " << "\"tracks\":[" << endl;
 
-    size_t track_index = 0;
+    size_t j = 0;
     Track<FS_TYPE>::trackmap::const_iterator tmi;
     for (tmi = ctx.track_map.begin(); tmi != ctx.track_map.end(); ++tmi) {
         Track<FS_TYPE>::ptr track = tmi->second;
-        
+
+        // Exclude degenerates if that's in the cards
         if (track->clusters.size() == 1 && ctx.params.exclude_degenerates) {
-            track_index++;
             continue;
         }
 
+        if (j > 0 && j < (ctx.track_map.size()-1)) {
+            dict << "," << endl;
+        }
+
         dict << "    {" << endl;
-        // Identifier
         dict << "      \"id\":" << track->id << "," << endl;
-        // Length
         dict << "      \"length\":" << track->clusters.size() << "," << endl;
-        // Clusters
         dict << "      \"clusters\":[" << endl;
 
         track->min.resize(ctx.value_rank, std::numeric_limits<FS_TYPE>::max());
@@ -984,18 +986,16 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
 
             i++;
         }
-        dict << "      ]," << endl;
+        dict << endl << "      ]," << endl;
 
         // Limits / Median
         dict << "      \"min\":" << to_json(track->min) << "," << endl;
         dict << "      \"max\":" << to_json(track->max) << endl;
         dict << "    }";
 
-        if (track_index < (ctx.track_map.size() - 1)) {
-            dict << "," << endl;
-        }
-        track_index++;
+        j++;
     }
+
     // end tracks
     dict << "  ],";
 

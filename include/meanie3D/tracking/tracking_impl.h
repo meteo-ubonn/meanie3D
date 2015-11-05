@@ -712,20 +712,19 @@ namespace m3D {
                 had_merges = true;
 
                 // collect merged cluster ids
-                id_set_t merged_ids;
-                uuid_set_t merged_uuids;
+                id_set_t ancestorIds;
+                uuid_set_t ancestorUuids;
                 for (int i = 0; i < candidates.size(); i++) {
                     typename Cluster<T>::ptr c = run.previous->clusters[candidates[i]];
-                    run.merged_cluster_ids.insert(c->id);
-                    merged_ids.insert(c->id);
+                    ancestorIds.insert(c->id);
                 }
 
                 if (logDetails) {
-                    cout << "\t\tprevious ids:" << merged_ids
-                            << " have merged into "
-                            << " uuid:" << new_cluster->uuid
-                            << " id:" << new_cluster->id << "." 
-                            << endl;
+                    cout << "\t\tprevious ids:" << ancestorIds
+                    << " have merged into "
+                    << " uuid:" << new_cluster->uuid
+                    << " id:" << new_cluster->id << "."
+                    << endl;
                 }
                 // store the given ID
                 size_t the_id = new_cluster->id;
@@ -733,7 +732,12 @@ namespace m3D {
                 // was the cluster already matched with one of the candidates?
                 id_set_t::const_iterator ti = run.current->tracked_ids.find(new_cluster->id);
                 bool alreadyMatched = ti != run.current->tracked_ids.end();
-                if (alreadyMatched) continue;
+                if (alreadyMatched) {
+                    run.current->merges[new_cluster->id] = ancestorIds;
+                    if (logDetails) {
+                        cout << "\t\t\ttrack id:" << new_cluster->id << " continues." << endl;
+                    }
+                }
 
                 // If the largest candidate covers at least msc_threshold percent
                 // of the merged cluster, continue it's id. Otherwise give
@@ -742,19 +746,19 @@ namespace m3D {
                 bool continueId = (run.coverNewByOld[n][largestCandidateIndex] > this->m_msc_threshold)
                                   && m_continueIDs;
 
-                if (continueId) {
+                if (continueId && !alreadyMatched) {
                     // continue the id
                     typename Cluster<T>::ptr c = run.previous->clusters[largestCandidateIndex];
                     new_cluster->id = c->id;
                     if (logDetails) {
-                        cout << "\t\tre-tagged uuid:" << new_cluster->uuid
+                        cout << "\t\t\tre-tagged uuid:" << new_cluster->uuid
                                 << " with id:" << new_cluster->id
-                                << "\t\ttrack id:" << c->id << " continues."
+                                << "\t\t\ttrack id:" << c->id << " continues."
                                 << endl;
                     }
                     // keep track
                     run.current->tracked_ids.insert(new_cluster->id);
-                } else {
+                } else if (!alreadyMatched) {
                     // If the cluster was not already tagged with a  fresh 
                     // id, give it a fresh id now.
                     id_set_t::const_iterator fi = run.current->new_ids.find(new_cluster->id);
@@ -762,27 +766,29 @@ namespace m3D {
                         new_cluster->id = nextId(run.highestId);
                         run.current->new_ids.insert(new_cluster->id);
                         if (logDetails) {
-                            cout << "\t\tre-tagged uuid:" << new_cluster->uuid
+                            cout << "\t\t\tre-tagged uuid:" << new_cluster->uuid
                                     << " with id:" << new_cluster->id
                                     << endl;
                         }                            
                     }
                     if (logDetails) {
-                        cout << "\t\ttrack id:" << new_cluster->id << " begins." << endl;
+                        cout << "\t\t\ttrack id:" << new_cluster->id << " begins." << endl;
                     }
                 }
 
                 // store in attributes
-                run.current->merges[new_cluster->id] = merged_ids;
+                run.current->merges[new_cluster->id] = ancestorIds;
 
                 // Remove the merged clusters (except the continued)
                 id_set_t::iterator fi;
-                for (fi = merged_ids.begin(); fi != merged_ids.end(); ++fi) {
+                for (fi = ancestorIds.begin(); fi != ancestorIds.end(); ++fi) {
                     id_t id = *fi;
-                    if (!continueId || (continueId && id != new_cluster->id)) {
+                    if ( (!alreadyMatched && (!continueId || id != new_cluster->id))
+                         || (alreadyMatched && id != new_cluster->id))
+                    {
                         run.scheduled_for_removal.insert(id);
                         if (logDetails) {
-                            cout << "\t\ttrack id:" << id << " ends." << endl;
+                            cout << "\t\t\ttrack id:" << id << " ends." << endl;
                         }
                     }
                 }
@@ -790,13 +796,26 @@ namespace m3D {
         }
 
         if (logDetails && !had_merges) {
-            cout << "\tnone." << endl;
+            cout << "\t\tnone." << endl;
         }
     }
 
     template <typename T>
+    bool
+    Tracking<T>::tagIfNeeded(typename Tracking<T>::tracking_run_t &run, typename Cluster<T>::ptr c) {
+        // in new ids?
+        id_set_t::const_iterator fi = run.current->new_ids.find(c->id);
+        if (fi == run.current->new_ids.end()) {
+            c->id = nextId(run.highestId);
+            run.current->new_ids.insert(c->id);
+            return true;
+        }
+        return false;
+    }
+
+    template <typename T>
     void
-    Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t & run)
+    Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t &run)
     {
         bool logDetails = m_verbosity >= VerbosityDetails;
         if (logDetails) {
@@ -816,13 +835,13 @@ namespace m3D {
             size_t maxSize = 0;
             size_t largestCandidateIndex = 0;
 
+            // Compile a list of candidates the previous cluster
+            // had split into. Keep track of the largest candidate.
             for (n = 0; n < run.current->clusters.size(); n++) {
                 T percentCovered = run.coverNewByOld[n][m];
                 if (percentCovered >= this->m_ms_threshold) {
                     typename Cluster<T>::ptr c = run.current->clusters[n];
-                    // add to the list of candidates 
                     candidates.push_back(n);
-                    // track the largest candidate
                     if (c->size() > maxSize) {
                         maxSize = c->size();
                         largestCandidateIndex = n;
@@ -835,20 +854,38 @@ namespace m3D {
 
                 // collect split cluster ids
                 
-                uuid_set_t split_into;
-                
+                uuid_set_t childrenIds;
+                id_set_t trackedChildrenIds;
+                bool haveMatchingChild = false;
                 for (int i = 0; i < candidates.size(); i++) {
                     typename Cluster<T>::ptr c = run.current->clusters[candidates[i]];
-                    split_into.insert(c->uuid);
+                    // get the splinter ids, exclude those that have already been
+                    // tracked with the exception of the id under consideration
+                    bool childMatches = (c->id == old_cluster->id);
+                    haveMatchingChild = haveMatchingChild || childMatches;
+
+                    id_set_t::const_iterator ti = run.current->tracked_ids.find(c->id);
+                    bool childWasTracked = ti != run.current->tracked_ids.end();
+
+                    // Memorise those who have been tracked
+                    if (childWasTracked) {
+                        trackedChildrenIds.insert(c->id);
+                    }
+                    // Memorise those only if they have not been tracked
+                    // with the exception of the one we're looking at who
+                    // is always added.
+                    if (!childWasTracked || (childMatches && childWasTracked)) {
+                        childrenIds.insert(c->uuid);
+                    }
                 }
 
                 if (logDetails) {
                     cout << "\t\tuuid:" << old_cluster->uuid
-                            << " id:" << old_cluster->id
-                            << " split into uuids:" << split_into
-                            << endl;
+                    << " id:" << old_cluster->id
+                    << " split into uuids:" << childrenIds
+                    << endl;
                 }
-                
+
                 // If the largest splinter covers at least msc_threshold percent
                 // of the split cluster, continue the split's id. Otherwise give
                 // it a fresh id. Always false if this behavior is switched 
@@ -858,42 +895,44 @@ namespace m3D {
 
                 id_set_t split_ids;
                 typename Cluster<T>::ptr largestCandidate = run.current->clusters[largestCandidateIndex];
-                if (continueId ) {
-                    // continue the id
+                if (continueId && !haveMatchingChild) {
+                    // continue the id among those that have not been tracked only
                     largestCandidate->id = old_cluster->id;
-                    split_ids.insert(largestCandidate->id);
-
                     if (logDetails) {
-                        cout << "\t\tre-tagged uuid:" << largestCandidate->uuid
+                        cout << "\t\t\tre-tagged uuid:" << largestCandidate->uuid
                                 << " with id:" << largestCandidate->id
                                 << endl;
-                        cout << "\t\ttrack #" << largestCandidate->id << " continues." << endl;
+                        cout << "\t\t\ttrack id:" << largestCandidate->id << " continues." << endl;
                     }
-
+                    split_ids.insert(largestCandidate->id);
                     run.current->tracked_ids.insert(largestCandidate->id);
                 } else {
+                    // Assign new ids to the children except those who have
+                    // already been tracked and the matched child.
 
-                    // new id for the split clusters. 
                     for (size_t ci = 0; ci < candidates.size(); ci++) {
                         int idx = candidates[ci];
                         typename Cluster<T>::ptr c = run.current->clusters[idx];
 
-                        // If the cluster was not already tagged with a 
-                        // fresh id, give it a fresh id now
-                        id_set_t::const_iterator fi = run.current->new_ids.find(c->id);
-                        if (fi != run.current->new_ids.end()) {
-                            c->id = nextId(run.highestId);
-                            run.current->new_ids.insert(c->id);
-                            if (logDetails) {
-                                cout << "\t\tre-tagged uuid:" << c->uuid
-                                        << " with id:" << c->id
-                                        << endl;
-                            }
-                        }
-                        split_ids.insert(c->id);
+                        id_set_t::const_iterator fi;
+                        fi = trackedChildrenIds.find(c->id);
 
-                        if (logDetails) {
-                            cout << "\t\ttrack id:" << c->id << " begins." << endl;
+                        // was the curent one tracked?
+                        if (fi == trackedChildrenIds.end()) {
+                            // The child was not tracked. Needs fresh id.
+                            tagIfNeeded(run, c);
+                            if (logDetails) {
+                                cout << "\t\t\ttrack id:" << c->id << " begins." << endl;
+                            }
+                            split_ids.insert(c->id);
+                        } else {
+                            // the child was tracked. Was it me?
+                            if (c->id == old_cluster->id) {
+                                split_ids.insert(c->id);
+                                if (logDetails) {
+                                    cout << "\t\t\ttrack id:" << old_cluster->id << " continues." << endl;
+                                }
+                            }
                         }
                     }
                 }
@@ -904,7 +943,7 @@ namespace m3D {
         }
 
         if (logDetails && !had_splits) {
-            cout << "\tnone." << endl;
+            cout << "\t\tnone." << endl;
         }
     }
 
