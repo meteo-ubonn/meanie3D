@@ -312,11 +312,63 @@ namespace m3D {
                                    const vector<int> &candidates);
 
         /**
-         *
+         * Examine criteria for merge continuation in unclear
+         * situation (no tracked id). Consider the following
+         * factors:
+         * <ul>
+         *  <li>dR - geometrical center difference</li>
+         *  <li>dH - size difference</li>
+         *  <li>obn - cover old by new</li>
+         * </ul>
+         * Calculates:
+         * s = erfc(dR) + erfc(dH) + erf(obn)
+         * =&gt; max(s) is the winner
+         * =&gt; if equal candidates, no one wins
+         * @param run tracking context
+         * @param index of the cluster that is the result of the merge.
+         * @param indexes of candidates
+         * @return -1 if no one wins, number of candidate else.
          */
         int findBestMergeCandidate(typename Tracking<T>::tracking_run_t &run,
                                    const int &n,
-                                   const vector<int> &candidates);
+                                   const vector<int> &indexes);
+
+
+        /**
+         * Gets the merge criteria value. The value is calculated considering:
+         * <ul>
+         *  <li>dR - geometrical center difference</li>
+         *  <li>dH - size difference</li>
+         *  <li>nbo - overlap percentage (new by old)</li>
+         * </ul>
+         * Calculates: s = erfc(dR) + erfc(dH) + erf(nbo)
+         * @param tracking context
+         * @param index of current cluster
+         * @param index of previous cluster
+         * @returns tracking criteria value.
+         */
+        double getMergeCriteria(typename Tracking<T>::tracking_run_t &run,
+                                const int &n,
+                                const int &m);
+
+        /**
+         * Compile a list of candidates that might have merged into c.
+         * If there is a match, add it. Only consider other candidates
+         * that have not been matched. Only consider those, if they
+         * satisfy the overlap criteria for merge and split.
+         *
+         * @param run tracking context
+         * @param index of merged cluster
+         * @param track_flag contains <code>true</code> if the id of the merged
+         * cluster was found in any of the candidates after the call.
+         * @param contains indexes of candidates after the call.
+         * @param contains ids of candidates after the call.
+         */
+        void getMergeCandidates(typename Tracking<T>::tracking_run_t &run,
+                                const int& n,
+                                bool &track_flag,
+                                vector<int> &candidateIndexes,
+                                id_set_t &candidateIds);
     };
 }
 

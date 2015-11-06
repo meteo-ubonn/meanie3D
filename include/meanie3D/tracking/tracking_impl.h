@@ -176,10 +176,10 @@ namespace m3D {
             // calculate max displacement based on time difference
             // and max velocity
             run.current->tracking_time_difference = run.deltaT.get();
-            run.maxDisplacement = this->m_maxVelocity * run.deltaT;
+            run.maxDisplacement = m_maxVelocity * run.deltaT;
 
             if (logDetails) {
-                cout << "\tmax velocity constraint:" << this->m_maxVelocity
+                cout << "\tmax velocity constraint:" << m_maxVelocity
                         << " and dT:" << run.deltaT
                         << " results in dR_max:" << run.maxDisplacement
                         << endl;
@@ -266,58 +266,61 @@ namespace m3D {
                 << " with uuid:" << c->uuid << " ";
             }
 
-            //
-            // Overlap Constraint
-            //
+            // How many percent of old cluster's points are shared by
+            // the new cluster?
+            run.coverOldByNew[n][m] = index_c.occupation_ratio(p, c);
 
+            // How many percent of the new cluster's points are shared
+            // by the old cluster
+            run.coverNewByOld[n][m] = index_p.occupation_ratio(c, p);
+
+            // Calculate this for merge/splits
+            vector<T> oldCenter, newCenter;
+            vector<T> dx = c->geometrical_center() - p->geometrical_center();
+            run.midDisplacement[n][m] = ::units::values::m(vector_norm(run.cs->to_meters(dx)));
+
+            //
+            // Overlap constraint
+            //
             // if the object is so big, that overlap is required at the given advection velocity
             // then check if that is the case. If no overlap exists, prohibit the match by setting
             // the constraint to false. If no overlap is required, the constraint is simply set to
             // true, thus allowing a match.
 
-            // Note: radius is calculated in kilometers.
-            // TODO: calculate overlap constraint radius in the same dimension
-            // as the dimension variables!
-
-            bool overlap_constraint_satisfied = true;
-
-            //                #if WITH_OPENMP
-            //                #pragma omp critical
-            //                #endif
-            {
-                // How many percent of old cluster's points are shared by
-                // the new cluster?
-                run.coverOldByNew[n][m] = index_c.occupation_ratio(p, c);
-
-                // How many percent of the new cluster's points are shared
-                // by the old cluster
-                run.coverNewByOld[n][m] = index_p.occupation_ratio(c, p);
-
-                if (m_useOverlapConstraint) {
-                    ::units::values::m radius = p->radius(run.cs);
-                    bool requires_overlap = (radius >= run.overlap_constraint_radius);
-                    if (requires_overlap) {
-                        overlap_constraint_satisfied = run.coverOldByNew[n][m] > 0.0;
+            if (m_useOverlapConstraint) {
+                ::units::values::m radius = p->radius(run.cs);
+                bool requires_overlap = (radius >= run.overlap_constraint_radius);
+                if (requires_overlap && run.coverOldByNew[n][m] == 0.0) {
+                    if (logDetails) {
+                        cout << "precluded: violation of overlap constraint." << endl;
                     }
-                }
-
-                if (overlap_constraint_satisfied) {
-                    // calculate average mid displacement, that is the 
-                    // distance between the two clusters geometrical
-                    // centers. 
-
-                    vector<T> oldCenter, newCenter;
-                    oldCenter = p->geometrical_center();
-                    newCenter = c->geometrical_center();
-
-                    vector<T> dx = newCenter - oldCenter;
-                    run.midDisplacement[n][m] = ::units::values::m(vector_norm(run.cs->to_meters(dx)));
+                    continue;
                 }
             }
 
-            if (!overlap_constraint_satisfied) {
+            //
+            // Growth/shrink rate constraint
+            //
+            // Processes in nature develop within certain bounds. It is
+            // not possible that a cloud covers 10 pixels in one scan
+            // and 10.000 in the next. The size deviation constraint is
+            // created to prohibit matches between objects, which vary
+            // too much in size
+            T maxSize = (T) max(p->size(), c->size());
+            T minSize = (T) min(p->size(), c->size());
+            run.sizeDifference[n][m] = (maxSize == 0) ? 1.0 : (maxSize - minSize);
+            if (m_size_weight != 0.0) {
+                if (run.sizeDifference[n][m] > run.maxSizeDifference) {
+                    run.maxSizeDifference = run.sizeDifference[n][m];
+                }
+            }
+            T sizeDeviation = (maxSize - minSize) / minSize;
+            if (sizeDeviation > m_max_size_deviation) {
                 if (logDetails) {
-                    cout << "precluded: violation of overlap constraint." << endl;
+                    cout << "precluded: violation of max histogram size restraint"
+                    << " (dH:" << sizeDeviation << " values"
+                    << " ,dH_max:" << m_max_size_deviation << " values)."
+                    << endl;
                 }
                 continue;
             }
@@ -336,61 +339,27 @@ namespace m3D {
                 continue;
             }
 
-            //              #if WITH_OPENMP
-            //              #pragma omp critical
-            //              #endif
-            {
-                // Processes in nature develop within certain bounds. It is
-                // not possible that a cloud covers 10 pixels in one scan 
-                // and unit_multiplier in the next. The size deviation 
-                // constraint is created to prohibit matches between objects,
-                // which vary too much in size
+            //
+            // Histogram correlation values
+            //
 
-                // calculate cluster sizes by summing up all
-                // bins in their histograms.
-                T oldSize = (T) p->size();
-                T newSize = (T) c->size();
+            // Just as the number of values will have some continuity,
+            // so will the distribution of values for a cluster. This
+            // fact is checked by creating a correlation between the
+            // histograms of the two clusters. Perfect match means
+            // a value of 1. No correlation at all means a value of 0.
 
-                // Determine the larger and smaller of the two
-                // numbers and their difference
-                T maxSize = (T) max(oldSize, newSize);
-                T minSize = (T) min(oldSize, newSize);
-                run.sizeDifference[n][m] = (maxSize == 0) ? 1.0 : (maxSize - minSize);
-
-                if (m_size_weight != 0.0) {
-                    if (run.sizeDifference[n][m] > run.maxSizeDifference) {
-                        run.maxSizeDifference = run.sizeDifference[n][m];
-                    }
-                }
-
-                // Now calculate the relative difference in percent (of number of points)
-                // between the two clusters. If too big, reject.
-                T sizeDeviation = (maxSize - minSize) / minSize;
-                if (sizeDeviation > m_max_size_deviation) {
-                    if (logDetails) {
-                        cout << "precluded: violation of max histogram size restraint"
-                        << " (dH:" << sizeDeviation << " values"
-                        << " ,dH_max:" << m_max_size_deviation << " values)."
-                        << endl;
-                    }
-                    continue;
-                }
-
-                if (run.haveHistogramInfo && m_corr_weight != 0.0) {
-                    // Just as the number of values will have some continuity,
-                    // so will the distribution of values for a cluster. This
-                    // fact is checked by creating a correlation between the
-                    // histograms of the two clusters. Perfect match means
-                    // a value of 1. No correlation at all means a value of 0.
-                    typename Histogram<T>::ptr hist_p
-                            = p->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
-                    typename Histogram<T>::ptr hist_c
-                            = c->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
-                    run.rankCorrelation[n][m] = hist_c->correlate_kendall(hist_p);
-                }
+            if (run.haveHistogramInfo && m_corr_weight != 0.0) {
+                typename Histogram<T>::ptr hist_p
+                        = p->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
+                typename Histogram<T>::ptr hist_c
+                        = c->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
+                run.rankCorrelation[n][m] = hist_c->correlate_kendall(hist_p);
             }
 
+            //
             // only if all constraints are passed, the flag is set to true
+            //
             run.matchPossible[n][m] = true;
 
             // Keep track of the largest distance in all possible
@@ -662,6 +631,18 @@ namespace m3D {
 #pragma mark Merging
 
     template <typename T>
+    double
+    Tracking<T>::getMergeCriteria(typename Tracking<T>::tracking_run_t &run, const int &n, const int &m) {
+        typename Cluster<T>::ptr c = run.current->clusters[n];
+        typename Cluster<T>::ptr p = run.previous->clusters[n];
+        double nbo = run.coverNewByOld[n][m];
+        double dR = run.midDisplacement[n][m].get();
+        double dH = run.sizeDifference[n][m];
+        double s = erf(nbo) + erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference);
+        return s;
+    }
+
+    template <typename T>
     int
     Tracking<T>::findBestMergeCandidate(typename Tracking<T>::tracking_run_t &run,
                                         const int &n,
@@ -669,15 +650,10 @@ namespace m3D {
         double maxS = -1.0;
         int maxM = -1;
         bool maxIsTied = false;
-        typename Cluster<T>::ptr c = run.current->clusters[n];
         for (size_t i=0; i < candidates.size(); i++) {
             int m = candidates[i];
-            typename Cluster<T>::ptr p = run.previous->clusters[n];
-            double nbo = run.coverNewByOld[n][m];
-            if (nbo >= this->m_msc_threshold) {
-                double dR = vector_norm(c->geometrical_center() - p->geometrical_center());
-                double dH = abs((double)c->size() - (double)p->size());
-                double s = erf(nbo) + erfc(dR) + erfc(dH);
+            if (run.coverNewByOld[n][m] >= m_msc_threshold) {
+                double s = getMergeCriteria(run,n,m);
                 if (s >= maxS) {
                     if (s==maxS) maxIsTied = true;
                     maxM = i;
@@ -686,6 +662,45 @@ namespace m3D {
             }
         }
         return maxIsTied ? -1 : maxM;
+    }
+
+    template <typename T>
+    void
+    Tracking<T>::getMergeCandidates(typename Tracking<T>::tracking_run_t &run,
+                                    const int& n,
+                                    bool &track_flag,
+                                    vector<int> &candidates,
+                                    id_set_t &candidateIds)
+    {
+        typename Cluster<T>::ptr c = run.current->clusters.at(n);
+        for (size_t m = 0; m < run.M; m++) {
+            typename Cluster<T>::ptr p = run.previous->clusters.at(m);
+            if (c->id == p->id) {
+                candidates.push_back(m);
+                candidateIds.insert(p->id);
+                track_flag = true;
+            } else {
+                T obn = run.coverOldByNew[n][m];
+                if (obn >= m_ms_threshold) {
+                    // Check for each of the candidates what the merge criteria
+                    // s is and find out if there is another combination with
+                    // higher s. If so, do not add the candidate here.
+                    double s1 = getMergeCriteria(run, n, m);
+                    bool foundBetter = false;
+                    for (int nn = 0; nn < run.N && !foundBetter; nn++) {
+                        if (nn == n) continue;
+                        double s2 = getMergeCriteria(run, nn, m);
+                        if (s2 > s1) {
+                            foundBetter = true;
+                        }
+                    }
+                    if (!foundBetter) {
+                        candidateIds.insert(p->id);
+                        candidates.push_back(m);
+                    }
+                }
+            }
+        }
     }
 
     template <typename T>
@@ -702,27 +717,10 @@ namespace m3D {
         for (n = 0; n < run.N; n++) {
             typename Cluster<T>::ptr c = run.current->clusters[n];
 
-            // Compile a list of candidates that might have merged into c.
-            // If there is a match, add it. Only consider other candidates
-            // that have not been matched. Only consider those, if they
-            // satisfy the overlap criteria for merge and split.
             bool track_flag = false;
             id_set_t candidateIds;
             vector<int> candidates;
-            for (m = 0; m < run.M; m++) {
-                typename Cluster<T>::ptr p = run.previous->clusters.at(m);
-                if (c->id == p->id) {
-                    candidates.push_back(m);
-                    candidateIds.insert(p->id);
-                    track_flag = true;
-                } else {
-                    T percentCovered = run.coverOldByNew[n][m];
-                    if (percentCovered >= this->m_ms_threshold) {
-                        candidateIds.insert(p->id);
-                        candidates.push_back(m);
-                    }
-                }
-            }
+            getMergeCandidates(run, n, track_flag, candidates, candidateIds);
 
             if (candidates.size() > 1) {
                 had_merges = true;
@@ -774,7 +772,7 @@ namespace m3D {
             int n = candidates[i];
             typename Cluster<T>::ptr c = run.current->clusters[n];
             double obn = run.coverOldByNew[n][m];
-            if (obn >= this->m_msc_threshold) {
+            if (obn >= m_msc_threshold) {
                 double dR = vector_norm(c->geometrical_center() - p->geometrical_center());
                 double dH = abs((double)c->size() - (double)p->size());
                 double s = erf(obn) + erfc(dR) + erfc(dH);
@@ -818,7 +816,7 @@ namespace m3D {
                     fi = run.current->new_ids.find(c->id);
                     if (fi != run.current->new_ids.end()) {
                         T percentCovered = run.coverNewByOld[n][m];
-                        if (percentCovered >= this->m_ms_threshold) {
+                        if (percentCovered >= m_ms_threshold) {
                             candidateUuids.insert(c->uuid);
                             candidates.push_back(n);
                         }
@@ -912,9 +910,9 @@ namespace m3D {
         // Advect the previous clusters by their displacement
         // vectors to make the results more accurate
         // utils::VisitUtils<T>::write_clusters_vtu_wholesale(previous, cs, "unshifted");
-        if (this->m_useDisplacementVectors) {
+        if (m_useDisplacementVectors) {
             if (logNormal) start_timer("-- Shifting clusters ... ");
-            this->advectClusters(run);
+            advectClusters(run);
             if (logNormal) stop_timer("done");
 
         }
