@@ -286,9 +286,6 @@ namespace m3D {
 
         // Employ a mapping to parallelize
 
-        //            #if WITH_OPENMP
-        //            #pragma omp parallel for schedule(dynamic)
-        //            #endif
         for (size_t idx = 0; idx < run.mapping.size(); idx++) {
             vector<int> index_pair = run.mapping.linear_to_grid(idx);
 
@@ -432,9 +429,6 @@ namespace m3D {
             cout << endl;
         }
 
-        //            #if WITH_OPENMP
-        //            #pragma omp parallel for schedule(dynamic)
-        //            #endif
         for (size_t idx = 0; idx < run.mapping.size(); idx++) {
             vector<int> index_pair = run.mapping.linear_to_grid(idx);
 
