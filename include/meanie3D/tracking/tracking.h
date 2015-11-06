@@ -59,7 +59,8 @@ namespace m3D {
             Verbosity verbosity;
 
             // Properties
-            const CoordinateSystem<T> *cs; // Coordinate system (for transformations)
+            size_t N,M;                     // Shortcuts for lenghts
+            const CoordinateSystem<T> *cs;  // Coordinate system (for transformations)
             LinearIndexMapping mapping;     // maps i <-> (n,m)
 
             m3D::id_t highestId;        // Stores the highest used ID
@@ -76,6 +77,7 @@ namespace m3D {
             ::units::values::m maxMidDisplacement;         // Maximum center displacment
             int maxSizeDifference;                       // Maximum allowed histogram size difference
 
+            ::units::values::meters_per_second averageVelocity;
             ::units::values::m overlap_constraint_radius;
             ::units::values::meters_per_second overlap_constraint_velocity;
 
@@ -83,7 +85,6 @@ namespace m3D {
             matchlist_t matches;                // final matching result
             id_set_t scheduled_for_removal;     // Set of ids to be removed at the end of the run.
 
-            ::units::values::meters_per_second averageVelocity;
             // Correlation data
             typename SimpleMatrix<T>::matrix_t rankCorrelation;
             typename SimpleMatrix< ::units::values::m >::matrix_t midDisplacement;

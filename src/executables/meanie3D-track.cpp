@@ -344,7 +344,7 @@ int main(int argc, char** argv) {
     tracking.setMergeSplitThreshold(mergeSplitThreshold);
     tracking.setMergeSplitContinuationThreshold(mergeSplitContinuationThreshold);
     tracking.setUseDisplacementVectors(useDisplacementVectors);
-    tracking.track(previous, current, cs, &tracking_variable_name);
+    tracking.track(previous, current, cs, &tracking_variable_name, verbosity);
 
 #if WITH_VTK
     if (write_vtk) {

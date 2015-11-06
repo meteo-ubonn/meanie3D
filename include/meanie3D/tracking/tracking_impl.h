@@ -48,13 +48,16 @@ namespace m3D {
     using namespace utils;
     using namespace utils::vectors;
 
+#pragma mark -
+#pragma mark Preliminaries
+
     template <typename T>
     void
     Tracking<T>::advectClusters(typename Tracking<T>::tracking_run_t &run)
     {
         using namespace utils::vectors;
 
-        for (size_t i = 0; i < run.previous->clusters.size(); i++) {
+        for (size_t i = 0; i < run.M; i++) {
             typename Cluster<T>::ptr c = run.previous->clusters[i];
             if (vector_norm<T>(c->displacement) != 0) {
                 // shift all points by the displacement vector
@@ -83,7 +86,7 @@ namespace m3D {
             cout << endl;
         }
         // Check if there is anything to do
-        if (run.current->clusters.size() == 0) {
+        if (run.N == 0) {
             if (logDetails) {
                 cout << "\tNo current clusters. Skipping tracking." << endl;
             }
@@ -92,10 +95,10 @@ namespace m3D {
 
         // Find out the highest id from the previous list
         run.highestId = run.previous->highest_id;
-        if (run.highestId == NO_ID || (run.highestId == 0 && run.previous->clusters.size() > 0)) {
+        if (run.highestId == NO_ID || (run.highestId == 0 && run.M > 0)) {
             // figure it out from the highest found ID
             run.highestId = 0;
-            for (size_t ci = 0; ci < run.previous->clusters.size(); ci++) {
+            for (size_t ci = 0; ci < run.M; ci++) {
                 if (run.previous->clusters[ci]->id > run.highestId) {
                     run.highestId = run.previous->clusters[ci]->id;
                 }
@@ -104,10 +107,10 @@ namespace m3D {
 
         // Find out the highest uuid from the previous list
         run.highestUuid = run.previous->highest_uuid;
-        if (run.highestUuid == NO_UUID || (run.highestUuid == 0 && run.previous->clusters.size() > 0)) {
+        if (run.highestUuid == NO_UUID || (run.highestUuid == 0 && run.M > 0)) {
             // figure it out from the highest found ID
             run.highestUuid = 0;
-            for (size_t ci = 0; ci < run.previous->clusters.size(); ci++) {
+            for (size_t ci = 0; ci < run.M; ci++) {
                 if (run.previous->clusters[ci]->id > run.highestUuid) {
                     run.highestUuid = run.previous->clusters[ci]->id;
                 }
@@ -121,13 +124,13 @@ namespace m3D {
         if (!skip_tracking) {
 
             // Check cluster sizes
-            for (size_t i = 0; i < run.previous->clusters.size(); i++) {
+            for (size_t i = 0; i < run.M; i++) {
                 typename Cluster<T>::ptr c = run.previous->clusters[i];
                 if (c->size() == 0) {
                     cerr << "ERROR: previous cluster " << c->id << " has no points!" << endl;
                 }
             }
-            for (size_t i = 0; i < run.current->clusters.size(); i++) {
+            for (size_t i = 0; i < run.N; i++) {
                 typename Cluster<T>::ptr c = run.current->clusters[i];
                 if (c->size() == 0) {
                     cerr << "ERROR: current cluster " << c->id << " has no points!" << endl;
@@ -136,6 +139,7 @@ namespace m3D {
 
             // figure out tracking variable index (for histogram)
             run.tracking_var_index = -1;
+            run.haveHistogramInfo = false;
             if (!run.tracking_variable.empty()) {
                 for (size_t i = 0; i < run.current->feature_variables.size(); i++) {
                     if (run.current->feature_variables[i].getName() == run.tracking_variable) {
@@ -143,14 +147,14 @@ namespace m3D {
                         break;
                     }
                 }
-
-                // TODO: fail only if histogram weight is > 0
                 if (run.tracking_var_index < 0) {
                     cerr << "FATAL:Illegal variable name " << run.tracking_variable << " for histogram comparison " << endl;
                     exit(EXIT_FAILURE);
                 }
                 // Valid min/max of tracking variable
                 utils::netcdf::get_valid_range(run.current->ncFile->getVar(run.tracking_variable), run.valid_min, run.valid_max);
+                // set flag
+                run.haveHistogramInfo = true;
             }
 
             // check time difference and determine displacement restraints
@@ -184,8 +188,7 @@ namespace m3D {
             // TODO: mean velocity constraint
 
             // Minimum object radius for overlap constraint
-            // TODO: this point needs to be replaced with velocity
-            // vectors from SMV/RMV estimates
+            // TODO: this point should to be replaced with velocity vectors from SMV/RMV estimates
             run.overlap_constraint_velocity = m_maxVelocity;
             run.overlap_constraint_radius = 0.5 * run.deltaT * run.overlap_constraint_velocity;
             if (logDetails) {
@@ -194,10 +197,10 @@ namespace m3D {
                      << endl;
             }
 
-            // Provide a mapping
+            // Provide a mapping for matchmaking and parallelisation
             vector<size_t> index_dims;
-            index_dims.push_back(run.current->clusters.size());
-            index_dims.push_back(run.previous->clusters.size());
+            index_dims.push_back(run.N);
+            index_dims.push_back(run.M);
             run.mapping = LinearIndexMapping(index_dims);
             
             // Bestow the current cluster list with fresh uuids
@@ -207,26 +210,26 @@ namespace m3D {
         return skip_tracking;
     }
 
+#pragma mark -
+#pragma mark Matching
+
     template <typename T>
     void
     Tracking<T>::calculateCorrelationData(typename Tracking<T>::tracking_run_t &run)
     {
         bool logDetails = run.verbosity >= VerbosityAll;
-        size_t old_count = run.previous->clusters.size();
-        size_t new_count = run.current->clusters.size();
-
         if (logDetails) {
             cout << endl;
         }
 
         // Allocate the correlation data
-        run.rankCorrelation = SimpleMatrix<T>::create_matrix(new_count, old_count);
-        run.midDisplacement = SimpleMatrix< ::units::values::m >::create_matrix(new_count, old_count);
-        run.sizeDifference = SimpleMatrix<T>::create_matrix(new_count, old_count);
-        run.likelihood = SimpleMatrix<T>::create_matrix(new_count, old_count);
-        run.coverOldByNew = SimpleMatrix<T>::create_matrix(new_count, old_count);
-        run.coverNewByOld = SimpleMatrix<T>::create_matrix(new_count, old_count);
-        run.matchPossible = SimpleMatrix<T>::create_flag_matrix(new_count, old_count);
+        run.rankCorrelation = SimpleMatrix<T>::create_matrix(run.N, run.M);
+        run.midDisplacement = SimpleMatrix< ::units::values::m >::create_matrix(run.N, run.M);
+        run.sizeDifference = SimpleMatrix<T>::create_matrix(run.N, run.M);
+        run.coverOldByNew = SimpleMatrix<T>::create_matrix(run.N, run.M);
+        run.coverNewByOld = SimpleMatrix<T>::create_matrix(run.N, run.M);
+        run.matchPossible = SimpleMatrix<T>::create_flag_matrix(run.N, run.M);
+        run.likelihood = SimpleMatrix<T>::create_matrix(run.N, run.M);
 
         run.maxSizeDifference = numeric_limits<int>::min();
         run.maxMidDisplacement = ::units::values::m(numeric_limits<T>::min());
@@ -235,11 +238,11 @@ namespace m3D {
 
         // need to label the clusters with a unique id before we
         // index them, otherwise the area calculations will be nonsense
-        for (size_t n = 0; n < run.current->clusters.size(); n++) {
+        for (size_t n = 0; n < run.N; n++) {
             run.current->clusters[n]->id = n;
         }
-        ClusterIndex<T> new_index(run.current->clusters, run.cs->get_dimension_sizes());
-        ClusterIndex<T> old_index(run.previous->clusters, run.cs->get_dimension_sizes());
+        ClusterIndex<T> index_c(run.current->clusters, run.cs->get_dimension_sizes());
+        ClusterIndex<T> index_p(run.previous->clusters, run.cs->get_dimension_sizes());
 
         // Employ a mapping to parallelize
 
@@ -255,13 +258,12 @@ namespace m3D {
             // set all constraint flags to false to start with
             run.matchPossible[n][m] = false;
 
-            typename Cluster<T>::ptr newCluster = run.current->clusters[n];
-            typename Cluster<T>::ptr oldCluster = run.previous->clusters[m];
-
+            typename Cluster<T>::ptr c = run.current->clusters[n];
+            typename Cluster<T>::ptr p = run.previous->clusters[m];
             if (logDetails) {
-                cout << "\tmatch uuid:" << oldCluster->uuid
-                    << " id:" << oldCluster->id
-                    << " with uuid:" << newCluster->uuid << " ";
+                cout << "\tmatch uuid:" << p->uuid
+                << " id:" << p->id
+                << " with uuid:" << c->uuid << " ";
             }
 
             //
@@ -285,16 +287,14 @@ namespace m3D {
             {
                 // How many percent of old cluster's points are shared by
                 // the new cluster?
-                T old_covered_by_new = new_index.occupation_ratio(oldCluster, newCluster);
-                run.coverOldByNew[n][m] = old_covered_by_new;
+                run.coverOldByNew[n][m] = index_c.occupation_ratio(p, c);
 
                 // How many percent of the new cluster's points are shared
                 // by the old cluster
-                T new_covered_by_old = old_index.occupation_ratio(newCluster, oldCluster);
-                run.coverNewByOld[n][m] = new_covered_by_old;
+                run.coverNewByOld[n][m] = index_p.occupation_ratio(c, p);
 
                 if (m_useOverlapConstraint) {
-                    ::units::values::m radius = oldCluster->radius(run.cs);
+                    ::units::values::m radius = p->radius(run.cs);
                     bool requires_overlap = (radius >= run.overlap_constraint_radius);
                     if (requires_overlap) {
                         overlap_constraint_satisfied = run.coverOldByNew[n][m] > 0.0;
@@ -307,8 +307,8 @@ namespace m3D {
                     // centers. 
 
                     vector<T> oldCenter, newCenter;
-                    oldCenter = oldCluster->geometrical_center();
-                    newCenter = newCluster->geometrical_center();
+                    oldCenter = p->geometrical_center();
+                    newCenter = c->geometrical_center();
 
                     vector<T> dx = newCenter - oldCenter;
                     run.midDisplacement[n][m] = ::units::values::m(vector_norm(run.cs->to_meters(dx)));
@@ -336,17 +336,11 @@ namespace m3D {
                 continue;
             }
 
-            typename Histogram<T>::ptr newHistogram;
-            typename Histogram<T>::ptr oldHistogram;
-
             //              #if WITH_OPENMP
             //              #pragma omp critical
             //              #endif
             {
-                newHistogram = newCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
-                oldHistogram = oldCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
-
-                // Processes in nature develop within certain bounds. It is 
+                // Processes in nature develop within certain bounds. It is
                 // not possible that a cloud covers 10 pixels in one scan 
                 // and unit_multiplier in the next. The size deviation 
                 // constraint is created to prohibit matches between objects,
@@ -354,15 +348,14 @@ namespace m3D {
 
                 // calculate cluster sizes by summing up all
                 // bins in their histograms.
-                size_t oldHistSum = (T) oldHistogram->sum();
-                size_t newHistSum = (T) newHistogram->sum();
+                T oldSize = (T) p->size();
+                T newSize = (T) c->size();
 
                 // Determine the larger and smaller of the two
                 // numbers and their difference
-                T max_H = (T) max(oldHistSum, newHistSum);
-                T min_H = (T) min(oldHistSum, newHistSum);
-
-                run.sizeDifference[n][m] = (max_H == 0) ? 1.0 : (max_H - min_H);
+                T maxSize = (T) max(oldSize, newSize);
+                T minSize = (T) min(oldSize, newSize);
+                run.sizeDifference[n][m] = (maxSize == 0) ? 1.0 : (maxSize - minSize);
 
                 if (m_size_weight != 0.0) {
                     if (run.sizeDifference[n][m] > run.maxSizeDifference) {
@@ -370,46 +363,46 @@ namespace m3D {
                     }
                 }
 
-                // Now calculate the relative difference in percent
-                // (of number of points) between the two clusters: 
-                T size_deviation = (max_H - min_H) / min_H;
-
-                // if the deviation is too big, exclude this match
-                if (size_deviation > m_max_size_deviation) {
+                // Now calculate the relative difference in percent (of number of points)
+                // between the two clusters. If too big, reject.
+                T sizeDeviation = (maxSize - minSize) / minSize;
+                if (sizeDeviation > m_max_size_deviation) {
                     if (logDetails) {
                         cout << "precluded: violation of max histogram size restraint"
-                             << " (dH:" << size_deviation << " values"
-                             << " ,dH_max:" << m_max_size_deviation << " values)."
-                             << endl;
+                        << " (dH:" << sizeDeviation << " values"
+                        << " ,dH_max:" << m_max_size_deviation << " values)."
+                        << endl;
                     }
                     continue;
                 }
 
-                // Just as the number of values will have some continuity,
-                // so will the distribution of values for a cluster. This
-                // fact is checked by creating a correlation between the
-                // histograms of the two clusters. Perfect match means
-                // a value of 1. No correlation at all means a value of 0. 
-                if (m_corr_weight != 0.0) {
-                    run.rankCorrelation[n][m] = newHistogram->correlate_kendall(oldHistogram);
+                if (run.haveHistogramInfo && m_corr_weight != 0.0) {
+                    // Just as the number of values will have some continuity,
+                    // so will the distribution of values for a cluster. This
+                    // fact is checked by creating a correlation between the
+                    // histograms of the two clusters. Perfect match means
+                    // a value of 1. No correlation at all means a value of 0.
+                    typename Histogram<T>::ptr hist_p
+                            = p->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
+                    typename Histogram<T>::ptr hist_c
+                            = c->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
+                    run.rankCorrelation[n][m] = hist_c->correlate_kendall(hist_p);
                 }
             }
 
             // only if all constraints are passed, the flag is set to true
             run.matchPossible[n][m] = true;
 
-            if (run.matchPossible[n][m]) {
-                // Keep track of the largest distance in all possible
-                // matches for making values relative later.
-                if (run.midDisplacement[n][m] > run.maxMidDisplacement) {
-                    run.maxMidDisplacement = run.midDisplacement[n][m];
-                }
-
-                if (logDetails) {
-                    cout << "possible." << endl;
-                }
-
+            // Keep track of the largest distance in all possible
+            // matches for making values relative later.
+            if (run.midDisplacement[n][m] > run.maxMidDisplacement) {
+                run.maxMidDisplacement = run.midDisplacement[n][m];
             }
+
+            if (logDetails) {
+                cout << "possible." << endl;
+            }
+
         } // done finishing correlation table
 
         // Now re-tag new clusters with no id
@@ -426,9 +419,6 @@ namespace m3D {
     Tracking<T>::calculateProbabilities(typename Tracking<T>::tracking_run_t & run)
     {
         bool logDetails = run.verbosity >= VerbosityAll;
-        size_t old_count = run.previous->clusters.size();
-        size_t new_count = run.current->clusters.size();
-
         if (logDetails) {
             cout << endl;
         }
@@ -442,8 +432,8 @@ namespace m3D {
             int n = index_pair[0];
             int m = index_pair[1];
 
-            typename Cluster<T>::ptr newCluster = run.current->clusters[n];
-            typename Cluster<T>::ptr oldCluster = run.previous->clusters[m];
+            typename Cluster<T>::ptr c = run.current->clusters[n];
+            typename Cluster<T>::ptr p = run.previous->clusters[m];
 
             // Only calculate values for pairs, that satisfy the
             // overlap constraint
@@ -482,27 +472,27 @@ namespace m3D {
 
         if (run.verbosity >= VerbosityAll) {
 
-            for (int n = 0; n < new_count; n++) {
-                typename Cluster<T>::ptr newCluster = run.current->clusters[n];
+            for (int n = 0; n < run.N; n++) {
+                typename Cluster<T>::ptr c = run.current->clusters[n];
 
                 if (logDetails) {
-                    size_t histSize = newCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max)->sum();
-                    cout << "\tcluster uuid:" << newCluster->uuid << " ("
+                    size_t histSize = c->size();
+                    cout << "\tcluster uuid:" << c->uuid << " ("
                         << " |H|:" << histSize << ")"
-                        << " mode:" << newCluster->mode
+                        << " mode:" << c->mode
                         << ")" << endl;
                 }
 
-                for (int m = 0; m < old_count; m++) {
+                for (int m = 0; m < run.M; m++) {
                     if (run.matchPossible[n][m]
                             || run.coverOldByNew[n][m] > 0.0
                             || run.coverNewByOld[n][m] > 0.0)
                     {
-                        typename Cluster<T>::ptr oldCluster = run.previous->clusters[m];
+                        typename Cluster<T>::ptr p = run.previous->clusters[m];
                         printf("\t\tuuid:%4llu \tid:%4lu\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
-                                oldCluster->uuid,
-                                oldCluster->id,
-                                oldCluster->histogram(run.tracking_var_index, run.valid_min, run.valid_max)->sum(),
+                                p->uuid,
+                                p->id,
+                                p->size(),
                                 run.midDisplacement[n][m].get(),
                                 run.sizeDifference[n][m],
                                 run.rankCorrelation[n][m],
@@ -519,9 +509,6 @@ namespace m3D {
     void
     Tracking<T>::matchmaking(typename Tracking<T>::tracking_run_t & run)
     {
-        size_t old_count = run.previous->clusters.size();
-        size_t new_count = run.current->clusters.size();
-
         bool logAll = run.verbosity >= VerbosityAll;
         bool logDetails = run.verbosity >= VerbosityDetails;
         if (logDetails) {
@@ -532,7 +519,7 @@ namespace m3D {
         ::units::values::meters_per_second velocitySum = ::units::values::meters_per_second(0);
         int velocityClusterCount = 0;
         float currentMaxProb = numeric_limits<float>::max();
-        int maxIterations = new_count * old_count;
+        int maxIterations = run.N * run.M;
         int iterations = 0;
 
         // put the matches in a special data structure
@@ -634,7 +621,7 @@ namespace m3D {
         // for all new clusters that have not been assigned
         // an id from one of the previous clusters, pick a 
         // fresh one now
-        for (int n = 0; n < run.current->clusters.size(); n++) {
+        for (int n = 0; n < run.N; n++) {
             typename Cluster<T>::ptr c = run.current->clusters[n];
             if (c->id == m3D::NO_ID) {
                 // Get a fresh ID
@@ -670,6 +657,9 @@ namespace m3D {
             cout << "\t\tnone." << endl;
         }
     }
+
+#pragma mark -
+#pragma mark Merging
 
     template <typename T>
     int
@@ -709,7 +699,7 @@ namespace m3D {
         bool had_merges = false;
         size_t n, m;
 
-        for (n = 0; n < run.current->clusters.size(); n++) {
+        for (n = 0; n < run.N; n++) {
             typename Cluster<T>::ptr c = run.current->clusters[n];
 
             // Compile a list of candidates that might have merged into c.
@@ -719,7 +709,7 @@ namespace m3D {
             bool track_flag = false;
             id_set_t candidateIds;
             vector<int> candidates;
-            for (m = 0; m < run.previous->clusters.size(); m++) {
+            for (m = 0; m < run.M; m++) {
                 typename Cluster<T>::ptr p = run.previous->clusters.at(m);
                 if (c->id == p->id) {
                     candidates.push_back(m);
@@ -768,6 +758,9 @@ namespace m3D {
         }
     }
 
+#pragma mark -
+#pragma mark Splitting
+
     template <typename T>
     int
     Tracking<T>::findBestSplitCandidate(typename Tracking<T>::tracking_run_t &run,
@@ -805,7 +798,7 @@ namespace m3D {
         }
         bool had_splits = false;
         size_t n, m;
-        for (m = 0; m < run.previous->clusters.size(); m++) {
+        for (m = 0; m < run.M; m++) {
             typename Cluster<T>::ptr p = run.previous->clusters.at(m);
             // Compile a list of candidates the previous cluster may have split into.
             // If there is a match, add it. Only consider candidates that have not been
@@ -814,7 +807,7 @@ namespace m3D {
             bool track_flag = false;
             uuid_set_t candidateUuids;
             vector<int> candidates;
-            for (n = 0; n < run.current->clusters.size(); n++) {
+            for (n = 0; n < run.N; n++) {
                 typename Cluster<T>::ptr c = run.current->clusters.at(n);
                 if (c->id == p->id) {
                     candidates.push_back(n);
@@ -880,6 +873,9 @@ namespace m3D {
         }
     }
 
+#pragma mark -
+#pragma mark Entry point
+
     template <typename T>
     void
     Tracking<T>::track(typename ClusterList<T>::ptr previous,
@@ -888,8 +884,6 @@ namespace m3D {
             const std::string * tracking_variable_name,
             const Verbosity verbosity)
     {
-#pragma mark -
-#pragma mark Preliminaries
         bool logNormal = verbosity >= VerbosityNormal;
 
         if (logNormal) cout << "Tracking:" << endl;
@@ -898,6 +892,8 @@ namespace m3D {
         run.verbosity = verbosity;
         run.previous = previous;
         run.current = current;
+        run.N = current->clusters.size();
+        run.M = previous->clusters.size();
         run.cs = cs;
 
         if (logNormal) start_timer("-- Calculating preliminaries ... ");
