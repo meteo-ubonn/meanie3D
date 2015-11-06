@@ -122,6 +122,11 @@ void parse_commmandline(program_options::variables_map vm,
         tracking_variable_name = vm["tracking-variable"].as<string>();
     }
 
+    if (correlation_weight != 0.0 && tracking_variable_name.empty()) {
+        cerr << "When specifying --wt you must give --tracking-variable as well." << endl;
+        exit(EXIT_FAILURE);
+    }
+
 #if WITH_VTK
 
     // --write-vtk
@@ -178,7 +183,7 @@ int main(int argc, char** argv) {
             ("version", "print version information and exit")
             ("previous,p", program_options::value<string>(), "Previous cluster file (netCDF)")
             ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
-            ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Defaults to the first variable that is not a dimension variable. Only used if the histogram weight --wt is greater than zero")
+            ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Must be specified when histogram weight --wt is not zero")
             ("wr", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for range correlation [0..1]")
             ("ws", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for size correlation [0..1]")
             ("wt", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for histogram rank correlation [0..1]")

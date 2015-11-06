@@ -152,7 +152,7 @@ namespace m3D {
                     exit(EXIT_FAILURE);
                 }
                 // Valid min/max of tracking variable
-                utils::netcdf::get_valid_range(run.current->ncFile->getVar(run.tracking_variable), run.valid_min, run.valid_max);
+                utils::netcdf::unpacked_limits(run.current->ncFile->getVar(run.tracking_variable), run.valid_min, run.valid_max);
                 // set flag
                 run.haveHistogramInfo = true;
             }
@@ -892,6 +892,7 @@ namespace m3D {
         run.verbosity = verbosity;
         run.previous = previous;
         run.current = current;
+        run.tracking_variable = tracking_variable_name==NULL ? "" : *tracking_variable_name;
         run.N = current->clusters.size();
         run.M = previous->clusters.size();
         run.cs = cs;

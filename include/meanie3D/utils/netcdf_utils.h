@@ -352,65 +352,13 @@ namespace m3D {
                 return unpacked_value;
             }
 
-            /** Unpack the limits 
-             */
-            template <typename T>
-            void
-            unpacked_limits(const NcVar &var, T &valid_min, T &valid_max)
-            {
-                T scale_factor = 1.0;
-
-                NcVarAtt att;
-
-                try {
-                    att = var.getAtt("scale_factor");
-                    att.getValues(&scale_factor);
-                } catch (netCDF::exceptions::NcAttExists &e) {
-                } catch (std::exception &e) {
-                }
-
-                T offset = 0.0;
-
-                try {
-                    att = var.getAtt("add_offset");
-                    att.getValues(&offset);
-                } catch (netCDF::exceptions::NcAttExists &e) {
-                } catch (std::exception &e) {
-                }
-
-                valid_min = numeric_limits<T>::min();
-
-                try {
-                    att = var.getAtt("valid_min");
-                    att.getValues(&valid_min);
-                } catch (netCDF::exceptions::NcAttExists &e) {
-                } catch (std::exception &e) {
-                }
-
-                valid_max = numeric_limits<T>::max();
-
-                try {
-                    att = var.getAtt("valid_max");
-                    att.getValues(&valid_max);
-                } catch (netCDF::exceptions::NcAttExists &e) {
-                } catch (std::exception &e) {
-                }
-
-                //        cout << endl;
-                //        cout << "Valid range for " << var.getName() << " packed=(" << valid_min << "," <<  valid_max << ")";
-
-                valid_min = offset + scale_factor * valid_min;
-                valid_max = offset + scale_factor * valid_max;
-
-                //        cout << " unpacked=(" << valid_min << "," <<  valid_max << ")" << endl;
-
-            }
-
-            /** Checks if the CF-Metadata standard is obeyed with respect to 
-             * valid_min, valid_max or valid_range attributes.
+            /**
+             * Retrieves the valid_min/valid_max. Looks at valid_range,
+             * valid_min and valid_max. Values are <b>packed</b>.
+             *
              * @param variable
-             * @param contains min value after the call, provided the attributes existed
-             * @param contains max value after the call, provided the attributes existed
+             * @param valid_min
+             * @param valid_min
              * @throw std::exception if neither valid_min+valid_max nor valid_range existed
              */
             template <typename T>
@@ -420,9 +368,7 @@ namespace m3D {
                 bool have_valid_range = false;
 
                 // check for 'valid_range' attribute first
-
                 T values[2];
-
                 try {
                     var.getAtt("valid_range").getValues(&values[0]);
                     valid_min = values[0];
@@ -434,14 +380,12 @@ namespace m3D {
 
                 if (!have_valid_range) {
                     // need both valid_min and valid_max
-
                     try {
                         var.getAtt("valid_min").getValues(&valid_min);
                         have_valid_range = true;
                     } catch (const std::exception &e) {
                         have_valid_range = false;
                     }
-
                     try {
                         var.getAtt("valid_max").getValues(&valid_max);
                         have_valid_range = true;
@@ -452,10 +396,44 @@ namespace m3D {
 
                 // No valid_range or valid_min+valid_max constitutes
                 // a reason for exception
-
                 if (!have_valid_range) {
                     throw std::exception();
                 }
+            }
+
+            /**
+             * Retrieves the valid_min/valid_max. Looks at valid_range,
+             * valid_min and valid_max. Values are <b>unpacked</b>.
+             *
+             * @param valid_min
+             * @param valid_max
+             * @throw std::exception if neither valid_min+valid_max nor valid_range existed
+             */
+            template <typename T>
+            void
+            unpacked_limits(const NcVar &var, T &valid_min, T &valid_max)
+            {
+                NcVarAtt att;
+
+                T scale_factor = 1.0;
+                try {
+                    att = var.getAtt("scale_factor");
+                    att.getValues(&scale_factor);
+                } catch (netCDF::exceptions::NcAttExists &e) {
+                } catch (std::exception &e) {
+                }
+
+                T offset = 0.0;
+                try {
+                    att = var.getAtt("add_offset");
+                    att.getValues(&offset);
+                } catch (netCDF::exceptions::NcAttExists &e) {
+                } catch (std::exception &e) {
+                }
+
+                ::m3D::utils::netcdf::get_valid_range(var,valid_min,valid_max);
+                valid_min = offset + scale_factor * valid_min;
+                valid_max = offset + scale_factor * valid_max;
             }
 
             /** Retrieves an simple attribute value with some checks
