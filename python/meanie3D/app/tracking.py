@@ -130,7 +130,10 @@ def run(config,time_index):
             
         if utils.getSafe(tracking,'maxTime'):
             tracking_params = "%s --max-time %d" % (tracking_params, tracking['maxTime'])
-            
+
+        if utils.getSafe(tracking,'maxSizeDeviation'):
+            tracking_params = "%s --max-size-deviation %d" % (tracking_params, tracking['maxSizeDeviation'])
+
         if utils.getSafe(tracking,'useDisplacementVectors'):
             tracking_params = "%s -v"  % tracking_params
 
