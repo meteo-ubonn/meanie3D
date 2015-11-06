@@ -46,7 +46,7 @@ namespace m3D {
     using namespace utils::vectors;
 
 #pragma mark -
-#pragma mark Preliminaries
+#pragma mark Experimental
 
     template <typename T>
     void
@@ -71,6 +71,9 @@ namespace m3D {
             }
         }
     }
+
+#pragma mark -
+#pragma mark Preliminaries
 
     template <typename T>
     bool
