@@ -41,8 +41,60 @@ namespace m3D {
     /** This class contains the tracking code.
      */
     template <typename T>
-    class Tracking
-    {
+    class Tracking {
+
+    public:
+
+        typedef pair<size_t, T> match_t;
+        typedef vector<match_t> matchlist_t;
+
+        /**
+         * Bundles data that constitutes a tracking run. These are mostly
+         * things derived at the beginning, such as bounds, derived parameters
+         * or similar. Also the correlation data between clusters.
+         */
+        typedef struct {
+            typename ClusterList<T>::ptr current; // previous cluster list
+            typename ClusterList<T>::ptr previous; // current cluster list
+            Verbosity verbosity;
+
+            // Properties
+            const CoordinateSystem<T> *cs; // Coordinate system (for transformations)
+            LinearIndexMapping mapping;     // maps i <-> (n,m)
+
+            m3D::id_t highestId;        // Stores the highest used ID
+            m3D::uuid_t highestUuid;    // Stores the highest used UUID
+
+            bool haveHistogramInfo;             // Indicates if histogram based data is available
+            std::string tracking_variable;      // Indicates the variable used for histogram
+            int tracking_var_index;             // Index of the variable used for histogram
+            T valid_min;                        // lower valid bound of histogram variable
+            T valid_max;                        // upper valid bound of histogram variable
+
+            ::units::values::s deltaT;          // Difference in seconds
+            ::units::values::m maxDisplacement; // Calculated from deltaT and max velocity
+            ::units::values::m maxMidDisplacement;         // Maximum center displacment
+            int maxSizeDifference;                       // Maximum allowed histogram size difference
+
+            ::units::values::m overlap_constraint_radius;
+            ::units::values::meters_per_second overlap_constraint_velocity;
+
+            id_set_t matched_uuids;             // uuid of new clusters that were matched
+            matchlist_t matches;                // final matching result
+            id_set_t scheduled_for_removal;     // Set of ids to be removed at the end of the run.
+
+            ::units::values::meters_per_second averageVelocity;
+            // Correlation data
+            typename SimpleMatrix<T>::matrix_t rankCorrelation;
+            typename SimpleMatrix< ::units::values::m >::matrix_t midDisplacement;
+            typename SimpleMatrix<T>::matrix_t sizeDifference;
+            typename SimpleMatrix<T>::matrix_t likelihood;
+            typename SimpleMatrix<T>::matrix_t coverOldByNew;
+            typename SimpleMatrix<T>::matrix_t coverNewByOld;
+            typename SimpleMatrix<T>::flag_matrix_t matchPossible;
+
+        } tracking_run_t;
+
     private:
 
         // Member Variables
@@ -76,23 +128,19 @@ namespace m3D {
          * @param weight for histogram rank correlation
          */
         Tracking(T wr = 1.0, T wd = 1.0, T wt = 1.0,
-                ::units::values::s max_delta_t = ::units::values::s(930),
-                const Verbosity verbosity = VerbosityNormal)
-        : m_dist_weight(wr)
-        , m_size_weight(wd)
-        , m_corr_weight(wt)
-        , m_max_deltaT(max_delta_t) // 15 minutes )(plus 30 seconds slack)
-        , m_useMeanVelocityConstraint(false) // limit deviation from mean velocity (false)
-        , m_meanVelocitySecurityPercentage(0.5) // to 50 %
-        , m_maxVelocity(::units::values::meters_per_second(100.0)) // limit max velocity to 30 m/s (~108 km/h)
-        , m_max_size_deviation(2.5) // how many percent may the objects vary in size (number of points) between scans (250%)
-        , m_useOverlapConstraint(true)
-        , m_ms_threshold(0.5) // percentage coverage old/new for merge/split (33%)
-        , m_msc_threshold(0.75) // percentage coverage old/new in merge/split for continuing track (75%)
-        , m_continueIDs(true) // continue IDs through splits/merges ?)
-        , m_useDisplacementVectors(false)
-        , m_verbosity(verbosity)
-        {
+                 ::units::values::s max_delta_t = ::units::values::s(930),
+                 const Verbosity verbosity = VerbosityNormal)
+                : m_dist_weight(wr), m_size_weight(wd), m_corr_weight(wt),
+                  m_max_deltaT(max_delta_t) // 15 minutes )(plus 30 seconds slack)
+                , m_useMeanVelocityConstraint(false) // limit deviation from mean velocity (false)
+                , m_meanVelocitySecurityPercentage(0.5) // to 50 %
+                , m_maxVelocity(::units::values::meters_per_second(100.0)) // limit max velocity to 30 m/s (~108 km/h)
+                , m_max_size_deviation(
+                        2.5) // how many percent may the objects vary in size (number of points) between scans (250%)
+                , m_useOverlapConstraint(true), m_ms_threshold(0.5) // percentage coverage old/new for merge/split (33%)
+                , m_msc_threshold(0.75) // percentage coverage old/new in merge/split for continuing track (75%)
+                , m_continueIDs(true) // continue IDs through splits/merges ?)
+                , m_useDisplacementVectors(false) {
         };
 
         /** Compares two cluster lists and propagates or assigns new identifiers.
@@ -104,9 +152,10 @@ namespace m3D {
          * @param verbosity
          */
         void track(typename ClusterList<T>::ptr previous,
-                typename ClusterList<T>::ptr current,
-                const CoordinateSystem<T> *cs,
-                const std::string *tracking_variable_name = NULL);
+                   typename ClusterList<T>::ptr current,
+                   const CoordinateSystem<T> *cs,
+                   const std::string *tracking_variable_name = NULL,
+                   const Verbosity verbosity = VerbosityNormal);
 
         // Accessors
 
@@ -114,13 +163,11 @@ namespace m3D {
          * 
          * @return 
          */
-        ::units::values::meters_per_second maxTrackingSpeed()
-        {
+        ::units::values::meters_per_second maxTrackingSpeed() {
             return m_maxVelocity;
         }
 
-        void setMaxTrackingSpeed(::units::values::meters_per_second speed)
-        {
+        void setMaxTrackingSpeed(::units::values::meters_per_second speed) {
             m_maxVelocity = speed;
         }
 
@@ -129,13 +176,11 @@ namespace m3D {
          * 
          * @return 
          */
-        float mergeSplitThreshold()
-        {
+        float mergeSplitThreshold() {
             return m_ms_threshold;
         }
 
-        void setMergeSplitThreshold(float value)
-        {
+        void setMergeSplitThreshold(float value) {
             m_ms_threshold = value;
         }
 
@@ -145,13 +190,11 @@ namespace m3D {
          * 
          * @return 
          */
-        float mergeSplitContinuationThreshold()
-        {
+        float mergeSplitContinuationThreshold() {
             return m_msc_threshold;
         }
 
-        void setMergeSplitContinuationThreshold(float value)
-        {
+        void setMergeSplitContinuationThreshold(float value) {
             m_msc_threshold = value;
         }
 
@@ -159,13 +202,11 @@ namespace m3D {
          * 
          * @return 
          */
-        bool continueIDs()
-        {
+        bool continueIDs() {
             return m_continueIDs;
         }
 
-        void setContinueIDs(bool value)
-        {
+        void setContinueIDs(bool value) {
             m_continueIDs = value;
         }
 
@@ -173,13 +214,11 @@ namespace m3D {
          * Are displacement vectors used to improve tracking?
          * @return 
          */
-        bool useDisplacementVectors()
-        {
+        bool useDisplacementVectors() {
             return m_useDisplacementVectors;
         }
 
-        void setUseDisplacementVectors(bool value)
-        {
+        void setUseDisplacementVectors(bool value) {
             m_useDisplacementVectors = value;
         }
 
@@ -187,77 +226,15 @@ namespace m3D {
          * 
          * @return 
          */
-        ::units::values::s maxDeltaT()
-        {
+        ::units::values::s maxDeltaT() {
             return m_max_deltaT;
         }
 
-        void setMaxDeltaT(::units::values::s seconds)
-        {
+        void setMaxDeltaT(::units::values::s seconds) {
             m_max_deltaT = seconds;
         }
 
-        /**
-         * 
-         * @param verbosity
-         */
-        void setVerbosity(Verbosity verbosity)
-        {
-            m_verbosity = verbosity;
-        }
-
     protected:
-
-        typedef pair<size_t, T> match_t;
-        typedef vector< match_t > matchlist_t;
-
-        /**
-         * Bundles data that constitutes a tracking run. These are mostly
-         * things derived at the beginning, such as bounds, derived parameters
-         * or similar. Also the correlation data between clusters.
-         */
-        typedef struct
-        {
-            typename ClusterList<T>::ptr current; // previous cluster list
-            typename ClusterList<T>::ptr previous; // current cluster list
-
-            // Properties
-            const CoordinateSystem<T> *cs; // Coordinate system (for transformations)
-            LinearIndexMapping mapping; // maps i <-> (n,m)
-
-            m3D::id_t highestId;        // Stores the highest used ID
-            m3D::uuid_t highestUuid;    // Stores the highest used UUID
-
-            std::string tracking_variable;
-            int tracking_var_index;
-            T valid_min;
-            T valid_max;
-
-            ::units::values::s deltaT; // Difference in seconds
-            ::units::values::m maxDisplacement; // Calculated from deltaT and max velocity
-            ::units::values::m maxMidD;
-            int maxHistD;
-
-            ::units::values::m overlap_constraint_radius;
-            ::units::values::meters_per_second overlap_constraint_velocity;
-
-            id_set_t matched_uuids; // uuid of new clusters that were matched
-
-            matchlist_t matches;    // final matching result
-
-            id_set_t scheduled_for_removal; // Set of ids to be removed at the end of the run.
-
-            ::units::values::meters_per_second averageVelocity;
-            // Correlation data
-            typename SimpleMatrix<T>::matrix_t rank_correlation;
-            typename SimpleMatrix< ::units::values::m>::matrix_t midDisplacement;
-            typename SimpleMatrix<T>::matrix_t histDiff;
-            typename SimpleMatrix<T>::matrix_t sum_prob;
-            typename SimpleMatrix<T>::matrix_t coverOldByNew;
-            typename SimpleMatrix<T>::matrix_t coverNewByOld;
-            typename SimpleMatrix<T>::flag_matrix_t constraints_satisified;
-
-        } tracking_run_t;
 
         /**
          * Move the clusters in the list by their displacement vectors 
@@ -312,10 +289,33 @@ namespace m3D {
         void removeScheduled(const tracking_run_t &run);
 
         /**
+         * Examine criteria for split continuation in unclear
+         * situation (no tracked id). Consider the following
+         * factors:
+         * <ul>
+         *  <li>dR - geometrical center difference</li>
+         *  <li>dH - size difference</li>
+         *  <li>obn - cover old by new</li>
+         * </ul>
+         * Calculates:
+         * s = erfc(dR) + erfc(dH) + erf(obn)
+         * =&gt; max(s) is the winner
+         * =&gt; if equal candidates, no one wins
+         * @param run tracking context
+         * @param index of previous cluster that split up
+         * @param list of index of candidates
+         * @return -1 if no one wins, number of candidate else.
+         */
+        int findBestSplitCandidate(typename Tracking<T>::tracking_run_t &run,
+                                   const int &m,
+                                   const vector<int> &candidates);
+
+        /**
          *
          */
-        bool tagIfNeeded(typename Tracking<T>::tracking_run_t &run,
-                         typename Cluster<T>::ptr c);
+        int findBestMergeCandidate(typename Tracking<T>::tracking_run_t &run,
+                                   const int &n,
+                                   const vector<int> &candidates);
     };
 }
 

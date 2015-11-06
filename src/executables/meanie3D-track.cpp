@@ -60,18 +60,15 @@ void parse_commmandline(program_options::variables_map vm,
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
         exit(EXIT_FAILURE);
-        ;
     }
 
     if (vm.count("previous") == 0) {
         cerr << "Missing previous cluster file argument --previous" << endl;
-
         exit(1);
     }
 
     try {
         previous_filename = vm["previous"].as<string>();
-
         NcFile previous_cluster_file(previous_filename, NcFile::read);
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "Exception opening file " << previous_filename << ":" << endl;
@@ -82,7 +79,6 @@ void parse_commmandline(program_options::variables_map vm,
 
     try {
         current_filename = vm["current"].as<string>();
-
         NcFile current_cluster_file(current_filename, NcFile::write);
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "FATAL:exception opening file " << current_filename << ":" << e.what() << endl;
@@ -90,9 +86,7 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     // Verbosity
-
     unsigned short vb = vm["verbosity"].as<unsigned short>();
-
     if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
         exit(EXIT_FAILURE);
@@ -101,39 +95,29 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     // max-speed
-
     FS_TYPE speed = vm["max-speed"].as<FS_TYPE>();
-
     max_speed = ::units::values::meters_per_second(speed);
 
     // max time
-
     FS_TYPE time = vm["max-time"].as<FS_TYPE>();
-
     max_time = ::units::values::s(time);
 
     // continue ID?
-
     continueIDs = !(vm.count("discontinue-id-in-merge-and-split") > 0);
-
     useDisplacementVectors = vm.count("use-displacement-vectors") > 0;
 
     // merge/split continuation threshold
-
     mergeSplitContinuationThreshold = vm["merge-split-continuation-threshold"].as<FS_TYPE>();
 
     // merge/split threshold
-
     mergeSplitThreshold = vm["merge-split-threshold"].as<FS_TYPE>();
 
     // Weights
-
     range_weight = vm["wr"].as<FS_TYPE>();
     size_weight = vm["ws"].as<FS_TYPE>();
     correlation_weight = vm["wt"].as<FS_TYPE>();
 
     // tracking variable
-
     if (vm.count("tracking-variable") > 0) {
         tracking_variable_name = vm["tracking-variable"].as<string>();
     }
@@ -141,54 +125,35 @@ void parse_commmandline(program_options::variables_map vm,
 #if WITH_VTK
 
     // --write-vtk
-
     write_vtk = vm.count("write-vtk") > 0;
 
     // VTK dimension mapping
-
     if (vm.count("vtk-dimensions") > 0) {
         // Open the file for reading once more
-
         NcFile *file = new NcFile(current_filename, NcFile::read);
-
         // Read "featurespace_dimensions"
-
         string fs_dimensions;
-
         file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
-
         vector<string> fs_dim_names = vectors::from_string<string>(fs_dimensions);
-
-
         // parse dimension list
-
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
         boost::char_separator<char> sep(",");
-
         string str_value = vm["vtk-dimensions"].as<string>();
-
         tokenizer dim_tokens(str_value, sep);
-
         for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
             string name = *tok_iter;
-
             // Boost::tokenizer has a horrible bug that only hits when
             // Optimization is above -O2. It appends brackets to the
             // beginning or end of the token. Totally fucked up shit
-
             bool found_it = false;
-
             for (size_t pi = 0; pi < fs_dim_names.size(); pi++) {
                 std::string dim_name = fs_dim_names[pi];
-
                 if (name.compare(dim_name) == 0) {
                     vtk_dimension_indexes.push_back((size_t) pi);
                     found_it = true;
                     break;
                 }
             }
-
             if (!found_it) {
                 cerr << "FATAL:invalid dimension '" << name << "'. Check parameter --vtk-dimensions" << endl;
                 exit(EXIT_FAILURE);
@@ -379,7 +344,6 @@ int main(int argc, char** argv) {
     tracking.setMergeSplitThreshold(mergeSplitThreshold);
     tracking.setMergeSplitContinuationThreshold(mergeSplitContinuationThreshold);
     tracking.setUseDisplacementVectors(useDisplacementVectors);
-    tracking.setVerbosity(verbosity);
     tracking.track(previous, current, cs, &tracking_variable_name);
 
 #if WITH_VTK
