@@ -45,6 +45,41 @@ namespace m3D {
 
     public:
 
+        /**
+         * Parameters to the tracking algorithm.
+         */
+        typedef struct {
+            std::string previous_filename; // Path to previous cluster file
+            std::string current_filename; // Path to current cluster file
+
+            bool write_vtk; // Write out clusters in .vtk? (TODO: remove)
+            std::vector<size_t> vtk_dimension_indexes; // See --vtk-dimensions in meanie3D-detect
+
+            double range_weight;        // Correlation weight for distance between clusters
+            double size_weight;         // Correlation weight for size comparison
+            double correlation_weight;  // Correlation weight for histogram comparison
+            std::string tracking_variable; // Variable name to be used for histogram correlation.
+
+            ::units::values::meters_per_second maxVelocity; // what is the allowed top speed of objects?
+            ::units::values::s max_deltaT; // How much time in seconds allowed between scans?
+            double max_size_deviation; // How many percent may the objects vary in size (number of points) between scans?
+
+            bool continueIDs; // Continue ids across merges and splits?
+            float mergeSplitThreshold; // What is the minimum overlap for merges/splits?
+            float mergeSplitContinuationThreshold; // What is the overlap required for continuing ids in merges/splits?
+
+            bool useDisplacementVectors; // Use displacment vectors (experimental)
+
+            bool useOverlapConstraint; // Do objects require overlap to be tracked (if their speed/size is low/big enough)
+            bool useMeanVelocityConstraint; // Are object matches constraint by average velocity? (currently defunct)
+            T meanVelocityPercentage; // Maximum allowed deviation from average velocity? (currently defunct)
+
+            Verbosity verbosity; // Output level (0 (none) to 3 (all))
+
+        } tracking_param_t;
+
+    protected:
+
         typedef pair<size_t, T> match_t;
         typedef vector<match_t> matchlist_t;
 
@@ -54,12 +89,10 @@ namespace m3D {
          * or similar. Also the correlation data between clusters.
          */
         typedef struct {
+            // Properties
             typename ClusterList<T>::ptr current; // previous cluster list
             typename ClusterList<T>::ptr previous; // current cluster list
-            Verbosity verbosity;
-
-            // Properties
-            size_t N,M;                     // Shortcuts for lenghts
+            size_t N,M;                     // Shortcuts for lenghts of previous and current lists.
             const CoordinateSystem<T> *cs;  // Coordinate system (for transformations)
             LinearIndexMapping mapping;     // maps i <-> (n,m)
 
@@ -67,7 +100,6 @@ namespace m3D {
             m3D::uuid_t highestUuid;    // Stores the highest used UUID
 
             bool haveHistogramInfo;             // Indicates if histogram based data is available
-            std::string tracking_variable;      // Indicates the variable used for histogram
             int tracking_var_index;             // Index of the variable used for histogram
             T valid_min;                        // lower valid bound of histogram variable
             T valid_max;                        // upper valid bound of histogram variable
@@ -98,28 +130,7 @@ namespace m3D {
 
     private:
 
-        // Member Variables
-
-        T m_dist_weight; // correlation weight distance
-        T m_size_weight; // correlation weight histogram sum
-        T m_corr_weight; // correlation weight histogram rank correlation
-
-        ::units::values::s m_max_deltaT; // What is the maximum time between slices for valid tracking (in seconds)
-        float m_max_size_deviation; // how many percent may the objects vary in size (number of points) between scans?
-
-        ::units::values::meters_per_second m_maxVelocity; // physical maximum speed of objects in m/s
-        bool m_useOverlapConstraint; // make use of max velocity constraint?
-
-        bool m_useMeanVelocityConstraint; // make use of max velocity constraint?
-        T m_meanVelocitySecurityPercentage; // Percentual amount of deviation from mean velocity allowed
-
-        float m_ms_threshold; // Percentage of coverage required to be a candidate for merge/split?
-        float m_msc_threshold; // How many percent of coverage is required in splits/merges for track continuation?
-
-        bool m_continueIDs; // Continue ids through merging/splitting?
-        bool m_useDisplacementVectors; // Experimental: use displacement vectors to advect previous clusters?
-
-        Verbosity m_verbosity; // Verbosity of output
+        tracking_param_t m_params;
 
     public:
 
@@ -128,112 +139,16 @@ namespace m3D {
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking(T wr = 1.0, T wd = 1.0, T wt = 1.0,
-                 ::units::values::s max_delta_t = ::units::values::s(930),
-                 const Verbosity verbosity = VerbosityNormal)
-                : m_dist_weight(wr), m_size_weight(wd), m_corr_weight(wt),
-                  m_max_deltaT(max_delta_t) // 15 minutes )(plus 30 seconds slack)
-                , m_useMeanVelocityConstraint(false) // limit deviation from mean velocity (false)
-                , m_meanVelocitySecurityPercentage(0.5) // to 50 %
-                , m_maxVelocity(::units::values::meters_per_second(100.0)) // limit max velocity to 30 m/s (~108 km/h)
-                , m_max_size_deviation(
-                        2.5) // how many percent may the objects vary in size (number of points) between scans (250%)
-                , m_useOverlapConstraint(true), m_ms_threshold(0.5) // percentage coverage old/new for merge/split (33%)
-                , m_msc_threshold(0.75) // percentage coverage old/new in merge/split for continuing track (75%)
-                , m_continueIDs(true) // continue IDs through splits/merges ?)
-                , m_useDisplacementVectors(false) {
+        Tracking(tracking_param_t params) : m_params(params) {
         };
 
-        /** Compares two cluster lists and propagates or assigns new identifiers.
-         * @param clusters from the last run
-         * @param clusters form the current run
-         * @param coordinate system
-         * @param name of variable to be used for the histogram correlation. 
-         *        If NULL, histogram comparison is ignored completely.
-         * @param verbosity
+        /**
+         * Runs the meanie3D tracking algorithm.
+         * @param current
+         * @param previous
          */
         void track(typename ClusterList<T>::ptr previous,
-                   typename ClusterList<T>::ptr current,
-                   const CoordinateSystem<T> *cs,
-                   const std::string *tracking_variable_name = NULL,
-                   const Verbosity verbosity = VerbosityNormal);
-
-        // Accessors
-
-        /** Maximum allowed speed for object pairings. 
-         * 
-         * @return 
-         */
-        ::units::values::meters_per_second maxTrackingSpeed() {
-            return m_maxVelocity;
-        }
-
-        void setMaxTrackingSpeed(::units::values::meters_per_second speed) {
-            m_maxVelocity = speed;
-        }
-
-        /** How much area is covered between clusters from previous and
-         * current time slice to make it a split/merge? 
-         * 
-         * @return 
-         */
-        float mergeSplitThreshold() {
-            return m_ms_threshold;
-        }
-
-        void setMergeSplitThreshold(float value) {
-            m_ms_threshold = value;
-        }
-
-        /** What is the minimum coverage between clusters from the previous
-         * and current time slice after a merge / split occured to consider
-         * the continuation of the ID?
-         * 
-         * @return 
-         */
-        float mergeSplitContinuationThreshold() {
-            return m_msc_threshold;
-        }
-
-        void setMergeSplitContinuationThreshold(float value) {
-            m_msc_threshold = value;
-        }
-
-        /** Are IDs even considered to be continued in merges/splits?
-         * 
-         * @return 
-         */
-        bool continueIDs() {
-            return m_continueIDs;
-        }
-
-        void setContinueIDs(bool value) {
-            m_continueIDs = value;
-        }
-
-        /** 
-         * Are displacement vectors used to improve tracking?
-         * @return 
-         */
-        bool useDisplacementVectors() {
-            return m_useDisplacementVectors;
-        }
-
-        void setUseDisplacementVectors(bool value) {
-            m_useDisplacementVectors = value;
-        }
-
-        /**
-         * 
-         * @return 
-         */
-        ::units::values::s maxDeltaT() {
-            return m_max_deltaT;
-        }
-
-        void setMaxDeltaT(::units::values::s seconds) {
-            m_max_deltaT = seconds;
-        }
+                   typename ClusterList<T>::ptr current);
 
     protected:
 
@@ -251,7 +166,7 @@ namespace m3D {
          * @param run
          * @return 
          */
-        bool calculatePreliminaries(typename Tracking<T>::tracking_run_t &run);
+        bool initialise(typename Tracking<T>::tracking_run_t &run);
 
         /**
          * 

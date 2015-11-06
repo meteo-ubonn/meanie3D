@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string>
 #include <netcdf>
+#include <meanie3D/tracking/tracking.h>
 
 using namespace std;
 using namespace boost;
@@ -39,24 +40,8 @@ typedef double FS_TYPE;
 
 static const double NO_SCALE = numeric_limits<double>::min();
 
-void parse_commmandline(program_options::variables_map vm,
-        string &previous_filename,
-        string &current_filename,
-        string &tracking_variable_name,
-        bool &write_vtk,
-        FS_TYPE &range_weight,
-        FS_TYPE &size_weight,
-        FS_TYPE &correlation_weight,
-        ::units::values::meters_per_second &max_speed,
-        ::units::values::s &max_time,
-        bool &continueIDs,
-        FS_TYPE &mergeSplitThreshold,
-        FS_TYPE &mergeSplitContinuationThreshold,
-        vector<size_t> &vtk_dimension_indexes,
-        bool &useDisplacementVectors,
-        Verbosity &verbosity) {
-    // Version
-
+void parse_commmandline(program_options::variables_map vm, Tracking<FS_TYPE>::tracking_param_t &params)
+{
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
         exit(EXIT_FAILURE);
@@ -68,20 +53,19 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     try {
-        previous_filename = vm["previous"].as<string>();
-        NcFile previous_cluster_file(previous_filename, NcFile::read);
+        params.previous_filename = vm["previous"].as<string>();
+        NcFile previous_cluster_file(params.previous_filename, NcFile::read);
     } catch (const netCDF::exceptions::NcException &e) {
-        cerr << "Exception opening file " << previous_filename << ":" << endl;
-
+        cerr << "Exception opening file " << params.previous_filename << ":" << endl;
         cerr << "FATAL:" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
 
     try {
-        current_filename = vm["current"].as<string>();
-        NcFile current_cluster_file(current_filename, NcFile::write);
+        params.current_filename = vm["current"].as<string>();
+        NcFile current_cluster_file(params.current_filename, NcFile::write);
     } catch (const netCDF::exceptions::NcException &e) {
-        cerr << "FATAL:exception opening file " << current_filename << ":" << e.what() << endl;
+        cerr << "FATAL:exception opening file " << params.current_filename << ":" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
 
@@ -91,51 +75,45 @@ void parse_commmandline(program_options::variables_map vm,
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
         exit(EXIT_FAILURE);
     } else {
-        verbosity = (Verbosity) vb;
+        params.verbosity = (Verbosity) vb;
     }
 
     // max-speed
     FS_TYPE speed = vm["max-speed"].as<FS_TYPE>();
-    max_speed = ::units::values::meters_per_second(speed);
+    params.maxVelocity= ::units::values::meters_per_second(speed);
 
     // max time
     FS_TYPE time = vm["max-time"].as<FS_TYPE>();
-    max_time = ::units::values::s(time);
+    params.max_deltaT= ::units::values::s(time);
 
     // continue ID?
-    continueIDs = !(vm.count("discontinue-id-in-merge-and-split") > 0);
-    useDisplacementVectors = vm.count("use-displacement-vectors") > 0;
+    params.continueIDs = !(vm.count("discontinue-id-in-merge-and-split") > 0);
+    params.useDisplacementVectors = vm.count("use-displacement-vectors") > 0;
 
     // merge/split continuation threshold
-    mergeSplitContinuationThreshold = vm["merge-split-continuation-threshold"].as<FS_TYPE>();
+    params.mergeSplitContinuationThreshold = vm["merge-split-continuation-threshold"].as<FS_TYPE>();
 
     // merge/split threshold
-    mergeSplitThreshold = vm["merge-split-threshold"].as<FS_TYPE>();
+    params.mergeSplitThreshold = vm["merge-split-threshold"].as<FS_TYPE>();
 
     // Weights
-    range_weight = vm["wr"].as<FS_TYPE>();
-    size_weight = vm["ws"].as<FS_TYPE>();
-    correlation_weight = vm["wt"].as<FS_TYPE>();
+    params.range_weight = vm["wr"].as<FS_TYPE>();
+    params.size_weight = vm["ws"].as<FS_TYPE>();
+    params.correlation_weight = vm["wt"].as<FS_TYPE>();
 
     // tracking variable
     if (vm.count("tracking-variable") > 0) {
-        tracking_variable_name = vm["tracking-variable"].as<string>();
-    }
-
-    if (correlation_weight != 0.0 && tracking_variable_name.empty()) {
-        cerr << "When specifying --wt you must give --tracking-variable as well." << endl;
-        exit(EXIT_FAILURE);
+        params.tracking_variable = vm["tracking-variable"].as<string>();
     }
 
 #if WITH_VTK
-
     // --write-vtk
-    write_vtk = vm.count("write-vtk") > 0;
-
+    params.write_vtk = vm.count("write-vtk") > 0;
     // VTK dimension mapping
+    // TODO: This code should be made generic and moved into utils.
     if (vm.count("vtk-dimensions") > 0) {
         // Open the file for reading once more
-        NcFile *file = new NcFile(current_filename, NcFile::read);
+        NcFile *file = new NcFile(params.current_filename, NcFile::read);
         // Read "featurespace_dimensions"
         string fs_dimensions;
         file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
@@ -154,7 +132,7 @@ void parse_commmandline(program_options::variables_map vm,
             for (size_t pi = 0; pi < fs_dim_names.size(); pi++) {
                 std::string dim_name = fs_dim_names[pi];
                 if (name.compare(dim_name) == 0) {
-                    vtk_dimension_indexes.push_back((size_t) pi);
+                    params.vtk_dimension_indexes.push_back((size_t) pi);
                     found_it = true;
                     break;
                 }
@@ -165,6 +143,7 @@ void parse_commmandline(program_options::variables_map vm,
             }
         }
         delete file;
+        VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = params.vtk_dimension_indexes;
     }
 
 #endif
@@ -193,6 +172,7 @@ int main(int argc, char** argv) {
             ("discontinue-id-in-merge-and-split,d", "If present, the tracking discontinues cluster IDs when merging and splitting. Otherwise the largest candidate carries the ID on if the overlap exceeds --merge-split-continuation-threshold.")
             ("max-speed", program_options::value<FS_TYPE>()->default_value(50.0), "Maximum allowed object speed (m/s)")
             ("max-time", program_options::value<FS_TYPE>()->default_value(915.0), "Maximum allowed time difference between files (seconds)")
+            ("max-size-deviation", program_options::value<double>()->default_value(2.5), "Maximum allowed difference in sizes (number of points) between clusters from previous and current file in percent [0..1]")
 #if WITH_VTK
             ("write-vtk,k", "Write out the clusters as .vtk files for visit")
             ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
@@ -217,108 +197,56 @@ int main(int argc, char** argv) {
 
     // Evaluate user input
 
-    string previous_filename, current_filename, tracking_variable_name;
-    Verbosity verbosity;
-    bool write_vtk = false;
-    vector<size_t> vtk_dimension_indexes;
-
-    FS_TYPE range_weight, size_weight, correlation_weight;
-    ::units::values::meters_per_second max_speed;
-    ::units::values::s max_time;
-
-    bool continueIDs = true;
-    bool useDisplacementVectors = false;
-    FS_TYPE mergeSplitThreshold = 0.66;
-    FS_TYPE mergeSplitContinuationThreshold = 0.66;
-
+    Tracking<FS_TYPE>::tracking_param_t params;
     try {
-        parse_commmandline(vm,
-                previous_filename,
-                current_filename,
-                tracking_variable_name,
-                write_vtk,
-                range_weight,
-                size_weight,
-                correlation_weight,
-                max_speed,
-                max_time,
-                continueIDs,
-                mergeSplitThreshold,
-                mergeSplitContinuationThreshold,
-                vtk_dimension_indexes,
-                useDisplacementVectors,
-                verbosity
-                );
+        parse_commmandline(vm, params);
     } catch (const std::exception &e) {
         cerr << "FATAL:" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
 
-#if WITH_VTK
-    VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
-#endif        
 
-    if (verbosity > VerbositySilent) {
+    if (params.verbosity > VerbositySilent) {
         cout << "----------------------------------------------------" << endl;
         cout << "meanie3D-track" << endl;
         cout << "----------------------------------------------------" << endl;
         cout << endl;
-
         cout << "Command line options:" << endl;
-
-        cout << "\tprevious cluster file = " << previous_filename << endl;
-        cout << "\tcurrent cluster file = " << current_filename << endl;
-        cout << "\tvariable name for histogram comparison: " << tracking_variable_name << endl;
-        cout << "\tcorrelation weights: wr=" << range_weight << " ws=" << size_weight << " wt=" << correlation_weight << endl;
-        cout << "\tmaximum speed: " << max_speed << " [m/s]" << endl;
-        cout << "\tmaximum time difference: " << max_time << " [seconds]" << endl;
-        cout << "\tmerge/split threshold: " << mergeSplitThreshold << endl;
-        cout << "\tcontinue id in merge/split: " << (continueIDs ? "yes" : "no") << endl;
-        cout << "\tmerge/split id continuation threshold: " << mergeSplitContinuationThreshold << endl;
-        cout << "\tusing displacement vectors to shift previous clusters: " << (useDisplacementVectors ? "yes" : "no") << endl;
-
+        cout << "\tprevious cluster file = " << params.previous_filename << endl;
+        cout << "\tcurrent cluster file = " << params.current_filename << endl;
+        cout << "\tvariable name for histogram comparison: " << params.tracking_variable << endl;
+        cout << "\tcorrelation weights: wr=" << params.range_weight << " ws=" << params.size_weight << " wt=" << params.correlation_weight << endl;
+        cout << "\tmaximum speed: " << params.maxVelocity << " [m/s]" << endl;
+        cout << "\tmaximum time difference: " << params.max_deltaT << " [seconds]" << endl;
+        cout << "\tmerge/split threshold: " << params.mergeSplitThreshold << endl;
+        cout << "\tcontinue id in merge/split: " << (params.continueIDs ? "yes" : "no") << endl;
+        cout << "\tmerge/split id continuation threshold: " << params.mergeSplitContinuationThreshold << endl;
+        cout << "\tusing displacement vectors to shift previous clusters: " << (params.useDisplacementVectors ? "yes" : "no") << endl;
 #if WITH_VTK
-        cout << "\twriting results out as vtk:" << (write_vtk ? "yes" : "no") << endl;
+        cout << "\twriting results out as vtk:" << (params.write_vtk ? "yes" : "no") << endl;
 #endif
         cout << endl;
     }
 
-    if (verbosity >= VerbosityNormal) {
-        cout << "Reading " << previous_filename << " ... " << flush;
-        ;
-        start_timer();
-    }
-
     // Read previous clusters
-    if (verbosity >= VerbosityNormal) start_timer("Reading " + previous_filename+ " ... ");
-    ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_filename);
-    if (verbosity >= VerbosityNormal) stop_timer("done");
+    if (params.verbosity >= VerbosityNormal) start_timer("Reading " + params.previous_filename+ " ... ");
+    ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(params.previous_filename);
+    if (params.verbosity >= VerbosityNormal) stop_timer("done");
 
     // Read current clusters
     CoordinateSystem<FS_TYPE> *cs;
-    if (verbosity >= VerbosityNormal) start_timer("Reading " + current_filename + " ... ");
-    ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read(current_filename, &cs);
-    if (verbosity >= VerbosityNormal) stop_timer("done");
-
-    // Check if the feature variables match
-    if (previous->feature_variables != current->feature_variables) {
-        cerr << "FATAL:Incompatible feature variables in the cluster files:" << endl;
-        exit(EXIT_FAILURE);
-    }
+    if (params.verbosity >= VerbosityNormal) start_timer("Reading " + params.current_filename + " ... ");
+    ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read(params.current_filename, &cs);
+    if (params.verbosity >= VerbosityNormal) stop_timer("done");
 
     // Perform tracking
-    Tracking<FS_TYPE> tracking(range_weight, size_weight, correlation_weight);
-    tracking.setMaxTrackingSpeed(max_speed);
-    tracking.setMaxDeltaT(max_time);
-    tracking.setMergeSplitThreshold(mergeSplitThreshold);
-    tracking.setMergeSplitContinuationThreshold(mergeSplitContinuationThreshold);
-    tracking.setUseDisplacementVectors(useDisplacementVectors);
-    tracking.track(previous, current, cs, &tracking_variable_name, verbosity);
+    Tracking<FS_TYPE> tracking(params);
+    tracking.track(previous, current);
 
 #if WITH_VTK
-    if (write_vtk) {
+    if (params.write_vtk) {
         m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(current, cs, current->source_file);
-        boost::filesystem::path path(current_filename);
+        boost::filesystem::path path(params.current_filename);
 
         string modes_path = path.filename().stem().string() + "_modes.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, current->clusters, true);
@@ -329,15 +257,12 @@ int main(int argc, char** argv) {
 #endif
 
     // Write results back
-
-    if (verbosity >= VerbosityNormal) start_timer("-- Writing " + current_filename + " ... ");
-    current->write(current_filename);
-    if (verbosity >= VerbosityNormal) stop_timer("done");
+    if (params.verbosity >= VerbosityNormal) start_timer("-- Writing " + params.current_filename + " ... ");
+    current->write(params.current_filename);
+    if (params.verbosity >= VerbosityNormal) stop_timer("done");
 
     // Clean up
     delete previous;
     delete current;
-    delete cs;
-
     return 0;
 }

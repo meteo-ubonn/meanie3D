@@ -32,19 +32,16 @@
 #include <meanie3D/numericalrecipes.h>
 #include <meanie3D/utils.h>
 
-
 #include <vector>
 #include <netcdf>
 #include <set>
 #include <utility>
 #include <algorithm>
-
 #include <math.h>
 
 #include "tracking.h"
 
 namespace m3D {
-
     using namespace utils;
     using namespace utils::vectors;
 
@@ -77,10 +74,11 @@ namespace m3D {
 
     template <typename T>
     bool
-    Tracking<T>::calculatePreliminaries(typename Tracking<T>::tracking_run_t &run)
+    Tracking<T>::initialise(typename Tracking<T>::tracking_run_t &run)
     {
         bool skip_tracking = false;
-        bool logDetails = run.verbosity >= VerbosityDetails;
+        bool logDetails = m_params.verbosity >= VerbosityDetails;
+        run.cs = NULL;
 
         if (logDetails) {
             cout << endl;
@@ -92,6 +90,15 @@ namespace m3D {
             }
             return true;
         }
+
+        // Check if the feature variables match
+        if (run.previous->feature_variables != run.current->feature_variables) {
+            cerr << "FATAL:Incompatible feature variables in the cluster files:" << endl;
+            exit(EXIT_FAILURE);
+        }
+
+        run.N = run.current->clusters.size();
+        run.M = run.previous->clusters.size();
 
         // Find out the highest id from the previous list
         run.highestId = run.previous->highest_id;
@@ -123,6 +130,13 @@ namespace m3D {
 
         if (!skip_tracking) {
 
+            // Get us a coordinate system
+            std::vector<std::string> dimNames;
+            for (size_t i=0; i < run.current->dimensions.size(); i++) {
+                dimNames.push_back(run.current->dimensions[i].getName());
+            }
+            run.cs = new CoordinateSystem<T>(run.current->ncFile, dimNames);
+
             // Check cluster sizes
             for (size_t i = 0; i < run.M; i++) {
                 typename Cluster<T>::ptr c = run.previous->clusters[i];
@@ -138,21 +152,25 @@ namespace m3D {
             }
 
             // figure out tracking variable index (for histogram)
-            NcVar tracking_var;
-            if (run.tracking_variable == "__default__") {
-                tracking_var = run.current->feature_variables[run.current->dimensions.size()];
-                run.tracking_variable = tracking_var.getName();
+            run.tracking_var_index = -1;
+            run.haveHistogramInfo = false;
+            if (m_params.tracking_variable == "__default__") {
+                NcVar v = run.current->feature_variables[run.current->dimensions.size()];
+                m_params.tracking_variable = v.getName();
+                run.haveHistogramInfo = true;
                 if (logDetails) {
                     cout << "Choosing default variable for histogram correlation: "
-                         << tracking_var.getName() << endl;
+                         << m_params.tracking_variable << endl;
                 }
             } else {
                 bool found_tracking_var = false;
                 for (size_t i = 0; i < run.current->feature_variables.size(); i++) {
                     NcVar v = run.current->feature_variables[i];
                     try {
-                        if (v.getName() == run.tracking_variable) {
+                        if (v.getName() == m_params.tracking_variable) {
                             found_tracking_var = true;
+                            run.tracking_var_index = i;
+                            run.haveHistogramInfo = true;
                         }
                     } catch (const std::exception &e) {
                         cerr << "FATAL:" << e.what() << endl;
@@ -160,30 +178,14 @@ namespace m3D {
                     }
                 }
                 if (!found_tracking_var) {
-                    cerr << "FATAL:tracking variable " << tracking_var.getName()
+                    cerr << "FATAL:tracking variable " << m_params.tracking_variable
                          << " is not part of the feature variables" << endl;
                     exit(EXIT_FAILURE);
                 }
             }
 
-            run.tracking_var_index = -1;
-            run.haveHistogramInfo = false;
-            if (!run.tracking_variable.empty()) {
-                for (size_t i = 0; i < run.current->feature_variables.size(); i++) {
-                    if (run.current->feature_variables[i].getName() == run.tracking_variable) {
-                        run.tracking_var_index = i;
-                        break;
-                    }
-                }
-                if (run.tracking_var_index < 0) {
-                    cerr << "FATAL:Illegal variable name " << run.tracking_variable << " for histogram comparison " << endl;
-                    exit(EXIT_FAILURE);
-                }
-                // Valid min/max of tracking variable
-                utils::netcdf::unpacked_limits(run.current->ncFile->getVar(run.tracking_variable), run.valid_min, run.valid_max);
-                // set flag
-                run.haveHistogramInfo = true;
-            }
+            // Valid min/max of tracking variable
+            utils::netcdf::unpacked_limits(run.current->ncFile->getVar(m_params.tracking_variable), run.valid_min, run.valid_max);
 
             // check time difference and determine displacement restraints
             ::units::values::s p_time = ::units::values::s(run.previous->timestamp);
@@ -194,20 +196,20 @@ namespace m3D {
             }
             run.deltaT = c_time - p_time;
 
-            if (run.deltaT > m_max_deltaT) {
+            if (run.deltaT > m_params.max_deltaT) {
                 cerr << "ERROR:files too far apart in time. Time difference:"
                         << run.deltaT << "s, longest accepted:"
-                        << m_max_deltaT << "s" << endl;
+                        << m_params.max_deltaT << "s" << endl;
                 return true;
             }
 
             // calculate max displacement based on time difference
             // and max velocity
             run.current->tracking_time_difference = run.deltaT.get();
-            run.maxDisplacement = m_maxVelocity * run.deltaT;
+            run.maxDisplacement = m_params.maxVelocity * run.deltaT;
 
             if (logDetails) {
-                cout << "\tmax velocity constraint:" << m_maxVelocity
+                cout << "\tmax velocity constraint:" << m_params.maxVelocity
                         << " and dT:" << run.deltaT
                         << " results in dR_max:" << run.maxDisplacement
                         << endl;
@@ -217,7 +219,7 @@ namespace m3D {
 
             // Minimum object radius for overlap constraint
             // TODO: this point should to be replaced with velocity vectors from SMV/RMV estimates
-            run.overlap_constraint_velocity = m_maxVelocity;
+            run.overlap_constraint_velocity = m_params.maxVelocity;
             run.overlap_constraint_radius = 0.5 * run.deltaT * run.overlap_constraint_velocity;
             if (logDetails) {
                 cout << "\toverlap constraint velocity:" << run.overlap_constraint_velocity
@@ -234,7 +236,7 @@ namespace m3D {
             // Bestow the current cluster list with fresh uuids
             ClusterUtils<T>::provideUuids(run.current, run.highestUuid);
 
-            if (run.verbosity >= VerbosityNormal) {
+            if (m_params.verbosity >= VerbosityNormal) {
                 cout << endl << "-- previous clusters --" << endl;
                 run.previous->print();
                 cout << endl << "-- current clusters --" << endl;
@@ -252,7 +254,7 @@ namespace m3D {
     void
     Tracking<T>::calculateCorrelationData(typename Tracking<T>::tracking_run_t &run)
     {
-        bool logDetails = run.verbosity >= VerbosityAll;
+        bool logDetails = m_params.verbosity >= VerbosityAll;
         if (logDetails) {
             cout << endl;
         }
@@ -322,7 +324,7 @@ namespace m3D {
             // the constraint to false. If no overlap is required, the constraint is simply set to
             // true, thus allowing a match.
 
-            if (m_useOverlapConstraint) {
+            if (m_params.useOverlapConstraint) {
                 ::units::values::m radius = p->radius(run.cs);
                 bool requires_overlap = (radius >= run.overlap_constraint_radius);
                 if (requires_overlap && run.coverOldByNew[n][m] == 0.0) {
@@ -344,17 +346,17 @@ namespace m3D {
             T maxSize = (T) max(p->size(), c->size());
             T minSize = (T) min(p->size(), c->size());
             run.sizeDifference[n][m] = (maxSize == 0) ? 1.0 : (maxSize - minSize);
-            if (m_size_weight != 0.0) {
+            if (m_params.size_weight != 0.0) {
                 if (run.sizeDifference[n][m] > run.maxSizeDifference) {
                     run.maxSizeDifference = run.sizeDifference[n][m];
                 }
             }
             T sizeDeviation = (maxSize - minSize) / minSize;
-            if (sizeDeviation > m_max_size_deviation) {
+            if (sizeDeviation > m_params.max_size_deviation) {
                 if (logDetails) {
                     cout << "precluded: violation of max histogram size restraint"
                     << " (dH:" << sizeDeviation << " values"
-                    << " ,dH_max:" << m_max_size_deviation << " values)."
+                    << " ,dH_max:" << m_params.max_size_deviation << " values)."
                     << endl;
                 }
                 continue;
@@ -384,7 +386,7 @@ namespace m3D {
             // histograms of the two clusters. Perfect match means
             // a value of 1. No correlation at all means a value of 0.
 
-            if (run.haveHistogramInfo && m_corr_weight != 0.0) {
+            if (run.haveHistogramInfo && m_params.correlation_weight != 0.0) {
                 typename Histogram<T>::ptr hist_p
                         = p->histogram(run.tracking_var_index, run.valid_min, run.valid_max);
                 typename Histogram<T>::ptr hist_c
@@ -422,7 +424,7 @@ namespace m3D {
     void
     Tracking<T>::calculateProbabilities(typename Tracking<T>::tracking_run_t & run)
     {
-        bool logDetails = run.verbosity >= VerbosityAll;
+        bool logDetails = m_params.verbosity >= VerbosityAll;
         if (logDetails) {
             cout << endl;
         }
@@ -466,15 +468,15 @@ namespace m3D {
                 // The final matching probability is a 
                 // weighed sum of all three factors. 
                 run.likelihood[n][m]
-                        = m_dist_weight * prob_r
-                        + m_size_weight * prob_h
-                        + m_corr_weight * prob_t;
+                        = m_params.range_weight * prob_r
+                        + m_params.size_weight * prob_h
+                        + m_params.correlation_weight * prob_t;
             }
         }
 
         // print correlation table
 
-        if (run.verbosity >= VerbosityAll) {
+        if (m_params.verbosity >= VerbosityAll) {
 
             for (int n = 0; n < run.N; n++) {
                 typename Cluster<T>::ptr c = run.current->clusters[n];
@@ -513,8 +515,8 @@ namespace m3D {
     void
     Tracking<T>::matchmaking(typename Tracking<T>::tracking_run_t & run)
     {
-        bool logAll = run.verbosity >= VerbosityAll;
-        bool logDetails = run.verbosity >= VerbosityDetails;
+        bool logAll = m_params.verbosity >= VerbosityAll;
+        bool logDetails = m_params.verbosity >= VerbosityDetails;
         if (logDetails) {
             cout << endl;
         }
@@ -686,7 +688,7 @@ namespace m3D {
         bool maxIsTied = false;
         for (size_t i=0; i < candidates.size(); i++) {
             int m = candidates[i];
-            if (run.coverNewByOld[n][m] >= m_msc_threshold) {
+            if (run.coverNewByOld[n][m] >= m_params.mergeSplitContinuationThreshold) {
                 double s = getMergeCriteria(run,n,m);
                 if (s >= maxS) {
                     if (s==maxS) maxIsTied = true;
@@ -715,7 +717,7 @@ namespace m3D {
                 track_flag = true;
             } else {
                 T obn = run.coverOldByNew[n][m];
-                if (obn >= m_ms_threshold) {
+                if (obn >= m_params.mergeSplitThreshold) {
                     // Check for each of the candidates what the merge criteria
                     // s is and find out if there is another combination with
                     // higher s. If so, do not add the candidate here.
@@ -741,7 +743,7 @@ namespace m3D {
     void
     Tracking<T>::handleMerges(typename Tracking<T>::tracking_run_t &run)
     {
-        bool logDetails = run.verbosity >= VerbosityDetails;
+        bool logDetails = m_params.verbosity >= VerbosityDetails;
         if (logDetails) {
             cout << endl << "\t-- Merges" << endl;
         }
@@ -762,7 +764,7 @@ namespace m3D {
                     cout << "\t\tprevious ids:" << candidateIds << " have merged into "
                     << "uuid:" << c->uuid << " id:" << c->id << "." << endl;
                 }
-                if (!track_flag && m_continueIDs) {
+                if (!track_flag && m_params.continueIDs) {
                     int winner = findBestMergeCandidate(run, n, candidates);
                     if (winner >= 0) {
                         typename Cluster<T>::ptr p = run.previous->clusters.at(winner);
@@ -806,7 +808,7 @@ namespace m3D {
             int n = candidates[i];
             typename Cluster<T>::ptr c = run.current->clusters[n];
             double obn = run.coverOldByNew[n][m];
-            if (obn >= m_msc_threshold) {
+            if (obn >= m_params.mergeSplitContinuationThreshold) {
                 double dR = vector_norm(c->geometrical_center() - p->geometrical_center());
                 double dH = abs((double)c->size() - (double)p->size());
                 double s = erf(obn) + erfc(dR) + erfc(dH);
@@ -824,7 +826,7 @@ namespace m3D {
     void
     Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t &run)
     {
-        bool logDetails = run.verbosity >= VerbosityDetails;
+        bool logDetails = m_params.verbosity >= VerbosityDetails;
         if (logDetails) {
             cout << "\t-- Splits" << endl;
         }
@@ -850,7 +852,7 @@ namespace m3D {
                     fi = run.current->new_ids.find(c->id);
                     if (fi != run.current->new_ids.end()) {
                         T percentCovered = run.coverNewByOld[n][m];
-                        if (percentCovered >= m_ms_threshold) {
+                        if (percentCovered >= m_params.mergeSplitThreshold) {
                             candidateUuids.insert(c->uuid);
                             candidates.push_back(n);
                         }
@@ -864,7 +866,7 @@ namespace m3D {
                     cout << "\t\tuuid:" << p->uuid << " id:" << p->id
                     << " split into uuids:" << candidateUuids << "." << endl;
                 }
-                if (!track_flag && m_continueIDs) {
+                if (!track_flag && m_params.continueIDs) {
                     int winner = findBestSplitCandidate(run, m, candidates);
                     if (winner >= 0) {
                         typename Cluster<T>::ptr c = run.current->clusters.at(winner);
@@ -911,26 +913,17 @@ namespace m3D {
     template <typename T>
     void
     Tracking<T>::track(typename ClusterList<T>::ptr previous,
-            typename ClusterList<T>::ptr current,
-            const CoordinateSystem<T> *cs,
-            const std::string * tracking_variable_name,
-            const Verbosity verbosity)
+            typename ClusterList<T>::ptr current)
     {
-        bool logNormal = verbosity >= VerbosityNormal;
+        bool logNormal = m_params.verbosity >= VerbosityNormal;
 
         if (logNormal) cout << "Tracking:" << endl;
 
         tracking_run_t run;
-        run.verbosity = verbosity;
         run.previous = previous;
         run.current = current;
-        run.tracking_variable = tracking_variable_name==NULL ? "" : *tracking_variable_name;
-        run.N = current->clusters.size();
-        run.M = previous->clusters.size();
-        run.cs = cs;
-
         if (logNormal) start_timer("-- Calculating preliminaries ... ");
-        bool skip_tracking = calculatePreliminaries(run);
+        bool skip_tracking = initialise(run);
         if (logNormal) stop_timer("done");
         if (skip_tracking) {
             return;
@@ -944,7 +937,7 @@ namespace m3D {
         // Advect the previous clusters by their displacement
         // vectors to make the results more accurate
         // utils::VisitUtils<T>::write_clusters_vtu_wholesale(previous, cs, "unshifted");
-        if (m_useDisplacementVectors) {
+        if (m_params.useDisplacementVectors) {
             if (logNormal) start_timer("-- Shifting clusters ... ");
             advectClusters(run);
             if (logNormal) stop_timer("done");
@@ -980,6 +973,12 @@ namespace m3D {
         current->tracking_performed = true;
         current->highest_id = run.highestId;
         current->highest_uuid = run.highestUuid;
+
+        // Clean up
+        if (run.cs != NULL) {
+            delete run.cs;
+            run.cs = NULL;
+        }
     }
 }
 
