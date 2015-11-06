@@ -138,6 +138,34 @@ namespace m3D {
             }
 
             // figure out tracking variable index (for histogram)
+            NcVar tracking_var;
+            if (run.tracking_variable == "__default__") {
+                tracking_var = run.current->feature_variables[run.current->dimensions.size()];
+                run.tracking_variable = tracking_var.getName();
+                if (logDetails) {
+                    cout << "Choosing default variable for histogram correlation: "
+                         << tracking_var.getName() << endl;
+                }
+            } else {
+                bool found_tracking_var = false;
+                for (size_t i = 0; i < run.current->feature_variables.size(); i++) {
+                    NcVar v = run.current->feature_variables[i];
+                    try {
+                        if (v.getName() == run.tracking_variable) {
+                            found_tracking_var = true;
+                        }
+                    } catch (const std::exception &e) {
+                        cerr << "FATAL:" << e.what() << endl;
+                        exit(EXIT_FAILURE);
+                    }
+                }
+                if (!found_tracking_var) {
+                    cerr << "FATAL:tracking variable " << tracking_var.getName()
+                         << " is not part of the feature variables" << endl;
+                    exit(EXIT_FAILURE);
+                }
+            }
+
             run.tracking_var_index = -1;
             run.haveHistogramInfo = false;
             if (!run.tracking_variable.empty()) {
@@ -205,6 +233,13 @@ namespace m3D {
             
             // Bestow the current cluster list with fresh uuids
             ClusterUtils<T>::provideUuids(run.current, run.highestUuid);
+
+            if (run.verbosity >= VerbosityNormal) {
+                cout << endl << "-- previous clusters --" << endl;
+                run.previous->print();
+                cout << endl << "-- current clusters --" << endl;
+                run.current->print();
+            }
         }
 
         return skip_tracking;
@@ -531,22 +566,22 @@ namespace m3D {
             // with higher probability, then skip this one
             id_set_t::iterator fi = run.current->tracked_ids.find(old_cluster->id);
             if (fi != run.current->tracked_ids.end()) {
-                if (logAll) {
-                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
-                         << " with uuid:" << new_cluster->uuid << " ";
-                    cout << "rejected: previous cluster already matched." << endl;
-                }
+//                if (logAll) {
+//                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
+//                         << " with uuid:" << new_cluster->uuid << " ";
+//                    cout << "rejected: previous cluster already matched." << endl;
+//                }
                 continue;
             }
 
             // Or if the NEW cluster was matched earlier, skip as well 
             fi = run.matched_uuids.find(new_cluster->uuid);
             if (fi != run.matched_uuids.end()) {
-                if (logAll) {
-                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
-                         << " with uuid:" << new_cluster->uuid << " ";
-                    cout << "rejected: new cluster already matched." << endl;
-                }
+//                if (logAll) {
+//                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
+//                         << " with uuid:" << new_cluster->uuid << " ";
+//                    cout << "rejected: new cluster already matched." << endl;
+//                }
                 continue;
             }
 
@@ -572,11 +607,10 @@ namespace m3D {
             velocityClusterCount++;
 
             if (logDetails) {
-                cout << "\t\tMatching uuid:" << old_cluster->uuid << " id:" << old_cluster->id
+                cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
                      << " with uuid:" << new_cluster->uuid << " ("
-                     << "velocity: " << velocity.get() << " m/s"
-                     << " displacement: " << new_cluster->displacement
-                     << ")." << endl;
+                     << " accepted: (velocity: " << velocity.get() << " m/s"
+                     << " displacement: " << new_cluster->displacement << ")." << endl;
             }
         }
 

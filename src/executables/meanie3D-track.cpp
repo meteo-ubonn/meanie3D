@@ -293,53 +293,17 @@ int main(int argc, char** argv) {
     if (verbosity >= VerbosityNormal) start_timer("Reading " + previous_filename+ " ... ");
     ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_filename);
     if (verbosity >= VerbosityNormal) stop_timer("done");
-    if (verbosity >= VerbosityAll) {
-        cout << endl << "-- previous clusters --" << endl;
-        previous->print();
-    }
 
     // Read current clusters
     CoordinateSystem<FS_TYPE> *cs;
     if (verbosity >= VerbosityNormal) start_timer("Reading " + current_filename + " ... ");
     ClusterList<FS_TYPE>::ptr current = ClusterList<FS_TYPE>::read(current_filename, &cs);
     if (verbosity >= VerbosityNormal) stop_timer("done");
-    if (verbosity >= VerbosityAll) {
-        cout << endl << "-- current clusters --" << endl;
-        current->print();
-    }
 
     // Check if the feature variables match
     if (previous->feature_variables != current->feature_variables) {
         cerr << "FATAL:Incompatible feature variables in the cluster files:" << endl;
         exit(EXIT_FAILURE);
-    }
-
-    // get the tracking variable
-    NcVar tracking_var;
-    if (tracking_variable_name == "__default__") {
-        tracking_var = current->feature_variables[current->dimensions.size()];
-    } else {
-        bool found_tracking_var = false;
-
-        for (size_t i = 0; i < current->feature_variables.size(); i++) {
-            NcVar v = current->feature_variables[i];
-
-            try {
-                if (v.getName() == tracking_variable_name) {
-                    found_tracking_var = true;
-                    tracking_var = v;
-                }
-            } catch (const std::exception &e) {
-                cerr << "FATAL:" << e.what() << endl;
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        if (!found_tracking_var) {
-            cerr << "FATAL:tracking variable " << tracking_var.getName()
-                    << " is not part of the feature variables" << endl;
-            exit(EXIT_FAILURE);
-        }
     }
 
     // Perform tracking
