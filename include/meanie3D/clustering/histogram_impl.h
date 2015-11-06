@@ -43,8 +43,8 @@ namespace m3D {
     Histogram<T>::sum()
     {
         size_t sum = 0;
-        for (vector<size_t>::iterator it = this->m_bins.begin(); it != this->m_bins.end(); it++) {
-            sum += (*it);
+        for (size_t i = 0; i < m_bins.size(); i++) {
+            sum += m_bins[i];
         }
         return sum;
     }
