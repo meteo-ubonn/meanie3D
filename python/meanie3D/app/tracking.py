@@ -181,13 +181,6 @@ def run(config,time_index):
             cluster_file= output_dir+"/netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index) + ".nc"
             last_cluster_file = output_dir+"/netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index-1) + ".nc"
 
-        # if there is a resume counter, keep skipping
-        # until the count is right
-        if (resume_at_index > 0) and (run_count < resume_at_index):
-            last_cluster_file = cluster_file
-            run_count = run_count + 1
-            continue
-
         print "-------------------------------------------------------------------------------------"
         print "Processing " + netcdf_file
         print "-------------------------------------------------------------------------------------"
@@ -196,8 +189,16 @@ def run(config,time_index):
         # Clustering
         # ----------------------------------------------
 
-        if utils.getSafe(config,'detection'):
+        if detection:
             print "-- Clustering --"
+
+            # if there is a resume counter, keep skipping until the count is right
+            # Note: this only applies to clustering, which is expensive. Tracking
+            # will be re-run
+            if (resume_at_index > 0) and (run_count < resume_at_index):
+                last_cluster_file = cluster_file
+                run_count = run_count + 1
+                continue
 
             # build the clustering command
             params = detect_params
@@ -240,7 +241,7 @@ def run(config,time_index):
         # Tracking
         # ----------------------------------------------
 
-        if config['tracking']:
+        if tracking:
             # if we have a previous scan, run the tracking command
             if (run_count > 0) or (time_index > 0):
 

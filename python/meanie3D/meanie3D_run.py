@@ -152,7 +152,9 @@ def main():
         meanie3D.app.utils.removeOutputDirectories(configuration,scales)
 
     # Run the detection and tracking steps
-    if (configuration['detection'] or configuration['tracking']):
+    detection = meanie3D.app.utils.getSafe(configuration,'detection')
+    tracking = meanie3D.app.utils.getSafe(configuration,'tracking')
+    if (detection or tracking):
 
         # run the actual clustering/tracking script
         if not scales:
