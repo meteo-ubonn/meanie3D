@@ -162,6 +162,7 @@ namespace m3D {
     protected:
 
         /**
+         * Experimental!!
          * Move the clusters in the list by their displacement vectors 
          * (which usually have been obtained on the last tracking run)
          * Only clusters with existing displacement vectors are moved. 
@@ -171,81 +172,96 @@ namespace m3D {
         void advectClusters(typename Tracking<T>::tracking_run_t &run);
 
         /**
-         * 
+         * Initialises a tracking run.
          * @param run
          * @return 
          */
         bool initialise(typename Tracking<T>::tracking_run_t &run);
 
         /**
-         * 
+         * Calculates data to base match probabilities on.
          * @param run
          */
         void calculateCorrelationData(typename Tracking<T>::tracking_run_t &run);
 
         /**
-         * 
+         * Calculates match probabilities.
          * @param run
          */
         void calculateProbabilities(typename Tracking<T>::tracking_run_t &run);
 
         /**
-         * 
+         * Analyses the probabilities to find the most likely matches.
          * @param run
          */
         void matchmaking(typename Tracking<T>::tracking_run_t &run);
 
         /**
-         * 
-         * @param run
-         */
-        void handleMerges(typename Tracking<T>::tracking_run_t &run);
-
-        /**
-         * 
+         * Called after matchmaking. Analyses and tags splits.
          * @param run
          */
         void handleSplits(typename Tracking<T>::tracking_run_t &run);
 
         /**
-         * 
+         * Called after matchmaking. Analyses and tags merges.
+         * @param run
+         */
+        void handleMerges(typename Tracking<T>::tracking_run_t &run);
+
+        /**
+         *
          * @param run
          */
         void removeScheduled(const tracking_run_t &run);
 
         /**
-         * Examine criteria for split continuation in unclear
-         * situation (no tracked id). Consider the following
-         * factors:
+         * Gets the split criterion value. The value is calculated considering:
          * <ul>
          *  <li>dR - geometrical center difference</li>
          *  <li>dH - size difference</li>
-         *  <li>obn - cover old by new</li>
+         *  <li>obn - overlap percentage (old by new)</li>
          * </ul>
-         * Calculates:
-         * s = erfc(dR) + erfc(dH) + erf(obn)
+         * Calculates: s = erfc(dR) + erfc(dH) + erf(obn)
+         * @param tracking context
+         * @param index of current cluster
+         * @param index of previous cluster
+         * @returns split criterion value
+         */
+        double
+                getSplitCriterion(typename Tracking<T>::tracking_run_t &run,
+                                  const int &m,
+                                  const int &n);
+
+
+        /**
+         * Examine split criterion in unclear situations to find the
+         * optimal candidate. Examines all possible candidates
+         * by calculating the split criterion s:
          * =&gt; max(s) is the winner
          * =&gt; if equal candidates, no one wins
          * @param run tracking context
-         * @param index of previous cluster that split up
-         * @param list of index of candidates
+         * @param index of the cluster that is the result of the merge.
+         * @param indexes of candidates
          * @return -1 if no one wins, number of candidate else.
          */
         int findBestSplitCandidate(typename Tracking<T>::tracking_run_t &run,
                                    const int &m,
                                    const vector<int> &candidates);
 
+
         /**
-         * Examine criteria for merge continuation in unclear
-         * situation (no tracked id). Consider the following
-         * factors:
-         * <ul>
-         *  <li>dR - geometrical center difference</li>
-         *  <li>dH - size difference</li>
-         *  <li>obn - cover old by new</li>
-         * </ul>
-         * Calculates:
-         * s = erfc(dR) + erfc(dH) + erf(obn)
+         *
+         */
+        void getSplitCandidates(typename Tracking<T>::tracking_run_t &run,
+                                const int& m,
+                                bool &track_flag,
+                                vector<int> &candidates,
+                                uuid_set_t &candidateUuids);
+
+        /**
+         * Examine merge criterion in unclear situations to find the
+         * optimal candidate. Examines all possible candidates
+         * by calculating the merge criterion s:
          * =&gt; max(s) is the winner
          * =&gt; if equal candidates, no one wins
          * @param run tracking context
@@ -259,7 +275,7 @@ namespace m3D {
 
 
         /**
-         * Gets the merge criteria value. The value is calculated considering:
+         * Gets the merge criterion value. The value is calculated considering:
          * <ul>
          *  <li>dR - geometrical center difference</li>
          *  <li>dH - size difference</li>
@@ -269,17 +285,17 @@ namespace m3D {
          * @param tracking context
          * @param index of current cluster
          * @param index of previous cluster
-         * @returns tracking criteria value.
+         * @returns merge criterion value.
          */
-        double getMergeCriteria(typename Tracking<T>::tracking_run_t &run,
-                                const int &n,
-                                const int &m);
+        double getMergeCriterion(typename Tracking<T>::tracking_run_t &run,
+                                 const int &n,
+                                 const int &m);
 
         /**
          * Compile a list of candidates that might have merged into c.
          * If there is a match, add it. Only consider other candidates
          * that have not been matched. Only consider those, if they
-         * satisfy the overlap criteria for merge and split.
+         * satisfy the overlap criterion for merge and split.
          *
          * @param run tracking context
          * @param index of merged cluster
@@ -293,6 +309,7 @@ namespace m3D {
                                 bool &track_flag,
                                 vector<int> &candidateIndexes,
                                 id_set_t &candidateIds);
+
     };
 }
 

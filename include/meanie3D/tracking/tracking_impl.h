@@ -691,9 +691,9 @@ namespace m3D {
 
     template <typename T>
     double
-    Tracking<T>::getMergeCriteria(typename Tracking<T>::tracking_run_t &run, const int &n, const int &m) {
+    Tracking<T>::getMergeCriterion(typename Tracking<T>::tracking_run_t &run, const int &n, const int &m) {
         typename Cluster<T>::ptr c = run.current->clusters[n];
-        typename Cluster<T>::ptr p = run.previous->clusters[n];
+        typename Cluster<T>::ptr p = run.previous->clusters[m];
         double nbo = run.coverNewByOld[n][m];
         double dR = run.midDisplacement[n][m].get();
         double dH = run.sizeDifference[n][m];
@@ -712,7 +712,7 @@ namespace m3D {
         for (size_t i=0; i < candidates.size(); i++) {
             int m = candidates[i];
             if (run.coverNewByOld[n][m] >= m_params.mergeSplitContinuationThreshold) {
-                double s = getMergeCriteria(run,n,m);
+                double s = getMergeCriterion(run, n, m);
                 if (s >= maxS) {
                     if (s==maxS) maxIsTied = true;
                     maxM = i;
@@ -739,16 +739,24 @@ namespace m3D {
                 candidateIds.insert(p->id);
                 track_flag = true;
             } else {
+
+                // Check if this (previous) cluster was already associated
+                // with a cluster from the current set? If so, exclude it
+                id_set_t::const_iterator fi = run.current->tracked_ids.find(p->id);
+                if (fi != run.current->tracked_ids.end()) continue;
+
+                // Not tracked
                 T obn = run.coverOldByNew[n][m];
                 if (obn >= m_params.mergeSplitThreshold) {
+
                     // Check for each of the candidates what the merge criteria
                     // s is and find out if there is another combination with
                     // higher s. If so, do not add the candidate here.
-                    double s1 = getMergeCriteria(run, n, m);
+                    double s1 = getMergeCriterion(run, n, m);
                     bool foundBetter = false;
                     for (int nn = 0; nn < run.N && !foundBetter; nn++) {
                         if (nn == n) continue;
-                        double s2 = getMergeCriteria(run, nn, m);
+                        double s2 = getMergeCriterion(run, nn, m);
                         if (s2 > s1) {
                             foundBetter = true;
                         }
@@ -819,31 +827,87 @@ namespace m3D {
 #pragma mark Splitting
 
     template <typename T>
+    double
+    Tracking<T>::getSplitCriterion(typename Tracking<T>::tracking_run_t &run, const int &n, const int &m) {
+        typename Cluster<T>::ptr c = run.current->clusters[n];
+        typename Cluster<T>::ptr p = run.previous->clusters[m];
+        double obn = run.coverOldByNew[n][m];
+        double dR = run.midDisplacement[n][m].get();
+        double dH = run.sizeDifference[n][m];
+        double s = erf(obn) + erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference);
+        return s;
+    }
+
+    template <typename T>
     int
     Tracking<T>::findBestSplitCandidate(typename Tracking<T>::tracking_run_t &run,
                                         const int &m,
                                         const vector<int> &candidates) {
         double maxS = -1.0;
-        int maxN = -1;
+        int maxM = -1;
         bool maxIsTied = false;
-        typename Cluster<T>::ptr p = run.previous->clusters[m];
         for (size_t i=0; i < candidates.size(); i++) {
             int n = candidates[i];
-            typename Cluster<T>::ptr c = run.current->clusters[n];
-            double obn = run.coverOldByNew[n][m];
-            if (obn >= m_params.mergeSplitContinuationThreshold) {
-                double dR = vector_norm(c->geometrical_center() - p->geometrical_center());
-                double dH = abs((double)c->size() - (double)p->size());
-                double s = erf(obn) + erfc(dR) + erfc(dH);
+            if (run.coverOldByNew[n][m] >= m_params.mergeSplitContinuationThreshold) {
+                double s = getSplitCriterion(run, n, m);
                 if (s >= maxS) {
                     if (s==maxS) maxIsTied = true;
-                    maxN = i;
+                    maxM = i;
                     maxS = s;
                 }
             }
         }
-        return maxIsTied ? -1 : maxN;
+        return maxIsTied ? -1 : maxM;
     }
+
+    template <typename T>
+    void
+    Tracking<T>::getSplitCandidates(typename Tracking<T>::tracking_run_t &run,
+                                    const int& m,
+                                    bool &track_flag,
+                                    vector<int> &candidates,
+                                    uuid_set_t &candidateUuids)
+    {
+        typename Cluster<T>::ptr p = run.previous->clusters.at(m);
+        for (size_t n = 0; n < run.N; n++) {
+            typename Cluster<T>::ptr c = run.current->clusters.at(n);
+            if (c->id == p->id) {
+                candidates.push_back(n);
+                candidateUuids.insert(c->uuid);
+                track_flag = true;
+            } else {
+
+                // Check if this (current) cluster was already associated
+                // with a cluster from the previous set? If so, exclude it
+                id_set_t::const_iterator fi = run.current->tracked_ids.find(c->id);
+                if (fi != run.current->tracked_ids.end()) continue;
+
+                // Not tracked
+                T obn = run.coverNewByOld[n][m];
+                if (obn >= m_params.mergeSplitThreshold) {
+
+                    // Check for each of the candidates what the split criteria
+                    // s is and find out if there is another combination with
+                    // higher s. If so, do not add the candidate here.
+
+                    double s1 = getSplitCriterion(run, n, m);
+                    bool foundBetter = false;
+                    for (int mm = 0; mm < run.M && !foundBetter; mm++) {
+                        if (mm == m) continue;
+                        double s2 = getMergeCriterion(run, n, mm);
+                        if (s2 > s1) {
+                            foundBetter = true;
+                        }
+                    }
+                    if (!foundBetter) {
+                        candidateUuids.insert(c->uuid);
+                        candidates.push_back(n);
+                    }
+                }
+            }
+        }
+    }
+
 
     template <typename T>
     void
@@ -856,32 +920,12 @@ namespace m3D {
         bool had_splits = false;
         size_t n, m;
         for (m = 0; m < run.M; m++) {
-            typename Cluster<T>::ptr p = run.previous->clusters.at(m);
-            // Compile a list of candidates the previous cluster may have split into.
-            // If there is a match, add it. Only consider candidates that have not been
-            // matched. Only consider those, if they satisfy the overlap criteria for
-            // merge and split.
+            typename Cluster<T>::ptr p = run.previous->clusters[m];
+
             bool track_flag = false;
             uuid_set_t candidateUuids;
             vector<int> candidates;
-            for (n = 0; n < run.N; n++) {
-                typename Cluster<T>::ptr c = run.current->clusters.at(n);
-                if (c->id == p->id) {
-                    candidates.push_back(n);
-                    candidateUuids.insert(c->uuid);
-                    track_flag = true;
-                } else {
-                    id_set_t::const_iterator fi;
-                    fi = run.current->new_ids.find(c->id);
-                    if (fi != run.current->new_ids.end()) {
-                        T percentCovered = run.coverNewByOld[n][m];
-                        if (percentCovered >= m_params.mergeSplitThreshold) {
-                            candidateUuids.insert(c->uuid);
-                            candidates.push_back(n);
-                        }
-                    }
-                }
-            }
+            getSplitCandidates(run, m, track_flag, candidates, candidateUuids);
 
             if (candidates.size() > 1) {
                 had_splits = true;
