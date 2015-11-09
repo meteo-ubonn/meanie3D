@@ -38,45 +38,44 @@ namespace m3D {
 
     using namespace utils;
 
+    /**
+     * Parameters to the tracking algorithm.
+     */
+    typedef struct {
+        std::string previous_filename; // Path to previous cluster file
+        std::string current_filename; // Path to current cluster file
+
+        bool write_vtk; // Write out clusters in .vtk? (TODO: remove)
+        std::vector<size_t> vtk_dimension_indexes; // See --vtk-dimensions in meanie3D-detect
+
+        double range_weight;        // Correlation weight for distance between clusters
+        double size_weight;         // Correlation weight for size comparison
+        double correlation_weight;  // Correlation weight for histogram comparison
+        std::string tracking_variable; // Variable name to be used for histogram correlation.
+
+        ::units::values::meters_per_second maxVelocity; // what is the allowed top speed of objects?
+        ::units::values::s max_deltaT; // How much time in seconds allowed between scans?
+        double max_size_deviation; // How many percent may the objects vary in size (number of points) between scans?
+
+        bool continueIDs; // Continue ids across merges and splits?
+        double mergeSplitThreshold; // What is the minimum overlap for merges/splits?
+        double mergeSplitContinuationThreshold; // What is the overlap required for continuing ids in merges/splits?
+
+        bool useDisplacementVectors; // Use displacment vectors (experimental)
+
+        bool useOverlapConstraint; // Do objects require overlap to be tracked (if their speed/size is low/big enough)
+        bool useMeanVelocityConstraint; // Are object matches constraint by average velocity? (currently defunct)
+        double meanVelocityPercentage; // Maximum allowed deviation from average velocity? (currently defunct)
+
+        Verbosity verbosity; // Output level (0 (none) to 3 (all))
+
+    } tracking_param_t;
+
+
     /** This class contains the tracking code.
      */
     template <typename T>
     class Tracking {
-
-    public:
-
-        /**
-         * Parameters to the tracking algorithm.
-         */
-        typedef struct {
-            std::string previous_filename; // Path to previous cluster file
-            std::string current_filename; // Path to current cluster file
-
-            bool write_vtk; // Write out clusters in .vtk? (TODO: remove)
-            std::vector<size_t> vtk_dimension_indexes; // See --vtk-dimensions in meanie3D-detect
-
-            double range_weight;        // Correlation weight for distance between clusters
-            double size_weight;         // Correlation weight for size comparison
-            double correlation_weight;  // Correlation weight for histogram comparison
-            std::string tracking_variable; // Variable name to be used for histogram correlation.
-
-            ::units::values::meters_per_second maxVelocity; // what is the allowed top speed of objects?
-            ::units::values::s max_deltaT; // How much time in seconds allowed between scans?
-            double max_size_deviation; // How many percent may the objects vary in size (number of points) between scans?
-
-            bool continueIDs; // Continue ids across merges and splits?
-            float mergeSplitThreshold; // What is the minimum overlap for merges/splits?
-            float mergeSplitContinuationThreshold; // What is the overlap required for continuing ids in merges/splits?
-
-            bool useDisplacementVectors; // Use displacment vectors (experimental)
-
-            bool useOverlapConstraint; // Do objects require overlap to be tracked (if their speed/size is low/big enough)
-            bool useMeanVelocityConstraint; // Are object matches constraint by average velocity? (currently defunct)
-            T meanVelocityPercentage; // Maximum allowed deviation from average velocity? (currently defunct)
-
-            Verbosity verbosity; // Output level (0 (none) to 3 (all))
-
-        } tracking_param_t;
 
     protected:
 
@@ -134,13 +133,23 @@ namespace m3D {
 
     public:
 
+        /**
+         * Obtain a set of default parameters for the tracking.
+         * @return default params.
+         */
+        static tracking_param_t defaultParams();
+
+        /**
+         * Instantiates an instance with default params.
+         */
+        Tracking() : m_params(Tracking::defaultParams()) {};
+
         /** Constructor
          * @param weight for distance correlation
          * @param weight for size correlation
          * @param weight for histogram rank correlation
          */
-        Tracking(tracking_param_t params) : m_params(params) {
-        };
+        Tracking(tracking_param_t params) : m_params(params) {};
 
         /**
          * Runs the meanie3D tracking algorithm.

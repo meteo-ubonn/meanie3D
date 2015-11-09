@@ -42,8 +42,34 @@
 #include "tracking.h"
 
 namespace m3D {
+    using namespace units;
     using namespace utils;
     using namespace utils::vectors;
+
+#pragma mark -
+#pragma mark Defaults
+
+    template <typename T>
+    tracking_param_t
+    Tracking<T>::defaultParams() {
+        tracking_param_t params;
+        params.range_weight = 1.0;
+        params.size_weight = 1.0;
+        params.correlation_weight = 0.0;
+        params.continueIDs = true;
+        params.mergeSplitThreshold = 1.0f / 3.0f;
+        params.mergeSplitContinuationThreshold = 0.75;
+        params.maxVelocity = ::units::values::meters_per_second(50.0);
+        params.max_deltaT = ::units::values::s(915);
+        params.useOverlapConstraint = true;
+        params.max_size_deviation = 3;
+        params.useMeanVelocityConstraint = false;
+        params.meanVelocityPercentage = 0.0;
+        params.verbosity = VerbosityNormal;
+        params.tracking_variable = "__default__";
+        params.write_vtk = false;
+        return params;
+    }
 
 #pragma mark -
 #pragma mark Experimental

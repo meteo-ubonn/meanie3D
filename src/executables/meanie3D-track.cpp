@@ -40,7 +40,7 @@ typedef double FS_TYPE;
 
 static const double NO_SCALE = numeric_limits<double>::min();
 
-void parse_commmandline(program_options::variables_map vm, Tracking<FS_TYPE>::tracking_param_t &params)
+void parse_commmandline(program_options::variables_map vm, tracking_param_t &params)
 {
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
@@ -156,23 +156,25 @@ void parse_commmandline(program_options::variables_map vm, Tracking<FS_TYPE>::tr
 int main(int argc, char** argv) {
     // Declare the supported options.
 
+    tracking_param_t params = Tracking<FS_TYPE >::defaultParams();
+
     program_options::options_description desc("Options");
     desc.add_options()
             ("help,h", "produce help message")
             ("version", "print version information and exit")
             ("previous,p", program_options::value<string>(), "Previous cluster file (netCDF)")
             ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
-            ("tracking-variable,t", program_options::value<string>()->default_value("__default__"), "Variable used for histogram correlation. Must be specified when histogram weight --wt is not zero")
-            ("wr", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for range correlation [0..1]")
-            ("ws", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for size correlation [0..1]")
-            ("wt", program_options::value<FS_TYPE>()->default_value(1.0), "Weight for histogram rank correlation [0..1]")
+            ("tracking-variable,t", program_options::value<string>()->default_value(params.tracking_variable), "Variable used for histogram correlation. Must be specified when histogram weight --wt is not zero")
+            ("wr", program_options::value<FS_TYPE>()->default_value(params.range_weight), "Weight for range correlation [0..1]")
+            ("ws", program_options::value<FS_TYPE>()->default_value(params.size_weight), "Weight for size correlation [0..1]")
+            ("wt", program_options::value<FS_TYPE>()->default_value(params.correlation_weight), "Weight for histogram rank correlation [0..1]")
             ("use-displacement-vectors,v", "If present, the algorithm uses the displacement vectors from the previous tracking result (if present) to shift clusters from the previous file to improve tracking (experimental).")
-            ("merge-split-threshold", program_options::value<FS_TYPE>()->default_value(1.0 / 3.0), "Percentage of area covered between previous/new clusters for split/merge calculation")
-            ("merge-split-continuation-threshold", program_options::value<FS_TYPE>()->default_value(0.75), "Minimum percentage of area covered between previous/new clusters to continue ID")
+            ("merge-split-threshold", program_options::value<FS_TYPE>()->default_value(params.mergeSplitThreshold), "Percentage of area covered between previous/new clusters for split/merge calculation")
+            ("merge-split-continuation-threshold", program_options::value<FS_TYPE>()->default_value(params.mergeSplitContinuationThreshold), "Minimum percentage of area covered between previous/new clusters to continue ID")
             ("discontinue-id-in-merge-and-split,d", "If present, the tracking discontinues cluster IDs when merging and splitting. Otherwise the largest candidate carries the ID on if the overlap exceeds --merge-split-continuation-threshold.")
-            ("max-speed", program_options::value<FS_TYPE>()->default_value(50.0), "Maximum allowed object speed (m/s)")
-            ("max-time", program_options::value<FS_TYPE>()->default_value(915.0), "Maximum allowed time difference between files (seconds)")
-            ("max-size-deviation", program_options::value<double>()->default_value(2.5), "Maximum allowed difference in sizes (number of points) between clusters from previous and current file in percent [0..1]")
+            ("max-speed", program_options::value<FS_TYPE>()->default_value(params.maxVelocity.get()), "Maximum allowed object speed (m/s)")
+            ("max-time", program_options::value<FS_TYPE>()->default_value(params.max_deltaT.get()), "Maximum allowed time difference between files (seconds)")
+            ("max-size-deviation", program_options::value<double>()->default_value(params.max_size_deviation), "Maximum allowed difference in sizes (number of points) between clusters from previous and current file in percent [0..1]")
 #if WITH_VTK
             ("write-vtk,k", "Write out the clusters as .vtk files for visit")
             ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
@@ -196,8 +198,6 @@ int main(int argc, char** argv) {
     }
 
     // Evaluate user input
-
-    Tracking<FS_TYPE>::tracking_param_t params;
     try {
         parse_commmandline(vm, params);
     } catch (const std::exception &e) {

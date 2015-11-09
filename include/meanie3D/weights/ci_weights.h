@@ -435,19 +435,17 @@ namespace m3D {
                 vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
 
                 // Perform a tracking run
-
-                Tracking<T> proto_tracker;
-
+                tracking_param_t params;
                 // Time difference calculation can be a second or so
                 // off. Allow some slack.
-
-                proto_tracker.setMaxDeltaT(::units::values::s(930));
+                params.max_deltaT = ::units::values::s(930);
+                Tracking<T> proto_tracker(params);
 
                 // TODO: tracking needs to be refactored to work on
                 // weight function histograms rather than variable
                 // histograms
 
-                proto_tracker.track(m_previous_protoclusters, &m_protoclusters, m_coordinate_system);
+                proto_tracker.track(m_previous_protoclusters, &m_protoclusters);
                 m_protoclusters.save();
 
                 // Find object pairs and shift the all data from
