@@ -644,6 +644,20 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
        }
        return(false);
     }
+	
+	M3D.showLoading = function() {
+		var vp = M3D.getViewportSize();
+		d3.select("#loading")
+			.style("display","block")
+			.style("height",vp.height)
+			.style("line-height",vp.height+"px");
+	}
+
+	M3D.hideLoading = function() {
+		d3.select("#loading")
+			.style("display","none");
+	}
+
 
     M3D.resize = function() {
         var menuSize = M3D.getMenuSize();
@@ -656,7 +670,6 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
         d3.select("#graph").select("svg")
             .attr("width", graphSize.width)
             .attr("height", graphSize.height);
-
     }
 
     /**

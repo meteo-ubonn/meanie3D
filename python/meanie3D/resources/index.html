@@ -107,10 +107,27 @@
                 list-style-type:none;
                 display: inline;
             }
-
+			
+            #loading {
+				position:absolute;
+				left:0px;
+				top:0px;
+				width: 100%;
+            	display: none;
+				background-color: gray;
+				opacity: 0.8;
+				font-size: large;
+				font-family: sans-serif;
+				font-weight: bold;
+				color: white;
+				text-align: center;
+				vertical-align: middle;
+				z-index: 1000;
+            }
         </style>
     </head>
     <body>
+	    <div id="loading">Loading track dictionary. This may take some time ...</div>	
         <!-- navigation -->
         <div id="menu">
             <div id="top">
@@ -172,7 +189,9 @@
 			var filterById = M3D.getUrlParameter('id');
 			var filterByTrackLength = M3D.getUrlParameter('tracklength');
 			var graph;
+			M3D.showLoading();
 			d3.json("track-dictionary.json", function(error, dictionary) {
+				M3D.hideLoading();
 				if (error) throw error;
 				var graph = new M3D.TrackingGraph(dictionary, filterById, filterByTrackLength);
 
