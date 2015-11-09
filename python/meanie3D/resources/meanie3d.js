@@ -371,7 +371,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             .select("#barchart")
             .append("div")
 
-        menu.selectAll("div")
+		var bar = menu.selectAll("div")
             .data(classes)
             .enter()
             .append("div")
@@ -388,11 +388,20 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             })
             .on("click", function(d) {
                 M3D.filterByTrackLength(d.length);
-            })
-            .text(function(d) {
-                return d.length + " (" + d.count + ")";
-            })
-
+            });
+		
+		bar.append("div")
+			.attr("class","left")
+			.text(function(d) {
+				return d.length;
+			});
+			
+		bar.append("div")
+			.attr("class","right")
+			.text(function(d) {
+				return d.count;
+			});
+			
         if (graph.selectedId) {
             d3.select("#menu")
                 .select("#top")
@@ -476,6 +485,20 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
                 return 2.5 * Math.log(1.0 + d.size);
             })
             .style("fill", function(d) { return M3D.color(d.id); })
+            .style("stroke", function(d) { 
+				if (graph.selectedId == d.id) {
+					return "#FF3366";
+				} else {
+					return "gray";
+				}
+			})
+			.style("stroke-width", function(d) {
+				if (graph.selectedId == d.id) {
+					return 3;
+				} else {
+					return 1;
+				}
+			})
             .on("dblclick", function(d) {
                 M3D.filterById(d.id);
             })
@@ -499,6 +522,16 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             .attr("text-anchor", "middle")
             .attr("text-align", "center")
             .attr("alignment-baseline","central")
+            .on("dblclick", function(d) {
+                M3D.filterById(d.id);
+            })
+            .on("mouseover", function(d) {
+                var coordinates = d3.mouse(this);
+                M3D.showNodeOverlay(graph,d,coordinates);
+            })
+            .on("mouseout", function(d) {
+                M3D.hideNodeOverlay();
+            })
             .attr("font-weight", "bold");
 
         node.append("title")
