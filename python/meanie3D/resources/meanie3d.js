@@ -9,6 +9,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
     M3D.graphPercentWidth = 0.85;
     M3D.radius = 12;
     M3D.color = d3.scale.category20();
+	M3D.maxInitialClassSize = 20;
 
     /**
      * Class representing a graph of tracks constructed
@@ -268,7 +269,15 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
         // Finally index the data
         this.resolveLinks();
 		this.index();
-		this.setTrackLength(this.trackLengthIndex.values[0]);
+		if (this.trackLengthIndex.values) {
+			var length = this.trackLengthIndex.values[0];
+			var size = this.trackLengthIndex.map.get(length).size;
+			for (var i=0; i < (this.trackLengthIndex.values.length-1) && size > M3D.maxInitialClassSize; i++) {
+				length = this.trackLengthIndex.values[i];
+				size = this.trackLengthIndex.map.get(length).size;
+			}
+		}
+		this.setTrackLength(length);
     }
     M3D.TrackingGraph = TrackingGraph;
 
@@ -311,7 +320,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             })
             .style("width", function(d) {
                 var minWidth = 80;
-                var width = minWidth + (size.width - minWidth) * (maxCount - d.count) / maxCount - 20;
+                var width = minWidth + (size.width - minWidth) * (d.count/maxCount) - 20;
                 return width + "px";
             })
             .style("opacity", function(d) {
@@ -351,8 +360,8 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
         var size = M3D.getGraphSize();
 
         var force = d3.layout.force()
-            .charge(-200)
-            .linkDistance(50)
+            .charge(-150)
+            .linkDistance(60)
             .size([size.width, size.height]);
 
         var svg = d3.select("body")
@@ -581,8 +590,8 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
 		var vp = M3D.getViewportSize();
 		d3.select("#loading")
 			.style("display","block")
-			.style("height",vp.height)
-			.style("line-height",vp.height+"px");
+			.style("height",vp.height + "px")
+			.style("padding-top",(vp.height/2.0)*0.8 +"px");
 	}
 
 	M3D.hideLoading = function() {

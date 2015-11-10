@@ -106,6 +106,7 @@ def run_trackstats(configuration,directory):
     return_code = -1
     os.chdir(directory)
     try:
+        print "meanie3D-trackstats %s" % (" ".join(params))
         return_code = external.execute_command("meanie3D-trackstats"," ".join(params),silent=True)
     except:
         print "ERROR:%s" % sys.exc_info()[0]
@@ -301,10 +302,12 @@ def copy_html_files(configuration,directory):
     :return:
     '''
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
-    indexPath = home + os.path.sep + os.path.sep.join(("meanie3D","resources","index.html"))
-    shutil.copy(indexPath,os.path.abspath(directory))
-    jsPath = home + os.path.sep + os.path.sep.join(("meanie3D","resources","meanie3d.js"))
-    shutil.copy(jsPath,os.path.abspath(directory))
+    path = home + os.path.sep + os.path.sep.join(("meanie3D","resources","index.html"))
+    shutil.copy(path,os.path.abspath(directory))
+    path = home + os.path.sep + os.path.sep.join(("meanie3D","resources","meanie3d.js"))
+    shutil.copy(path,os.path.abspath(directory))
+    path = home + os.path.sep + os.path.sep.join(("meanie3D","resources","ajax-loader.gif"))
+    shutil.copy(path,os.path.abspath(directory))
     return
 
 # ----------------------------------------------------------------------------

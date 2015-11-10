@@ -121,13 +121,15 @@
 				font-weight: bold;
 				color: white;
 				text-align: center;
-				vertical-align: middle;
 				z-index: 1000;
             }
         </style>
     </head>
     <body>
-	    <div id="loading">Loading track dictionary. This may take some time ...</div>	
+	    <div id="loading">
+	    	<p>Loading track dictionary. This may take some time ...</p>
+	    	<p><img src="ajax-loader.gif"/></p>
+	    </div>
         <!-- navigation -->
         <div id="menu">
             <div id="top">
@@ -190,15 +192,23 @@
 			var filterByTrackLength = M3D.getUrlParameter('tracklength');
 			var graph;
 			M3D.showLoading();
-			d3.json("track-dictionary.json", function(error, dictionary) {
-				M3D.hideLoading();
-				if (error) throw error;
-				M3D.graph = new M3D.TrackingGraph(dictionary);
-				M3D.graph.setId(filterById);
-				M3D.graph.setTrackLength(filterByTrackLength);
-                M3D.addBarchartMenu(M3D.graph);
-				M3D.showTrackingGraph(M3D.graph);
-            });
+			// Give this a little time to allow the loading spinner to start animating.
+			setTimeout(function() {
+				d3.json("track-dictionary.json", function(error, dictionary) {
+					M3D.hideLoading();
+					if (error) throw error;
+					M3D.graph = new M3D.TrackingGraph(dictionary);
+					if (filterById) {
+						M3D.graph.setId(filterById);
+					}
+					if (filterByTrackLength) {
+						M3D.graph.setTrackLength(filterByTrackLength);
+					}
+	                M3D.addBarchartMenu(M3D.graph);
+					M3D.showTrackingGraph(M3D.graph);
+	            });
+			}, 500);
+			
 
 		</script>
 	</body>
