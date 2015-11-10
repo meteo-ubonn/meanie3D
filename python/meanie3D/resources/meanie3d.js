@@ -1,7 +1,11 @@
 if (typeof (M3D) == 'undefined' || M3D == null) {
 
     M3D = {};
-
+	
+	// Global variable holding the current graph
+	M3D.graph = null;
+	
+	// Some constants
     M3D.graphPercentWidth = 0.85;
     M3D.radius = 12;
     M3D.color = d3.scale.category20();
@@ -12,7 +16,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
      * helper methods for filtering by id and methods to
      * index or key up the data along criteria.
      */
-	function TrackingGraph(dictionary, filterById, filterByTrackLength) {
+	function TrackingGraph(dictionary) {
 	    // Data
 	    this.dictionary = dictionary;
 	    this.selectedId = false;
@@ -35,6 +39,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
          */
         this.setId = function(filterById) {
             this.selectedId = filterById;
+			this.linkedNodes = new Set();
             if (filterById) {
                 this.linkedNodes = this.getLinkedNodesByID(parseInt(filterById));
             }
@@ -47,6 +52,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
         this.setTrackLength = function(length) {
             var self = this;
             this.selectedTrackLength = length;
+			this.linkedNodes = new Set();
             if (length) {
                 var len = parseInt(this.selectedTrackLength);
                 var ids = this.trackLengthIndex.map.get(len);
@@ -262,16 +268,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
         // Finally index the data
         this.resolveLinks();
 		this.index();
-		this.setId(filterById);
-		if (!filterByTrackLength) {
-		    // unless an id was selected, default to the first
-		    // entry in the track lengths
-		    if (!this.selectedId) {
-                this.setTrackLength(this.trackLengthIndex.values[0]);
-            }
-		} else {
-            this.setTrackLength(filterByTrackLength)
-        }
+		this.setTrackLength(this.trackLengthIndex.values[0]);
     }
     M3D.TrackingGraph = TrackingGraph;
 
@@ -280,7 +277,6 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
      * bar chart
      */
     M3D.addBarchartMenu = function(graph) {
-
         // Extract a linear index as objects
         var classes = new Array();
         var maxCount = -1;
@@ -336,16 +332,17 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
 			.text(function(d) {
 				return d.count;
 			});
-			
-        if (graph.selectedId) {
-            d3.select("#menu")
-                .select("#top")
-                .append("div")
-                .attr("id","trackinfo")
-                .text("Selected track #" + graph.selectedId);
-        }
-
     }
+	
+	M3D.showTrackingGraph = function(graph) {
+		// Remove graph svg if there is one
+		var svg = d3.select("body").select("#graph").select("svg");
+		if (svg) {
+			svg.remove();
+		}
+        M3D.addTrackingGraph(graph);
+        M3D.resize();
+	}
 
     /**
      * Adds a div#graph to the page, which contains the actual graph.
@@ -612,28 +609,25 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
      * @param A node or link or any other object with property 'id'.
      */
     M3D.filterById = function(d) {
-        var location = window.location.toString();
-        var i = location.indexOf("?");
-        if ( i > 0) {
-            location = location.substring(0,i);
-        }
-        window.location.href = location + "?id="+d;
+		M3D.graph.setId(d);
+		M3D.showTrackingGraph(M3D.graph);
     }
 
     M3D.filterByTrackLength = function(d) {
-        var location = window.location.toString();
-        var i = location.indexOf("?");
-        if ( i > 0) {
-            location = location.substring(0,i);
-        }
-        window.location.href = (location + "?tracklength=" + d);
+		var graph = M3D.graph;
+		graph.setId(null);
+		graph.setTrackLength(d);
+		M3D.showTrackingGraph(graph);
+		d3.selectAll(".bar").attr("class", function(d) {
+    		return d.length == graph.selectedTrackLength ? "bar selected" : "bar";
+		})
     }
 
-    M3D.search = function(graph,id,uuid) {
+    M3D.search = function(id,uuid) {
         if (id) {
             M3D.filterById(id);
         } else if (uuid) {
-            var _id = graph.findIdForUuid(uuid);
+            var _id = M3D.graph.findIdForUuid(uuid);
             M3D.filterById(_id);
         }
         return false;

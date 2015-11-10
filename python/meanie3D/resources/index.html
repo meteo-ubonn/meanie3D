@@ -137,7 +137,7 @@
                         Enter id of a track or uuid of a cluster:
                         <input type="text" id="_id" value="" placeholder="id" size="5"/> or
                         <input type="text" id="_uuid" value="" placeholder="uuid" size="5"/>
-                        <input type="submit" value="go" onclick="return M3D.search(window.graph, this.form._id.value, this.form._uuid.value);">
+                        <input type="submit" value="go" onclick="return M3D.search(this.form._id.value, this.form._uuid.value);">
                     </form>
                 </div>
                 <div id="barchart-legend">
@@ -193,16 +193,11 @@
 			d3.json("track-dictionary.json", function(error, dictionary) {
 				M3D.hideLoading();
 				if (error) throw error;
-				var graph = new M3D.TrackingGraph(dictionary, filterById, filterByTrackLength);
-
-				// make this globally available for search form. Admittedly a litle crude.
-				window.graph = graph;
-
-                // M3D.addBubbleMenu(graph);
-                M3D.addBarchartMenu(graph);
-                M3D.resize();
-                M3D.addTrackingGraph(graph);
-                M3D.resize();
+				M3D.graph = new M3D.TrackingGraph(dictionary);
+				M3D.graph.setId(filterById);
+				M3D.graph.setTrackLength(filterByTrackLength);
+                M3D.addBarchartMenu(M3D.graph);
+				M3D.showTrackingGraph(M3D.graph);
             });
 
 		</script>
