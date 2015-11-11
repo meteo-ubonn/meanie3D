@@ -697,7 +697,7 @@ namespace m3D {
         double nbo = run.coverNewByOld[n][m];
         double dR = run.midDisplacement[n][m].get();
         double dH = run.sizeDifference[n][m];
-        double s = erf(nbo) + erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference);
+        double s = nbo * (erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference));
         return s;
     }
 
@@ -806,6 +806,7 @@ namespace m3D {
                             << "\t\t\ttrack id:" << p->id << " continues." << endl;
                         }
                         run.current->new_ids.erase(c->id);
+                        // run.current->tracked_ids.insert(p->id);
                         c->id = p->id;
                     }
                 }
@@ -834,7 +835,7 @@ namespace m3D {
         double obn = run.coverOldByNew[n][m];
         double dR = run.midDisplacement[n][m].get();
         double dH = run.sizeDifference[n][m];
-        double s = erf(obn) + erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference);
+        double s = obn * (erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference));
         return s;
     }
 
@@ -894,7 +895,7 @@ namespace m3D {
                     bool foundBetter = false;
                     for (int mm = 0; mm < run.M && !foundBetter; mm++) {
                         if (mm == m) continue;
-                        double s2 = getMergeCriterion(run, n, mm);
+                        double s2 = getSplitCriterion(run, n, mm);
                         if (s2 > s1) {
                             foundBetter = true;
                         }
