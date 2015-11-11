@@ -122,6 +122,9 @@ namespace m3D {
         }
     }
 
+#pragma mark -
+#pragma mark Writing/Reading
+
     template <typename T>
     void
     ClusterList<T>::save()
@@ -150,12 +153,14 @@ namespace m3D {
                 // by creating a new file with an altered name first, writing
                 // it off and finally deleting the original when done, replacing
                 // the original in that way.
-
                 file = new NcFile(filename, NcFile::replace);
             } catch (const netCDF::exceptions::NcException &e) {
                 cerr << "FATAL:exception opening file " << filename << " for writing : " << e.what() << endl;
                 exit(EXIT_FAILURE);
             }
+
+            // write version attribute
+            file->putAtt("version", m3D::VERSION);
 
             // Create dimensions
             NcDim dim, spatial_dim;

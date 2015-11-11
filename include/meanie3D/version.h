@@ -29,7 +29,7 @@
 
 namespace m3D {
 
-    static const std::string VERSION = "1.5.3";
+    static const std::string VERSION = "1.5.4";
 
     void print_version()
     {
