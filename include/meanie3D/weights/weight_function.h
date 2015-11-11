@@ -28,7 +28,7 @@
 #include <meanie3D/namespaces.h>
 #include <meanie3D/utils.h>
 
-namespace m3D { 
+namespace m3D {
 
     /** Weight function interface. The weight function plays an important
      * role in the mean-shift algorithm. It replaces density as criterion
@@ -36,7 +36,8 @@ namespace m3D {
      * often the case in scientific, gridded data sets.
      */
     template <typename T>
-    class WeightFunction {
+    class WeightFunction
+    {
     public:
 
         /** Weight at given point in feature-space 
@@ -45,7 +46,9 @@ namespace m3D {
          */
         virtual T operator()(const typename Point<T>::ptr p) const = 0;
 
-        virtual ~WeightFunction() {}
+        virtual ~WeightFunction()
+        {
+        }
     };
 }
 

@@ -1,5 +1,4 @@
-__author__ = 'juergen.simon@uni-bonn.de'
-__all__ = ["external", "postprocessing","utils","tracking"]
+__all__ = ["analysis","external", "postprocessing","utils","tracking"]
 __have_visit__ = None
 __visitPath__ = None
 __visitImportPath__ = None

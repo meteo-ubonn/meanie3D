@@ -37,8 +37,8 @@
 #include <limits>
 #include <fstream>
 
-namespace m3D { 
-    
+namespace m3D {
+
     using namespace netCDF;
 
     /** Specialization of DataStore for NetCDF. 
@@ -48,26 +48,25 @@ namespace m3D {
     template <typename T>
     class NetCDFDataStore : public DataStore<T>
     {
-
     private:
 
         static const T NO_VALUE;
 
         typedef std::map< size_t, MultiArray<T> * > multiarray_map_t;
 
-        std::string     m_filename;
+        std::string m_filename;
 
         /** Parameter used for construction. Points in feature-space,
          * where one variable's value is less than the given threshold,
          * will not be added.
          */
-        map<int,double> m_lower_thresholds;
+        map<int, double> m_lower_thresholds;
 
         /** Parameter used for construction. Points in feature-space,
          * where one variable's value is more than the given threshold,
          * will not be added.
          */
-        map<int,double> m_upper_thresholds;
+        map<int, double> m_upper_thresholds;
 
         /** Parameter used for construction. Points in feature-space,
          * where one variable's value is out of valid range are usually
@@ -75,9 +74,9 @@ namespace m3D {
          * the missing value with the value provided, thus allowing
          * use of that point in spite of missing values.
          */
-        map<int,double> m_replacement_values;
+        map<int, double> m_replacement_values;
 
-        std::vector<std::string>    m_variable_names;
+        std::vector<std::string> m_variable_names;
 
         /** Not sure this needs holding on to, but hey
          */
@@ -102,7 +101,7 @@ namespace m3D {
         // Map of data for construction. The data in this
         // array is already unpacked
 
-        multiarray_map_t    m_buffered_data;
+        multiarray_map_t m_buffered_data;
 
     public:
 
@@ -116,9 +115,9 @@ namespace m3D {
          * abstracted (also the dimension concept).
          */
         NetCDFDataStore(const std::string &filename,
-                        const CoordinateSystem<T> *coordinate_system,
-                        const vector<std::string> &variable_names,
-                        const int time_index = -1)
+                const CoordinateSystem<T> *coordinate_system,
+                const vector<std::string> &variable_names,
+                const int time_index = -1)
         : m_filename(filename)
         , m_variable_names(variable_names)
         , m_coordinate_system(coordinate_system)
@@ -126,9 +125,8 @@ namespace m3D {
         {
             NcFile file(filename.c_str(), NcFile::read);
 
-            if (file.isNull())
-            {
-                throw "ERROR:could not open file "+filename;
+            if (file.isNull()) {
+                throw "ERROR:could not open file " + filename;
             }
 
             m_scale_factor = new T[variable_names.size()];
@@ -141,21 +139,16 @@ namespace m3D {
 
             // Check if the variables exist
 
-            for (int i=0; i<variable_names.size(); i++)
-            {
-                try
-                {
+            for (int i = 0; i < variable_names.size(); i++) {
+                try {
                     NcVar var = file.getVar(variable_names[i]);
 
-                    if (var.isNull())
-                    {
-                        cerr << "FATAL: no variable "+variable_names[i]+" found in file " + filename << endl;
+                    if (var.isNull()) {
+                        cerr << "FATAL: no variable " + variable_names[i] + " found in file " + filename << endl;
                         exit(EXIT_FAILURE);
                     }
-                }
-                catch (netCDF::exceptions::NcException &e)
-                {
-                    cerr << "FATAL: can't access variable "+variable_names[i]+" in file " + filename << endl;
+                } catch (netCDF::exceptions::NcException &e) {
+                    cerr << "FATAL: can't access variable " + variable_names[i] + " in file " + filename << endl;
                     exit(EXIT_FAILURE);
                 }
 
@@ -197,33 +190,52 @@ namespace m3D {
             return m_coordinate_system;
         }
 
-        const std::vector<std::string> &variable_names() const {
+        const std::vector<std::string> &variable_names() const
+        {
             return m_variable_names;
         }
 
         /** @return valid min attributes
          */
-        const T valid_min(size_t index) const { return m_valid_min[index]; }
+        const T valid_min(size_t index) const
+        {
+            return m_valid_min[index];
+        }
 
         /** @return valid max attributes
          */
-        const T valid_max(size_t index) const { return m_valid_max[index]; }
+        const T valid_max(size_t index) const
+        {
+            return m_valid_max[index];
+        }
 
         /** @return scale factor attributes
          */
-        const T scale_factor(size_t index) const { return m_scale_factor[index]; }
+        const T scale_factor(size_t index) const
+        {
+            return m_scale_factor[index];
+        }
 
         /** @return add_offset attributes
          */
-        const T add_offset(size_t index) const { return m_offset[index]; }
+        const T add_offset(size_t index) const
+        {
+            return m_offset[index];
+        }
 
         /** @return fill_value attributes
          */
-        const T fill_value(size_t index) const { return m_fill_value[index]; }
+        const T fill_value(size_t index) const
+        {
+            return m_fill_value[index];
+        }
 
         /** @return filename 
          */
-        const std::string filename() const { return m_filename; }
+        const std::string filename() const
+        {
+            return m_filename;
+        }
 
 #pragma mark -
 #pragma mark Buffered data handling
@@ -244,32 +256,30 @@ namespace m3D {
             // one more
 
             int spatial_dims = time_is_an_issue
-                ? variable.getDimCount() - 1
-                : variable.getDimCount();
+                    ? variable.getDimCount() - 1
+                    : variable.getDimCount();
 
             vector<size_t> dims(spatial_dims);
-            for (size_t i=0; i<spatial_dims; i++)
-            {
+            for (size_t i = 0; i < spatial_dims; i++) {
                 dims[i] = coordinate_system()->get_dimension_sizes()[i];
             }
 
-            MultiArray<T> *index = new MultiArrayBlitz<T>(dims,0);
+            MultiArray<T> *index = new MultiArrayBlitz<T>(dims, 0);
 
             vector<int> gp(spatial_dims);
 
-            if (spatial_dims==1)
-            {
+            if (spatial_dims == 1) {
                 // 1D
 
                 int N = time_is_an_issue
-                    ? variable.getDim(1).getSize()
-                    : variable.getDim(0).getSize();
+                        ? variable.getDim(1).getSize()
+                        : variable.getDim(0).getSize();
 
-                T *values = (T*) calloc(N,sizeof(T));
+                T *values = (T*) calloc(N, sizeof (T));
 
                 // where to start reading?
 
-                vector<size_t> start(variable.getDimCount(),0);
+                vector<size_t> start(variable.getDimCount(), 0);
 
                 if (time_is_an_issue) start[0] = this->m_time_index;
 
@@ -279,15 +289,12 @@ namespace m3D {
 
                 // how much to read?
 
-                vector<size_t> count(variable.getDimCount(),0);
+                vector<size_t> count(variable.getDimCount(), 0);
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     count[0] = 1;
                     count[1] = N;
-                }
-                else
-                {
+                } else {
                     count[0] = N;
                 }
 
@@ -295,63 +302,54 @@ namespace m3D {
 
                 variable.getVar(start, count, values);
 
-                for (int i = 0; i < N; i++)
-                {
+                for (int i = 0; i < N; i++) {
                     gp[0] = i;
-                    index->set(gp,values[i]);
+                    index->set(gp, values[i]);
                 }
 
                 // Clean up
 
                 delete values;
-            }
-            else if (spatial_dims == 2)
-            {
+            } else if (spatial_dims == 2) {
                 // 2D
 
-                int N,M;
+                int N, M;
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     N = variable.getDim(1).getSize();
                     M = variable.getDim(2).getSize();
-                }
-                else
-                {
+                } else {
                     N = variable.getDim(0).getSize();
                     M = variable.getDim(1).getSize();
                 }
-                
+
 #if DEBUG_NETCDF_DATASTORE
                 cout << "2D data set: N=" << N << " M=" << M << endl;
 #endif
                 // Create buffer to hold data
 
-                T *values = (T*) calloc(N*M,sizeof(T));
+                T *values = (T*) calloc(N*M, sizeof (T));
 
-                if (values==NULL) {
+                if (values == NULL) {
                     cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
 
-                vector<size_t> start(variable.getDimCount(),0);
+                vector<size_t> start(variable.getDimCount(), 0);
 
                 if (time_is_an_issue) start[0] = this->m_time_index;
 
                 // how much to read?
 
-                vector<size_t> count(variable.getDimCount(),0);
+                vector<size_t> count(variable.getDimCount(), 0);
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     count[0] = 1;
                     count[1] = N;
                     count[2] = M;
-                }
-                else
-                {
+                } else {
                     count[0] = N;
                     count[1] = M;
                 }
@@ -359,43 +357,35 @@ namespace m3D {
                 // read the chunk
 
                 variable.getVar(start, count, values);
-                
+
                 // re-package
 
-                for (int i = 0; i < N; i++)
-                {
-                    for (int j = 0; j < M; j++)
-                    {
+                for (int i = 0; i < N; i++) {
+                    for (int j = 0; j < M; j++) {
                         gp[0] = i;
                         gp[1] = j;
-                        index->set(gp,values[i*M + j]);
+                        index->set(gp, values[i * M + j]);
                     }
                 }
 
                 // Clean up
 
                 delete[] values;
-            }
-
-            else if (spatial_dims==3)
-            {
+            } else if (spatial_dims == 3) {
                 // 3D
 
-                int N,M,K;
+                int N, M, K;
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     N = variable.getDim(1).getSize();
                     M = variable.getDim(2).getSize();
                     K = variable.getDim(3).getSize();
-                }
-                else
-                {
+                } else {
                     N = variable.getDim(0).getSize();
                     M = variable.getDim(1).getSize();
                     K = variable.getDim(2).getSize();
                 }
-                
+
 #if DEBUG_NETCDF_DATASTORE
                 cout << "3D data set: N=" << N << " M=" << M << " K=" << K << endl;
 #endif
@@ -403,33 +393,28 @@ namespace m3D {
                 // Read this as a succession of 2D slices
                 // Allocate buffer for 2D slices
 
-                T *values = (T*) calloc(N*M*K,sizeof(T));
-                if (values == NULL)
-                {
+                T *values = (T*) calloc(N * M*K, sizeof (T));
+                if (values == NULL) {
                     cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
 
-                vector<size_t> start(variable.getDimCount(),0);
+                vector<size_t> start(variable.getDimCount(), 0);
 
-                if (time_is_an_issue) 
-                {
+                if (time_is_an_issue) {
                     start[0] = this->m_time_index;
                     start[1] = 0;
-                }
-                else
-                {
+                } else {
                     start[0] = 0;
                 }
 
                 // how much to read?
 
-                 vector<size_t> count;
+                vector<size_t> count;
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     count.push_back(1);
                 }
                 count.push_back(N);
@@ -440,27 +425,22 @@ namespace m3D {
 
                 variable.getVar(start, count, values);
 
-                    // Re-package
-                for (int i=0; i<N; i++)
-                {
-                    for (int j=0; j<M; j++)
-                    {
-                        for (int k=0; k < K; k++)
-                        {
+                // Re-package
+                for (int i = 0; i < N; i++) {
+                    for (int j = 0; j < M; j++) {
+                        for (int k = 0; k < K; k++) {
                             gp[0] = i;
                             gp[1] = j;
                             gp[2] = k;
 
-                            index->set(gp, values[ M*K*i + K*j +k ]);
+                            index->set(gp, values[ M * K * i + K * j + k ]);
                         }
                     }
                 }
 
                 // Clean up
                 delete values;
-            }
-            else
-            {
+            } else {
                 cerr << "FATAL: Variables with " << spatial_dims << " spatial dimensions are not currently handled" << endl;
                 exit(EXIT_FAILURE);
             }
@@ -486,12 +466,11 @@ namespace m3D {
             // one more
 
             int spatial_dims = time_is_an_issue
-            ? variable.getDimCount() - 1
-            : variable.getDimCount();
+                    ? variable.getDimCount() - 1
+                    : variable.getDimCount();
 
             vector<size_t> dims(spatial_dims);
-            for (size_t i=0; i<spatial_dims; i++)
-            {
+            for (size_t i = 0; i < spatial_dims; i++) {
                 dims[i] = coordinate_system()->dimensions()[i].getSize();
             }
 
@@ -499,43 +478,38 @@ namespace m3D {
 
             vector<int> gp(spatial_dims);
 
-            if (spatial_dims==1)
-            {
+            if (spatial_dims == 1) {
                 // 1D
 
                 int N = time_is_an_issue ? variable.getDim(1).getSize() : variable.getDim(0).getSize();
 
                 // where to start reading?
 
-                vector<size_t> start(variable.getDimCount(),0);
+                vector<size_t> start(variable.getDimCount(), 0);
 
                 if (time_is_an_issue) start[0] = this->m_time_index;
 
                 // how much to write?
 
-                vector<size_t> count(variable.getDimCount(),0);
+                vector<size_t> count(variable.getDimCount(), 0);
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     count[0] = 1;
                     count[1] = N;
-                }
-                else
-                {
+                } else {
                     count[0] = N;
                 }
 
                 // copy the data into the buffer
 
-                T *values = (T*) calloc(N,sizeof(T));
+                T *values = (T*) calloc(N, sizeof (T));
 
-                if (values==NULL) {
+                if (values == NULL) {
                     cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
 
-                for (int i = 0; i < N; i++)
-                {
+                for (int i = 0; i < N; i++) {
                     values[i] = index->get(gp);
                 }
 
@@ -546,65 +520,55 @@ namespace m3D {
                 // Clean up
 
                 delete[] values;
-            }
-            else if (spatial_dims == 2)
-            {
+            } else if (spatial_dims == 2) {
                 // 2D
 
-                int N,M;
+                int N, M;
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     N = variable.getDim(1).getSize();
                     M = variable.getDim(2).getSize();
-                }
-                else
-                {
+                } else {
                     N = variable.getDim(0).getSize();
                     M = variable.getDim(1).getSize();
                 }
 
                 // Create buffer to hold data
 
-                T *values = (T*) calloc(N*M,sizeof(T));
+                T *values = (T*) calloc(N*M, sizeof (T));
 
-                if (values==NULL) {
+                if (values == NULL) {
                     cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
 
-                vector<size_t> start(variable.getDimCount(),0);
+                vector<size_t> start(variable.getDimCount(), 0);
 
                 if (time_is_an_issue) start[0] = this->m_time_index;
 
                 // how much to read?
 
-                vector<size_t> count(variable.getDimCount(),0);
+                vector<size_t> count(variable.getDimCount(), 0);
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     count[0] = 1;
                     count[1] = N;
                     count[2] = M;
-                }
-                else
-                {
+                } else {
                     count[0] = N;
                     count[1] = M;
                 }
 
                 // re-package
 
-                for (int i = 0; i < N; i++)
-                {
-                    for (int j = 0; j < M; j++)
-                    {
+                for (int i = 0; i < N; i++) {
+                    for (int j = 0; j < M; j++) {
                         gp[0] = i;
                         gp[1] = j;
 
-                        values[i*M+j] = index->get(gp);
+                        values[i * M + j] = index->get(gp);
                     }
                 }
 
@@ -615,22 +579,16 @@ namespace m3D {
                 // Clean up
 
                 delete[] values;
-            }
-
-            else if (spatial_dims==3)
-            {
+            } else if (spatial_dims == 3) {
                 // 3D
 
-                int N,M,K;
+                int N, M, K;
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     N = variable.getDim(1).getSize();
                     M = variable.getDim(2).getSize();
                     K = variable.getDim(3).getSize();
-                }
-                else
-                {
+                } else {
                     N = variable.getDim(0).getSize();
                     M = variable.getDim(1).getSize();
                     K = variable.getDim(2).getSize();
@@ -639,25 +597,21 @@ namespace m3D {
                 // Read this as a succession of 2D slices
                 // Allocate buffer for 2D slices
 
-                T *values = (T*) calloc(N*M*K, sizeof(T));
+                T *values = (T*) calloc(N * M*K, sizeof (T));
 
-                if (values == NULL)
-                {
+                if (values == NULL) {
                     cerr << "FATAL:out of memory" << endl;
                     exit(EXIT_FAILURE);
                 }
 
                 // where to start reading?
 
-                vector<size_t> start(variable.getDimCount(),0);
+                vector<size_t> start(variable.getDimCount(), 0);
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     start[0] = this->m_time_index;
                     start[1] = 0;
-                }
-                else
-                {
+                } else {
                     start[0] = 0;
                 }
 
@@ -665,8 +619,7 @@ namespace m3D {
 
                 vector<size_t> count;
 
-                if (time_is_an_issue)
-                {
+                if (time_is_an_issue) {
                     count.push_back(1);
                 }
                 count.push_back(N);
@@ -675,17 +628,14 @@ namespace m3D {
 
                 // Re-package
 
-                for (int i=0; i<N; i++)
-                {
-                    for (int j=0; j<M; j++)
-                    {
-                        for (int k=0; k < K; k++)
-                        {
+                for (int i = 0; i < N; i++) {
+                    for (int j = 0; j < M; j++) {
+                        for (int k = 0; k < K; k++) {
                             gp[0] = i;
                             gp[1] = j;
                             gp[2] = k;
 
-                            values[ M*K*i + K*j +k ] = index->get(gp);
+                            values[ M * K * i + K * j + k ] = index->get(gp);
                         }
                     }
                 }
@@ -697,9 +647,7 @@ namespace m3D {
                 // Clean up
 
                 delete[] values;
-            }
-            else
-            {
+            } else {
                 cerr << "FATAL: Variables with " << spatial_dims << " spatial dimensions are not currently handled" << endl;
                 exit(EXIT_FAILURE);
             }
@@ -711,8 +659,7 @@ namespace m3D {
         {
             typename multiarray_map_t::iterator i;
 
-            for (i = m_buffered_data.begin(); i != m_buffered_data.end(); ++i)
-            {
+            for (i = m_buffered_data.begin(); i != m_buffered_data.end(); ++i) {
                 MultiArray<T> *indexPtr = i->second;
                 i->second = NULL;
                 delete indexPtr;
@@ -739,9 +686,8 @@ namespace m3D {
 
             fi = attributes.find("scale_factor");
 
-            if ( fi != attributes.end() )
-            {
-                fi->second.getValues( &scale_factor );
+            if (fi != attributes.end()) {
+                fi->second.getValues(&scale_factor);
             }
 
             this->m_scale_factor[var_index] = scale_factor;
@@ -752,9 +698,8 @@ namespace m3D {
 
             fi = attributes.find("add_offset");
 
-            if ( fi != attributes.end() )
-            {
-                fi->second.getValues( &offset );
+            if (fi != attributes.end()) {
+                fi->second.getValues(&offset);
             }
 
             this->m_offset[var_index] = offset;
@@ -767,13 +712,13 @@ namespace m3D {
 
             double valid_min, valid_max;
 
-            variable.getAtt("valid_min").getValues( &valid_min );
+            variable.getAtt("valid_min").getValues(&valid_min);
 
             this->m_valid_min[var_index] = valid_min;
 
             this->m_min[var_index] = valid_min;
 
-            variable.getAtt("valid_max").getValues( &valid_max );
+            variable.getAtt("valid_max").getValues(&valid_max);
 
             this->m_valid_max[var_index] = valid_max;
 
@@ -785,9 +730,8 @@ namespace m3D {
 
             fi = attributes.find("_FillValue");
 
-            if ( fi != attributes.end() )
-            {
-                fi->second.getValues( &fillValue );
+            if (fi != attributes.end()) {
+                fi->second.getValues(&fillValue);
 
                 this->m_fill_value[var_index] = fillValue;
             }
@@ -796,8 +740,7 @@ namespace m3D {
         void
         read()
         {
-            for (size_t var_index=0; var_index < this->m_variable_names.size(); var_index++)
-            {
+            for (size_t var_index = 0; var_index < this->m_variable_names.size(); var_index++) {
                 this->get_limits(var_index);
 
                 this->read_buffer(var_index);
@@ -807,8 +750,7 @@ namespace m3D {
         void
         save()
         {
-            for (size_t var_index=0; var_index < this->m_variable_names.size(); var_index++)
-            {
+            for (size_t var_index = 0; var_index < this->m_variable_names.size(); var_index++) {
                 this->write_buffered_data(var_index);
             }
         }
@@ -820,34 +762,25 @@ namespace m3D {
         void
         save_as(std::string filename)
         {
-            if (filename.empty())
-            {
+            if (filename.empty()) {
                 throw std::runtime_error("no available filename");
-            }
-
-            else if (!m_filename.empty() && filename.empty())
-            {
+            } else if (!m_filename.empty() && filename.empty()) {
                 this->save();
-            }
-            else if (!m_filename.empty())
-            {
+            } else if (!m_filename.empty()) {
                 // If filename changed, copy the old file to the
                 // new filename to preserve everything possible and
                 // then re-open the copied file and save the current
                 // data
 
-                if (m_filename != filename )
-                {
+                if (m_filename != filename) {
                     // copy file
 
-                    boost::filesystem::copy_file(m_filename,filename,boost::filesystem::copy_option::overwrite_if_exists);
+                    boost::filesystem::copy_file(m_filename, filename, boost::filesystem::copy_option::overwrite_if_exists);
 
                     this->m_filename = std::string(filename);
 
                     this->save();
-                }
-                else
-                {
+                } else {
                     throw runtime_error("save_as called with identical filename");
                 }
             }
@@ -855,12 +788,13 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Accessors
-        
+
         /** get time index
          * 
          * @return the time index this store was constructed with
          */
-        int get_time_index() {
+        int get_time_index()
+        {
             return this->m_time_index;
         }
 
@@ -880,52 +814,45 @@ namespace m3D {
                 typename multiarray_map_t::const_iterator i;
 
                 {
-                        i = m_buffered_data.find(variable_index);
+                    i = m_buffered_data.find(variable_index);
                 }
 
-                if (i != m_buffered_data.end())
-                {
+                if (i != m_buffered_data.end()) {
                     MultiArray<T> *indexPtr = i->second;
 
                     value = indexPtr->get(gridpoint);
-                }
-                else
-                {
+                } else {
                     cerr << "FATAL: no buffered data for variable with index " << variable_index << endl;
                     exit(EXIT_FAILURE);
                 }
 
-                if (m_fill_value[variable_index] != NO_VALUE)
-                {
+                if (m_fill_value[variable_index] != NO_VALUE) {
                     is_valid = (value != m_fill_value[variable_index]);
-                }
-                else
-                {
-                    is_valid = (value >= m_valid_min[variable_index]) 
+                } else {
+                    is_valid = (value >= m_valid_min[variable_index])
                             && (value <= m_valid_max[variable_index]);
                 }
 
                 // scale first, then offset
 
-                 unpacked_value = m_scale_factor[variable_index] 
-                         * value + m_offset[variable_index];
-            }            
+                unpacked_value = m_scale_factor[variable_index]
+                        * value + m_offset[variable_index];
+            }
 
             return unpacked_value;
         }
 
-       /** Gets a point by it's linear index. The index may run
+        /** Gets a point by it's linear index. The index may run
          * from 0 ... (N-1) where N is the total number of points
          * in the grid.
          */
-        virtual 
+        virtual
         T get(size_t variable_index,
-              size_t index,
-              bool &is_valid) const 
+                size_t index,
+                bool &is_valid) const
         {
             return 0;
         }
-
 
         /** Values in memory buffer are 'packed'. When retrieving values
          * through get(..) they are unpacked. In order to get the packed
@@ -935,9 +862,9 @@ namespace m3D {
          * @return packed value
          */
         T packed_value(const size_t variable_index,
-                       const T unpacked_value)
+                const T unpacked_value)
         {
-           T packed_value = (unpacked_value - m_offset[variable_index]) / m_scale_factor[variable_index];
+            T packed_value = (unpacked_value - m_offset[variable_index]) / m_scale_factor[variable_index];
 
             return packed_value;
         }
@@ -956,12 +883,9 @@ namespace m3D {
 
             i = m_buffered_data.find(variable_index);
 
-            if (i != m_buffered_data.end())
-            {
+            if (i != m_buffered_data.end()) {
                 indexPtr = i->second;
-            }
-            else
-            {
+            } else {
                 cerr << "FATAL: no buffered data for variable with index " << variable_index << endl;
                 exit(EXIT_FAILURE);
             }
@@ -970,7 +894,7 @@ namespace m3D {
 
             T packed_value = (value - m_offset[variable_index]) / m_scale_factor[variable_index];
 
-            indexPtr->set(gridpoint,packed_value);
+            indexPtr->set(gridpoint, packed_value);
         }
 
         const size_t rank() const
@@ -978,11 +902,10 @@ namespace m3D {
             return this->m_variable_names.size();
         }
 
-        const size_t size() const 
+        const size_t size() const
         {
             size_t N = 1;
-            for (size_t i=0; i < this->m_coordinate_system->rank(); i++)
-            {
+            for (size_t i = 0; i < this->m_coordinate_system->rank(); i++) {
                 N *= this->m_coordinate_system->get_dimension_sizes()[i];
             }
 
@@ -996,13 +919,15 @@ namespace m3D {
 
         /** @return unpacked valid_min
          */
-        const T min(size_t index) const {
+        const T min(size_t index) const
+        {
             return m_offset[index] + m_min[index] * m_scale_factor[index];
         }
 
         /** @return unpacked valid_max
          */
-        const T max(size_t index) const {
+        const T max(size_t index) const
+        {
             return m_offset[index] + m_max[index] * m_scale_factor[index];
         }
 
@@ -1013,12 +938,9 @@ namespace m3D {
         {
             typename multiarray_map_t::const_iterator i = m_buffered_data.find(index);
 
-            if (i != m_buffered_data.end())
-            {
+            if (i != m_buffered_data.end()) {
                 return i->second;
-            }
-            else
-            {
+            } else {
                 cerr << "FATAL: no buffered data for variable with index " << index << endl;
                 exit(EXIT_FAILURE);
             }
@@ -1031,8 +953,7 @@ namespace m3D {
         {
             typename multiarray_map_t::iterator i = m_buffered_data.find(index);
 
-            if (i != m_buffered_data.end())
-            {
+            if (i != m_buffered_data.end()) {
                 MultiArray<T> *ptr = i->second;
                 m_buffered_data.erase(i);
                 delete ptr;
@@ -1044,7 +965,7 @@ namespace m3D {
         void
         for_each(size_t variable_index, typename DataStore<T>::ForEachFunctor *callback)
         {
-            vector<int> gridpoint(this->get_dimension_sizes().size(),0);
+            vector<int> gridpoint(this->get_dimension_sizes().size(), 0);
             this->for_each_recursive(variable_index, callback, 0, gridpoint);
         }
 
@@ -1052,27 +973,22 @@ namespace m3D {
 
         void
         for_each_recursive(size_t variable_index,
-                           typename DataStore<T>::ForEachFunctor *callback,
-                           size_t dim_index,
-                           vector<int> &gridpoint)
+                typename DataStore<T>::ForEachFunctor *callback,
+                size_t dim_index,
+                vector<int> &gridpoint)
         {
             size_t dimSize = this->get_dimension_sizes()[dim_index];
 
-            if (dim_index < (this->get_dimension_sizes().size()-1) )
-            {
-                for ( size_t index = 0; index < dimSize; index++ )
-                {
+            if (dim_index < (this->get_dimension_sizes().size() - 1)) {
+                for (size_t index = 0; index < dimSize; index++) {
                     gridpoint[dim_index] = index;
 
-                    for_each_recursive(variable_index,callback,dim_index+1,gridpoint);
+                    for_each_recursive(variable_index, callback, dim_index + 1, gridpoint);
                 }
-            }
-            else
-            {
+            } else {
                 vector<int> gIter = gridpoint;
 
-                for (size_t i=0; i<dimSize; i++)
-                {
+                for (size_t i = 0; i < dimSize; i++) {
                     gIter[dim_index] = i;
 
                     bool is_valid = false;
@@ -1088,7 +1004,7 @@ namespace m3D {
 
     // Static initialization of template constant
 
-    template <typename T> 
+    template <typename T>
     const T NetCDFDataStore<T>::NO_VALUE = -9999999999;
 }
 

@@ -35,12 +35,12 @@
 #include <vector>
 #include <netcdf>
 
-namespace m3D { 
+namespace m3D {
 
 #pragma mark -
 #pragma mark Helper macros
 
-/* Indexing */
+    /* Indexing */
 
 #define A1(dim) dim[0]
 #define A2(dim) dim[0],dim[1]
@@ -48,7 +48,7 @@ namespace m3D {
 #define A4(dim) dim[0],dim[1],dim[2],dim[3]
 #define A5(dim) dim[0],dim[1],dim[2],dim[3],dim[4]
 
-/* Filling */
+    /* Filling */
 
 #define FILL_A1(dim,array,value) \
 for(int i1=0;i1<dim[0];i1++) \
@@ -125,7 +125,6 @@ for(int i1=0;i1<dim[0];i1++){ \
     template <typename T>
     class MultiArrayBlitz : public MultiArray<T>
     {
-
 #pragma mark -
 #pragma mark Attributes
 
@@ -135,11 +134,11 @@ for(int i1=0;i1<dim[0];i1++){ \
         // TODO: think about employing template
         // metaprogramming for this
 
-        blitz::Array<T,1> m_a1;
-        blitz::Array<T,2> m_a2;
-        blitz::Array<T,3> m_a3;
-        blitz::Array<T,4> m_a4;
-        blitz::Array<T,5> m_a5;
+        blitz::Array<T, 1> m_a1;
+        blitz::Array<T, 2> m_a2;
+        blitz::Array<T, 3> m_a3;
+        blitz::Array<T, 4> m_a4;
+        blitz::Array<T, 5> m_a5;
 
         void destroy();
 
@@ -148,51 +147,66 @@ for(int i1=0;i1<dim[0];i1++){ \
 
     public:
 
-        MultiArrayBlitz() : MultiArray<T>() {};
+        MultiArrayBlitz() : MultiArray<T>()
+        {
+        };
 
         MultiArrayBlitz(const vector<size_t> &dims)
-            : MultiArray<T>(dims)
+        : MultiArray<T>(dims)
         {
-            switch (this->m_dims.size())
-            {
-                case 1: m_a1.resize(A1(this->m_dims)); break;
-                case 2: m_a2.resize(A2(this->m_dims)); break;
-                case 3: m_a3.resize(A3(this->m_dims)); break;
-                case 4: m_a4.resize(A4(this->m_dims)); break;
-                case 5: m_a5.resize(A5(this->m_dims)); break;
+            switch (this->m_dims.size()) {
+                case 1: m_a1.resize(A1(this->m_dims));
+                    break;
+                case 2: m_a2.resize(A2(this->m_dims));
+                    break;
+                case 3: m_a3.resize(A3(this->m_dims));
+                    break;
+                case 4: m_a4.resize(A4(this->m_dims));
+                    break;
+                case 5: m_a5.resize(A5(this->m_dims));
+                    break;
                 default: throw std::out_of_range("only dimensions 1 .. 5 are supported");
             }
         };
 
         MultiArrayBlitz(const vector<size_t> &dims, T default_value)
-            : MultiArray<T>(dims,default_value)
+        : MultiArray<T>(dims, default_value)
         {
-            switch (this->m_dims.size())
-            {
-                case 1: {
+            switch (this->m_dims.size()) {
+                case 1:
+                {
                     m_a1.resize(A1(this->m_dims));
                     FILL_A1(this->m_dims, m_a1, default_value);
-                } break;
+                }
+                    break;
 
-                case 2: {
+                case 2:
+                {
                     m_a2.resize(A2(this->m_dims));
                     FILL_A2(this->m_dims, m_a2, default_value);
-                } break;
+                }
+                    break;
 
-                case 3: {
+                case 3:
+                {
                     m_a3.resize(A3(this->m_dims));
                     FILL_A3(this->m_dims, m_a3, default_value);
-                } break;
+                }
+                    break;
 
-                case 4: {
+                case 4:
+                {
                     m_a4.resize(A4(this->m_dims));
                     FILL_A4(this->m_dims, m_a4, default_value);
-                } break;
+                }
+                    break;
 
-                case 5: {
+                case 5:
+                {
                     m_a5.resize(A5(this->m_dims));
                     FILL_A5(this->m_dims, m_a5, default_value);
-                } break;
+                }
+                    break;
 
                 default:
                     throw std::out_of_range("only 5 dimensions are currently supported");
@@ -203,13 +217,16 @@ for(int i1=0;i1<dim[0];i1++){ \
          */
         MultiArrayBlitz(const MultiArrayBlitz<T> &other) : MultiArray<T>(other)
         {
-            switch (this->m_dims.size())
-            {
-                case 1: m_a1 = blitz::Array<T,1>(other.m_a1); break;
-                case 2: m_a2 = blitz::Array<T,2>(other.m_a2); break;
-                case 3: m_a3 = blitz::Array<T,3>(other.m_a3); break;
-                case 4: m_a4 = blitz::Array<T,4>(other.m_a4); break;
-                case 5: m_a5 = blitz::Array<T,5>(other.m_a5);
+            switch (this->m_dims.size()) {
+                case 1: m_a1 = blitz::Array<T, 1>(other.m_a1);
+                    break;
+                case 2: m_a2 = blitz::Array<T, 2>(other.m_a2);
+                    break;
+                case 3: m_a3 = blitz::Array<T, 3>(other.m_a3);
+                    break;
+                case 4: m_a4 = blitz::Array<T, 4>(other.m_a4);
+                    break;
+                case 5: m_a5 = blitz::Array<T, 5>(other.m_a5);
                 default: throw std::out_of_range("only 5 dimensions are currently supported");
             }
         }
@@ -218,26 +235,31 @@ for(int i1=0;i1<dim[0];i1++){ \
          */
         MultiArrayBlitz(const MultiArrayBlitz<T> *other) : MultiArray<T>(other)
         {
-            switch (this->m_dims.size())
-            {
-                case 1: m_a1 = blitz::Array<T,1>(other->m_a1); break;
-                case 2: m_a2 = blitz::Array<T,2>(other->m_a2); break;
-                case 3: m_a3 = blitz::Array<T,3>(other->m_a3); break;
-                case 4: m_a4 = blitz::Array<T,4>(other->m_a4); break;
-                case 5: m_a5 = blitz::Array<T,5>(other->m_a5);
+            switch (this->m_dims.size()) {
+                case 1: m_a1 = blitz::Array<T, 1>(other->m_a1);
+                    break;
+                case 2: m_a2 = blitz::Array<T, 2>(other->m_a2);
+                    break;
+                case 3: m_a3 = blitz::Array<T, 3>(other->m_a3);
+                    break;
+                case 4: m_a4 = blitz::Array<T, 4>(other->m_a4);
+                    break;
+                case 5: m_a5 = blitz::Array<T, 5>(other->m_a5);
                 default: throw std::out_of_range("only 5 dimensions are currently supported");
             }
         }
 
         MultiArrayBlitz<T>
-        operator = (const MultiArrayBlitz& other)
+                operator=(const MultiArrayBlitz& other)
         {
             return MultiArrayBlitz<T>(other);
         }
 
         /** Destructor
          */
-        ~MultiArrayBlitz() {};
+        ~MultiArrayBlitz()
+        {
+        };
 
 #pragma mark -
 #pragma mark Accessors
@@ -245,13 +267,17 @@ for(int i1=0;i1<dim[0];i1++){ \
         T get(const vector<int> &index) const
         {
             T result;
-            switch (this->m_dims.size())
-            {
-                case 1: result = m_a1(A1(index)); break;
-                case 2: result = m_a2(A2(index)); break;
-                case 3: result = m_a3(A3(index)); break;
-                case 4: result = m_a4(A4(index)); break;
-                case 5: result = m_a5(A5(index)); break;
+            switch (this->m_dims.size()) {
+                case 1: result = m_a1(A1(index));
+                    break;
+                case 2: result = m_a2(A2(index));
+                    break;
+                case 3: result = m_a3(A3(index));
+                    break;
+                case 4: result = m_a4(A4(index));
+                    break;
+                case 5: result = m_a5(A5(index));
+                    break;
                 default: throw std::out_of_range("only 5 dimensions are currently supported");
             }
 
@@ -262,13 +288,17 @@ for(int i1=0;i1<dim[0];i1++){ \
         set(const vector<int> &index, const T &value)
         {
 
-            switch (this->m_dims.size())
-            {
-                case 1: m_a1(A1(index)) = value; break;
-                case 2: m_a2(A2(index)) = value; break;
-                case 3: m_a3(A3(index)) = value; break;
-                case 4: m_a4(A4(index)) = value; break;
-                case 5: m_a5(A5(index)) = value; break;
+            switch (this->m_dims.size()) {
+                case 1: m_a1(A1(index)) = value;
+                    break;
+                case 2: m_a2(A2(index)) = value;
+                    break;
+                case 3: m_a3(A3(index)) = value;
+                    break;
+                case 4: m_a4(A4(index)) = value;
+                    break;
+                case 5: m_a5(A5(index)) = value;
+                    break;
                 default: throw std::out_of_range("only 5 dimensions are currently supported");
             }
         }
@@ -278,19 +308,22 @@ for(int i1=0;i1<dim[0];i1++){ \
 
         void resize(vector<size_t> dimensions)
         {
-            if (dimensions.size() != this->m_dims.size())
-            {
+            if (dimensions.size() != this->m_dims.size()) {
                 // release old data
 
-                vector<int> empty(this->m_dims.size(),0);
+                vector<int> empty(this->m_dims.size(), 0);
 
-                switch (dimensions.size())
-                {
-                    case 1: m_a1.resize(0); break;
-                    case 2: m_a2.resize(0,0); break;
-                    case 3: m_a3.resize(0,0,0); break;
-                    case 4: m_a4.resize(0,0,0,0); break;
-                    case 5: m_a5.resize(0,0,0,0,0); break;
+                switch (dimensions.size()) {
+                    case 1: m_a1.resize(0);
+                        break;
+                    case 2: m_a2.resize(0, 0);
+                        break;
+                    case 3: m_a3.resize(0, 0, 0);
+                        break;
+                    case 4: m_a4.resize(0, 0, 0, 0);
+                        break;
+                    case 5: m_a5.resize(0, 0, 0, 0, 0);
+                        break;
                     default: throw std::out_of_range("only 5 dimensions are currently supported");
                 }
             }
@@ -299,26 +332,34 @@ for(int i1=0;i1<dim[0];i1++){ \
 
             // Re-allocate
 
-            switch (this->m_dims.size())
-            {
-                case 1: m_a1.resize(A1(this->m_dims)); break;
-                case 2: m_a2.resize(A2(this->m_dims)); break;
-                case 3: m_a3.resize(A3(this->m_dims)); break;
-                case 4: m_a4.resize(A4(this->m_dims)); break;
-                case 5: m_a5.resize(A5(this->m_dims)); break;
+            switch (this->m_dims.size()) {
+                case 1: m_a1.resize(A1(this->m_dims));
+                    break;
+                case 2: m_a2.resize(A2(this->m_dims));
+                    break;
+                case 3: m_a3.resize(A3(this->m_dims));
+                    break;
+                case 4: m_a4.resize(A4(this->m_dims));
+                    break;
+                case 5: m_a5.resize(A5(this->m_dims));
+                    break;
                 default: throw std::out_of_range("only 5 dimensions are currently supported");
             }
         }
 
         void populate_array(const T& value)
         {
-            switch (this->m_dims.size())
-            {
-                case 1: FILL_A1(this->m_dims, m_a1, value); break;
-                case 2: FILL_A2(this->m_dims, m_a2, value); break;
-                case 3: FILL_A3(this->m_dims, m_a3, value); break;
-                case 4: FILL_A4(this->m_dims, m_a4, value); break;
-                case 5: FILL_A5(this->m_dims, m_a5, value); break;
+            switch (this->m_dims.size()) {
+                case 1: FILL_A1(this->m_dims, m_a1, value);
+                    break;
+                case 2: FILL_A2(this->m_dims, m_a2, value);
+                    break;
+                case 3: FILL_A3(this->m_dims, m_a3, value);
+                    break;
+                case 4: FILL_A4(this->m_dims, m_a4, value);
+                    break;
+                case 5: FILL_A5(this->m_dims, m_a5, value);
+                    break;
                 default: throw std::out_of_range("only 5 dimensions are currently supported");
             }
         }
@@ -327,13 +368,17 @@ for(int i1=0;i1<dim[0];i1++){ \
         {
             assert(this->m_dims == other->get_dimensions());
 
-            switch (this->m_dims.size())
-            {
-                case 1: COPY_A1(this->m_dims, other, default_value); break;
-                case 2: COPY_A2(this->m_dims, other, default_value); break;
-                case 3: COPY_A3(this->m_dims, other, default_value); break;
-                case 4: COPY_A4(this->m_dims, other, default_value); break;
-                case 5: COPY_A5(this->m_dims, other, default_value); break;
+            switch (this->m_dims.size()) {
+                case 1: COPY_A1(this->m_dims, other, default_value);
+                    break;
+                case 2: COPY_A2(this->m_dims, other, default_value);
+                    break;
+                case 3: COPY_A3(this->m_dims, other, default_value);
+                    break;
+                case 4: COPY_A4(this->m_dims, other, default_value);
+                    break;
+                case 5: COPY_A5(this->m_dims, other, default_value);
+                    break;
                 default: throw std::out_of_range("only 5 dimensions are currently supported");
             }
         }

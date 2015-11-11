@@ -29,30 +29,32 @@
 
 #include <vector>
 
-namespace m3D { namespace utils {
+namespace m3D {
+    namespace utils {
 
-    // Matrix
+        // Matrix
 
-    template <typename T>
-    struct Matrix
-    {
-        // A matrix is a 2D vector construct in this context
-        typedef vector< vector<T> > matrix_t;
+        template <typename T>
+        struct SimpleMatrix
+        {
+            // A matrix is a 2D vector construct in this context
+            typedef vector< vector<T> > matrix_t;
 
-        /** Creates a new matrix of the given dimensions
-         */
-        static matrix_t
-        create_matrix(size_t width, size_t height);
+            /** Creates a new matrix of the given dimensions
+             */
+            static matrix_t
+            create_matrix(size_t width, size_t height);
 
-        // Flag Matrix
+            // Flag Matrix
 
-        typedef vector< vector<int> > flag_matrix_t;
+            typedef vector< vector<int> > flag_matrix_t;
 
-        /** Creates a new matrix of the given dimensions
-         */
-        static flag_matrix_t
-        create_flag_matrix(size_t width, size_t height, int defaultValue=0 );
-    };
-}}
+            /** Creates a new matrix of the given dimensions
+             */
+            static flag_matrix_t
+            create_flag_matrix(size_t width, size_t height, int defaultValue = 0);
+        };
+    }
+}
 
 #endif

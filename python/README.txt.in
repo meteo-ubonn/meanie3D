@@ -1,7 +1,10 @@
+
 Project Name: meanie3D-python
-Author: Jürgen Simon
-Email: juergen.simon@uni-bonn.de
-Licence: MIT Licence
+Version: ${PACKAGE_VERSION}
+Url: ${PROJECT_URL}
+Author: ${PROJECT_AUTHOR}
+Email: ${PROJECT_AUTHOR_EMAIL}
+License: ${PROJECT_LICENSE}
 
 #----------------------------------------------------------------------------#
 Info:

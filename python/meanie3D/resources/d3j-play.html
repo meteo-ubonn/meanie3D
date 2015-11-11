@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>D3 Page Template</title>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    </head>
+    <body>
+<script type="text/javascript">
+
+	var padding = {
+		'x' : 20,
+		'y' : 20
+	};
+
+	var spacing = {
+		'x' : 35,
+		'y' : 25
+	};
+
+	var nodeRadius = 10;
+	var fontSize = 9;
+	
+	var color = d3.scale.category20();
+
+	var svg = d3.select("body")
+		.append("svg")
+		.attr("width",4000)
+		.attr("height",4000);
+		
+	d3.json("track-dictionary.json", function(json) {
+	    // console.log(json);  //Log output to console
+
+		var steps = new Array();
+		var ids = new Array();
+		var nodes = json.tree.nodes;
+		nodes.forEach(function(node) {
+			if (steps.indexOf(node.step) < 0) 
+				steps.push(node.step);
+			if (ids.indexOf(node.id) < 0) 
+				ids.push(node.id);
+		});
+		
+		ids.sort(function(a,b) {
+			return parseInt(a.id) < parseInt(b.id);
+		});
+		steps.sort(function(a,b) {
+			return parseInt(a.step) < parseInt(b.step);
+		});
+
+		// Lines
+		
+		var links = svg.selectAll("line")
+			.data(json.tree.links)
+		    .enter()
+			.append("line");
+
+		links
+			.attr("x1",function(d) {
+			return nodeCoords(steps, ids, nodes, d.source).x;
+		})
+		.attr("y1",function(d) {
+			return nodeCoords(steps, ids, nodes, d.source).y;
+		})
+		.attr("x2",function(d) {
+			return nodeCoords(steps, ids, nodes, d.target).x;
+		})
+		.attr("y2",function(d) {
+			return nodeCoords(steps, ids, nodes, d.target).y;
+		})
+		.attr("stroke-width", 1)
+		.attr("stroke", function(d) {
+			if (d.type == 0) {
+				return "lightgrey";
+			} else if (d.type == 1) {
+				return "blue";
+			} else if (d.type == 2) {
+				return "red";
+			}
+		});
+		
+		// Markers (Arrowheads)
+		links.append("svg:line")
+			.attr("x1", function(d) { 
+				return nodeCoords(steps, ids, nodes, d.source).x;
+			})
+			.attr("y1", function(d) { 
+				return nodeCoords(steps, ids, nodes, d.source).y;
+			})
+			.attr("x2", function(d) { 
+				return nodeCoords(steps, ids, nodes, d.target).y;
+			})
+			.attr("y2", function(d) { 
+				return nodeCoords(steps, ids, nodes, d.target).y;
+			})
+			.attr("class", "link arrow")
+			.attr("marker-end", "url(#arrow)");
+		
+		// Nodes
+
+		var circles = svg.selectAll("circle")
+			.data(nodes)
+			.enter()
+			.append("circle");
+
+		circles
+			.attr("cx", function(d, i) { 
+				return nodeX(steps,ids,d);
+			})
+			.attr("cy", function(d, i) { 
+				return nodeY(steps,ids,d);
+			})
+			.attr("r", function(d) {
+				return nodeRadius;
+			})
+			.attr("fill", function(d) {
+				return color(d.id);
+			});
+			
+		// Labels
+		
+		svg.selectAll("text")
+			.data(nodes)
+			.enter()
+			.append("text")
+			.text(function(d) {
+				return d.id;
+			})
+			.attr("x", function(d, i) { 
+				return nodeX(steps,ids,d);
+			})
+			.attr("y", function(d, i) { 
+				return nodeY(steps,ids,d);
+			})
+			.attr("fill","white")
+			.attr("text-anchor", "middle")
+			.attr("text-align", "center")
+			.attr("alignment-baseline","central")
+		   	.attr("font-family", "sans-serif")
+		   	.attr("font-size", function() {
+		   		return fontSize + "px";
+		   	})
+			.attr("font-weight", "bold");
+
+	});
+	
+	function nodeX(steps, ids, node) {
+		var ni = steps.indexOf(node.step);
+		return padding.x + ni * spacing.x;
+	}
+	
+	function nodeY(steps, ids, node) {
+		var nj = ids.indexOf(node.id);
+		return padding.y + nj * spacing.y;
+	}
+	
+	function nodeCoords(steps, ids, nodes, uuid) {
+		var coords = {};
+		for (var i=0; i<nodes.length; i++) {
+			var node = nodes[i];
+			if (node.uuid == uuid) {
+				coords.x = nodeX(steps,ids,node);
+				coords.y = nodeY(steps,ids,node);
+				return coords;
+			}
+		}
+		console.log("No node found with uuid=" + uuid);
+		return coords;
+	}
+	
+</script>
+</body>
+</html>

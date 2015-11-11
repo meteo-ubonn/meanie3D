@@ -38,23 +38,23 @@ using namespace netCDF;
 using namespace m3D;
 
 template <class T>
-class FSTestBase : public Test 
+class FSTestBase : public Test
 {
 protected:
 
-    NcFile              *m_file;
-    std::string         m_filename;
-    vector<string>      m_variable_names;
+    NcFile *m_file;
+    std::string m_filename;
+    vector<string> m_variable_names;
 
-    DataStore<T>        *m_data_store;
+    DataStore<T> *m_data_store;
     CoordinateSystem<T> *m_coordinate_system;
-    FeatureSpace<T>     *m_featureSpace;
-    PointIndex<T>       *m_featureSpaceIndex;
-    
-    FSTestSettings      *m_settings;
+    FeatureSpace<T> *m_featureSpace;
+    PointIndex<T> *m_featureSpaceIndex;
 
-    size_t              m_pointCount;
-    size_t              m_totalPointCount;
+    FSTestSettings *m_settings;
+
+    size_t m_pointCount;
+    size_t m_totalPointCount;
 
     /** Returns variables names for dimension variables to be 
      * created as part of the test
@@ -80,7 +80,7 @@ protected:
     string filename_from_current_testcase();
 
 public:
-    
+
     static const T FILL_VALUE;
 
     /**
@@ -108,7 +108,7 @@ public:
      * @return 
      */
     NcFile *file();
-    
+
     /**
      */
     void reopen_file_for_reading();
@@ -118,7 +118,7 @@ public:
      * @return 
      */
     CoordinateSystem<T> *coordinate_system();
-    
+
     /** Helper method. Adds a variable with the given name to the file. 
      * The variable has the given name. The valid_min and valid_max 
      * attributes can also be set (default 0..1)
@@ -129,7 +129,7 @@ public:
      * @return the created variable
      */
     NcVar add_variable(string name, T valid_min = 0.0, T valid_max = 1.0);
-    
+
     /**
      * 
      */

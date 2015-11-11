@@ -42,15 +42,19 @@ void parse_commmandline(program_options::variables_map vm,
         string &source_filename,
         string &root_directory,
         vector<NcDim> &dimensions,
-        vector<NcVar> &dimension_variables) {
+        vector<NcVar> &dimension_variables)
+{
     // Version
 
-    if (vm.count("version") != 0) {
+    if (vm.count("version") != 0)
+    {
         cout << m3D::VERSION << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
-    if (vm.count("source") == 0) {
+    if (vm.count("source") == 0)
+    {
         cerr << "Missing 'source' argument" << endl;
 
         exit(1);
@@ -58,30 +62,37 @@ void parse_commmandline(program_options::variables_map vm,
 
     source_filename = vm["source"].as<string>();
 
-    try {
+    try
+    {
         root_directory = vm["root"].as<string>();
-    }    catch (const boost::exception& e) {
+    } catch (const boost::exception& e)
+    {
         cerr << "Missing 'root' argument" << endl;
 
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Open NetCDF file
 
     NcFile *file = NULL;
 
-    try {
+    try
+    {
         file = new NcFile(source_filename, NcFile::read);
-    }    catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e)
+    {
         cerr << "ERROR opening file '" << source_filename << "' : " << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     *filePtr = file;
 
     // Extract dimensions
 
-    if (vm.count("dimensions") == 0) {
+    if (vm.count("dimensions") == 0)
+    {
         cerr << "Missing parameter --dimensions" << endl;
 
         exit(1);
@@ -95,7 +106,8 @@ void parse_commmandline(program_options::variables_map vm,
 
     tokenizer dim_tokens(vm["dimensions"].as<string>(), sep);
 
-    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
+    {
         const char* name = (*tok_iter).c_str();
 
         dimensions.push_back(file->getDim(name));
@@ -104,7 +116,8 @@ void parse_commmandline(program_options::variables_map vm,
     }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     using namespace m3D;
 
     // Declare the supported options.
@@ -120,16 +133,20 @@ int main(int argc, char** argv) {
 
     program_options::variables_map vm;
 
-    try {
+    try
+    {
         program_options::store(program_options::parse_command_line(argc, argv, desc), vm);
         program_options::notify(vm);
-    }    catch (std::exception &e) {
+    } catch (std::exception &e)
+    {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-trackplot --help for command line options" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
-    if (vm.count("help") == 1 || argc < 2) {
+    if (vm.count("help") == 1 || argc < 2)
+    {
         cout << desc << "\n";
         return 1;
     }
@@ -147,26 +164,33 @@ int main(int argc, char** argv) {
 
     namespace fs = boost::filesystem;
 
-    try {
+    try
+    {
         parse_commmandline(vm, &source, source_filename, root_directory, dimensions, dimension_variables);
-    }    catch (const std::exception &e) {
+    } catch (const std::exception &e)
+    {
         cerr << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
-    if (fs::is_directory(root_directory)) {
+    if (fs::is_directory(root_directory))
+    {
         fs::directory_iterator dir_iter(root_directory);
         fs::directory_iterator end;
 
         // Iterate over the "-clusters.nc" - files in sourcepath
 
-        while (dir_iter != end) {
+        while (dir_iter != end)
+        {
             fs::path f = dir_iter->path();
 
             if (fs::is_regular_file(f)
                     && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc")
-                    && f.generic_string() != source_filename) {
-                try {
+                    && f.generic_string() != source_filename)
+            {
+                try
+                {
                     cout << "Processing file " << f.filename() << " ... ";
 
                     // copy the file to a backup
@@ -177,7 +201,8 @@ int main(int argc, char** argv) {
 
                     // delete backup if it exists
 
-                    if (fs::exists(backup_path)) {
+                    if (fs::exists(backup_path))
+                    {
                         fs::remove(backup_path);
                     }
 
@@ -197,7 +222,8 @@ int main(int argc, char** argv) {
 
                     multimap<string, NcGroupAtt >::iterator at;
 
-                    for (at = attributes.begin(); at != attributes.end(); at++) {
+                    for (at = attributes.begin(); at != attributes.end(); at++)
+                    {
                         NcGroupAtt a = at->second;
 
                         size_t size = a.getAttLength();
@@ -217,7 +243,8 @@ int main(int argc, char** argv) {
 
                     multimap<string, NcDim>::iterator sdi;
 
-                    for (sdi = source_dims.begin(); sdi != source_dims.end(); sdi++) {
+                    for (sdi = source_dims.begin(); sdi != source_dims.end(); sdi++)
+                    {
                         NcDim source_dim = sdi->second;
                         NcDim copy_dim = copy.addDim(sdi->first, source_dim.getSize());
                     }
@@ -228,17 +255,20 @@ int main(int argc, char** argv) {
 
                     multimap<string, NcVar>::iterator vit;
 
-                    for (vit = source_vars.begin(); vit != source_vars.end(); vit++) {
+                    for (vit = source_vars.begin(); vit != source_vars.end(); vit++)
+                    {
                         NcVar original_var = vit->second;
 
                         // Make sure to copy the variables that were
                         // listed in the --dimensions parameter from
                         // the right file
 
-                        for (size_t k = 0; k < dimensions.size(); k++) {
+                        for (size_t k = 0; k < dimensions.size(); k++)
+                        {
                             NcDim sd = dimensions[k];
 
-                            if (sd.getName() == original_var.getName()) {
+                            if (sd.getName() == original_var.getName())
+                            {
                                 original_var = dimension_variables[k];
 
                                 break;
@@ -271,7 +301,8 @@ int main(int argc, char** argv) {
 
                         map< string, NcVarAtt >::iterator at;
 
-                        for (at = attributes.begin(); at != attributes.end(); at++) {
+                        for (at = attributes.begin(); at != attributes.end(); at++)
+                        {
                             NcVarAtt a = at->second;
 
                             size_t size = a.getAttLength();
@@ -287,9 +318,11 @@ int main(int argc, char** argv) {
                     }
 
                     cout << " done." << endl;
-                }                catch (const netCDF::exceptions::NcException &e) {
+                } catch (const netCDF::exceptions::NcException &e)
+                {
                     cerr << "ERROR opening file '" << f.generic_string() << "' : " << e.what() << endl;
-                    exit(EXIT_FAILURE);;
+                    exit(EXIT_FAILURE);
+                    ;
                 }
             }
 

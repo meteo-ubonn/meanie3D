@@ -1,5 +1,3 @@
-__author__ = "juergen.simon@uni-bonn.de"
-
 import glob
 import os
 import os.path
@@ -114,21 +112,30 @@ def run(config,time_index):
             
         if utils.getSafe(tracking,'histogramWeight'):
             tracking_params = "%s --wt %s" % (tracking_params, tracking['histogramWeight'])
+        else:
+            tracking_params = "%s --wt 0" % tracking_params
             
         if utils.getSafe(tracking,'positionWeight'):
             tracking_params = "%s --wr %s" % (tracking_params, tracking['positionWeight'])
+        else:
+            tracking_params = "%s --wr 0" % tracking_params
             
         if utils.getSafe(tracking,'sizeWeight'):
             tracking_params = "%s --ws %s" % (tracking_params, tracking['sizeWeight'])
+        else:
+            tracking_params = "%s --ws 0" % tracking_params
             
         if utils.getSafe(tracking,'maxSpeed'):
             tracking_params = "%s --max-speed %f" % (tracking_params, tracking['maxSpeed'])
             
         if utils.getSafe(tracking,'maxTime'):
             tracking_params = "%s --max-time %d" % (tracking_params, tracking['maxTime'])
-            
+
+        if utils.getSafe(tracking,'maxSizeDeviation'):
+            tracking_params = "%s --max-size-deviation %d" % (tracking_params, tracking['maxSizeDeviation'])
+
         if utils.getSafe(tracking,'useDisplacementVectors'):
-            tracking_params = "%s -v"
+            tracking_params = "%s -v"  % tracking_params
 
     resume_at_index = 0;
 
@@ -174,13 +181,6 @@ def run(config,time_index):
             cluster_file= output_dir+"/netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index) + ".nc"
             last_cluster_file = output_dir+"/netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index-1) + ".nc"
 
-        # if there is a resume counter, keep skipping
-        # until the count is right
-        if (resume_at_index > 0) and (run_count < resume_at_index):
-            last_cluster_file = cluster_file
-            run_count = run_count + 1
-            continue
-
         print "-------------------------------------------------------------------------------------"
         print "Processing " + netcdf_file
         print "-------------------------------------------------------------------------------------"
@@ -189,7 +189,15 @@ def run(config,time_index):
         # Clustering
         # ----------------------------------------------
 
-        if utils.getSafe(config,'detection'):
+        if detection:
+            # if there is a resume counter, keep skipping until the count is right
+            # Note: this only applies to clustering, which is expensive. Tracking
+            # will be re-run
+            if (resume_at_index > 0) and (run_count < resume_at_index):
+                last_cluster_file = cluster_file
+                run_count = run_count + 1
+                continue
+
             print "-- Clustering --"
 
             # build the clustering command
@@ -233,7 +241,7 @@ def run(config,time_index):
         # Tracking
         # ----------------------------------------------
 
-        if config['tracking']:
+        if tracking:
             # if we have a previous scan, run the tracking command
             if (run_count > 0) or (time_index > 0):
 

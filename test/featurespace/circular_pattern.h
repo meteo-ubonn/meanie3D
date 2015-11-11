@@ -23,30 +23,29 @@ static const float ELLIPSE_FUZZINESS = 0.05f;
 #pragma mark -
 #pragma mark Test Fixture
 
-template <class T> 
+template <class T>
 class FSCircularPatternTest2D : public FSTestBase<T>
 {
-    
 protected:
-    
+
     //
     // Protected member variables
     //
 
     // The half-axis numbers for the ellipsoids 
     vector< vector<T> > m_bandwidths;
-    
+
     // Calculates from the number of points created.
     vector<size_t> m_nearest_neighbours;
-    
+
     /**
      * 
      * @param coordinate
      * @param axis
      * @return 
      */
-    bool isPointOnEllipse( vector<T> coordinate, vector<T> axis );
-    
+    bool isPointOnEllipse(vector<T> coordinate, vector<T> axis);
+
     /**
      * 
      * @param var
@@ -54,30 +53,30 @@ protected:
      * @param dimensionIndex
      * @param gridpoint
      */
-    void create_ellipsoid_recursive( NcVar &var, 
-            vector<T> &h, 
-            size_t dimensionIndex, 
-            vector<int> &gridpoint );
-    
+    void create_ellipsoid_recursive(NcVar &var,
+            vector<T> &h,
+            size_t dimensionIndex,
+            vector<int> &gridpoint);
+
     /**
      * 
      * @param var
      * @param h
      */
-    void create_ellipsoid( NcVar &var, 
-            vector<T> h );
+    void create_ellipsoid(NcVar &var,
+            vector<T> h);
 
 public:
-    
+
     FSCircularPatternTest2D();
-    
+
     virtual void SetUp();
-    
+
     virtual void TearDown();
-    
+
 };
 
-template <class T> 
+template <class T>
 class FSCircularPatternTest3D : public FSCircularPatternTest2D<T>
 {
 public:

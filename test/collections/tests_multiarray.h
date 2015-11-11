@@ -84,243 +84,249 @@ using namespace testing;
 #pragma mark Blitz Multi-Array
 
 template <typename T>
-class MultiArrayBlitzTest : public testing::Test {};
+class MultiArrayBlitzTest : public testing::Test
+{
+};
 
 typedef testing::Types< float, double > VectorDataTypes;
 
-TYPED_TEST_CASE( MultiArrayBlitzTest, VectorDataTypes );
+TYPED_TEST_CASE(MultiArrayBlitzTest, VectorDataTypes);
 
-TYPED_TEST( MultiArrayBlitzTest, VectorDataTypes )
+TYPED_TEST(MultiArrayBlitzTest, VectorDataTypes)
 {
-    vector<size_t>  dims;
-    vector<int>     index;
+    vector<size_t> dims;
+    vector<int> index;
 
     // 1D
-//    dims.resize(1);
-//    dims[0]=5;
-//    
-//    // Test default constructor
-//    
-//    MultiArrayBlitz<TypeParam> a11(dims);
-//
-//    // Test set / get
-//
-//    SET_A1(dims,a11,index,120);
-//    TEST_A1(dims,a11,index,120);
-//    
-//    // test populate
-//    a11.populate_array(125);
-//    TEST_A1(dims,a11,index,125);
-//
-//    // Test constructor with default value
-//    
-//    MultiArrayBlitz<TypeParam> a12(dims,100);
-//    TEST_A1(dims,a12,index,100);
+    //    dims.resize(1);
+    //    dims[0]=5;
+    //    
+    //    // Test default constructor
+    //    
+    //    MultiArrayBlitz<TypeParam> a11(dims);
+    //
+    //    // Test set / get
+    //
+    //    SET_A1(dims,a11,index,120);
+    //    TEST_A1(dims,a11,index,120);
+    //    
+    //    // test populate
+    //    a11.populate_array(125);
+    //    TEST_A1(dims,a11,index,125);
+    //
+    //    // Test constructor with default value
+    //    
+    //    MultiArrayBlitz<TypeParam> a12(dims,100);
+    //    TEST_A1(dims,a12,index,100);
 
     // 2D
-    
+
     dims.resize(2);
     dims[0] = 10;
     dims[1] = 10;
 
     MultiArrayBlitz<TypeParam> a21(dims);
-    
+
     // Test set / get
-    
-    SET_A2(dims,a21,index,200);
-    TEST_A2(dims,a21,index,200);
-    
+
+    SET_A2(dims, a21, index, 200);
+    TEST_A2(dims, a21, index, 200);
+
     // Test constructor with default value
-    
-    MultiArrayBlitz<TypeParam> a22(dims,250);
-    TEST_A2(dims,a22,index,250);
+
+    MultiArrayBlitz<TypeParam> a22(dims, 250);
+    TEST_A2(dims, a22, index, 250);
 
     // 3D
-    
+
     dims.resize(3);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 100;
-    
+
     MultiArrayBlitz<TypeParam> a31(dims);
-    
+
     // Test set / get
-    
-    SET_A3(dims,a31,index,300);
-    TEST_A3(dims,a31,index,300);
-    
+
+    SET_A3(dims, a31, index, 300);
+    TEST_A3(dims, a31, index, 300);
+
     // Test constructor with default value
-    
-    MultiArrayBlitz<TypeParam> a32(dims,350);
-    TEST_A3(dims,a32,index,350);
+
+    MultiArrayBlitz<TypeParam> a32(dims, 350);
+    TEST_A3(dims, a32, index, 350);
 
     // 4D
-    
+
     dims.resize(4);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 10;
     dims[3] = 10;
-    
+
     MultiArrayBlitz<TypeParam> a41(dims);
-    
+
     // Test set / get
-    
-    SET_A4(dims,a41,index,400);
-    TEST_A4(dims,a41,index,400);
-    
+
+    SET_A4(dims, a41, index, 400);
+    TEST_A4(dims, a41, index, 400);
+
     // Test constructor with default value
-    
-    MultiArrayBlitz<TypeParam> a42(dims,450);
-    TEST_A4(dims,a42,index,450);
+
+    MultiArrayBlitz<TypeParam> a42(dims, 450);
+    TEST_A4(dims, a42, index, 450);
 
     // 4D
-    
+
     dims.resize(5);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 10;
     dims[3] = 10;
     dims[4] = 10;
-    
+
     MultiArrayBlitz<TypeParam> a51(dims);
-    
+
     // Test set / get
-    
-    SET_A5(dims,a51,index,500);
-    TEST_A5(dims,a51,index,500);
-    
+
+    SET_A5(dims, a51, index, 500);
+    TEST_A5(dims, a51, index, 500);
+
     // Test constructor with default value
-    
-    MultiArrayBlitz<TypeParam> a52(dims,550);
-    TEST_A5(dims,a52,index,550);
+
+    MultiArrayBlitz<TypeParam> a52(dims, 550);
+    TEST_A5(dims, a52, index, 550);
 }
 
 #pragma mark -
 #pragma mark Recursive Multi-Array
 
 template <typename T>
-class MultiArrayRecursiveTest : public testing::Test {};
-
-TYPED_TEST_CASE( MultiArrayRecursiveTest, VectorDataTypes );
-
-TYPED_TEST( MultiArrayRecursiveTest, VectorDataTypes )
+class MultiArrayRecursiveTest : public testing::Test
 {
-    vector<size_t>  dims;
-    vector<int>     index;
-    
+};
+
+TYPED_TEST_CASE(MultiArrayRecursiveTest, VectorDataTypes);
+
+TYPED_TEST(MultiArrayRecursiveTest, VectorDataTypes)
+{
+    vector<size_t> dims;
+    vector<int> index;
+
     // 1D
-//    dims.resize(1);
-//    dims[0]=5;
-//    
-//    // Test default constructor
-//    
-//    MultiArrayRecursive<TypeParam> a11(dims);
-//    
-//    // Test set / get
-//    
-//    SET_A1(dims,a11,index,120);
-//    TEST_A1(dims,a11,index,120);
-//    
-//    // Test constructor with default value
-//    
-//    MultiArrayRecursive<TypeParam> a12(dims,100);
-//    TEST_A1(dims,a12,index,100);
-    
+    //    dims.resize(1);
+    //    dims[0]=5;
+    //    
+    //    // Test default constructor
+    //    
+    //    MultiArrayRecursive<TypeParam> a11(dims);
+    //    
+    //    // Test set / get
+    //    
+    //    SET_A1(dims,a11,index,120);
+    //    TEST_A1(dims,a11,index,120);
+    //    
+    //    // Test constructor with default value
+    //    
+    //    MultiArrayRecursive<TypeParam> a12(dims,100);
+    //    TEST_A1(dims,a12,index,100);
+
     // 2D
-    
+
     dims.resize(2);
     dims[0] = 10;
     dims[1] = 10;
-    
+
     MultiArrayRecursive<TypeParam> a21(dims);
-    
+
     // Test set / get
-    
-    SET_A2(dims,a21,index,200);
-    TEST_A2(dims,a21,index,200);
-    
+
+    SET_A2(dims, a21, index, 200);
+    TEST_A2(dims, a21, index, 200);
+
     // Test constructor with default value
-    
-    MultiArrayRecursive<TypeParam> a22(dims,250);
-    TEST_A2(dims,a22,index,250);
-    
+
+    MultiArrayRecursive<TypeParam> a22(dims, 250);
+    TEST_A2(dims, a22, index, 250);
+
     // 3D
-    
+
     dims.resize(3);
     dims[0] = 100;
     dims[1] = 100;
     dims[2] = 10;
-    
+
     MultiArrayRecursive<TypeParam> a31(dims);
-    
+
     // Test set / get
-    
-    SET_A3(dims,a31,index,300);
-    TEST_A3(dims,a31,index,300);
-    
+
+    SET_A3(dims, a31, index, 300);
+    TEST_A3(dims, a31, index, 300);
+
     // Test constructor with default value
-    
-    MultiArrayRecursive<TypeParam> a32(dims,350);
-    TEST_A3(dims,a32,index,350);
-    
+
+    MultiArrayRecursive<TypeParam> a32(dims, 350);
+    TEST_A3(dims, a32, index, 350);
+
     // 4D
-    
+
     dims.resize(4);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 10;
     dims[3] = 10;
-    
+
     MultiArrayRecursive<TypeParam> a41(dims);
-    
+
     // Test set / get
-    
-    SET_A4(dims,a41,index,400);
-    TEST_A4(dims,a41,index,400);
-    
+
+    SET_A4(dims, a41, index, 400);
+    TEST_A4(dims, a41, index, 400);
+
     // Test constructor with default value
-    
-    MultiArrayRecursive<TypeParam> a42(dims,450);
-    TEST_A4(dims,a42,index,450);
-    
+
+    MultiArrayRecursive<TypeParam> a42(dims, 450);
+    TEST_A4(dims, a42, index, 450);
+
     // 4D
-    
+
     dims.resize(5);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 10;
     dims[3] = 10;
     dims[4] = 10;
-    
+
     MultiArrayRecursive<TypeParam> a51(dims);
-    
+
     // Test set / get
-    
-    SET_A5(dims,a51,index,500);
-    TEST_A5(dims,a51,index,500);
-    
+
+    SET_A5(dims, a51, index, 500);
+    TEST_A5(dims, a51, index, 500);
+
     // Test constructor with default value
-    
-    MultiArrayRecursive<TypeParam> a52(dims,550);
-    TEST_A5(dims,a52,index,550);
+
+    MultiArrayRecursive<TypeParam> a52(dims, 550);
+    TEST_A5(dims, a52, index, 550);
 };
 
 #pragma mark -
 #pragma mark Blitz Multi-Array
 
 template <typename T>
-class MultiArrayBoostTest : public testing::Test {};
+class MultiArrayBoostTest : public testing::Test
+{
+};
 
 typedef testing::Types< float, double > VectorDataTypes;
 
-TYPED_TEST_CASE( MultiArrayBoostTest, VectorDataTypes );
+TYPED_TEST_CASE(MultiArrayBoostTest, VectorDataTypes);
 
-TYPED_TEST( MultiArrayBoostTest, VectorDataTypes )
+TYPED_TEST(MultiArrayBoostTest, VectorDataTypes)
 {
-    vector<size_t>  dims;
-    vector<int>     index;
-    
+    vector<size_t> dims;
+    vector<int> index;
+
     // 1D
     //    dims.resize(1);
     //    dims[0]=5;
@@ -342,84 +348,84 @@ TYPED_TEST( MultiArrayBoostTest, VectorDataTypes )
     //
     //    MultiArrayBoost<TypeParam> a12(dims,100);
     //    BLITZ_TEST_A1(dims,a12,index,100);
-    
+
     // 2D
-    
+
     dims.resize(2);
     dims[0] = 10;
     dims[1] = 10;
-    
+
     MultiArrayBoost<TypeParam> a21(dims);
-    
+
     // Test set / get
-    
-    SET_A2(dims,a21,index,200);
-    TEST_A2(dims,a21,index,200);
-    
+
+    SET_A2(dims, a21, index, 200);
+    TEST_A2(dims, a21, index, 200);
+
     // Test constructor with default value
-    
-    MultiArrayBoost<TypeParam> a22(dims,250);
-    TEST_A2(dims,a22,index,250);
-    
+
+    MultiArrayBoost<TypeParam> a22(dims, 250);
+    TEST_A2(dims, a22, index, 250);
+
     // 3D
-    
+
     dims.resize(3);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 100;
-    
+
     MultiArrayBoost<TypeParam> a31(dims);
-    
+
     // Test set / get
-    
-    SET_A3(dims,a31,index,300);
-    TEST_A3(dims,a31,index,300);
-    
+
+    SET_A3(dims, a31, index, 300);
+    TEST_A3(dims, a31, index, 300);
+
     // Test constructor with default value
-    
-    MultiArrayBoost<TypeParam> a32(dims,350);
-    TEST_A3(dims,a32,index,350);
-    
+
+    MultiArrayBoost<TypeParam> a32(dims, 350);
+    TEST_A3(dims, a32, index, 350);
+
     // 4D
-    
+
     dims.resize(4);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 10;
     dims[3] = 10;
-    
+
     MultiArrayBoost<TypeParam> a41(dims);
-    
+
     // Test set / get
-    
-    SET_A4(dims,a41,index,400);
-    TEST_A4(dims,a41,index,400);
-    
+
+    SET_A4(dims, a41, index, 400);
+    TEST_A4(dims, a41, index, 400);
+
     // Test constructor with default value
-    
-    MultiArrayBoost<TypeParam> a42(dims,450);
-    TEST_A4(dims,a42,index,450);
-    
+
+    MultiArrayBoost<TypeParam> a42(dims, 450);
+    TEST_A4(dims, a42, index, 450);
+
     // 4D
-    
+
     dims.resize(5);
     dims[0] = 10;
     dims[1] = 10;
     dims[2] = 10;
     dims[3] = 10;
     dims[4] = 10;
-    
+
     MultiArrayBoost<TypeParam> a51(dims);
-    
+
     // Test set / get
-    
-    SET_A5(dims,a51,index,500);
-    TEST_A5(dims,a51,index,500);
-    
+
+    SET_A5(dims, a51, index, 500);
+    TEST_A5(dims, a51, index, 500);
+
     // Test constructor with default value
-    
-    MultiArrayBoost<TypeParam> a52(dims,550);
-    TEST_A5(dims,a52,index,550);
+
+    MultiArrayBoost<TypeParam> a52(dims, 550);
+    TEST_A5(dims, a52, index, 550);
 };
 
 #endif

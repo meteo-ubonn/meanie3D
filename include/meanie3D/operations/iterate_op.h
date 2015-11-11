@@ -29,17 +29,20 @@
 
 #include <meanie3D/featurespace.h>
 
-namespace m3D { 
+namespace m3D {
 
     template <typename T>
     class IterationOperation : public Operation<T>
     {
-
     public:
 
-        IterationOperation( FeatureSpace<T> *fs, PointIndex<T> *index ) : Operation<T>( fs, index ) {};
+        IterationOperation(FeatureSpace<T> *fs, PointIndex<T> *index) : Operation<T>(fs, index)
+        {
+        };
 
-        virtual ~IterationOperation() {}
+        virtual ~IterationOperation()
+        {
+        }
 
         /** Performs a mean-shift iteration from the given starting
          * point until one of the two termination criteria is met.
@@ -52,9 +55,9 @@ namespace m3D {
          * @param termcrit_iterations maximum number of iterations
          */
         void
-        iterate(Point<T> *origin, 
-                const SearchParameters *params, 
-                const Kernel<T> *kernel, 
+        iterate(Point<T> *origin,
+                const SearchParameters *params,
+                const Kernel<T> *kernel,
                 const WeightFunction<T> *weight,
                 const T termcrit_epsilon,
                 const size_t termcrit_iterations);
@@ -71,17 +74,17 @@ namespace m3D {
          * 
          * @return The trajectory of the iteration
          */
-        typename FeatureSpace<T>::Trajectory * 
-        get_trajectory(Point<T> *origin, 
-                       const SearchParameters *params, 
-                       const Kernel<T> *kernel, 
-                       const WeightFunction<T> *weight,
-                       const T termcrit_epsilon,
-                       const size_t termcrit_iterations);
+        typename FeatureSpace<T>::Trajectory *
+        get_trajectory(Point<T> *origin,
+                const SearchParameters *params,
+                const Kernel<T> *kernel,
+                const WeightFunction<T> *weight,
+                const T termcrit_epsilon,
+                const size_t termcrit_iterations);
 
 
-        
-    };   
+
+    };
 }
 
 #endif

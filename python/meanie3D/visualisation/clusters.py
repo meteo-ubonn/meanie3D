@@ -1,7 +1,3 @@
-##
-# This modules contains code to visualise clusters in visit.
-#
-
 import glob
 import os
 import pdb
@@ -83,7 +79,7 @@ def run(conf):
 
     if not utils.getValueForKeyPath(conf,'resume'):
         print "Removing results from previous runs"
-        subprocess.call("rm -rf images movies *.vtk *.vtr *.png", shell=True)
+        subprocess.call("rm -rf images movies *.vtk *.vtr *tracking*.png *source*.png", shell=True)
     else:
         print "Removing intermediary files from previous runs"
         subprocess.call("rm -f *.vtk *.vtr", shell=True)
@@ -178,8 +174,7 @@ def run(conf):
                 if utils.getValueForKeyPath(conf,'postprocessing.clusters.showDisplacementVectors'):
                     params += " --write-displacement-vectors"
 
-                # pdb.set_trace()
-
+                # pdb.set_trace();
                 meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
 
@@ -253,10 +248,10 @@ def run(conf):
     # clean up
     print "Cleaning up ..."
     subprocess.call("mkdir images", shell=True)
-    subprocess.call("mv tracking_*.png images", shell=True)
-    subprocess.call("mv source_*.png images", shell=True)
+    subprocess.call("mv *tracking_*.png images", shell=True)
+    subprocess.call("mv *source_*.png images", shell=True)
     subprocess.call("mkdir movies", shell=True)
-    subprocess.call("mv *.gif *.m4v movies", shell=True)
+    subprocess.call("mv *source*.gif *tracking*.gif *.m4v movies", shell=True)
     subprocess.call("rm -f *.vt* visitlog.py", shell=True)
     return
 

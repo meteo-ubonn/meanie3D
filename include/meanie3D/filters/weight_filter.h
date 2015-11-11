@@ -42,9 +42,9 @@ namespace m3D {
     {
     private:
 
-        WeightFunction<T>   *m_weight_function;
-        T                   m_lower_threshold;
-        T                   m_upper_threshold;
+        WeightFunction<T> *m_weight_function;
+        T m_lower_threshold;
+        T m_upper_threshold;
 
     public:
 
@@ -59,16 +59,16 @@ namespace m3D {
          * @throws logic_error if |thresholds| = 0
          */
         WeightThresholdFilter(WeightFunction<T> *weight_function,
-                              T lower_threshold=numeric_limits<T>::min(),
-                              T upper_threshold=numeric_limits<T>::max(),
-                              bool show_progress=false);
+                T lower_threshold = numeric_limits<T>::min(),
+                T upper_threshold = numeric_limits<T>::max(),
+                bool show_progress = false);
 
         virtual ~WeightThresholdFilter();
 
 #pragma mark -
 #pragma mark Abstract filter method
 
-        virtual void apply( FeatureSpace<T> *fs );
+        virtual void apply(FeatureSpace<T> *fs);
     };
 }
 

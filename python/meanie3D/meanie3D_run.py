@@ -1,12 +1,5 @@
 #!/usr/bin/python
 
-## meanie3D.py
-#
-# Python script for running a whole set of netcdf files through the clustering and tracking process
-# Includes postprocessing chain for stats, visualisation and cross-scale comparison
-#
-# \author Juergen Simon (juergen.simon@uni-bonn.de)
-
 import os
 import sys
 import getopt
@@ -19,20 +12,7 @@ import meanie3D.app.utils
 import meanie3D.app.postprocessing
 
 # Make sure the C++ executables are installed
-meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats"])
-
-##
-# \return meanie3D package version
-#
-def getVersion():
-    from . import __version__
-    return __version__
-
-##
-# \return meanie3D package location
-#
-def getHome():
-    return meanie3D.__file__
+meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats","rm"])
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
@@ -74,7 +54,7 @@ def print_configuration_format():
 ## Prints version info and exits
 #
 def print_version():
-    print "meanie3D: " + getVersion() + "\n"
+    print "meanie3D: " + meanie3D.getVersion() + "\n"
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -167,8 +147,14 @@ def main():
     configuration["resume"] = resume
     configuration['config_file'] = os.path.abspath(config_file)
 
+    # Remove previous results
+    if resume == False:
+        meanie3D.app.utils.removeOutputDirectories(configuration,scales)
+
     # Run the detection and tracking steps
-    if (configuration['detection'] or configuration['tracking']):
+    detection = meanie3D.app.utils.getSafe(configuration,'detection')
+    tracking = meanie3D.app.utils.getSafe(configuration,'tracking')
+    if (detection or tracking):
 
         # run the actual clustering/tracking script
         if not scales:
@@ -199,4 +185,4 @@ def main():
 # ----------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

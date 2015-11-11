@@ -30,18 +30,17 @@
 
 #include <vector>
 
-namespace m3D { 
+namespace m3D {
 
     template <typename T>
     class MultiArray
     {
-
 #pragma mark -
 #pragma mark Attributes
 
     protected:
 
-        vector<size_t>  m_dims;
+        vector<size_t> m_dims;
 
 #pragma mark -
 #pragma mark Constructors/Destructors
@@ -50,14 +49,16 @@ namespace m3D {
 
         class ForEachFunctor
         {
-            public:
+        public:
             virtual void operator()(const vector<int> &index, const T value) = 0;
         };
 
         /** Constructs an empty mutli-dimensional array
          */
         MultiArray()
-            : m_dims(vector<size_t>()) {};
+        : m_dims(vector<size_t>())
+        {
+        };
 
         /** Constructs an empty mutli-dimensional array
          * with as many dimensions as the dimension vector
@@ -65,7 +66,9 @@ namespace m3D {
          * @param dimensions
          */
         MultiArray(const vector<size_t> &dims)
-            : m_dims(dims) {};
+        : m_dims(dims)
+        {
+        };
 
         /** Constructs an empty mutli-dimensional array
          * with as many dimensions as the dimension vector
@@ -74,18 +77,21 @@ namespace m3D {
          * @param default value
          */
         MultiArray(const vector<size_t> &dims, T default_value)
-            : m_dims(dims)
-        {};
+        : m_dims(dims)
+        {
+        };
 
         /** Destructor
          */
-        virtual ~MultiArray() {};
+        virtual ~MultiArray()
+        {
+        };
 
         /** Copy constructor.
          * @param other index
          */
         MultiArray(const MultiArray<T> &other)
-            : m_dims(other.get_dimensions())
+        : m_dims(other.get_dimensions())
         {
             this->copy_from(&other);
         };
@@ -102,7 +108,7 @@ namespace m3D {
          * @param other index
          */
         MultiArray<T> *
-        operator = (const MultiArray* other)
+                operator=(const MultiArray* other)
         {
             this->m_dims = other->get_dimensions();
             this->copy_from(other);
@@ -127,19 +133,26 @@ namespace m3D {
         /** @return const reference to the dimension vector
          * this array was build on
          */
-        const vector<size_t> & get_dimensions() const { return m_dims; };
+        const vector<size_t> & get_dimensions() const
+        {
+            return m_dims;
+        };
 
         /** @return number of points in this array
          */
-        const size_t size() const {
+        const size_t size() const
+        {
             size_t num_values = 1;
-            for (int i=0; i<m_dims.size(); i++) num_values *= m_dims[i];
+            for (int i = 0; i < m_dims.size(); i++) num_values *= m_dims[i];
             return num_values;
         }
 
         /** @return the array's dimensionality
          */
-        const size_t rank() const { return m_dims.size(); }
+        const size_t rank() const
+        {
+            return m_dims.size();
+        }
 
 #pragma mark -
 #pragma mark Stuff
@@ -168,7 +181,7 @@ namespace m3D {
          */
         virtual
         size_t count_value(const T &value) = 0;
-        
+
 #pragma mark -
 #pragma mark For each
 
@@ -177,7 +190,7 @@ namespace m3D {
          */
         void for_each(ForEachFunctor *f) const
         {
-            vector<int> index(this->get_dimensions().size(),0);
+            vector<int> index(this->get_dimensions().size(), 0);
             this->for_each_recursive(f, 0, index);
         }
 
@@ -187,21 +200,16 @@ namespace m3D {
         {
             size_t dimSize = this->get_dimensions()[dim_index];
 
-            if (dim_index < (this->get_dimensions().size()-1) )
-            {
-                for ( size_t i = 0; i < dimSize; i++ )
-                {
+            if (dim_index < (this->get_dimensions().size() - 1)) {
+                for (size_t i = 0; i < dimSize; i++) {
                     index[dim_index] = i;
 
-                    for_each_recursive(f,dim_index+1,index);
+                    for_each_recursive(f, dim_index + 1, index);
                 }
-            }
-            else
-            {
+            } else {
                 vector<int> gIter = index;
 
-                for (size_t i=0; i<dimSize; i++)
-                {
+                for (size_t i = 0; i < dimSize; i++) {
                     gIter[dim_index] = i;
 
                     f->operator()(gIter, this->get(gIter));
@@ -216,26 +224,21 @@ namespace m3D {
 
         void
         add_values_around_recursive(const vector<int> lower_bounds,
-                                    const vector<int> upper_bounds,
-                                    vector<int> &gridpoint,
-                                    size_t dim_index,
-                                    vector<T> &values)
+                const vector<int> upper_bounds,
+                vector<int> &gridpoint,
+                size_t dim_index,
+                vector<T> &values)
         {
-            if (dim_index < (this->get_dimensions().size()-1) )
-            {
-                for ( size_t i = lower_bounds[dim_index]; i <= upper_bounds[dim_index]; i++ )
-                {
+            if (dim_index < (this->get_dimensions().size() - 1)) {
+                for (size_t i = lower_bounds[dim_index]; i <= upper_bounds[dim_index]; i++) {
                     gridpoint[dim_index] = i;
 
-                    add_values_around_recursive(lower_bounds,upper_bounds,gridpoint,dim_index+1,values);
+                    add_values_around_recursive(lower_bounds, upper_bounds, gridpoint, dim_index + 1, values);
                 }
-            }
-            else
-            {
+            } else {
                 vector<int> gIter = gridpoint;
 
-                for ( size_t i = lower_bounds[dim_index]; i <= upper_bounds[dim_index]; i++ )
-                {
+                for (size_t i = lower_bounds[dim_index]; i <= upper_bounds[dim_index]; i++) {
                     gIter[dim_index] = i;
 
                     values.push_back(this->get(gIter));
@@ -249,30 +252,27 @@ namespace m3D {
         values_around(const vector<int> gridpoint, const vector<int> &bandwidth, vector<T> &result)
         {
             // set search ranges and make sure they are within bounds
-            
+
             using namespace utils::vectors;
 
             vector<int> lower_bounds = gridpoint - bandwidth;
             vector<int> upper_bounds = gridpoint + bandwidth;
 
-            for (size_t dim_index=0; dim_index < (this->get_dimensions().size()-1); dim_index++ )
-            {
-                if (lower_bounds[dim_index] < 0)
-                {
+            for (size_t dim_index = 0; dim_index < (this->get_dimensions().size() - 1); dim_index++) {
+                if (lower_bounds[dim_index] < 0) {
                     lower_bounds[dim_index] = 0;
                 }
-                if (upper_bounds[dim_index] > (this->get_dimensions()[dim_index]-1))
-                {
-                    upper_bounds[dim_index] = (this->get_dimensions()[dim_index]-1);
+                if (upper_bounds[dim_index] > (this->get_dimensions()[dim_index] - 1)) {
+                    upper_bounds[dim_index] = (this->get_dimensions()[dim_index] - 1);
                 }
             }
 
             vector<int> gp = lower_bounds;
 
-            this->add_values_around_recursive(lower_bounds,upper_bounds,gp,0,result);
+            this->add_values_around_recursive(lower_bounds, upper_bounds, gp, 0, result);
         }
     };
-    
+
 }
 
 #endif

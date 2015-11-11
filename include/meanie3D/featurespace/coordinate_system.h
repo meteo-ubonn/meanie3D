@@ -33,15 +33,16 @@
 #include <map>
 #include <netcdf>
 
-namespace m3D { 
-    
+namespace m3D {
+
     using namespace ::std;
     using namespace ::netCDF;
 
     /** This represents one point f in feature space F.
      */
     template <class T>
-    class CoordinateSystem {
+    class CoordinateSystem
+    {
     public:
 
 #pragma mark -
@@ -74,7 +75,7 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Util methods
-    
+
         /** Calculates min/max and resolution, reads dimension variable
          * data and gets dimension sizes. Requires the dimensions and
          * dimension variables to be set up.
@@ -99,7 +100,7 @@ namespace m3D {
          * Afterwards, the map will be empty.
          */
         static void clear_dimension_data_map(DimensionData &data);
-        
+
     public:
 
 #pragma mark -
@@ -112,9 +113,9 @@ namespace m3D {
          * @param filename
          * @param dimensions
          */
-        CoordinateSystem(NcFile *file, 
-                         const vector<string> &dimensions);
-        
+        CoordinateSystem(NcFile *file,
+                const vector<string> &dimensions);
+
         /** Construct a coordinate system from the coordinate
          * variables in a NetCDF file.
          *
@@ -132,7 +133,7 @@ namespace m3D {
 
         /** Copy operator
          */
-        CoordinateSystem<T> operator =(const CoordinateSystem<T> &other);
+        CoordinateSystem<T> operator=(const CoordinateSystem<T> &other);
 
         /** Destructor */
         ~CoordinateSystem();

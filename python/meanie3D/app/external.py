@@ -1,7 +1,3 @@
-__author__ = 'simon'
-
-''' This module contains code used to call external programs '''
-
 import os
 import subprocess
 import platform

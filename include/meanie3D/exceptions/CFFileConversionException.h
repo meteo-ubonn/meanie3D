@@ -30,7 +30,7 @@
 #include <exception>
 #include <string>
 
-namespace m3D { 
+namespace m3D {
 
     /** This exception is to be used when converting files from
      * different formats into the CF Metadata format or vica versa.
@@ -39,15 +39,15 @@ namespace m3D {
     {
     private:
 
-        std::string   m_message;
+        std::string m_message;
 
     public:
 
-        CFFileConversionException( const char* message );
+        CFFileConversionException(const char* message);
 
-        ~CFFileConversionException() throw();
+        ~CFFileConversionException() throw ();
 
-        virtual const char* what() const throw();
+        virtual const char* what() const throw ();
     };
 }
 

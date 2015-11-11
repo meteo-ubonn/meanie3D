@@ -38,7 +38,7 @@
 #include <map>
 #include <vector>
 
-namespace m3D { 
+namespace m3D {
 
     // Forward declaration
 
@@ -55,13 +55,12 @@ namespace m3D {
     template <typename T>
     class FeatureSpace
     {
-        
     public:
 
 #pragma mark -
 #pragma mark public constants
 
-        static map<int,double> *NO_THRESHOLDS;
+        static map<int, double> *NO_THRESHOLDS;
 
 #pragma mark -
 #pragma mark General Typedefs
@@ -73,8 +72,8 @@ namespace m3D {
         typedef vector< vector<T> > Trajectory;
         typedef typename Trajectory::iterator TrajectoryIterator;
         typedef MultiArray<T> multi_array_t;
-        
-        
+
+
 
 #pragma mark -
 #pragma mark Private
@@ -103,7 +102,7 @@ namespace m3D {
         /** The data store contains the data used to populate
          * the value range of the feature space 
          */
-        const DataStore<T>      *m_data_store;
+        const DataStore<T> *m_data_store;
 
         /** Progress indicator for construction 
          */
@@ -113,13 +112,13 @@ namespace m3D {
          * where one variable's value is less than the given threshold,
          * will not be added.
          */
-        map<int,double> m_lower_thresholds;
+        map<int, double> m_lower_thresholds;
 
         /** Parameter used for construction. Points in feature-space,
          * where one variable's value is more than the given threshold,
          * will not be added.
          */
-        map<int,double> m_upper_thresholds;
+        map<int, double> m_upper_thresholds;
 
         /** Parameter used for construction. Points in feature-space,
          * where one variable's value is out of valid range are usually
@@ -127,31 +126,31 @@ namespace m3D {
          * the missing value with the value provided, thus allowing
          * use of that point in spite of missing values.
          */
-        map<int,double> m_replacement_values;
+        map<int, double> m_replacement_values;
 
         // bool flag array, indicating where the original data sets
         // had '_fillValue' or values outside of valid_range.
         // Note: only applicaple for gridded data!
-        MultiArray<bool>             *m_off_limits;
+        MultiArray<bool> *m_off_limits;
 
         // Factual limits
 
-        map<size_t,T>   m_min;
-        map<size_t,T>   m_max;
+        map<size_t, T> m_min;
+        map<size_t, T> m_max;
 
 #pragma mark-
 #pragma mark Public Member Variables
 
     public:
 
-        typename Point<T>::list     points;
+        typename Point<T>::list points;
 
-        size_t                      dimension;
+        size_t dimension;
 
-        const CoordinateSystem<T>   *coordinate_system;
+        const CoordinateSystem<T> *coordinate_system;
 
 #if WRITE_MEANSHIFT_WEIGHTS
-        vector< vector<T> >         weight_sample_points;
+        vector< vector<T> > weight_sample_points;
 #endif
 
 
@@ -164,7 +163,7 @@ namespace m3D {
          * 
          * @param show_progress
          */
-        void construct_featurespace( bool show_progress=true );
+        void construct_featurespace(bool show_progress = true);
 
 
 #pragma mark -
@@ -186,11 +185,11 @@ namespace m3D {
          * @param show_progress
          */
         FeatureSpace(const CoordinateSystem<T> *coordinate_system,
-                     const DataStore<T> *dataStore,
-                     const map<int,double> &lower_thresholds,
-                     const map<int,double> &upper_thresholds,
-                     const map<int,double> &replacement_values,
-                     const bool& show_progress = true );
+                const DataStore<T> *dataStore,
+                const map<int, double> &lower_thresholds,
+                const map<int, double> &upper_thresholds,
+                const map<int, double> &replacement_values,
+                const bool& show_progress = true);
 
         // Making copies
 
@@ -198,21 +197,21 @@ namespace m3D {
          * @param other
          * @param without_points if true, the points are not copied
          */
-        FeatureSpace<T>(const FeatureSpace<T>& other, 
-                bool with_points=true );
+        FeatureSpace<T>(const FeatureSpace<T>& other,
+                bool with_points = true);
 
         /** Copy constructor
          * @param pointer to other 
          * @param without_points if true, the points are not copied
          */
-        FeatureSpace<T>(const FeatureSpace<T>* other, 
-                bool with_points=true );
+        FeatureSpace<T>(const FeatureSpace<T>* other,
+                bool with_points = true);
 
         /** Copy operator
          * @param other
          * @return pointer to a copy
          */
-        FeatureSpace<T> operator = (const FeatureSpace<T>& other);
+        FeatureSpace<T> operator=(const FeatureSpace<T>& other);
 
         /** Destructor
          */
@@ -223,15 +222,24 @@ namespace m3D {
 
         /** @return the data store used to construct this featurespace
          */
-        const DataStore<T> *data_store() const {return m_data_store; }
+        const DataStore<T> *data_store() const
+        {
+            return m_data_store;
+        }
 
         /** @return number of points in featurespace
          */
-        const size_t size() const { return points.size(); };
+        const size_t size() const
+        {
+            return points.size();
+        };
 
         /** @return a pointer to the points array 
          */
-        typename Point<T>::list *get_points() { return &(this->points); }
+        typename Point<T>::list *get_points()
+        {
+            return &(this->points);
+        }
 
         /** @return rank of featurespace, which is rank of the
          * spatial range plus rank of the value range.
@@ -261,35 +269,41 @@ namespace m3D {
         /** Lower thresholds used in the construction of the featurespace. 
          * Only variables from the value range are used.
          */
-        const map <int,double> &lower_thresholds() const 
-        { 
-            return m_lower_thresholds; 
+        const map <int, double> &lower_thresholds() const
+        {
+            return m_lower_thresholds;
         }
 
         /** Upper thresholds used in the construction of the featurespace.
          * Only variables from the value range are used.
          */
-        const map <int,double> &upper_thresholds() const 
-        { 
-            return m_upper_thresholds; 
+        const map <int, double> &upper_thresholds() const
+        {
+            return m_upper_thresholds;
         }
 
         /** A map of bool values, which indicates where in the construction
          * points were encountered, that are 'off limits' in the sense of 
          * not valid.
          */
-        const MultiArray<bool> *off_limits() const 
-        { 
-            return m_off_limits; 
+        const MultiArray<bool> *off_limits() const
+        {
+            return m_off_limits;
         }
 
         /** Contains the inf of all points in the featurespace.
          */
-        const map<size_t,T> &min() const { return m_min; }
+        const map<size_t, T> &min() const
+        {
+            return m_min;
+        }
 
         /** Contains the sup of all points in the featurespace
          */
-        const map<size_t,T> &max() const { return m_max; }
+        const map<size_t, T> &max() const
+        {
+            return m_max;
+        }
 
 
 #pragma mark -
@@ -309,8 +323,8 @@ namespace m3D {
         vector<size_t> spatial_range_indexes()
         {
             vector<size_t> result(this->coordinate_system->rank());
-            for (size_t i=0; i<this->coordinate_system->rank(); ++i)
-                result[i]=i;
+            for (size_t i = 0; i<this->coordinate_system->rank(); ++i)
+                result[i] = i;
             return result;
         }
 
@@ -322,11 +336,10 @@ namespace m3D {
         {
             vector<size_t> result;
 
-            if (this->m_omit_value_range)
-            {
+            if (this->m_omit_value_range) {
                 result = vector<size_t>(this->data_store()->rank());
-                for (size_t i=0; i<this->data_store()->rank(); ++i)
-                    result[i]=this->coordinate_system->rank() + i;
+                for (size_t i = 0; i<this->data_store()->rank(); ++i)
+                    result[i] = this->coordinate_system->rank() + i;
             }
 
             return result;
@@ -339,7 +352,7 @@ namespace m3D {
          * @return it's spatial component
          */
         typename CoordinateSystem<T>::Coordinate
-        spatial_component( const vector<T> &value ) const;
+        spatial_component(const vector<T> &value) const;
 
         /**  
          * @param p
@@ -365,7 +378,7 @@ namespace m3D {
          */
         void
         round_to_resolution(vector<T> &point,
-                            const vector<T> &resolution ) const;
+                const vector<T> &resolution) const;
 
         /** Count the number of points in the featurespace
          * that were part of the original make up (and not
@@ -374,11 +387,11 @@ namespace m3D {
          */
         size_t
         count_original_points() const;
-        
+
         /** Debug tool. Checks if any of the points are out of the 
          * ordinary. Throws an exception if so.
          */
-        void 
+        void
         sanity_check();
 
     };

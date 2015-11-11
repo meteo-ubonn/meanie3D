@@ -30,30 +30,30 @@
 #include <stdlib.h>
 #include <iostream>
 
-namespace m3D { namespace utils { 
+namespace m3D {
+    namespace utils {
 
-    /** Prints the given array.
-     */
-    template <typename T> 
-    void print_array( T *array, size_t count )
-    {
-        using namespace std;
-        
-        cout << "(";
-
-        for ( size_t i = 0; i < count; i++ )
+        /** Prints the given array.
+         */
+        template <typename T>
+        void print_array(T *array, size_t count)
         {
-            cout << array[i];
+            using namespace std;
 
-            if ( i < count - 1 )
-            {
-                cout << ",";
+            cout << "(";
+
+            for (size_t i = 0; i < count; i++) {
+                cout << array[i];
+
+                if (i < count - 1) {
+                    cout << ",";
+                }
             }
-        }       
 
-        cout << ")";
+            cout << ")";
+        }
     }
-}}
+}
 
 #endif
 

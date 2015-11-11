@@ -24,15 +24,15 @@ extern "C" {
 
     float gammln(float xx);
 
-    void kendl1(float data1[], float data2[], 
+    void kendl1(float data1[], float data2[],
             unsigned long n, float *tau,
             float *z, float *prob);
 
     void sort2(unsigned long n, float arr[], float brr[]);
 
-    void spear(float data1[], float data2[], unsigned long n, 
-                    float*d, float*zd, float*probd, float*rs, float*probrs);
-    
+    void spear(float data1[], float data2[], unsigned long n,
+            float*d, float*zd, float*probd, float*rs, float*probrs);
+
 #if defined(__cplusplus)
 }
 #endif

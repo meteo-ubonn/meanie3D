@@ -34,14 +34,15 @@
 // should the need arise. Also, this is a great way of 
 // actually seeing all namespaces and dependencies.
 
-extern "C"
-{
-    namespace m3D 
-    {
+extern "C" {
+    namespace m3D {
         namespace utils {
-            namespace netcdf {}
-            namespace sets {}
-            namespace vectors {}
+            namespace netcdf {
+            }
+            namespace sets {
+            }
+            namespace vectors {
+            }
         }
     }
 }

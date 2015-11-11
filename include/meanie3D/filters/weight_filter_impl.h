@@ -34,34 +34,36 @@ namespace m3D {
 
     template <typename T>
     WeightThresholdFilter<T>::WeightThresholdFilter(WeightFunction<T> *w,
-                                                    T lower,
-                                                    T upper,
-                                                    bool show_progress)
+            T lower,
+            T upper,
+            bool show_progress)
     : FeatureSpaceFilter<T>(show_progress)
     , m_weight_function(w)
     , m_lower_threshold(lower)
     , m_upper_threshold(upper)
-    {}
+    {
+    }
 
     template <typename T>
-    WeightThresholdFilter<T>::~WeightThresholdFilter() {}
+    WeightThresholdFilter<T>::~WeightThresholdFilter()
+    {
+    }
 
 #pragma mark -
 #pragma mark Abstract filter method
 
     template <typename T>
     void
-    WeightThresholdFilter<T>::apply( FeatureSpace<T> *fs )
+    WeightThresholdFilter<T>::apply(FeatureSpace<T> *fs)
     {
         using namespace std;
 
         boost::progress_display *progress_bar = NULL;
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             cout << endl << "Applying weight function filter ...";
 
-            progress_bar = new boost::progress_display( fs->size() );
+            progress_bar = new boost::progress_display(fs->size());
 
             start_timer();
         }
@@ -71,10 +73,8 @@ namespace m3D {
         vector< Point<T> * > accepted;
         vector< Point<T> * > erased;
 
-        for ( size_t k=0; k < fs->points.size(); k++)
-        {
-            if ( this->show_progress() )
-            {
+        for (size_t k = 0; k < fs->points.size(); k++) {
+            if (this->show_progress()) {
                 progress_bar->operator++();
             }
 
@@ -82,26 +82,21 @@ namespace m3D {
 
             T w = m_weight_function->operator()(p);
 
-            if ( w < m_lower_threshold || w > m_upper_threshold)
-            {
+            if (w < m_lower_threshold || w > m_upper_threshold) {
                 erased.push_back(p);
-            }
-            else
-            {
+            } else {
                 accepted.push_back(p);
             }
         }
 
         fs->points = accepted;
 
-        for (size_t i=0; i<erased.size(); i++)
-        {
+        for (size_t i = 0; i < erased.size(); i++) {
             Point<T> *p = erased[i];
             delete p;
         }
 
-        if ( this->show_progress() )
-        {
+        if (this->show_progress()) {
             delete progress_bar;
             cout << "done. (" << stop_timer() << "s)" << std::endl;
         }

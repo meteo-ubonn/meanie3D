@@ -91,7 +91,8 @@ void parse_commmandline(program_options::variables_map vm,
     } catch (const boost::exception& e) {
         cerr << "Missing parameter -o " << endl;
 
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Open NetCDF file
@@ -102,7 +103,8 @@ void parse_commmandline(program_options::variables_map vm,
         file = new NcFile(filename, NcFile::read);
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "Error opening file '" << filename << "' : " << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     *filePtr = file;
@@ -132,7 +134,8 @@ void parse_commmandline(program_options::variables_map vm,
 
         if (dimVar.isNull()) {
             cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
 
         dimension_variables.push_back(dimVar);
@@ -146,7 +149,8 @@ void parse_commmandline(program_options::variables_map vm,
     if (vm.count("variables") == 0) {
         cerr << "Missing mandatory parameter --variables" << endl;
 
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     tokenizer var_tokens(vm["variables"].as<string>(), sep);
@@ -156,7 +160,8 @@ void parse_commmandline(program_options::variables_map vm,
 
         if (var.isNull()) {
             cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
 
         variables.push_back(var);
@@ -187,7 +192,8 @@ void parse_commmandline(program_options::variables_map vm,
 
         if (convection_filter_index < 0) {
             cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name << "' not a featurespace variable" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
     }
 
@@ -377,19 +383,12 @@ void parse_commmandline(program_options::variables_map vm,
     // VTK output?
 
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
-
     write_cluster_modes = vm.count("write-cluster-modes") > 0;
-
     write_cluster_centers = vm.count("write-cluster-centers") > 0;
-
     write_weight_response = vm.count("write-cluster-weight-response") > 0;
-
     write_weight_function = vm.count("write-weight-function") > 0;
-
     write_meanshift_vectors = vm.count("write-meanshift-vectors") > 0;
-
     ci_satellite_only = vm.count("ci-satellite-only") > 0;
-
     include_weight = vm.count("include-weight-function-in-results") > 0;
 
     // VTK dimension mapping
@@ -414,7 +413,8 @@ void parse_commmandline(program_options::variables_map vm,
 
             if (fi == dimensions.end()) {
                 cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of --dimensions" << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
 
             size_t index = fi - dimensions.begin();
@@ -425,7 +425,8 @@ void parse_commmandline(program_options::variables_map vm,
         if (vtk_dimension_indexes.size() != dimensions.size()) {
             cerr << "The number of vtk-dimensions must be identical to dimensions" << endl;
 
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
     }
 
@@ -480,7 +481,8 @@ void parse_commmandline(program_options::variables_map vm,
     if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
 
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     } else {
         verbosity = (Verbosity) vb;
     }
@@ -500,13 +502,15 @@ void parse_commmandline(program_options::variables_map vm,
 
                 if (var.isNull()) {
                     cerr << "Can't open variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                    exit(EXIT_FAILURE);;
+                    exit(EXIT_FAILURE);
+                    ;
                 }
 
                 vtk_variables.push_back(var);
             } catch (const netCDF::exceptions::NcException &e) {
                 cerr << "Can't find variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
         }
     }
@@ -584,7 +588,6 @@ int main(int argc, char** argv) {
     using namespace m3D;
 
     // Declare the supported options.
-
     program_options::options_description desc("Options");
     desc.add_options()
             ("help,h", "produce help message")
@@ -631,14 +634,16 @@ int main(int argc, char** argv) {
     } catch (std::exception &e) {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-detect --help for command line options" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Version
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     if (vm.count("help") == 1 || argc < 2) {
@@ -647,7 +652,6 @@ int main(int argc, char** argv) {
     }
 
     // Evaluate user input
-
     NcFile *file = NULL;
     string filename;
     string output_filename;
@@ -689,9 +693,7 @@ int main(int argc, char** argv) {
     Verbosity verbosity = VerbosityNormal;
 
     timestamp_t timestamp;
-
     FS_TYPE kernel_width = 0.0;
-
     try {
         parse_commmandline(vm,
                 &file,
@@ -737,14 +739,12 @@ int main(int argc, char** argv) {
 #if WITH_VTK
         VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
 #endif
-
         // Get timestamp
-
-        // Tracking comparison (solve that generically sometime)
         if (boost::contains(filename, "rico.out.xy.")) {
+            // TODO: this block was put in for a specific tracking
+            // inter-comparison problem. Remove when the project is through!!
             // time for this is days since simulation start
             double time_in_days = utils::netcdf::get_time<double>(filename, time_index);
-
             // a day has 24 * 60 * 60 seconds
             timestamp = (long) round(time_in_days * 24.0 * 60.0 * 60.0);
         } else {
@@ -753,7 +753,7 @@ int main(int argc, char** argv) {
         }
     } catch (const std::exception &e) {
         cerr << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
     }
 
     bool show_progress = (verbosity > VerbositySilent);
@@ -765,7 +765,6 @@ int main(int argc, char** argv) {
         cout << endl;
 
         cout << "Command line options:" << endl;
-
         cout << "\tinput file = " << filename << endl;
 
         if (time_index >= 0) {
@@ -773,22 +772,17 @@ int main(int argc, char** argv) {
         } else {
             cout << "\ttime is not a variable dimension. Using timestamp " << timestamp << endl;
         }
-
         cout << "\tdimensions = " << vm["dimensions"].as<string>() << endl;
-
         cout << "\tvariables = " << vm["variables"].as<string>() << endl;
 
         if (!ranges.empty()) {
             cout << "\tranges = " << ranges << endl;
 
             // calculate kernel width as average of ranges
-
             kernel_width = boost::numeric_cast<FS_TYPE>(0.0);
-
             for (size_t i = 0; i < dimensions.size(); i++) {
                 kernel_width += ranges[i];
             }
-
             kernel_width = kernel_width / boost::numeric_cast<FS_TYPE>(dimensions.size());
         } else {
             cout << "\tautomatic bandwidth selection" << endl;
@@ -804,18 +798,15 @@ int main(int argc, char** argv) {
 
         if (scale != NO_SCALE) {
             double width = sqrt(ceil(-2.0 * scale * log(0.01))) / 2;
-
             if (ranges.empty()) {
                 kernel_width = width;
             }
-
             cout << "\tpre-smoothing data with scale parameter " << scale << " (kernel width = " << width << ")" << endl;
         } else {
             cout << "\tno scale-space smoothing" << endl;
         }
 
         cout << "\tkernel:" << kernel_name << endl;
-
         cout << "\tweight-function:" << weight_function_name << endl;
         cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
         cout << "\t\tupper weight-function threshold: " << wwf_upper_threshold << endl;
@@ -886,34 +877,24 @@ int main(int argc, char** argv) {
 #endif
 
     if (ranges.empty()) {
-        // if ranges are not explicitly given, figure the out
-        // based on scale
-
         // spatial range
-
         FS_TYPE t = (scale == NO_SCALE) ? 1.0 : scale;
-
         FS_TYPE filter_width = sqrt(ceil(-2.0 * t * log(0.01))) / 2.0;
-
         for (size_t i = 0; i < dimensions.size(); i++) {
             ranges.push_back(filter_width);
         }
-
         // value range
-
         for (size_t i = 0; i < data_store->rank(); i++) {
             FS_TYPE range = data_store->valid_max(i) - data_store->valid_min(i);
             ranges.push_back(range);
         }
-
         cout << "Automatically calculated bandwidth:" << ranges << endl;
     }
-
     search_params = new RangeSearchParams<FS_TYPE>(ranges);
 
 #if WRITE_OFF_LIMITS_MASK
     std::string ol_fname = path.filename().stem().string() + "-off_limits.vtk";
-    VisitUtils<FS_TYPE>::write_multiarray_vtk(ol_fname,"off_limits",coord_system,fs->off_limits());
+    VisitUtils<FS_TYPE>::write_multiarray_vtk(ol_fname, "off_limits", coord_system, fs->off_limits());
 #endif
 
     // Convection Filter?
@@ -930,20 +911,18 @@ int main(int argc, char** argv) {
     // Scale-Space smoothing
 
     if (scale != NO_SCALE) {
+
         // TODO: make decay a parameter or at least a constant
-
         FS_TYPE decay = 0.01;
-
         vector<FS_TYPE> resolution = fs->coordinate_system->resolution();
-        ScaleSpaceFilter<FS_TYPE> sf(scale, resolution, exclude_from_scale_space_filtering, decay, show_progress);
 
+        ScaleSpaceFilter<FS_TYPE> sf(scale, resolution, exclude_from_scale_space_filtering, decay, show_progress);
         sf.apply(fs);
 
 #if WRITE_FEATURESPACE
         std::string fn = path.stem().string() + "_scale_" + boost::lexical_cast<string>(scale) + ".vtk";
         VisitUtils<FS_TYPE>::write_featurespace_vtk(fn, fs);
 #endif
-
         if (verbosity > VerbositySilent) {
             cout << endl << "Constructing " << weight_function_name << " weight function ...";
             start_timer();
@@ -956,15 +935,6 @@ int main(int argc, char** argv) {
                     ci_comparison_file,
                     ci_comparison_protocluster_file,
                     ci_satellite_only);
-
-            //            FS_TYPE temp = 0.0;
-            //            FS_TYPE radiance = ((OASECIWeightFunction<FS_TYPE> *)weight_function)->spectral_radiance(0,temp);
-            //
-            //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,
-            //                                                              data_store,
-            //                                                              ranges,
-            //                                                              sf.get_filtered_min(),
-            //                                                              sf.get_filtered_max());
         } else if (weight_function_name == "inverse") {
             weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         } else if (weight_function_name == "pow10") {
@@ -972,13 +942,10 @@ int main(int argc, char** argv) {
         } else {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
         }
-
         cout << " done (" << stop_timer() << "s)." << endl;
 
         // Apply weight function filter
-
         WeightThresholdFilter<FS_TYPE> wtf(weight_function, wwf_lower_threshold, wwf_upper_threshold, true);
-
         wtf.apply(fs);
 
         if (verbosity > VerbositySilent) {
@@ -998,7 +965,6 @@ int main(int argc, char** argv) {
                     ci_comparison_file,
                     ci_comparison_protocluster_file,
                     ci_satellite_only);
-
             //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         } else if (weight_function_name == "inverse") {
             weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, lower_thresholds, upper_thresholds);
@@ -1007,13 +973,10 @@ int main(int argc, char** argv) {
         } else {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
-
         cout << " done (" << stop_timer() << "s)." << endl;
 
         // Apply weight function filter
-
         WeightThresholdFilter<FS_TYPE> wtf(weight_function, wwf_lower_threshold, wwf_upper_threshold, true);
-
         wtf.apply(fs);
 
         if (verbosity > VerbositySilent) {
@@ -1033,11 +996,9 @@ int main(int argc, char** argv) {
         boost::filesystem::path destination_path = boost::filesystem::path(".");
 
         destination_path /= filename_only;
-
         destination_path.replace_extension();
 
         string dest_path = destination_path.generic_string();
-
         if (verbosity > VerbositySilent)
             cout << "Writing featurespace-variables ...";
 
@@ -1066,9 +1027,7 @@ int main(int argc, char** argv) {
 #endif
 
     // Create specified kernel
-
     Kernel<FS_TYPE> *kernel = NULL;
-
     if (kernel_name == "uniform") {
         kernel = new UniformKernel<FS_TYPE>(kernel_width);
     } else if (kernel_name == "gauss") {
@@ -1078,34 +1037,42 @@ int main(int argc, char** argv) {
     }
 
     // Run the clustering
-
     PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
     ClusterOperation<FS_TYPE> cop(fs, data_store, index);
     ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, write_meanshift_vectors, show_progress);
 
-    // Number the result sequentially to make it easier to follow
-    // previous results in comparison
-
-    clusters.retag_identifiers();
-
     // Axe weenies
-
     clusters.apply_size_threshold(min_cluster_size);
+
+    // The survivors are now eligible for an actual id
+    // TODO: we need to move away from doing this as part
+    // of the detection process. The id is something only
+    // to be assigned/changed in tracking!
+    m3D::id_t id = m3D::MIN_ID;
+    ClusterUtils<FS_TYPE>::provideIds(&clusters,id);
+    clusters.highest_id = id;
+
+    // Give (provisional) universal identifiers
+    // TODO: store the uuid in a place that can be accessed 
+    // between the runs, so that the uuid becomes a true
+    // uuid from the point of detection. At this time, only
+    // the tracking can provide this by getting the highest_uuid
+    // from the previous file.
+    m3D::uuid_t uuid = m3D::MIN_UUID;
+    ClusterUtils<FS_TYPE>::provideUuids(&clusters,uuid);
+    clusters.highest_uuid = uuid;
 
     if (verbosity >= VerbosityDetails)
         clusters.print();
 
     // Collate with previous clusters, if provided
-
     if (previous_file != NULL) {
         cout << endl << "Collating with previous results:" << endl;
-
         if (verbosity >= VerbosityDetails)
             clusters.print();
 
         try {
             ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_file->c_str());
-
             if (verbosity >= VerbosityNormal)
                 cout << "Comparing " << clusters.clusters.size() << " new clusters to "
                 << previous->clusters.size() << " clusters" << endl;
@@ -1116,24 +1083,21 @@ int main(int argc, char** argv) {
                 cout << endl << "List of previous clusters:" << endl;
                 previous->print();
             }
-
             ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
-
             cluster_filter.filter_with_previous_clusters(previous, &clusters, coord_system, weight_function, verbosity);
-            
         } catch (const std::exception &e) {
             cerr << "FATAL:exception reading previous cluster file: " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
-
         cout << endl << "Done. Have " << clusters.clusters.size() << " clusters:" << endl;
 
         if (verbosity >= VerbosityDetails)
             clusters.print();
+    } else {
+        // No previous file? Provide UUIDs from scratch
     }
-
+    
     // Announce final results
-
     if (verbosity > VerbositySilent)
         cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
 
@@ -1150,7 +1114,6 @@ int main(int argc, char** argv) {
         string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, clusters.clusters, true);
     }
-
     if (write_cluster_centers) {
         string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, clusters.clusters);
@@ -1171,13 +1134,11 @@ int main(int argc, char** argv) {
         cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;
 
     // Before writing, set the timestamp!!
-
     clusters.timestamp = timestamp;
-
+    
     clusters.write(output_filename);
 
-    if (include_weight_in_result) 
-    {
+    if (include_weight_in_result) {
         cout << "NOT IMPLEMENTED" << endl;
         // cout << "Writing weight function to result file ... ";
         // cout << "done." << endl;
@@ -1187,14 +1148,10 @@ int main(int argc, char** argv) {
         cout << "done." << endl;
 
     // mop up
-
     delete kernel;
-
     delete index;
-
     delete coord_system;
-
     delete fs;
 
-    return 0;
+    return EXIT_SUCCESS;
 }

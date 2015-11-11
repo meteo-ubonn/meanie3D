@@ -1,13 +1,6 @@
-#!/usr/bin/python
-
-## meanie3D-tracking.py
-#
-# Python script for running a whole set of netcdf files through the clustering and tracking process.
-# \author Juergen Simon (juergen.simon@uni-bonn.de)
-
-# System packages
 import glob
 import os
+import shutil
 import sys
 import tempfile
 import visit
@@ -20,15 +13,18 @@ import meanie3D
 from meanie3D.app import utils
 from meanie3D.app import external
 
-# make sure external commands are available
+# ----------------------------------------------------------------------------
+
 external.locateCommands(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
 
 # ----------------------------------------------------------------------------
-## Checks the consistency of the given configuration and hotfixes
-# problems it finds.
-# \param configuration
-#
+
 def check_configuration(configuration):
+    '''
+    Checks the consistency of the given configuration and hotfixes
+    :param configuration:
+    :return:
+    '''
 
     # Check the configuration
     dimensions = utils.getValueForKeyPath(configuration,'data.dimensions')
@@ -57,12 +53,13 @@ def check_configuration(configuration):
 
 # ----------------------------------------------------------------------------
 
-# ----------------------------------------------------------------------------
-## Runs the meanie3D-trackstats command.
-# \param configuration
-# \param directory
-# \return True if the stats were created, False else
 def run_trackstats(configuration,directory):
+    '''
+    Runs the meanie3D-trackstats command.
+    :param configuration:
+    :param directory:
+    :return:
+    '''
     pconf = configuration['postprocessing']
     if not 'tracks' in pconf:
         return False
@@ -109,6 +106,7 @@ def run_trackstats(configuration,directory):
     return_code = -1
     os.chdir(directory)
     try:
+        print "meanie3D-trackstats %s" % (" ".join(params))
         return_code = external.execute_command("meanie3D-trackstats"," ".join(params),silent=True)
     except:
         print "ERROR:%s" % sys.exc_info()[0]
@@ -119,10 +117,14 @@ def run_trackstats(configuration,directory):
     return (return_code == 0)
 
 # ----------------------------------------------------------------------------
-## Runs gnuplot to produce .eps files
-# \param configuration
-# \param directory
+
 def plot_trackstats(configuration,directory):
+    '''
+    Runs gnuplot to produce .eps files
+    :param configuration:
+    :param directory:
+    :return:
+    '''
     pconf = configuration['postprocessing']
     if not 'tracks' in pconf:
         return False
@@ -192,24 +194,28 @@ def plot_trackstats(configuration,directory):
     return (return_code == 0)
 
 # ----------------------------------------------------------------------------
-## Runs cross-scale analysis
-# \param configuration
-# \param directory
+
 def run_comparison(configuration):
+    '''
+    Runs cross-scale analysis.
+    :param configuration:
+    :return:
+    '''
     print "Running cross-scale comparison"
     return
 
-##
-# Compiles the gievn template into an executable python script and runs
-# it through visit.
-#
-# \param:templatePath
-# \param:configuration
-# \param:replacements
-# \param:directory
-# \returns:external command return code
-#
-def compileAndRunTemplate(templatePath,configuration,replacements,directory):
+# ----------------------------------------------------------------------------
+
+def compile_and_run_template(templatePath,configuration,replacements,directory):
+    '''
+    Compiles the gievn template into an executable python
+    script and runs it through visit.
+    :param templatePath:
+    :param configuration:
+    :param replacements:
+    :param directory:
+    :return:True if the command was successful, False else.
+    '''
     scriptFilename = tempfile.mktemp() + ".py"
     # scriptFilename = os.path.abspath("generated.py")
     #print "\tWriting python script for visualisation to: " + scriptFilename
@@ -240,24 +246,20 @@ def compileAndRunTemplate(templatePath,configuration,replacements,directory):
     os.chdir('..')
     return (returnCode == 0)
 
-##
-# Visualises the tracks found.
-# \param configuration
-# \param directory
+# ----------------------------------------------------------------------------
+
 def visualise_tracks(configuration,directory):
+    '''
+    Visualises the tracks found.
+    :param configuration:
+    :param directory:
+    :return:
+    '''
     print "Visualising tracks for %s" % directory
     if not __have_visit__:
         return
-
-    # try:
-    #     visit.Launch(vdir=__visitPath__)
-    # except:
-
-    # Find template
-    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
-    # home = meanie3D.__file__
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
-    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","visualisation","templates","tracks_visit.py"))
+    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","resources","tracks_visit.py"))
     replacements = {
         'P_TRACKS_DIR' : os.path.abspath(directory),
         'P_RESUME' : str(configuration['resume']),
@@ -265,24 +267,22 @@ def visualise_tracks(configuration,directory):
         'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
     }
 
-    return compileAndRunTemplate(templatePath,configuration,replacements,directory)
-
+    return compile_and_run_template(templatePath,configuration,replacements,directory)
 
 # ----------------------------------------------------------------------------
-## Creates a python script for Visit and runs Visit with the script.
-# Visualises the clusters, creates movies etc.
-# \param configuration
-# \param directory
+
 def visualise_clusters(configuration,directory):
+    '''
+    Visualises the clusters.
+    :param configuration:
+    :param directory:
+    :return:
+    '''
     print "Visualising clusters for %s" % directory
     if not __have_visit__:
         return
-
-    # Find template
-    # templatePath = os.path.join(os.path.split(__file__)[0], "templates/tracks_visit.py")
-    # home = meanie3D.__file__
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
-    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","visualisation","templates","clusters_visit.py"))
+    templatePath = home + os.path.sep + os.path.sep.join(("meanie3D","resources","clusters_visit.py"))
     replacements = {
         'P_CLUSTER_DIR' : os.path.abspath(directory + os.path.sep + "netcdf"),
         'P_NETCDF_DIR' : configuration['source_directory'],
@@ -290,19 +290,38 @@ def visualise_clusters(configuration,directory):
         'P_M3D_HOME' : home,
         'P_CONFIGURATION_FILE' : os.path.abspath(configuration['config_file'])
     }
-
-    return compileAndRunTemplate(templatePath,configuration,replacements,directory)
-
+    return compile_and_run_template(templatePath,configuration,replacements,directory)
 
 # ----------------------------------------------------------------------------
-## Removes any files that are not part of the results and were produced
-# in any of the subsequent steps. C
-# \param configuration
-# \param directory
+
+def copy_html_files(configuration,directory):
+    '''
+    Copies the files required for html presentation.
+    :param configuration:
+    :param directory:
+    :return:
+    '''
+    home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
+    path = home + os.path.sep + os.path.sep.join(("meanie3D","resources","index.html"))
+    shutil.copy(path,os.path.abspath(directory))
+    path = home + os.path.sep + os.path.sep.join(("meanie3D","resources","meanie3d.js"))
+    shutil.copy(path,os.path.abspath(directory))
+    path = home + os.path.sep + os.path.sep.join(("meanie3D","resources","ajax-loader.gif"))
+    shutil.copy(path,os.path.abspath(directory))
+    return
+
+# ----------------------------------------------------------------------------
+
 def cleanup(configuration,directory):
+    '''
+    Removes any files that are not part of the results and were produced
+    in any of the previous steps.
+    :param configuration:
+    :param directory:
+    :return:
+    '''
     print "Cleaning temporary files for %s" % directory
     os.chdir(directory)
-
     if utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks'):
         for filename in glob.glob('*.vtk') :
             os.remove(filename)
@@ -317,13 +336,15 @@ def cleanup(configuration,directory):
     os.chdir("..")
     return
 
-##
-# Runs postprocessing steps according to the section 'postprocessing' in the
-# given configuration.
-# \param:directory
-# \param:configuration
-#
+# ----------------------------------------------------------------------------
+
 def run(configuration):
+    '''
+    Runs postprocessing steps according to the section
+    'postprocessing' in the configuration.
+    :param configuration:
+    :return:
+    '''
 
     # Check configuration section 'postprocessing'
     check_configuration(configuration)
@@ -348,9 +369,12 @@ def run(configuration):
         # run the track statistics
         if (run_trackstats(configuration, directory)):
 
+            # Copy HTML files
+            copy_html_files(configuration,directory)
+
             # run the stats plotting
             if utils.getValueForKeyPath(configuration,'postprocessing.tracks.plotStats'):
-                plot_trackstats(configuration,directory);
+                plot_trackstats(configuration,directory)
 
             # run the track visualisations
             if utils.getValueForKeyPath(configuration, 'postprocessing.tracks.visualiseTracks'):

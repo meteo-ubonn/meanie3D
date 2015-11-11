@@ -32,13 +32,12 @@
 #include <time.h>
 
 namespace m3D {
-    
+
     using namespace Radolan;
 
     template <typename T>
     class ConradCluster
     {
-
     public:
 
         typedef std::vector< ConradCluster<T> > track_t;
@@ -49,13 +48,17 @@ namespace m3D {
         int cellStatus;
         T centerY, centerX;
         int numCorePixels, numPixels, lifetime, hailWarning, pixelPerHour, directionDeg;
-        T yMin,xMin,yMax,xMax;
+        T yMin, xMin, yMax, xMax;
 
         // Constructor/Destructor
 
-        ConradCluster() {};
+        ConradCluster()
+        {
+        };
 
-        ~ConradCluster() {};
+        ~ConradCluster()
+        {
+        };
 
         // timestamp
 
@@ -69,7 +72,7 @@ namespace m3D {
 
             time_t now;
 
-            time( &now );
+            time(&now);
 
             // initialize the scan time
 
@@ -78,7 +81,7 @@ namespace m3D {
             // gmtime_r does not make timezone adjustment. Since the
             // Radolan timestamps are supposed to be UTC, so will the
             // result of gmtime_r
-            gmtime_r( (const time_t * ) &now, &t );
+            gmtime_r((const time_t *) &now, &t);
 
             // construct the server timestamp @ GMT with DST set up correctly
             t.tm_sec = 0;
@@ -86,11 +89,11 @@ namespace m3D {
             t.tm_hour = hour;
             t.tm_mday = day;
             t.tm_mon = month;
-            t.tm_year = (year > 50) ? (1900+year) : (2000 + year);
+            t.tm_year = (year > 50) ? (1900 + year) : (2000 + year);
 
             // Now convert to seconds since epoch
 
-            time_t time = timegm( &t );
+            time_t time = timegm(&t);
 
             return time;
         }
@@ -106,7 +109,7 @@ namespace m3D {
             RDGeographicalPoint geo = rdGeographicalPoint(centerX, centerY);
             RDCartesianPoint cart = rcs.cartesianCoordinate(geo);
 
-            std::vector<T> c(2,0);
+            std::vector<T> c(2, 0);
             c[0] = cart.x;
             c[1] = cart.y;
 
@@ -119,10 +122,10 @@ namespace m3D {
         vector<T> box_min() const
         {
             RDCoordinateSystem rcs(RD_RX);
-            RDGeographicalPoint geo = rdGeographicalPoint(xMin,yMin);
+            RDGeographicalPoint geo = rdGeographicalPoint(xMin, yMin);
             RDCartesianPoint cart = rcs.cartesianCoordinate(geo);
 
-            std::vector<T> c(2,0);
+            std::vector<T> c(2, 0);
             c[0] = cart.x;
             c[1] = cart.y;
 
@@ -135,10 +138,10 @@ namespace m3D {
         vector<T> box_max() const
         {
             RDCoordinateSystem rcs(RD_RX);
-            RDGeographicalPoint geo = rdGeographicalPoint(xMax,yMax);
+            RDGeographicalPoint geo = rdGeographicalPoint(xMax, yMax);
             RDCartesianPoint cart = rcs.cartesianCoordinate(geo);
 
-            std::vector<T> c(2,0);
+            std::vector<T> c(2, 0);
             c[0] = cart.x;
             c[1] = cart.y;
 
@@ -155,13 +158,11 @@ namespace m3D {
 
             std::ifstream file(filename.c_str());
 
-            if (file.is_open())
-            {
-                std::string   line;
+            if (file.is_open()) {
+                std::string line;
 
-                while(std::getline(file, line))
-                {
-                    std::stringstream   linestream(line);
+                while (std::getline(file, line)) {
+                    std::stringstream linestream(line);
 
                     //        01 yy (year)
                     //        02 mm (month)
@@ -187,16 +188,14 @@ namespace m3D {
 
                     // Read the integers using the operator >>
                     linestream >> cluster.year >> cluster.month >> cluster.day >> cluster.hour >> cluster.minute
-                    >> cluster.id >> cluster.cellStatus >> cluster.centerY >> cluster.centerX
-                    >> cluster.numCorePixels >> cluster.numPixels >> cluster.directionDeg
-                    >> cluster.lifetime >> cluster.hailWarning >> cluster.pixelPerHour
-                    >> cluster.yMin >> cluster.xMin >> cluster.yMax >> cluster.xMax;
+                            >> cluster.id >> cluster.cellStatus >> cluster.centerY >> cluster.centerX
+                            >> cluster.numCorePixels >> cluster.numPixels >> cluster.directionDeg
+                            >> cluster.lifetime >> cluster.hailWarning >> cluster.pixelPerHour
+                            >> cluster.yMin >> cluster.xMin >> cluster.yMax >> cluster.xMax;
 
                     result.push_back(cluster);
                 }
-            }
-            else
-            {
+            } else {
                 cerr << "ERROR:Could not open file " << filename << endl;
             }
 
@@ -207,44 +206,43 @@ namespace m3D {
         print(const std::vector< ConradCluster<T> > &list)
         {
             cout << "date"
-            << "\t\tid"
-            << "\tcellStatus"
-            << "\tage"
-            << "\tnumPixel"
-            << "\tspeed [pixels/h]"
-            << "\tdirection [deg]"
-            << "\thail_warning"
-            << "\tnumCorePixel"
-            << "\t\tcenter"
-            << "\t\tmin"
-            << "\t\tmax"
-            << endl;
+                    << "\t\tid"
+                    << "\tcellStatus"
+                    << "\tage"
+                    << "\tnumPixel"
+                    << "\tspeed [pixels/h]"
+                    << "\tdirection [deg]"
+                    << "\thail_warning"
+                    << "\tnumCorePixel"
+                    << "\t\tcenter"
+                    << "\t\tmin"
+                    << "\t\tmax"
+                    << endl;
 
             typename std::vector< ConradCluster<T> >::const_iterator ci;
-            for (ci = list.begin(); ci != list.end(); ++ci)
-            {
+            for (ci = list.begin(); ci != list.end(); ++ci) {
                 ConradCluster<T> c = *ci;
 
                 ostringstream date;
                 date << std::setfill('0') << std::setw(2) << std::setprecision(0);
                 date << c.day << "." << c.month << "." << c.year << " " << c.hour << ":" << c.minute;
 
-                vector<T> min,max;
-                c.box(min,max);
+                vector<T> min, max;
+                c.box(min, max);
 
                 cout << date.str()
-                << "\t\t" << c.id
-                << "\t" << c.cellStatus
-                << "\t" << c.lifetime
-                << "\t" << c.numPixels
-                << "\t" << c.pixelPerHour
-                << "\t" << c.directionDeg
-                << "\t" << c.hailWarning
-                << "\t" << c.numCorePixels
-                << "\t\t" << c.center()
-                << "\t\t" << c.box_min()
-                << "\t\t" << c.box_max()
-                << endl;
+                        << "\t\t" << c.id
+                        << "\t" << c.cellStatus
+                        << "\t" << c.lifetime
+                        << "\t" << c.numPixels
+                        << "\t" << c.pixelPerHour
+                        << "\t" << c.directionDeg
+                        << "\t" << c.hailWarning
+                        << "\t" << c.numCorePixels
+                        << "\t\t" << c.center()
+                        << "\t\t" << c.box_min()
+                        << "\t\t" << c.box_max()
+                        << endl;
             }
         }
     };

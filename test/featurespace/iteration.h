@@ -14,44 +14,43 @@
 #pragma mark -
 #pragma mark Test Fixture
 
-template <class T> 
+template <class T>
 class FSIterationTest2D : public FSTestBase<T>
 {
-    
 protected:
-    
+
     //
     // Protected member variables
     //
-    
+
     typename CoordinateSystem<T>::Coordinate *m_center;
-    
+
     vector<T> *m_mean;
-    
+
     vector<T> *m_deviation;
-    
+
     size_t m_cloudSize;
-    
+
     vector< vector<T> > m_bandwidths;
-    
-    vector< Point<T> >  m_origins;
+
+    vector< Point<T> > m_origins;
 
     //
     // Protected methods
     //
-    
-    void write_cloud( const NcVar &variable );
+
+    void write_cloud(const NcVar &variable);
 
 public:
-    
+
     FSIterationTest2D();
-    
+
     virtual void SetUp();
-    
+
     virtual void TearDown();
 };
 
-template <class T> 
+template <class T>
 class FSIterationTest3D : public FSIterationTest2D<T>
 {
 public:

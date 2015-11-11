@@ -30,7 +30,7 @@
 
 #include <vector>
 
-namespace m3D { 
+namespace m3D {
 
     /** Encapsulates the mapping behavior between linear and 
      * grid point indexes. Note that this is not storage related
@@ -43,33 +43,36 @@ namespace m3D {
     private:
         std::vector<size_t> m_dimension_sizes;
         std::vector<size_t> m_slice_sizes;
-        size_t              m_size;
+        size_t m_size;
 
     public:
 
+        LinearIndexMapping()
+        {
+        }
+
         /** Constructs a mapping object 
          */
-        LinearIndexMapping(const std::vector<size_t> &dimension_sizes) 
-                : m_dimension_sizes(dimension_sizes)
-                , m_slice_sizes(std::vector<size_t>(dimension_sizes.size(),1))
-                , m_size(1)
+        LinearIndexMapping(const std::vector<size_t> &dimension_sizes)
+        : m_dimension_sizes(dimension_sizes)
+        , m_slice_sizes(std::vector<size_t>(dimension_sizes.size(), 1))
+        , m_size(1)
         {
             size_t N = m_dimension_sizes.size();
 
-            for (size_t i=0; i<N; i++)
+            for (size_t i = 0; i < N; i++)
                 m_size *= m_dimension_sizes[i];
 
             // pre-calculate slice sizes. 
 
-            m_slice_sizes[N-1] = 1;
+            m_slice_sizes[N - 1] = 1;
 
-            for (int n=(N-2); n >= 0; n--)
-            {
-                m_slice_sizes[n] = m_slice_sizes[n+1] * m_dimension_sizes[n+1];
+            for (int n = (N - 2); n >= 0; n--) {
+                m_slice_sizes[n] = m_slice_sizes[n + 1] * m_dimension_sizes[n + 1];
             }
 
-//            cout << "Constructing mapping for " << m_dimension_sizes << endl;
-//            cout << "Slice-sizes              " << m_slice_sizes << endl;
+            //            cout << "Constructing mapping for " << m_dimension_sizes << endl;
+            //            cout << "Slice-sizes              " << m_slice_sizes << endl;
 
         };
 
@@ -84,20 +87,18 @@ namespace m3D {
          * @param linear index
          * @return grid index
          */
-        vector<int> 
+        vector<int>
         linear_to_grid(size_t linear_index)
         {
             size_t N = m_dimension_sizes.size();
 
-            vector<int> g(N,0);
+            vector<int> g(N, 0);
 
             size_t position_sum = 0;
 
-            for (int i=0; i < N; i++)
-            {
-                if (i>0)
-                {
-                    position_sum += g[i-1] * m_slice_sizes[i-1];
+            for (int i = 0; i < N; i++) {
+                if (i > 0) {
+                    position_sum += g[i - 1] * m_slice_sizes[i - 1];
                 }
 
                 int idx = (linear_index - position_sum) / m_slice_sizes[i];
@@ -108,15 +109,14 @@ namespace m3D {
             return g;
         }
 
-        size_t 
+        size_t
         grid_to_index(const vector<int> &g)
         {
             size_t linear_index = 0;
 
             size_t N = m_dimension_sizes.size();
 
-            for (int i = (N-1); i >=0; i++)
-            {
+            for (int i = (N - 1); i >= 0; i++) {
                 linear_index += m_slice_sizes[i] * g[i];
             }
 

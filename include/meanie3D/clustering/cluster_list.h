@@ -43,10 +43,10 @@ namespace m3D {
 
     using namespace netCDF;
     using namespace std;
-    
+
     template <typename T>
     class ArrayIndex;
-    
+
     /** Cluster of points in feature space. A cluster is a point in feature space,
      * where multiple trajectories of original feature space points end. This end
      * point is called the cluster's 'mode'.
@@ -60,12 +60,11 @@ namespace m3D {
     template <class T>
     class ClusterList
     {
-
     private:
 
         typedef map< vector<T>, typename Cluster<T>::ptr > ClusterMap;
 
-        ClusterMap      m_cluster_map;
+        ClusterMap m_cluster_map;
 
         /** Estimate the tendency of the weight function at the given
          * grid point with respect to it's direct (9/16) neighbours.
@@ -76,9 +75,9 @@ namespace m3D {
          */
         T
         weight_function_tendency(typename Point<T>::ptr p,
-                                 const WeightFunction<T> *weight_function,
-                                 const typename Point<T>::list &neighbours,
-                                 ArrayIndex<T> &index);
+                const WeightFunction<T> *weight_function,
+                const typename Point<T>::list &neighbours,
+                ArrayIndex<T> &index);
 
         /** Sanity check / consistency check
          */
@@ -88,58 +87,50 @@ namespace m3D {
 
         void
         aggregate_zeroshifts(FeatureSpace<T> *fs,
-                             const WeightFunction<T> *weight_function,
-                             ArrayIndex<T> &index,
-                             bool coalesceWithStrongestNeighbour,
-                             bool show_progress);
+                const WeightFunction<T> *weight_function,
+                ArrayIndex<T> &index,
+                bool coalesceWithStrongestNeighbour,
+                bool show_progress);
 
     public:
 
 #pragma mark -
 #pragma mark Public typedefs
 
-        typedef ClusterList<T> *    ptr;
+        typedef ClusterList<T> * ptr;
 
 #pragma mark -
 #pragma mark Public Properties
 
+        NcFile *ncFile;
+        std::string filename; // this is filled on read() or write()
+        std::vector<NcVar> feature_variables; // all variables, including dimension variables
+        vector<string> variable_names; // vector of strings. this shit needs cleaning up so bad, man
+        vector<NcDim> dimensions; // all dimensions that were in the featurespace
+        string source_file; // Name of the file that the clusters were created from
 
-        NcFile          *ncFile;
-        std::string     filename;                       // this is filled on read() or write()
+        typename Cluster<T>::list clusters;
 
-        // meta-info
+        bool tracking_performed;
+        int tracking_time_difference; // time difference between the two files in [s]
+        id_set_t tracked_ids; // IDs that were continues
+        id_set_t dropped_ids; // IDs that were discontinued
+        id_set_t new_ids; // IDs that were added fresh
+        id_map_t splits; // contains a mapping from previous id's to a list of current id's.
+        id_map_t merges; // contains a mapping of current id to previous ids
+        m3D::id_t highest_id; // Highest used ID
+        m3D::uuid_t highest_uuid; // Highest used UUID
 
-        std::vector<NcVar>  feature_variables;    // all variables, including dimension variables
-        vector<string>      variable_names;       // vector of strings. this shit needs cleaning up so bad, man
+        timestamp_t timestamp; // contains the variable 'time(time)' value
 
-        vector<NcDim>       dimensions;           // all dimensions that were in the featurespace
-        string              source_file;          // Name of the file that the clusters were created from
-
-        // payload
-
-        typename Cluster<T>::list   clusters;
-
-        // tracking help
-
-        bool            tracking_performed; 
-        int             tracking_time_difference; // time difference between the two files in [s]
-        id_set_t        tracked_ids;    // IDs that were continues
-        id_set_t        dropped_ids;    // IDs that were discontinued
-        id_set_t        new_ids;        // IDs that were added fresh
-        id_map_t        splits;         // contains a mapping from previous id's to a list of current id's.
-        id_map_t        merges;         // contains a mapping of current id to previous ids
-        m3D::id_t       highest_id;     // Highest used ID
-
-        timestamp_t     timestamp;      // contains the variable 'time(time)' value
-
-        // control
-
-        bool            m_use_original_points_only;
+        bool m_use_original_points_only;
 
 #pragma mark -
 #pragma mark Constructor/Destructor
 
-        ClusterList() {};
+        ClusterList()
+        {
+        };
 
         /** @constructor
          * @param all variables used to construct the points from, in the same order
@@ -159,10 +150,10 @@ namespace m3D {
          *          that resulted from filtering (for example scale-space)
          */
         ClusterList(const vector<NcVar> &vars,
-                    const vector<NcDim> &dims,
-                    const string& sourcefile,
-                    int time_index = NO_TIME,
-                    bool use_original_points_only=true)
+                const vector<NcDim> &dims,
+                const string& sourcefile,
+                int time_index = NO_TIME,
+                bool use_original_points_only = true)
         : ncFile(NULL)
         , feature_variables(vars)
         , variable_names(utils::netcdf::to_names(vars))
@@ -172,17 +163,14 @@ namespace m3D {
         , highest_id(0)
         , m_use_original_points_only(use_original_points_only)
         {
-            try 
-            {
+            try {
                 long timestamp = utils::netcdf::get_time<long>(sourcefile, time_index);
                 this->set_time_in_seconds(::units::values::s(timestamp));
-            }
-            catch (runtime_error &e)
-            {
-                cerr << "ERROR:could not obtain timestamp from file " 
-                     << sourcefile 
-                     << "(time_index=" << time_index 
-                     << endl;
+            } catch (runtime_error &e) {
+                cerr << "ERROR:could not obtain timestamp from file "
+                        << sourcefile
+                        << "(time_index=" << time_index
+                        << endl;
             }
         };
 
@@ -194,10 +182,10 @@ namespace m3D {
          * @param the command line parameters used to cluster
          */
         ClusterList(const typename Cluster<T>::list &list,
-                    const vector<NcDim> &dims,
-                    const vector<NcVar> &vars,
-                    const string& sourcefile,
-                    int time_index = NO_TIME)
+                const vector<NcDim> &dims,
+                const vector<NcVar> &vars,
+                const string& sourcefile,
+                int time_index = NO_TIME)
         : ncFile(NULL)
         , feature_variables(vars)
         , variable_names(utils::netcdf::to_names(vars))
@@ -208,17 +196,14 @@ namespace m3D {
         , highest_id(0)
         , m_use_original_points_only(true)
         {
-            try 
-            {
+            try {
                 long timestamp = utils::netcdf::get_time<long>(sourcefile, time_index);
                 this->set_time_in_seconds(::units::values::s(timestamp));
-            }
-            catch (netCDF::exceptions::NcException &e)
-            {
-                cerr << "ERROR:could not obtain timestamp from file " 
-                     << sourcefile 
-                     << "(time_index=" << time_index 
-                     << endl;
+            } catch (netCDF::exceptions::NcException &e) {
+                cerr << "ERROR:could not obtain timestamp from file "
+                        << sourcefile
+                        << "(time_index=" << time_index
+                        << endl;
             }
         };
 
@@ -226,10 +211,9 @@ namespace m3D {
          */
         ~ClusterList()
         {
-            if (ncFile!=NULL)
-            {
+            if (ncFile != NULL) {
                 delete ncFile;
-                ncFile=NULL;
+                ncFile = NULL;
             }
         };
 
@@ -243,15 +227,15 @@ namespace m3D {
         /** @param index
          * @return cluster at index
          */
-        typename Cluster<T>::ptr operator[] (size_t index);
-        
+        typename Cluster<T>::ptr operator[](size_t index);
+
         /** Clears the cluster list. 
          * 
          * @param deletion_flag if <code>true</code>, the clusters will be
          * properly deleted. That includes their points. Defaults to
          * <code>false</code>
          */
-        void clear(bool deletion_flag=false);
+        void clear(bool deletion_flag = false);
 
 #pragma mark -
 #pragma mark Timestamp
@@ -284,9 +268,9 @@ namespace m3D {
          * chosen. If
          */
         void aggregate_cluster_graph(FeatureSpace<T> *fs,
-                                     const WeightFunction<T> *weight_function,
-                                     bool coalesceWithStrongestNeighbour,
-                                     bool show_progress=true);
+                const WeightFunction<T> *weight_function,
+                bool coalesceWithStrongestNeighbour,
+                bool show_progress = true);
 
         /** Find the boundary points of two clusters.
          * @param cluster 1
@@ -297,8 +281,8 @@ namespace m3D {
          */
         typename Point<T>::list
         get_boundary_points(typename Cluster<T>::ptr c1,
-                            typename Cluster<T>::ptr c2,
-                            ArrayIndex<T> &index);
+                typename Cluster<T>::ptr c2,
+                ArrayIndex<T> &index);
 
         /** Merges the two clusters into a new cluster and removes the mergees from
          * the list of clusters, while inserting the new cluster. The mode of the merged
@@ -309,7 +293,7 @@ namespace m3D {
          */
         typename Cluster<T>::ptr
         merge_clusters(typename Cluster<T>::ptr c1,
-                       typename Cluster<T>::ptr c2);
+                typename Cluster<T>::ptr c2);
 
         /** Find all directly adjacent clusters to the given cluster
          *
@@ -320,7 +304,7 @@ namespace m3D {
          */
         typename Cluster<T>::list
         neighbours_of(typename Cluster<T>::ptr cluster,
-                      ArrayIndex<T> &index);
+                ArrayIndex<T> &index);
 
         /** If the two clusters have neighbouring points in the grid,
          * they are counted as neighbours.
@@ -331,18 +315,14 @@ namespace m3D {
          */
         bool
         are_neighbours(const Cluster<T> *c1,
-                       const Cluster<T> *c2,
-                       ArrayIndex<T> &index);
+                const Cluster<T> *c2,
+                ArrayIndex<T> &index);
 #pragma mark -
 #pragma mark ID helpers
 
         /** Iterates over all clusters and sets their ID to NO_ID 
          */
         void erase_identifiers();
-
-        /** Re-tags sequentially, starting with 0 
-         */
-        void retag_identifiers();
 
 #pragma mark -
 #pragma mark Post-Processing
@@ -353,7 +333,7 @@ namespace m3D {
          * @param show progress indicator
          */
         void apply_size_threshold(unsigned int min_cluster_size,
-                                  const bool& show_progress = true);
+                const bool& show_progress = true);
 
 #pragma mark -
 #pragma mark I/O
@@ -364,7 +344,7 @@ namespace m3D {
          * http://git.meteo.uni-bonn.de/projects/meanie3d/wiki/Cluster_File
          * @param full path to filename, including extension '.nc'
          */
-        void write( const string& path );
+        void write(const string& path);
 
         /** Persists any changes. Requires that the list was read
          * from a file before.
@@ -381,7 +361,7 @@ namespace m3D {
          */
         static
         typename ClusterList<T>::ptr
-        read(const string& path, CoordinateSystem<T> **cs_ptr=NULL );
+        read(const string& path, CoordinateSystem<T> **cs_ptr = NULL);
 
         /** Prints the cluster list out to console
          * @param include point details?
@@ -401,12 +381,12 @@ namespace m3D {
          */
         static
         void
-        reset_clustering( FeatureSpace<T> *fs );
+        reset_clustering(FeatureSpace<T> *fs);
 
         /** Counts the number of points in all clusters and checks
          * if the number is equal to featureSpace->size()
          */
-        void sanity_check( const FeatureSpace<T> *fs );
+        void sanity_check(const FeatureSpace<T> *fs);
 
 #pragma mark -
 #pragma mark Debugging
@@ -414,17 +394,25 @@ namespace m3D {
         /** Used for analyzing the boundaries and signal correlation
          */
         void write_boundaries(const WeightFunction<T> *weight_function,
-                              FeatureSpace<T> *fs,
-                              PointIndex<T> *index,
-                              const vector<T> &resolution );
+                FeatureSpace<T> *fs,
+                PointIndex<T> *index,
+                const vector<T> &resolution);
 
 #if WRITE_MODES
     protected:
-        vector< vector<T> >         m_trajectory_endpoints;
-        vector<size_t>              m_trajectory_lengths;
+        vector< vector<T> > m_trajectory_endpoints;
+        vector<size_t> m_trajectory_lengths;
     public:
-        const vector< vector<T> > &trajectory_endpoints() { return m_trajectory_endpoints; }
-        const vector<size_t> &trajectory_lengths() { return m_trajectory_lengths; }
+
+        const vector< vector<T> > &trajectory_endpoints()
+        {
+            return m_trajectory_endpoints;
+        }
+
+        const vector<size_t> &trajectory_lengths()
+        {
+            return m_trajectory_lengths;
+        }
 #endif
 
     };

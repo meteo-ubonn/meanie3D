@@ -42,20 +42,23 @@ namespace m3D {
     class PointDefaultFactory : public PointFactory<T>
     {
 
-        virtual Point<T> * create() {
+        virtual Point<T> * create()
+        {
             return new Point<T>();
         }
 
-        virtual Point<T> * create( vector<int> &gridpoint, vector<T> &coord, vector<T> &value ) {
-            return new Point<T>(gridpoint,coord,value);
+        virtual Point<T> * create(vector<int> &gridpoint, vector<T> &coord, vector<T> &value)
+        {
+            return new Point<T>(gridpoint, coord, value);
         }
 
-        virtual Point<T> * create( vector<T> &coord, vector<T> &value ) {
-            return new Point<T>(coord,value);
+        virtual Point<T> * create(vector<T> &coord, vector<T> &value)
+        {
+            return new Point<T>(coord, value);
         }
 
         virtual Point<T> *
-        copy( const Point<T> *p)
+        copy(const Point<T> *p)
         {
             return new Point<T>(p);
         }

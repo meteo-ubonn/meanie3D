@@ -57,38 +57,48 @@ namespace m3D {
 #pragma mark 
 #pragma mark Member variables
 
-        matrix_t    point_matrix;        // Featurespace as matrix (size x dimensions)
+        matrix_t point_matrix; // Featurespace as matrix (size x dimensions)
 
-        matrix_t    white_point_matrix;  // Whitened featurespace matrix (size x dimensions)
+        matrix_t white_point_matrix; // Whitened featurespace matrix (size x dimensions)
 
-        matrix_t    omega;                      // Transformation matrix
+        matrix_t omega; // Transformation matrix
 
-        vector<T>   white_range;                // Last transformation parameters
+        vector<T> white_range; // Last transformation parameters
 
 #pragma mark 
 #pragma mark Protected Constructor/Destructor
 
         inline
-        WhiteningIndex( typename Point<T>::list *points, size_t dimension ) : PointIndex<T>( points, dimension ) {};
+        WhiteningIndex(typename Point<T>::list *points, size_t dimension) : PointIndex<T>(points, dimension)
+        {
+        };
 
         inline
-        WhiteningIndex( typename Point<T>::list *points, const vector<size_t> &indexes ) : PointIndex<T>( points, indexes ) {};
+        WhiteningIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : PointIndex<T>(points, indexes)
+        {
+        };
 
         inline
-        WhiteningIndex( FeatureSpace<T> *fs ) : PointIndex<T>(fs) {};
+        WhiteningIndex(FeatureSpace<T> *fs) : PointIndex<T>(fs)
+        {
+        };
 
         inline
-        WhiteningIndex( FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables ) : PointIndex<T>( fs, index_variables ) {};
+        WhiteningIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : PointIndex<T>(fs, index_variables)
+        {
+        };
 
         inline
-        WhiteningIndex( const WhiteningIndex<T> &o ) : PointIndex<T>(o), point_matrix(o.point_matrix) {};
+        WhiteningIndex(const WhiteningIndex<T> &o) : PointIndex<T>(o), point_matrix(o.point_matrix)
+        {
+        };
 
 #pragma mark -
 #pragma mark Abstract Protected Methods
 
         virtual
         void
-          build_index( const vector<T> &bandwidths ) = 0;
+        build_index(const vector<T> &bandwidths) = 0;
 
     public:
 
@@ -97,11 +107,11 @@ namespace m3D {
 
         virtual
         typename Point<T>::list *
-        search( const vector<T> &x, const SearchParameters *params, vector<T> *distances=NULL ) = 0;
+        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL) = 0;
 
         virtual
         void
-        add_point( typename Point<T>::ptr p ) = 0;
+        add_point(typename Point<T>::ptr p) = 0;
 
 #pragma mark -
 #pragma mark Destructor
@@ -115,61 +125,58 @@ namespace m3D {
 #pragma mark -
 #pragma mark Protected Specific Methods
 
-//        void test_lapack() 
-//        {
-//            matrix_t A(3,2), B(2,2), C(3,2);
-//            A(0,0) = 2.0;
-//            A(0,1) = 1.0;
-//            A(1,0) = -1.0;
-//            A(1,1) = 2.0;
-//            A(2,0) = -1.0;
-//            A(2,1) = 2.0;
-//            
-//            cout << A << endl;
-//            
-//            //B = boost::numeric::ublas::identity_matrix<T>(2,2);
-//            B(0,0) = 0.5;
-//            B(0,1) = 0.0;
-//            B(1,0) = 0.0;
-//            B(1,1) = 0.5;
-//            
-//            cout << B << endl;
-//
-//            C = boost::numeric::ublas::prod( A, B );
-//            
-//            cout << C << endl;
-//        }
+        //        void test_lapack() 
+        //        {
+        //            matrix_t A(3,2), B(2,2), C(3,2);
+        //            A(0,0) = 2.0;
+        //            A(0,1) = 1.0;
+        //            A(1,0) = -1.0;
+        //            A(1,1) = 2.0;
+        //            A(2,0) = -1.0;
+        //            A(2,1) = 2.0;
+        //            
+        //            cout << A << endl;
+        //            
+        //            //B = boost::numeric::ublas::identity_matrix<T>(2,2);
+        //            B(0,0) = 0.5;
+        //            B(0,1) = 0.0;
+        //            B(1,0) = 0.0;
+        //            B(1,1) = 0.5;
+        //            
+        //            cout << B << endl;
+        //
+        //            C = boost::numeric::ublas::prod( A, B );
+        //            
+        //            cout << C << endl;
+        //        }
 
         // calculate transformation omega from F to F' 
         // and calculate F'
 
-        void transform_featurespace( vector<T> ranges )
+        void transform_featurespace(vector<T> ranges)
         {
             using namespace std;
             using namespace ::m3D::utils;
-            
+
             // test_lapack();
 
             // Lazy transform
 
-            if ( point_matrix.size1() == 0 )
-            {
+            if (point_matrix.size1() == 0) {
                 // turn the feature-space into matrix form with #points rows
                 // and #dimensions columns.
 
-                point_matrix = matrix_t( this->size(), this->dimension() );
+                point_matrix = matrix_t(this->size(), this->dimension());
 
                 typename Point<T>::list::iterator it;
 
-                for ( size_t row_index = 0; row_index < this->size(); row_index++ )
-                {
+                for (size_t row_index = 0; row_index < this->size(); row_index++) {
                     typename Point<T>::ptr p = this->m_points->at(row_index);
 
-                    for ( size_t col_index = 0; col_index < this->dimension(); col_index++ )
-                    {
+                    for (size_t col_index = 0; col_index < this->dimension(); col_index++) {
                         size_t actual_index = this->m_index_variable_indexes[col_index];
 
-                        point_matrix( row_index, col_index ) = p->values[ actual_index ];
+                        point_matrix(row_index, col_index) = p->values[ actual_index ];
                     }
                 }
             }
@@ -179,13 +186,11 @@ namespace m3D {
             // construct a diagonal matrix with the whitening factors
             // from the bandwidth vector
 
-            omega = boost::numeric::ublas::matrix<T>( this->dimension(), this->dimension() );
+            omega = boost::numeric::ublas::matrix<T>(this->dimension(), this->dimension());
 
-            for ( size_t i = 0; i < this->dimension(); i++ )
-            {
-                for ( size_t j = 0; j < this->dimension(); j++ )
-                {
-                    omega(i,j) = ( i == j ) ? ( white_radius / white_range[i] ) : 0.0;
+            for (size_t i = 0; i < this->dimension(); i++) {
+                for (size_t j = 0; j < this->dimension(); j++) {
+                    omega(i, j) = (i == j) ? (white_radius / white_range[i]) : 0.0;
                 }
             }
 
@@ -195,12 +200,12 @@ namespace m3D {
 #if DEBUG_INDEX
 
             cout << endl << "\t" << "transforming featurespace to achieve radius " << this->white_radius
-                 << " for ranges " << ranges
-                 << " omega = " << omega << " ... ";
+                    << " for ranges " << ranges
+                    << " omega = " << omega << " ... ";
 
             start_timer();
 #endif 
-            white_point_matrix = boost::numeric::ublas::prod( point_matrix, omega );
+            white_point_matrix = boost::numeric::ublas::prod(point_matrix, omega);
 
 #if DEBUG_INDEX
             cout << " ... done. (" << stop_timer() << "s" << endl;
@@ -210,10 +215,10 @@ namespace m3D {
             std::string fn;
 
             fn = "index_matrix" + boost::lexical_cast<string>(index_number) + ".vtk";
-            VisitUtils<T>::write_matrix_vtk( fn, point_matrix, "featurespace" );
+            VisitUtils<T>::write_matrix_vtk(fn, point_matrix, "featurespace");
 
             fn = "index_matrix_whitened_" + boost::lexical_cast<string>(index_number++) + ".vtk";
-            VisitUtils<T>::write_matrix_vtk( fn, white_point_matrix, "whitened_featurespace" );
+            VisitUtils<T>::write_matrix_vtk(fn, white_point_matrix, "whitened_featurespace");
 #endif
 #endif
         };
@@ -223,13 +228,12 @@ namespace m3D {
          * @param vector
          * @return vector
          */
-        vector<T> transform_vector( const vector<T> &x )
+        vector<T> transform_vector(const vector<T> &x)
         {
-            vector<T> r( x.size() );
+            vector<T> r(x.size());
 
-            for ( size_t i=0; i<x.size(); i++ )
-            {
-                r[i] = omega(i,i) * x[i];
+            for (size_t i = 0; i < x.size(); i++) {
+                r[i] = omega(i, i) * x[i];
             }
 
             return r;

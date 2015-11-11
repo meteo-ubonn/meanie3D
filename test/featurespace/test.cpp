@@ -19,16 +19,16 @@
 #include <gtest/gtest.h>
 #include "testcases.h"
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
-    
+
 #if WITH_TBB
     cout << "INFO:Initializing TBB scheduler ... ";
     tbb::task_scheduler_init init;
     cout << "done.";
 #endif
-    
+
     ::testing::InitGoogleTest(&argc, argv);
-    
+
     return RUN_ALL_TESTS();
 }
