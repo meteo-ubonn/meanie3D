@@ -371,7 +371,8 @@ namespace m3D {
             // too much in size
             T maxSize = (T) max(p->size(), c->size());
             T minSize = (T) min(p->size(), c->size());
-            run.sizeDifference[n][m] = (maxSize == 0) ? 1.0 : (maxSize - minSize);
+            T sizeDiff =  (maxSize == 0) ? 1.0 : (maxSize - minSize);
+            run.sizeDifference[n][m] = sizeDiff;
             if (m_params.size_weight != 0.0) {
                 if (run.sizeDifference[n][m] > run.maxSizeDifference) {
                     run.maxSizeDifference = run.sizeDifference[n][m];
@@ -584,12 +585,12 @@ namespace m3D {
             int n = pairing[0];
             int m = pairing[1];
 
-            typename Cluster<T>::ptr new_cluster = run.current->clusters[n];
-            typename Cluster<T>::ptr old_cluster = run.previous->clusters[m];
+            typename Cluster<T>::ptr c = run.current->clusters[n];
+            typename Cluster<T>::ptr p = run.previous->clusters[m];
 
             // if the old cluster was matched already in a match
             // with higher probability, then skip this one
-            id_set_t::iterator fi = run.current->tracked_ids.find(old_cluster->id);
+            id_set_t::iterator fi = run.current->tracked_ids.find(p->id);
             if (fi != run.current->tracked_ids.end()) {
 //                if (logAll) {
 //                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
@@ -600,7 +601,7 @@ namespace m3D {
             }
 
             // Or if the NEW cluster was matched earlier, skip as well 
-            fi = run.matched_uuids.find(new_cluster->uuid);
+            fi = run.matched_uuids.find(c->uuid);
             if (fi != run.matched_uuids.end()) {
 //                if (logAll) {
 //                    cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
@@ -613,18 +614,18 @@ namespace m3D {
             // Getting here means, that the match is accepted.
 
             // ID is continued
-            new_cluster->id = old_cluster->id;
+            c->id = p->id;
 
             // calculate displacement
-            new_cluster->displacement = new_cluster->geometrical_center()
-                    - old_cluster->geometrical_center();
+            c->displacement = c->geometrical_center()
+                              - p->geometrical_center();
 
             // Remember that this ID was tracked, removing
             // the old cluster from the race
-            run.current->tracked_ids.insert(old_cluster->id);
+            run.current->tracked_ids.insert(p->id);
 
             // remove the new cluster from the race
-            run.matched_uuids.insert(new_cluster->uuid);
+            run.matched_uuids.insert(c->uuid);
 
             // Update for mean velocity calculation
             ::units::values::meters_per_second velocity = run.midDisplacement[n][m] / run.deltaT;
@@ -632,10 +633,10 @@ namespace m3D {
             velocityClusterCount++;
 
             if (logDetails) {
-                cout << "\t\tuuid:" << old_cluster->uuid << " id:" << old_cluster->id
-                     << " with uuid:" << new_cluster->uuid << " ("
-                     << " accepted: (velocity: " << velocity.get() << " m/s"
-                     << " displacement: " << new_cluster->displacement << ")." << endl;
+                cout << "\t\tuuid:" << p->uuid << " id:" << p->id
+                << " with uuid:" << c->uuid << " ("
+                << " accepted: (velocity: " << velocity.get() << " m/s"
+                << " displacement: " << c->displacement << ")." << endl;
             }
         }
 
