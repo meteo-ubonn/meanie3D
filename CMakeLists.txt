@@ -34,8 +34,11 @@ SET(PROJECT_AUTHOR_EMAIL "juergen.simon@uni-bonn.de")
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 
-CONFIGURE_FILE( ${PROJECT_SOURCE_DIR}/config_h.in 
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/config_h.in
     ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h)
+
+CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/meanie3D/version.h.in
+        ${PROJECT_BINARY_DIR}/include/meanie3D/version.h)
 
 # Set default cmake build type to Debug
 # (None, Debug, Release, RelWithDebInfo or MinSizeRel)
