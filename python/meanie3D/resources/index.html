@@ -123,13 +123,27 @@
 				text-align: center;
 				z-index: 1000;
             }
+		
+		    #pondering {
+				position:absolute;
+				left:0px;
+				top:0px;
+				width: 100%;
+            	display: none;
+				background-color: gray;
+				opacity: 0.5;
+				text-align: center;
+				z-index: 1000;
+            }
+
         </style>
     </head>
     <body>
 	    <div id="loading">
 	    	<p>Loading track dictionary. This may take some time ...</p>
-	    	<p><img src="ajax-loader.gif"/></p>
+	    	<p><img src="ajax-loader.gif" id="loading-indicator"/></p>
 	    </div>
+		<div id="pondering"></div>
         <!-- navigation -->
         <div id="menu">
             <div id="top">

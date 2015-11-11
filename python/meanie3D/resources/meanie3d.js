@@ -10,6 +10,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
     M3D.radius = 12;
     M3D.color = d3.scale.category20();
 	M3D.maxInitialClassSize = 20;
+	M3D.maxRecursionLevel = 1;
 
     /**
      * Class representing a graph of tracks constructed
@@ -82,7 +83,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
         /** @return a function to filter links. */
 	    this.linkFilter = function(link) {
 	        if (this.selectedId || this.selectedTrackLength) {
-                return this.linkedNodes.has(link.source) || this.linkedNodes.has(link.target);
+                return this.linkedNodes.has(link.source) && this.linkedNodes.has(link.target);
             }
             return true;
         }
@@ -197,7 +198,7 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
             var roots = this.nodesWithId(id);
             var linked = new Set();
             roots.forEach(function(root) {
-                self.getLinkedNodes(root, linked);
+                self.getLinkedNodes(root, linked, 0);
             });
             return linked;
         }
@@ -206,25 +207,36 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
          * Recursively collects all ids of nodes linking
          * to or linked to any node with this id.
          */
-        this.getLinkedNodes = function(node,linkedNodes) {
+        this.getLinkedNodes = function(node, linkedNodes, recursion) {
             var self = this;
-            if (linkedNodes.has(node)) {
-                return;
-            }
+			
+			if (linkedNodes.has(node)) {
+				return;
+			}
+			
             linkedNodes.add(node);
-            var nextNodes = this.nodesWithId(node.id);
-            // Now gather up all nodes that point to or
-            // from any of the nodes in the list
+			
+			if (recursion > M3D.maxRecursionLevel) {
+			 	return;
+			}
+			
+			// Collect all the node's targets
+			var links = new Set();
             this.links.forEach(function(link) {
-                if (nextNodes.has(link.target) || nextNodes.has(link.source)) {
-                    var nextNode = null;
-                    if (link.target == node) {
-                        self.getLinkedNodes(link.source, linkedNodes);
-                    } else if (link.source == node) {
-                        self.getLinkedNodes(link.target, linkedNodes);
-                    }
-                }
-            });
+				var linkedNode = null;
+				if (link.source.uuid == node.uuid) {
+					linkedNode = link.target;
+				} else if (link.target.uuid == node.uuid) {
+					linkedNode = link.source;
+				}
+				if (linkedNode) {
+					var level = (link.type==0) ? recursion : recursion+1;
+		            var nextNodes = self.nodesWithId(linkedNode.id);
+					nextNodes.forEach(function(nextNode) {
+						self.getLinkedNodes(linkedNode, linkedNodes, level);
+					});
+				}
+			});
         }
 
         /**
@@ -345,12 +357,16 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
 	
 	M3D.showTrackingGraph = function(graph) {
 		// Remove graph svg if there is one
-		var svg = d3.select("body").select("#graph").select("svg");
-		if (svg) {
-			svg.remove();
-		}
-        M3D.addTrackingGraph(graph);
-        M3D.resize();
+		M3D.showPondering();
+		setTimeout(function() {
+			var svg = d3.select("body").select("#graph").select("svg");
+			if (svg) {
+				svg.remove();
+			}
+	        M3D.addTrackingGraph(graph);
+	        M3D.resize();
+			M3D.hidePondering();
+		},10)
 	}
 
     /**
@@ -599,6 +615,18 @@ if (typeof (M3D) == 'undefined' || M3D == null) {
 			.style("display","none");
 	}
 
+	M3D.showPondering = function() {
+		var vp = M3D.getViewportSize();
+		d3.select("#pondering")
+			.style("display","block")
+			.style("height",vp.height + "px")
+			.style("padding-top",(vp.height/2.0)*0.8 +"px");
+	}
+
+	M3D.hidePondering = function() {
+		d3.select("#pondering")
+			.style("display","none");
+	}
 
     M3D.resize = function() {
         var menuSize = M3D.getMenuSize();
