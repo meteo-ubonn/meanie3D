@@ -190,8 +190,6 @@ def run(config,time_index):
         # ----------------------------------------------
 
         if detection:
-            print "-- Clustering --"
-
             # if there is a resume counter, keep skipping until the count is right
             # Note: this only applies to clustering, which is expensive. Tracking
             # will be re-run
@@ -199,6 +197,8 @@ def run(config,time_index):
                 last_cluster_file = cluster_file
                 run_count = run_count + 1
                 continue
+
+            print "-- Clustering --"
 
             # build the clustering command
             params = detect_params

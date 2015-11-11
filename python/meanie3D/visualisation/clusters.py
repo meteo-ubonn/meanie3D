@@ -251,7 +251,7 @@ def run(conf):
     subprocess.call("mv *tracking_*.png images", shell=True)
     subprocess.call("mv *source_*.png images", shell=True)
     subprocess.call("mkdir movies", shell=True)
-    subprocess.call("mv *.gif *.m4v movies", shell=True)
+    subprocess.call("mv *source*.gif *tracking*.gif *.m4v movies", shell=True)
     subprocess.call("rm -f *.vt* visitlog.py", shell=True)
     return
 
