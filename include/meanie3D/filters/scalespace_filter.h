@@ -54,11 +54,6 @@ namespace m3D {
         map<size_t, T> m_max; /// maximum tracker
 
         boost::progress_display *m_progress_bar; /// Progress meter
-
-        size_t m_modified_points;
-
-        size_t m_created_points;
-
         vector<netCDF::NcVar> m_excluded_vars;
 
         void

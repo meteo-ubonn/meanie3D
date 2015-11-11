@@ -217,11 +217,6 @@ namespace m3D {
                     // it to the array index
 
                     filteredPoints->set(gridpoint, p, false);
-
-                    if (!p->isOriginalPoint)
-                        m_created_points++;
-                    else
-                        m_modified_points++;
                 }
 
                 // If we have a point after all that, update it with the
@@ -318,8 +313,6 @@ namespace m3D {
             m_max[varIndex] = std::numeric_limits<T>::min();
         }
 
-        m_modified_points = m_created_points = 0;
-
         // Apply dimension by dimension (exploiting separability)
 
         for (size_t dimIndex = 0; dimIndex < fs->spatial_rank(); dimIndex++) {
@@ -346,7 +339,7 @@ namespace m3D {
         if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
             cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
-                    << "(" << m_created_points << " new points))" << endl;
+                    << "(" << (fs->size() - originalPoints) << " new points))" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
         }
@@ -505,14 +498,12 @@ namespace m3D {
 
 #if WITH_OPENMP
 #pragma omp critical
+                    {
 #endif
                     filteredPoints->set(gridpoint, p, false);
-
-                    if (!p->isOriginalPoint) {
-                        m_created_points++;
-                    } else {
-                        m_modified_points++;
+#if WITH_OPENMP
                     }
+#endif
                 }
 
                 // If we have a point after all that, update it with the
@@ -586,8 +577,6 @@ namespace m3D {
             m_max[varIndex] = std::numeric_limits<T>::min();
         }
 
-        m_modified_points = m_created_points = 0;
-
         //
         // Apply dimension by dimension (exploiting separability)
         //
@@ -617,7 +606,7 @@ namespace m3D {
         if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
             cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
-                    << "(" << m_created_points << " new points))" << endl;
+                    << "(" << (fs->size() - originalPoints) << " new points))" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
         }
