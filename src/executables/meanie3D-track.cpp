@@ -245,7 +245,7 @@ int main(int argc, char** argv) {
 
 #if WITH_VTK
     if (params.write_vtk) {
-        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(current, cs, current->source_file);
+        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(current, cs, current->source_file);
         boost::filesystem::path path(params.current_filename);
 
         string modes_path = path.filename().stem().string() + "_modes.vtk";
