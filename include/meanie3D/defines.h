@@ -69,12 +69,8 @@
 #define DEBUG_FEATURESPACE 0
 #define DEBUG_ITERATION 0
 #define DEBUG_MEANSHIFT_GRAPH 0
-#define DEBUG_MEANSHIFT_CALCULATION 0
 #define DEBUG_MEANSHIFT_RESULT_CALCULATION 0
 #define DEBUG_MEANSHIFT_SAMPLING 0
-#define DEBUG_CLUSTER_MERGING 0
-#define DEBUG_CLUSTER_MERGING_DECISION 0
-#define DEBUG_TRACKING 0
 #define DEBUG_HISTOGRAM_CORRELATION 0
 #define DEBUG_GRAPH_AGGREGATION 0
 
@@ -119,10 +115,6 @@
 // as 'off limits' in the original feature-space
 // (one of the variables outside of valid_range).
 #define WRITE_OFF_LIMITS_MASK 0
-
-// Write out the center of the cluster in a single
-// file per cluster
-#define WRITE_CLUSTER_CENTERS 0
 
 // Write out the result of the initial clustering
 // step into separate files.
