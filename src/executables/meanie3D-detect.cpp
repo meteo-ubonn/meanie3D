@@ -1016,9 +1016,6 @@ int main(int argc, char** argv) {
 
 #endif
 
-    if (verbosity == VerbosityAll)
-        fs->print();
-
 #if WRITE_MEANSHIFT_WEIGHTS
     vector<FS_TYPE> sample_point(2);
     sample_point[0] = -43.4621658325195;
@@ -1039,7 +1036,14 @@ int main(int argc, char** argv) {
     // Run the clustering
     PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
     ClusterOperation<FS_TYPE> cop(fs, data_store, index);
-    ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, write_meanshift_vectors, show_progress);
+    ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, show_progress);
+
+    #if WITH_VTK
+    if (write_meanshift_vectors) {
+        std::string ms_path = path.filename().stem().string() + "-meanshift-vectors.vtk";
+        VisitUtils<FS_TYPE>::write_shift_vectors(ms_path, fs, true);
+    }
+    #endif
 
     // Axe weenies
     clusters.apply_size_threshold(min_cluster_size);
@@ -1061,9 +1065,6 @@ int main(int argc, char** argv) {
     m3D::uuid_t uuid = m3D::MIN_UUID;
     ClusterUtils<FS_TYPE>::provideUuids(&clusters,uuid);
     clusters.highest_uuid = uuid;
-
-    if (verbosity >= VerbosityDetails)
-        clusters.print();
 
     // Collate with previous clusters, if provided
     if (previous_file != NULL) {
@@ -1108,7 +1109,7 @@ int main(int argc, char** argv) {
 
 #if WITH_VTK
     if (write_vtk && clusters.clusters.size() > 0) {
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(&clusters, coord_system, path.filename().string());
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(&clusters, coord_system, path.filename().string());
     }
     if (write_cluster_modes) {
         string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";

@@ -326,40 +326,9 @@ namespace m3D {
                     unsigned int max_colors = 5,
                     bool use_ids = true,
                     bool only_boundary = false,
-                    bool write_xml = false);
+                    bool write_xml = true);
 
-
-            static
-            void
-            write_clusters_vtu_wholesale(const ClusterList<T> *list,
-                    const CoordinateSystem<T> *cs,
-                    const string &base_name,
-                    unsigned int max_colors = 5,
-                    bool use_ids = true,
-                    bool only_boundary = false,
-                    bool write_xml = false);
-
-            /** Writes the cluster's points out as rectilinear grid
-             * @param cluster list
-             * @param coordinate system (required for resolution)
-             * @param infix for cluster filenames
-             * @param only_bounday: If <code>true</code> only points marked
-             * as boundary points are written out. If <code>false</code> all
-             * points are written out (default).
-             * @param write_ascii If <code>true</code>, the files is written as
-             * legacy ascii (expensive). If <code>false</code> (default) the more
-             * efficient xml format is used.
-             */
-            static
-            void
-            write_clusters_vtr(const ClusterList<T> *list,
-                    const CoordinateSystem<T> *cs,
-                    const string &base_name,
-                    bool use_ids = true,
-                    bool only_boundary = false,
-                    bool write_ascii = false);
-
-            /** Write out the track centers 
+            /** Write out the track centers
              */
             static
             void

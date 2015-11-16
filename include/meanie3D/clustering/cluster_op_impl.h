@@ -60,28 +60,6 @@ namespace m3D {
     }
 #endif
 
-    template <typename T>
-    void
-    ClusterOperation<T>::increment_cluster_progress() const
-    {
-#if PROVIDE_THREADSAFETY
-        boost::mutex::scoped_lock(m_cluster_progress_mutex);
-#endif
-        if (m_progress_bar) {
-            m_progress_bar->operator++();
-        }
-    }
-
-    template <typename T>
-    void
-    ClusterOperation<T>::report_done()
-    {
-#if PROVIDE_THREADSAFETY
-        boost::mutex::scoped_lock(m_cluster_threadcount_mutex);
-#endif            
-        m_cluster_threadcount++;
-    }
-
 #pragma mark -
 #pragma mark Clustering Code
 
@@ -92,7 +70,6 @@ namespace m3D {
             const Kernel<T> *kernel,
             const WeightFunction<T> *weight_function,
             const bool coalesceWithStrongestNeighbour,
-            const bool write_meanshift_vectors,
             const bool show_progress_bar)
     {
         using namespace m3D::utils::vectors;
@@ -143,54 +120,25 @@ namespace m3D {
             return cluster_list;
         }
 
-#if WITH_TBB
+        MeanshiftOperation<T> meanshiftOperator(this->feature_space, this->point_index);
+        meanshiftOperator.prime_index(params);
 
-        // perform one search operation on the index
-        // in order to pre-empt the index building
-
-        this->feature_space->sanity_check();
-
-        typename Point<T>::ptr x = this->feature_space->points[0];
-        typename Point<T>::list *list = this->point_index->search(x->values, params);
-        delete list;
-
-        // Run parallelized version
-
-        // tbb::task_scheduler_init init(1);
-
-        parallel_for(tbb::blocked_range<size_t>(0, this->point_index->size()),
-
-                ClusterTask<T>(this->feature_space,
-                this->point_index,
-                this, &cluster_list,
-                0,
-                this->feature_space->size(),
-                params,
-                kernel,
-                weight_function,
-                show_progress_bar),
-                tbb::auto_partitioner());
-
-#else
-        // Single threaded execution (or OpenMP)
-        ClusterTask<T> ct(this->feature_space,
-                this->point_index,
-                this, &cluster_list,
-                0,
-                this->feature_space->size(),
-                params,
-                kernel,
-                weight_function,
-                show_progress_bar);
-        ct();
-
+#if WITH_OPENMP
+#pragma omp parallel for schedule(dynamic)
 #endif
-
-        if (write_meanshift_vectors) {
-#if WITH_VTK
-            VisitUtils<T>::write_shift_vectors("meanshift_vectors.vtk", this->feature_space, false);
-            VisitUtils<T>::write_shift_vectors("meanshift_vectors-spatial.vtk", this->feature_space, true);
+        for (size_t index = 0; index < this->feature_space->size(); index++) {
+            if (show_progress_bar) {
+#if WITH_OPENMP
+#pragma omp critical
 #endif
+                m_progress_bar->operator++();
+            }
+            // Get the meanshift vector for this point
+            typename Point<T>::ptr x = this->feature_space->points[ index ];
+            x->shift = meanshiftOperator.meanshift(x->values, params, kernel, weight_function);
+            // Extract the spatial component and obtain the grid
+            vector<T> spatial_shift = this->feature_space->spatial_component(x->shift);
+            x->gridded_shift = this->feature_space->coordinate_system->to_gridpoints(spatial_shift);
         }
 
         if (show_progress_bar) {
@@ -201,11 +149,20 @@ namespace m3D {
 
         // Analyse the graph and create clusters
         cluster_list.aggregate_cluster_graph(this->feature_space, weight_function, coalesceWithStrongestNeighbour, show_progress_bar);
-        this->feature_space->sanity_check();
+
+        // Provide fresh ids right away
+        m3D::uuid_t uuid = 0;
+        ClusterUtils<T>::provideUuids(&cluster_list,uuid);
+        m3D::id_t id = 0;
+        ClusterUtils<T>::provideIds(&cluster_list,id);
+
+        cout << "Cluster list after aggregation:" << endl;
+        cluster_list.print();
 
         // Replace points with original data ()
         ClusterUtils<T>::replace_points_from_datastore(cluster_list, m_data_store);
-        this->feature_space->sanity_check();
+        cout << "Cluster list after filtering points:" << endl;
+        cluster_list.print();
 
         // Find margin points (#325)
         ClusterUtils<T>::obtain_margin_flag(cluster_list, this->feature_space);

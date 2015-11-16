@@ -264,9 +264,11 @@ def run(config,time_index):
         last_cluster_file = cluster_file
         # don't forget to increment run counter
         run_count = (run_count + 1)
+
         # Clean out the trash if there is any
-        print "Cleaning up *.vt*"
-        call("rm -f *.vt*", shell=True)
+        if config['cleanup_vtk']:
+            print "Cleaning up *.vt*"
+            call("rm -f *.vt*", shell=True)
 
     print "Done."
     return

@@ -111,7 +111,6 @@ namespace m3D {
                 const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
                 const WeightFunction<T> *weight_function = NULL,
                 const bool coalesceWithStrongestNeighbour = false,
-                const bool write_meanshift_vectors = false,
                 const bool show_progress_bar = true);
 
 #pragma mark -

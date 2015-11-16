@@ -651,9 +651,16 @@ namespace m3D {
     }
 
     template <typename T>
+    bool sortBySize(const typename Cluster<T>::ptr c1, const typename Cluster<T>::ptr c2) {
+        return c1->size() < c2->size();
+    }
+
+    template <typename T>
     void
     ClusterList<T>::print(bool includePoints)
     {
+        std::sort(clusters.begin(),clusters.end(), sortBySize<T>);
+
         for (size_t ci = 0; ci < clusters.size(); ci++) {
             typename Cluster<T>::ptr c = clusters[ci];
             c->print(includePoints);
@@ -920,7 +927,7 @@ namespace m3D {
         NetCDFDataStore<T> *ds = (NetCDFDataStore<T> *) fs->data_store();
         boost::filesystem::path path(ds->filename());
 
-        std::string basename = path.generic_string() + "-zeroshift_";
+        std::string basename = path.stem().generic_string() + "-zeroshift";
         VisitUtils<T>::write_clusters_vtu(this, fs->coordinate_system, basename);
 #endif
         // Sanity checking

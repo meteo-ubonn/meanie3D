@@ -243,9 +243,14 @@ int main(int argc, char** argv) {
     Tracking<FS_TYPE> tracking(params);
     tracking.track(previous, current);
 
+    if (params.verbosity >= VerbosityNormal) {
+        cout << "Resulting current list:" << endl;
+        current->print();
+    }
+
 #if WITH_VTK
     if (params.write_vtk) {
-        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(current, cs, current->source_file);
+        m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(current, cs, current->source_file);
         boost::filesystem::path path(params.current_filename);
 
         string modes_path = path.filename().stem().string() + "_modes.vtk";
@@ -258,7 +263,7 @@ int main(int argc, char** argv) {
 
     // Write results back
     if (params.verbosity >= VerbosityNormal) start_timer("-- Writing " + params.current_filename + " ... ");
-    current->write(params.current_filename);
+    current->save();
     if (params.verbosity >= VerbosityNormal) stop_timer("done");
 
     // Clean up

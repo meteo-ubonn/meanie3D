@@ -36,20 +36,24 @@ def check_configuration(configuration):
         return -1
 
     # Check that visualiseTracks has .vtk to work from
-    if utils.getValueForKeyPath(configuration,'postprocessing.tracks.visualiseTracks') and not utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks'):
-        print "WARNING: tracks.visualiseTracks = True but tracks.meanie3D-trackstats.vtk_tracks = False. Correcting."
-        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks',True)
+    postprocessing = utils.getValueForKeyPath(configuration,'postprocessing')
+    if postprocessing:
+        tracks = utils.getValueForKeyPath(postprocessing,'tracks')
+        if tracks:
+            if utils.getValueForKeyPath(tracks,'visualiseTracks') and not utils.getValueForKeyPath(tracks,'meanie3D-trackstats.vtk_tracks'):
+                print "WARNING: tracks.visualiseTracks = True but tracks.meanie3D-trackstats.vtk_tracks = False. Correcting."
+                utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtk_tracks',True)
 
-    # Complement vtk_dimensions to make our life a little easier down the road.
-    vtkDimensions = utils.getValueForKeyPath(configuration,'data.vtkDimensions')
-    if vtkDimensions:
-        vtkDimString = ",".join(vtkDimensions)
-        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtkDimensions',vtkDimString)
+            # Complement vtk_dimensions to make our life a little easier down the road.
+            vtkDimensions = utils.getValueForKeyPath(configuration,'data.vtkDimensions')
+            if vtkDimensions:
+                vtkDimString = ",".join(vtkDimensions)
+                utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.vtkDimensions',vtkDimString)
 
-    # Make sure that plotStats has gnuplot files to work with
-    if utils.getValueForKeyPath(configuration,'postprocessing.tracks.plotStats') and not utils.getValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot'):
-        print "WARNING: track.plot_stats = True but tracks.meanie3D-trackstats.gnuplot = False. Correcting."
-        utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot',True)
+            # Make sure that plotStats has gnuplot files to work with
+            if utils.getValueForKeyPath(tracks,'plotStats') and not utils.getValueForKeyPath(tracks,'meanie3D-trackstats.gnuplot'):
+                print "WARNING: track.plot_stats = True but tracks.meanie3D-trackstats.gnuplot = False. Correcting."
+                utils.setValueForKeyPath(configuration,'postprocessing.tracks.meanie3D-trackstats.gnuplot',True)
 
 # ----------------------------------------------------------------------------
 
