@@ -381,7 +381,7 @@ namespace m3D {
             T sizeDeviation = (maxSize - minSize) / minSize;
             if (sizeDeviation > m_params.max_size_deviation) {
                 if (logDetails) {
-                    cout << "precluded: violation of max histogram size restraint"
+                    cout << "precluded: violation of size constraint"
                     << " (dH:" << sizeDeviation << " values"
                     << " ,dH_max:" << m_params.max_size_deviation << " values)."
                     << endl;
@@ -396,8 +396,8 @@ namespace m3D {
             if (run.midDisplacement[n][m] > run.maxDisplacement) {
                 if (logDetails) {
                     cout << "precluded: violation of max displacement"
-                         << " (dR:" << run.midDisplacement[n][m] << "m"
-                         << " dR_max:" << run.maxDisplacement << "m"
+                         << " (dR:" << run.midDisplacement[n][m]
+                         << " dR_max:" << run.maxDisplacement
                          << ")." << endl;
                 }
                 continue;
@@ -514,10 +514,7 @@ namespace m3D {
                 }
 
                 for (int m = 0; m < run.M; m++) {
-                    if (run.matchPossible[n][m]
-                            || run.coverOldByNew[n][m] > 0.0
-                            || run.coverNewByOld[n][m] > 0.0)
-                    {
+                    if (run.matchPossible[n][m]) {
                         typename Cluster<T>::ptr p = run.previous->clusters[m];
                         printf("\t\tuuid:%4llu \tid:%4lu\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
                                 p->uuid,
@@ -635,7 +632,7 @@ namespace m3D {
             if (logDetails) {
                 cout << "\t\tuuid:" << p->uuid << " id:" << p->id
                 << " with uuid:" << c->uuid << " ("
-                << " accepted: (velocity: " << velocity.get() << " m/s"
+                << " accepted: (velocity: " << velocity
                 << " displacement: " << c->displacement << ")." << endl;
             }
         }
@@ -716,7 +713,7 @@ namespace m3D {
                 double s = getMergeCriterion(run, n, m);
                 if (s >= maxS) {
                     if (s==maxS) maxIsTied = true;
-                    maxM = i;
+                    maxM = m;
                     maxS = s;
                 }
             }
@@ -854,7 +851,7 @@ namespace m3D {
                 double s = getSplitCriterion(run, n, m);
                 if (s >= maxS) {
                     if (s==maxS) maxIsTied = true;
-                    maxM = i;
+                    maxM = n;
                     maxS = s;
                 }
             }
