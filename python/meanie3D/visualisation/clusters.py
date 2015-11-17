@@ -85,6 +85,7 @@ def run(conf):
         subprocess.call("rm -f *.vtk *.vtr", shell=True)
 
     # Glob the netcdf directory
+    print "Current work directory: " + os.path.abspath(os.getcwd())
     print "Processing files in directory " + conf['source_directory']
     netcdf_files = sorted(glob.glob(conf['source_directory']+"/*.nc"))
 
@@ -92,6 +93,7 @@ def run(conf):
     # forced re-set in time to circumvent the
     # Visit memory leak
     image_count=0
+
 
     for netcdf_file in netcdf_files:
         # construct the cluster filename and find it
