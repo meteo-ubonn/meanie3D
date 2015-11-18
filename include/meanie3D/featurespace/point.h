@@ -91,10 +91,6 @@ namespace m3D {
          */
         bool isBoundary;
 
-#if PROVIDE_MUTEX
-        boost::mutex mutex;
-#endif
-
 #pragma mark -
 #pragma mark Constructor/Destructor
 

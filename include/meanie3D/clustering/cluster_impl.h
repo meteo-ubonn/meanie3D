@@ -106,15 +106,7 @@ namespace m3D {
     Cluster<T>::add_point(Point<T> *point)
     {
         m_points.push_back(point);
-
-#if PROVIDE_THREADSAFETY
-        point.mutex.lock();
-#endif
         point->cluster = this;
-
-#if PROVIDE_THREADSAFETY
-        point.mutex.unlock();
-#endif
     }
 
     template <typename T>
@@ -144,15 +136,7 @@ namespace m3D {
         typename vector< Point<T> * >::iterator it = this->get_points().find(*point);
         if (it != this->get_points().end()) {
             this->get_points().erase(it);
-
-#if PROVIDE_THREADSAFETY
-            point->mutex.lock();
-#endif
             point->cluster = NULL;
-
-#if PROVIDE_THREADSAFETY
-            point->mutex.unlock();
-#endif
         }
     }
 

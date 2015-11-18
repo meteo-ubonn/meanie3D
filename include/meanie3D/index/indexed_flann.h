@@ -52,12 +52,7 @@ namespace m3D {
 #pragma mark Member variables
 
         Index< L2<T> > *m_index;
-
         Matrix<T> m_dataset;
-
-#if PROVIDE_MUTEX
-        boost::mutex m_mutex;
-#endif
 
     protected:
 
@@ -202,15 +197,9 @@ namespace m3D {
             }
 
             if (this->white_range != h || m_index == NULL) {
-#if PROVIDE_MUTEX
-                boost::mutex::scoped_lock(m_mutex);
-#endif
                 build_index(h);
             }
 
-#if PROVIDE_MUTEX
-            m_mutex.lock();
-#endif
             // FLANN Search Parameters
 
             flann::SearchParams flann_params(32, 0, false);
@@ -250,10 +239,6 @@ namespace m3D {
             } else {
                 m_index->radiusSearch(query, indices, dists, this->white_radius, flann_params);
             }
-
-#if PROVIDE_MUTEX
-            m_mutex.unlock();
-#endif
 
 #if DEBUG_INDEX_SEARCHES
             std::cout << " with radius = " << this->white_radius;

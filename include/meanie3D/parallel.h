@@ -28,11 +28,8 @@
 #include <omp.h>
 #endif
 
-#if WITH_TBB
-#include <tbb/tbb.h>
-#define PROVIDE_MUTEX 1
-#define PROVIDE_THREADSAFETY 1
-#endif
+#define PROVIDE_MUTEX !
+#define PROVIDE_THREADSAFETY !
 
-#endif	
+#endif
 

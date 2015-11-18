@@ -247,7 +247,7 @@ TYPED_TEST(FSClusteringTest2D, FS_Clustering_2D_Range_Test)
                 (NetCDFDataStore<TypeParam> *)this->m_data_store,
                 this->m_featureSpaceIndex);
 
-        ClusterList<TypeParam> clusters = op.cluster(params, kernel, NULL, false, true, true);
+        ClusterList<TypeParam> clusters = op.cluster(params, kernel, NULL, false, true);
 
         size_t cluster_number = 1;
         for (ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++) {
@@ -319,7 +319,7 @@ TYPED_TEST(FSClusteringTest3D, FS_Clustering_3D_Test)
 
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(h);
 
-        ClusterList<TypeParam> clusters = op.cluster(params, kernel, NULL, PostAggregationMethodNone, true, true);
+        ClusterList<TypeParam> clusters = op.cluster(params, kernel, NULL, false, true);
 
         size_t cluster_number = 1;
         for (ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++) {

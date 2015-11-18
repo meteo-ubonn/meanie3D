@@ -27,9 +27,12 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+#include <meanie3D/clustering/cluster.h>
+#include <meanie3D/utils/set_utils.h>
 
 #include <algorithm>
 #include <sstream>
+#include <stdlib.h>
 #include <netcdf>
 #include <vector>
 #include <set>
@@ -38,9 +41,6 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <stdlib.h>
-
-#include "cluster.h"
 #include "cluster_list.h"
 
 namespace m3D {
@@ -139,6 +139,8 @@ namespace m3D {
     void
     ClusterList<T>::write(const std::string& path)
     {
+        using namespace utils::vectors;
+
         try {
             NcFile *file = NULL;
             this->filename = std::string(path);
@@ -197,7 +199,7 @@ namespace m3D {
             id_set_t cluster_ids;
             for (size_t ci = 0; ci < clusters.size(); ci++)
                 cluster_ids.insert(clusters[ci]->id);
-            file->putAtt("cluster_ids", to_string(cluster_ids));
+            file->putAtt("cluster_ids", sets::to_string(cluster_ids));
 
             // Add tracking meta-info
             if (this->tracking_performed) {

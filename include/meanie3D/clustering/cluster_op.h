@@ -58,12 +58,6 @@ namespace m3D {
         boost::progress_display *m_progress_bar;
         size_t m_cluster_threadcount;
 
-#if PROVIDE_THREADSAFETY
-        mutex m_cluster_threadcount_mutex;
-        mutex m_clusters_mutex;
-        mutex m_cluster_progress_mutex;
-#endif
-
     public:
 
         /** Used to move the progress bar forward if it's switched

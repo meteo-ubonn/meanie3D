@@ -56,7 +56,6 @@ INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
 # -------------------------------------
 
 OPTION(WITH_OPENMP "Enable/Disable OpenMP" ON)
-OPTION(WITH_TBB "Enable/Disable Intel TBB" OFF)
 OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
 OPTION(WITH_VTK "Enable/Disable visualisation code (requires VTK)" OFF)
 OPTION(WITH_OPENCV "Legacy option. Leave at OFF" OFF)
@@ -80,22 +79,6 @@ IF (OPENMP_ENABLED)
 ELSE()
     MESSAGE(STATUS "OpenMP is disabled")
 ENDIF()
-
-SET(TBB_ENABLED ${WITH_TBB})
-IF (TBB_ENABLED)
-    MESSAGE(STATUS "TBB is enabled")
-    ADD_DEFINITIONS(-DWITH_TBB=1)
-ELSE()
-    MESSAGE(STATUS "TBB is disabled")
-ENDIF()
-
-# Guard against flag error
-
-IF (OPENMP_ENABLED)
-    IF (TBB_ENABLED)
-        MESSAGE(FATAL_ERROR "-DWITH_OPENMP=ON is mutually exclusive with -DWITH_TBB=ON")
-    ENDIF(TBB_ENABLED)
-ENDIF(OPENMP_ENABLED)
 
 # -------------------------------------
 # Visualization on/off
@@ -207,16 +190,6 @@ ELSE(FLANN_FOUND)
    MESSAGE(FATAL_ERROR "libflann not found (http://www.cs.ubc.ca/research/flann/)")
 ENDIF(FLANN_FOUND)
 
-# TBB
-IF (TBB_ENABLED)
-    FIND_PACKAGE(TBB)
-    IF (TBB_FOUND)
-        INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
-    ELSE(TBB_FOUND)
-        MESSAGE(FATAL_ERROR "TBB not found (http://threadingbuildingblocks.org)")
-   ENDIF(TBB_FOUND)
-ENDIF(TBB_ENABLED)
-
 # OpenMP
 IF (OPENMP_ENABLED)
     FIND_PACKAGE(OpenMP REQUIRED)
@@ -240,6 +213,7 @@ IF (OPENMP_ENABLED)
 
 ENDIF(OPENMP_ENABLED)
 
+# OpenCV
 IF (OPENCV_ENABLED)
     FIND_PACKAGE(OpenCV)
     IF (OpenCV_FOUND)
@@ -294,7 +268,6 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/clustering/cluster_list_impl.h
     include/meanie3D/clustering/cluster_op.h
     include/meanie3D/clustering/cluster_op_impl.h
-    include/meanie3D/clustering/cluster_task.h
     include/meanie3D/clustering/cluster_utils.h
     include/meanie3D/clustering/cluster_utils_impl.h
     include/meanie3D/clustering/conrad_cluster.h
@@ -361,8 +334,6 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/utils/array_utils.h
     include/meanie3D/utils/cluster_index.h
     include/meanie3D/utils/cluster_index_impl.h
-    include/meanie3D/utils/console_utils.h
-    include/meanie3D/utils/console_utils_impl.h
     include/meanie3D/utils/file_utils.h
     include/meanie3D/utils/gaussian_normal.h
     include/meanie3D/utils/map_utils.h
@@ -422,7 +393,6 @@ SOURCE_GROUP("meanie3d/clustering" FILES
     include/meanie3D/clustering/cluster_list_impl.h
     include/meanie3D/clustering/cluster_op.h
     include/meanie3D/clustering/cluster_op_impl.h
-    include/meanie3D/clustering/cluster_task.h
     include/meanie3D/clustering/cluster_utils.h
     include/meanie3D/clustering/cluster_utils_impl.h
     include/meanie3D/clustering/conrad_cluster.h
@@ -494,8 +464,6 @@ SOURCE_GROUP("meanie3d/utils" FILES
     include/meanie3D/utils/array_utils.h
     include/meanie3D/utils/cluster_index.h
     include/meanie3D/utils/cluster_index_impl.h
-    include/meanie3D/utils/console_utils.h
-    include/meanie3D/utils/console_utils_impl.h
     include/meanie3D/utils/file_utils.h
     include/meanie3D/utils/gaussian_normal.h
     include/meanie3D/utils/map_utils.h
@@ -530,7 +498,6 @@ TARGET_LINK_LIBRARIES(meanie3D
     radolan
     ${Boost_LIBRARIES}
     ${VTK_LIBRARIES}
-    ${TBB_LIBRARIES}
     ${Blitz_LIBRARY}
     ${OpenCV_LIBRARIES}
     ${OpenMP_RT_LIBRARIES})
@@ -560,7 +527,6 @@ TARGET_LINK_LIBRARIES(meanie3D-detect
     meanie3D
     ${Boost_LIBRARIES}
     ${VTK_LIBRARIES}
-    ${TBB_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${NETCDF_LIBRARIES}
     ${OpenMP_RT_LIBRARIES})
@@ -577,7 +543,6 @@ TARGET_LINK_LIBRARIES(meanie3D-track
     meanie3D
     ${Boost_LIBRARIES}
     ${VTK_LIBRARIES}
-    ${TBB_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${NETCDF_LIBRARIES}
     ${OpenMP_RT_LIBRARIES})
@@ -757,7 +722,6 @@ IF (TESTS_ENABLED)
         ${Boost_LIBRARIES}
         ${NETCDF_LIBRARIES}
         ${FLANN_LIBRARIES}
-        ${TBB_LIBRARIES}
         ${OpenMP_RT_LIBRARIES}
         ${HDF5_LIBRARIES}
         ${VTK_LIBRARIES}
@@ -796,7 +760,6 @@ IF (TESTS_ENABLED)
         ${Boost_LIBRARIES}
         ${NETCDF_LIBRARIES}
         ${HDF5_LIBRARIES}
-        ${TBB_LIBRARIES}
         ${OpenMP_RT_LIBRARIES}
         ${VTK_LIBRARIES})
     SET_TARGET_PROPERTIES(m3D-test-detection PROPERTIES LINKER_LANGUAGE CXX)

@@ -46,11 +46,6 @@ namespace m3D {
         // kdtree.c
         struct kdtree *m_index;
 
-#if PROVIDE_MUTEX
-        // mutex objects for accessing kd_tree methods
-        boost::mutex m_mutex;
-#endif
-
 #pragma mark -
 #pragma mark Member variables
 
@@ -188,9 +183,6 @@ namespace m3D {
                 RangeSearchParams<T> *p = (RangeSearchParams<T> *) & params;
 
                 if (this->white_range != p->bandwidth || m_index == NULL) {
-#if PROVIDE_MUTEX
-                    boost::mutex::scoped_lock(m_mutex);
-#endif
                     build_index(p->bandwidth);
                 }
             }
@@ -212,10 +204,6 @@ namespace m3D {
             for (size_t index = 0; index < this->dimension(); index++) {
                 pos[index] = xt[index];
             }
-
-#if PROVIDE_MUTEX
-            m_mutex.lock();
-#endif            
 
 #if DEBUG_INDEX_SEARCHES
             utils::start_timer();
@@ -265,11 +253,6 @@ namespace m3D {
                     this->write_search(xt, white_ranges, result);
                 }
             }
-
-#if PROVIDE_MUTEX
-            m_mutex.unlock();
-#endif            
-
             return result;
         }
     };

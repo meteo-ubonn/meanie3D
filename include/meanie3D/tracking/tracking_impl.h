@@ -26,18 +26,18 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-
 #include <meanie3D/utils/vector_utils.h>
 #include <meanie3D/clustering.h>
 #include <meanie3D/numericalrecipes.h>
 #include <meanie3D/utils.h>
 
-#include <vector>
+#include <algorithm>
+#include <boost/bind.hpp>
+#include <math.h>
 #include <netcdf>
 #include <set>
 #include <utility>
-#include <algorithm>
-#include <math.h>
+#include <vector>
 
 #include "tracking.h"
 

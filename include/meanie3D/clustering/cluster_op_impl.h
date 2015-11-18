@@ -31,8 +31,6 @@
 
 #include <vector>
 
-#include "cluster_task.h"
-
 namespace m3D {
 
 #if WRITE_MODES
