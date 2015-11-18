@@ -42,9 +42,7 @@ namespace m3D {
     private:
 
         T m_scale; /// Scale
-
         T m_decay; /// Decay
-
         vector<ScaleSpaceKernel<T> > m_kernels; /// Scale-Space kernel
 
         map<size_t, T> m_unfiltered_min; /// unfiltered minimum

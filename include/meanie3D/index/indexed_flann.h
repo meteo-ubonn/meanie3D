@@ -217,37 +217,18 @@ namespace m3D {
             }
 
             flann::Matrix<T> query = flann::Matrix<T>(&query_point[0], 1, this->dimension());
-
-#if DEBUG_INDEX_SEARCHES
-            double t = utils::stop_timer();
-            std::cout << std::endl << "\tsearching around x = " << x
-                    << " ->  " << x_t << " ...";
-            utils::start_timer();
-#endif
-            // Go get it!
-
             vector< vector<int> > indices;
-
             vector<vector<T> > dists;
-
             if (params->search_type() == SearchTypeKNN) {
                 const KNNSearchParams<T> *p = dynamic_cast<const KNNSearchParams<T> *> (params);
-
                 flann_params.sorted = flann::FLANN_True;
-
                 m_index->knnSearch(query, indices, dists, p->k, flann_params);
             } else {
                 m_index->radiusSearch(query, indices, dists, this->white_radius, flann_params);
             }
 
-#if DEBUG_INDEX_SEARCHES
-            std::cout << " with radius = " << this->white_radius;
-            std::cout << " found " << indices[0].size() << " points. (" << t << "s)" << std::endl;
-#endif
             // re-wrap results
-
             typename Point<T>::list * result = new typename Point<T>::list();
-
             for (size_t row = 0; row < indices.size(); row++) {
                 vector <int> _indices = indices[row];
                 for (size_t col = 0; col < _indices.size(); col++) {
@@ -266,7 +247,6 @@ namespace m3D {
             }
 
             if (PointIndex<T>::write_index_searches) {
-
                 if (params->search_type() == SearchTypeRange) {
                     RangeSearchParams<T> *p = (RangeSearchParams<T> *) params;
                     this->write_search(x, p->bandwidth, result);
@@ -306,51 +286,23 @@ namespace m3D {
         void construct_dataset()
         {
             // re-package data for FLANN
-
             size_t count = this->size() * this->dimension();
-
             T* data = (T *) malloc(count * sizeof (T));
-
             for (size_t row = 0; row < this->white_point_matrix.size1(); row++) {
                 for (size_t col = 0; col < this->white_point_matrix.size2(); col++) {
                     data[ row * this->white_point_matrix.size2() + col ] = this->white_point_matrix(row, col);
                 }
             }
-
             m_dataset = flann::Matrix<T>(data, this->size(), this->dimension());
-
-#if DEBUG_INDEX
-#if WRITE_INDEX
-            static size_t index_count = 0;
-            string fn = "flann_dataset_" + boost::lexical_cast<string>(index_count) + ".h5";
-            std::cout << "Saving dataset to " << fn << " ... ";
-            flann::save_to_file(m_dataset, fn, "whitened_fs");
-            std::cout << "done." << std::endl;
-#endif
-#endif
         }
 
         void build_index_from_dataset()
         {
             // Set up Index options
             flann::IndexParams params;
-
             params = flann::KDTreeSingleIndexParams();
-
             m_index = new flann::Index< flann::L2<T> >(m_dataset, params);
-
             m_index->buildIndex();
-
-#if DEBUG_INDEX
-#if WRITE_INDEX
-            static size_t index_count = 0;
-            string fn = "flann_index_" + boost::lexical_cast<string>(index_count) + ".h5";
-            std::cout << "Saving index to " << fn << " ... ";
-            m_index->save(fn);
-            std::cout << "done." << std::endl;
-            index_count++;
-#endif
-#endif
         }
     };
 }

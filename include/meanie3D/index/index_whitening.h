@@ -196,31 +196,7 @@ namespace m3D {
 
             // multiply the original featurespace matrix with
             // this transformation matrix
-
-#if DEBUG_INDEX
-
-            cout << endl << "\t" << "transforming featurespace to achieve radius " << this->white_radius
-                    << " for ranges " << ranges
-                    << " omega = " << omega << " ... ";
-
-            start_timer();
-#endif 
             white_point_matrix = boost::numeric::ublas::prod(point_matrix, omega);
-
-#if DEBUG_INDEX
-            cout << " ... done. (" << stop_timer() << "s" << endl;
-#if WRITE_INDEX
-            static size_t index_number = 0;
-
-            std::string fn;
-
-            fn = "index_matrix" + boost::lexical_cast<string>(index_number) + ".vtk";
-            VisitUtils<T>::write_matrix_vtk(fn, point_matrix, "featurespace");
-
-            fn = "index_matrix_whitened_" + boost::lexical_cast<string>(index_number++) + ".vtk";
-            VisitUtils<T>::write_matrix_vtk(fn, white_point_matrix, "whitened_featurespace");
-#endif
-#endif
         };
 
         /** Transform the given coordinate using the current omega

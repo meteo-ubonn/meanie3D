@@ -772,18 +772,6 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
         return;
     }
 
-#if DEBUG
-    cout << "Shapefile " << shapefile << endl;
-    cout << "\tnumber of enties: " << file->nRecords << endl;
-    cout << "\tshape type: " << shape_type(file->nShapeType) << endl;
-    cout << "\tmin_bounds: ";
-    cfa::utils::array::print_array(file->adBoundsMin, 3);
-    cout << endl;
-    cout << "\tmax_bounds: ";
-    cfa::utils::array::print_array(file->adBoundsMax, 3);
-    cout << endl;
-#endif
-
     // Obtain NetCDF data and create river variable
 
     vector<NcDim> dimensions_2D;

@@ -517,46 +517,11 @@ void parse_commmandline(program_options::variables_map vm,
 }
 
 void print_compile_time_options() {
-#if WRITE_BANDWIDTH
-    cout << "\tWRITE_BANDWIDTH=1" << endl;
-#else
-    cout << "\tWRITE_BANDWIDTH=0" << endl;
-#endif
-
-#if WRITE_CLUSTER_MEANSHIFT
-    cout << "\tWRITE_CLUSTER_MEANSHIFT=1" << endl;
-#else
-    cout << "\tWRITE_CLUSTER_MEANSHIFT=0" << endl;
-#endif
 
 #if WRITE_FEATURESPACE
     cout << "\tWRITE_FEATURESPACE=1" << endl;
 #else
     cout << "\tWRITE_FEATURESPACE=0" << endl;
-#endif
-
-#if WRITE_INDEX
-    cout << "\tWRITE_INDEX=1" << endl;
-#else
-    cout << "\tWRITE_INDEX=0" << endl;
-#endif
-
-#if WRITE_ITERATION_ORIGINS
-    cout << "\tWRITE_ITERATION_ORIGINS=1" << endl;
-#else
-    cout << "\tWRITE_ITERATION_ORIGINS=0" << endl;
-#endif
-
-#if WRITE_MEANSHIFT_SAMPLES
-    cout << "\tWRITE_MEANSHIFT_SAMPLES=1" << endl;
-#else
-    cout << "\tWRITE_MEANSHIFT_SAMPLES=0" << endl;
-#endif
-
-#if WRITE_MEANSHIFT_WEIGHTS
-    cout << "\tWRITE_MEANSHIFT_WEIGHTS=1" << endl;
-#else
-    cout << "\tWRITE_MEANSHIFT_WEIGHTS=0" << endl;
 #endif
 
 #if WRITE_MODES
@@ -1016,13 +981,6 @@ int main(int argc, char** argv) {
 
 #endif
 
-#if WRITE_MEANSHIFT_WEIGHTS
-    vector<FS_TYPE> sample_point(2);
-    sample_point[0] = -43.4621658325195;
-    sample_point[1] = -4383.64453125;
-    fs->weight_sample_points.push_back(sample_point);
-#endif
-
     // Create specified kernel
     Kernel<FS_TYPE> *kernel = NULL;
     if (kernel_name == "uniform") {
@@ -1119,12 +1077,6 @@ int main(int argc, char** argv) {
         string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, clusters.clusters);
     }
-
-#if WRITE_CLUSTER_MEANSHIFT
-    string shifts_path = path.filename().stem().string() + "-clusters_shifts";
-    ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_meanshift_vtk(shifts_path, clusters.clusters);
-#endif
-
     if (write_weight_response && clusters.clusters.size() > 0) {
         string wr_path = path.filename().stem().string() + "-clusters_weight";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function, false);

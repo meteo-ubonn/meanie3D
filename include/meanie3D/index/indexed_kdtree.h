@@ -190,61 +190,37 @@ namespace m3D {
             // Compile the sample
 
             typename Point<T>::list *result = new typename Point<T>::list();
-
             struct kdres *presults;
 
             // tranform coordinate
-
             vector<T> xt = this->transform_vector(x);
 
             // re-package data for KD-Tree
-
             double pos[this->dimension()];
-
             for (size_t index = 0; index < this->dimension(); index++) {
                 pos[index] = xt[index];
             }
 
-#if DEBUG_INDEX_SEARCHES
-            utils::start_timer();
-#endif
-            // Do the thing
-
             presults = kd_nearest_range(m_index, pos, this->white_radius);
 
-
-#if DEBUG_INDEX_SEARCHES
-            std::cout << std::endl << "\tSearching kd-tree around " << x
-                    << " -> " << xt
-                    << " range: " << this->white_radius
-                    << " -> found " << kd_res_size(presults) << " points (" << utils::stop_timer() << "s)" << std::endl;
-#endif
-
             // Re-package results
-
             while (!kd_res_end(presults)) {
                 typename Point<T>::ptr ptr = (typename Point<T>::ptr) kd_res_item(presults, &pos[0]);
-
                 result->push_back(ptr);
-
                 kd_res_next(presults);
             }
 
             // calculate distances
-
-            if (distances != NULL) {
-                typename Point<T>::list::iterator li;
-
-                for (li = result->begin(); li != result->end(); li++) {
-
-                    //                    vector<T> dx = vector_subtract(<#vector<T> &v1#>, <#vector<T> &v2#>)
-                }
-            }
+//            if (distances != NULL) {
+//                typename Point<T>::list::iterator li;
+//                for (li = result->begin(); li != result->end(); li++) {
+//                    vector<T> dx = vector_subtract(<#vector<T> &v1#>, <#vector<T> &v2#>);
+//                }
+//            }
 
             kd_res_free(presults);
 
             if (PointIndex<T>::write_index_searches) {
-
                 if (params->search_type() == SearchTypeRange) {
                     RangeSearchParams<T> *p = (RangeSearchParams<T> *) params;
                     this->write_search(x, p->bandwidth, result);

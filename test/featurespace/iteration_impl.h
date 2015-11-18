@@ -262,30 +262,8 @@ TYPED_TEST(FSIterationTest2D, FS_Iteration_2D_Test)
         // trajectory
         EXPECT_LT(trajectory->size(), TERMCRIT_ITER);
 
-        delete weight;
-
-#if WRITE_TRAJECTORIES
-
-        // Write trajectory out
-        const ::testing::TestInfo * const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        string fn = std::string(test_info->test_case_name()) + "_trajectory_" + boost::lexical_cast<string>(i) + ".vtk";
-        boost::replace_all(fn, "/", "_");
-        VisitUtils<TypeParam>::write_pointlist_vtk(fn, trajectory, "trajectory");
-
-#endif
-
-#if WRITE_BANDWIDTH
-        vector<TypeParam> start = trajectory->front();
-        size_t dim = trajectory->front().size();
-        string bw_fn = "trajectory_bw_" + boost::lexical_cast<string>(i) + (dim == 2 ? ".curve" : ".3D");
-        if (dim == 2) {
-            VisitUtils<TypeParam>::write_ellipsis_2d(bw_fn.c_str(), this->m_bandwidths[i], 1000, &start);
-        } else if (dim == 3) {
-            VisitUtils<TypeParam>::write_ellipsis_3d(bw_fn.c_str(), this->m_bandwidths[i], 1000, &start);
-        }
-#endif   
         // clean up
-
+        delete weight;
         delete trajectory;
     }
 }
@@ -310,29 +288,8 @@ TYPED_TEST(FSIterationTest3D, FS_Iteration_3D_Test)
 #endif
 
     // G'is a kernel
-
     GaussianNormalKernel<TypeParam> kernel(1.0f);
-
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
-
-#if WRITE_ITERATION_ORIGINS
-    static size_t test_count = 0;
-    string fn = "origins_" + boost::lexical_cast<string>(test_count++) + ".3D";
-    ofstream f(fn.c_str());
-    f << "x\ty\tz\tv" << endl;
-    f << fixed << setprecision(4);
-
-    INFO << "Starting points:" << endl;
-    for (size_t i = 0; i < this->m_origins.size(); i++) {
-        if (INFO_ENABLED) cout << this->m_origins[i].values << endl;
-        for (size_t j = 0; j < this->m_origins[i].values.size(); j++) {
-            f << this->m_origins[i].values[j] << "\t";
-        }
-        f << endl;
-        if (INFO_ENABLED) cout << endl;
-    }
-    f.close();
-#endif
 
     for (size_t i = 0; i < this->m_origins.size(); i++) {
         typename FeatureSpace<TypeParam>::Trajectory *trajectory = NULL;

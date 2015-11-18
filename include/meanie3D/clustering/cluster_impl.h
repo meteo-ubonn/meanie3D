@@ -116,12 +116,6 @@ namespace m3D {
         typename Point<T>::list::const_iterator li;
         for (li = list.begin(); li != list.end(); li++) {
             typename Point<T>::ptr p = *li;
-#if DEBUG_MEANSHIFT_GRAPH
-            if (p->cluster) {
-                cerr << "ERROR:point " << p->values << " is already assigned to cluster at " << p->cluster->mode << endl;
-                continue;
-            }
-#endif
             if (!p->isOriginalPoint && addOriginalPointsOnly) {
                 continue;
             }

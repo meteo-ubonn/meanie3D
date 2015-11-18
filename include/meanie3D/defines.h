@@ -62,53 +62,17 @@
 // Debugging Flags(stdout)
 // ---------------------------------------------------- //
 
-#define DEBUG_DIMENSION_DATA 0
-#define DEBUG_INDEX 0
-#define DEBUG_INDEX_SEARCHES 0
-#define DEBUG_NETCDF_DATASTORE 0
-#define DEBUG_FEATURESPACE 0
-#define DEBUG_ITERATION 0
-#define DEBUG_MEANSHIFT_GRAPH 0
-#define DEBUG_MEANSHIFT_RESULT_CALCULATION 0
-#define DEBUG_MEANSHIFT_SAMPLING 0
-#define DEBUG_HISTOGRAM_CORRELATION 0
 #define DEBUG_GRAPH_AGGREGATION 0
 
 // ---------------------------------------------------- //
 // Debugging Flags (files)
 // ---------------------------------------------------- //
 
-// Write out the constructed index data. Only works for FLANN 
-// at this point
-#define WRITE_INDEX 0
-
 // Write the feature-space out in .vtk file format
 #define WRITE_FEATURESPACE 0
 
-// Write out each mean-shift sample as vtk file
-// WARNING: this produces a LOT of data
-#define WRITE_MEANSHIFT_SAMPLES 0
-
-// Write out the weights at a set of sample points. If this
-// feature is enabled, set the sample points using the property
-// FeatureSpace::weight_sample_points
-#define WRITE_MEANSHIFT_WEIGHTS 0
-
-// In the iterative approach, writes out a file that shows iteration
-// origins only
-#define WRITE_ITERATION_ORIGINS 0
-
-// When using the iterative mean-shift, this feature allows
-// writing out the individual trajectories as .vtk files.
-// WARNING: this produces a LOT of data
-#define WRITE_TRAJECTORIES 0
-
 // Write out modes found by the iterations or graph approach
 #define WRITE_MODES 0
-
-// Writes out a vtk file that visualizes the selected bandwidth
-// parameters
-#define WRITE_BANDWIDTH 0
 
 // Write out a VTK file that contains 1 and 0 for
 // all points. 1 means, that the point was marked
@@ -119,9 +83,5 @@
 // Write out the result of the initial clustering
 // step into separate files.
 #define WRITE_ZEROSHIFT_CLUSTERS 0
-
-// Write out files containing the mean-shift
-// vectors for individual clusters alone
-#define WRITE_CLUSTER_MEANSHIFT 0
 
 #endif

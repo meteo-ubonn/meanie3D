@@ -87,11 +87,6 @@ namespace m3D {
         float *h2 = o->bins_as_float_array();
         float d, zd, probd, probrs, rho;
         spear(h1, h2, this->size(), &d, &zd, &probd, &rho, &probrs);
-
-#if DEBUG_HISTOGRAM_CORRELATION
-        cout << "spearman rank correlation of " << this->bins() << " with " << o->bins();
-        cout << "  =>  rho=" << rho << " d=" << d << " zd=" << zd << " probrs=" << probrs << endl;
-#endif
         return isnan(rho) ? (T) - 1.0 : (T) rho;
     }
 
@@ -104,11 +99,6 @@ namespace m3D {
         float *h2 = o->bins_as_float_array();
         float z, prob, tau;
         kendl1(h1, h2, (int) this->size(), &tau, &z, &prob);
-
-#if DEBUG_HISTOGRAM_CORRELATION
-        cout << "kendall  rank correlation of " << this->bins() << " with " << o->bins();
-        cout << "  =>  tau=" << tau << " z=" << z << " prob=" << prob << endl;
-#endif
         return isnan(tau) ? (T) - 1.0 : (T) tau;
     }
 

@@ -88,10 +88,6 @@ namespace m3D {
             resolution = p->resolution;
         }
 
-#if WRITE_TRAJECTORIES
-        static size_t trajectory_number = 0;
-#endif  
-
         if (show_progress_bar) {
             cout << endl << "Creating meanshift vector graph ...";
             start_timer();

@@ -40,7 +40,6 @@ namespace m3D {
     protected:
 
         FeatureSpace<T> *feature_space;
-
         PointIndex<T> *point_index;
 
     public:

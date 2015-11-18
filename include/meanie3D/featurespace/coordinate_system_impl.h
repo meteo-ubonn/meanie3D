@@ -192,16 +192,7 @@ namespace m3D {
 
         for (size_t i = 0; i < dimVars.size(); i++) {
             NcVar var = dimVars[i];
-
-#if DEBUG_DIMENSION_DATA
-            cout << "Reading dimension data for " << var.getName() << endl;
-#endif
             T* data = utils::netcdf::readNetCDFVariable<T>(var);
-
-#if DEBUG_DIMENSION_DATA
-            utils::print_array(data, utils::netcdf::num_vals(var));
-            cout << endl;
-#endif
             dimData[i] = data;
         }
     }

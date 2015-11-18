@@ -172,15 +172,6 @@ namespace m3D {
             cout << " done. (" << size() << " points in " << stop_timer() << " seconds)" << endl;
         }
 
-#if DEBUG_FEATURESPACE
-        cout << "Feature Space Content:" << endl;
-        typename Point<T>::list::iterator pit;
-        for (pit = points.begin(); pit != points.end(); pit++) {
-            Point<T> *p = *pit;
-            cout << p->coordinate << " -> " << p->values << endl;
-        }
-#endif
-
         if (show_progress) {
             delete m_progress_bar;
         }
@@ -238,15 +229,6 @@ namespace m3D {
 #endif
                     this->m_off_limits->set(gridpoint, true);
                 }
-
-#if DEBUG_FEATURESPACE
-                cout << "#" << var_index << "@"
-                        << gridpoint
-                        << " (" << coordinate << ") : "
-                        << value << " valid="
-                        << isPointValid << endl;
-#endif
-
                 if (isPointValid) {
                     values.push_back(value);
 
