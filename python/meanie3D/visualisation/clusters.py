@@ -196,7 +196,10 @@ def run(conf):
                 params = "-f %s %s" \
                          % (cluster_file,utils.getValueForKeyPath(conf,'postprocessing.clusters.meanie3D-cfm2vtk'))
                 if utils.getValueForKeyPath(conf,'postprocessing.clusters.showDisplacementVectors'):
-                    params += " --write-displacement-vectors"
+                    params.append(" --write-displacement-vectors")
+
+                if utils.getValueForKeyPath(conf,'data.vtkDimensions'):
+                    params.append(" --vtk-dimensions=%s" % conf['vtkDimensions'])
 
                 # pdb.set_trace();
                 meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
