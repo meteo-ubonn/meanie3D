@@ -711,6 +711,8 @@ void readTrackingData(trackstats_context_t &ctx) {
  * @param ctx
  */
 void getSpeedHistogramData(trackstats_context_t &ctx) {
+    // TODO: this is assuming the spatial dimensions are in 'km'. This
+    // is one place where the unit refactoring is urgently needed.
     FS_TYPE dS = boost::numeric_cast<FS_TYPE>(1000.0) * vector_norm(ctx.cluster->displacement);
     if (dS == 0) return;
     FS_TYPE dT = boost::numeric_cast<FS_TYPE>(ctx.cluster->tracking_time_difference());
@@ -1168,7 +1170,7 @@ void writeStats(trackstats_context_t &ctx) {
 
         if (ctx.params.write_gnuplot_files) {
             write_histogram("speeds-hist.txt", "number of clusters", "speed [m/s]", 
-                    ctx.params.size_histogram_bins, 
+                    ctx.params.speed_histogram_bins,
                     ctx.speed_histogram);
             write_values<float>("speeds.txt", "number of clusters", "speed in [m/s]", 
                     ctx.speeds);
