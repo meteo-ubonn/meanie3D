@@ -1,7 +1,7 @@
 '''
 The MIT License (MIT)
 
-(c) Jürgen Simon 2014 (juergen.simon@uni-bonn.de)
+(c) Juergen Simon 2014 (juergen.simon@uni-bonn.de)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -266,7 +266,7 @@ def compile_and_run_template(templatePath,configuration,replacements,directory):
     returnCode = -1
     try:
         print "Executing visit: " + params
-        returnCode = external.execute_command('visit',params,silent=True)
+        returnCode = external.execute_command('visit',params,silent=False)
     except:
         print "ERROR:%s" % sys.exc_info()[0]
 

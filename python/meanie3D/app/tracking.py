@@ -1,7 +1,7 @@
 '''
 The MIT License (MIT)
 
-(c) Jürgen Simon 2014 (juergen.simon@uni-bonn.de)
+(c) Juergen Simon 2014 (juergen.simon@uni-bonn.de)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -180,6 +180,7 @@ def run(config,time_index):
         # output directories should only be created at
         # the first time step
         if time_index <= 0:
+            # TODO: consider scenario where user opted not to remove previous results?
             print "Removing results from previous runs"
             utils.create_ouput_directories(output_dir)
     else:
@@ -218,7 +219,7 @@ def run(config,time_index):
             # if there is a resume counter, keep skipping until the count is right
             # Note: this only applies to clustering, which is expensive. Tracking
             # will be re-run
-            if (resume_at_index > 0) and (run_count < resume_at_index):
+            if (resume_at_index > 0) and (run_count <= resume_at_index):
                 last_cluster_file = cluster_file
                 run_count = run_count + 1
                 continue

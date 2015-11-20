@@ -1,7 +1,7 @@
 '''
 The MIT License (MIT)
 
-(c) Jürgen Simon 2014 (juergen.simon@uni-bonn.de)
+(c) Juergen Simon 2014 (juergen.simon@uni-bonn.de)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -118,6 +118,7 @@ def run(conf):
 
 
     for netcdf_file in netcdf_files:
+
         # construct the cluster filename and find it
         # in the cluster directory
         netcdf_path,filename    = os.path.split(netcdf_file);
