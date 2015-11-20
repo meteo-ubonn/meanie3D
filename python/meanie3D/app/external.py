@@ -147,6 +147,7 @@ def execute_command(command, parameters, withStdOut=False, silent=True):
         if silent:
             p = Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
+            # TODO: this does seem to be broken
             p = Popen(cmd, shell=True, stdout=subprocess.STDOUT, stderr=subprocess.STDOUT)
         p.communicate()
         return p.returncode
