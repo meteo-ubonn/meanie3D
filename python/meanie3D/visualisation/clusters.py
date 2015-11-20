@@ -116,7 +116,6 @@ def run(conf):
     # Visit memory leak
     image_count=0
 
-
     for netcdf_file in netcdf_files:
 
         # construct the cluster filename and find it
@@ -197,12 +196,14 @@ def run(conf):
                 params = "-f %s %s" \
                          % (cluster_file,utils.getValueForKeyPath(conf,'postprocessing.clusters.meanie3D-cfm2vtk'))
                 if utils.getValueForKeyPath(conf,'postprocessing.clusters.showDisplacementVectors'):
-                    params.append(" --write-displacement-vectors")
+                    params += " --write-displacement-vectors"
 
                 if utils.getValueForKeyPath(conf,'data.vtkDimensions'):
-                    params.append(" --vtk-dimensions=%s" % conf['vtkDimensions'])
+                    vtkDimString = ",".join(utils.getValueForKeyPath(conf,'data.vtkDimensions'))
+                    params += " --vtk-dimensions=%s" % vtkDimString
 
                 # pdb.set_trace();
+                print "meanie3D-cfm2vtk %s" % params
                 meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
 

@@ -260,7 +260,7 @@ def run(config,time_index):
             # execute
             start_time = time.time()
             print "meanie3D-detect " + params
-            print external.execute_command("meanie3D-detect",params,True)
+            external.execute_command("meanie3D-detect",params,True)
             print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
         # ----------------------------------------------
@@ -283,7 +283,7 @@ def run(config,time_index):
                 # execute
                 start_time = time.time()
                 print "meanie3D-track" + params
-                print external.execute_command("meanie3D-track",params,True)
+                external.execute_command("meanie3D-track",params,True)
                 print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
         # keep track

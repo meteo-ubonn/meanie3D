@@ -74,7 +74,7 @@ def run():
     # Parse command line
     try:
         argv = sys.argv[1:]
-        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["json-example","resume","help","version","start=","end="])
+        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["resume","help","version","start=","end="])
     except getopt.GetoptError as detail:
         print detail
         sys.exit(2)
