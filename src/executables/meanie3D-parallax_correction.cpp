@@ -156,7 +156,7 @@ void parallax(T satheight, T satlat, T satlon, T height, T lat, T lon, T& latcor
 
     satlat_geod = atan(tan(asatlat) * SQR(radius_ratio));
     xsat = dheight * cos(satlat_geod) * sin(asatlon);
-    ysat = dheight * cos(satlat_geod);
+    ysat = dheight * sin(satlat_geod);
     zsat = dheight * cos(satlat_geod) * cos(asatlon);
 
     //     cartesian coordinates of the surface point
