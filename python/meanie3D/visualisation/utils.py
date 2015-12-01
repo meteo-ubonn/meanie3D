@@ -87,7 +87,7 @@ def runGlobalVisitConf(configuration):
 #
 # ---------------------------------------------------------
 
-def addPseudolorPlot(databaseFile, configuration):
+def addPseudocolorPlot(databaseFile, configuration):
     '''
     Adds a pseudocolor plot
     :param databaseFile:
@@ -111,6 +111,42 @@ def addPseudolorPlot(databaseFile, configuration):
         # Add the plot
         visit.AddPlot("Pseudocolor", variable)
         p = visit.PseudocolorAttributes()
+        updateVisitObjectFromDictionary(p, attributes)
+        visit.SetPlotOptions(p)
+        # Threshold?
+        threshold = getValueForKeyPath(configuration, "ThresholdAttributes")
+        if threshold:
+            visit.AddOperator("Threshold")
+            t = visit.ThresholdAttributes()
+            updateVisitObjectFromDictionary(t, threshold)
+            visit.SetOperatorOptions(t)
+    return
+
+
+def addContourPlot(databaseFile, configuration):
+    '''
+    Adds a contour plot.
+    :param databaseFile:
+    :param configuration:
+        {
+            "variable":"X",
+            "ContourAttributes": {
+               see visit.ContourAttributes()
+            },
+            "ThresholdAttributes" : {
+                see visit.ThresholdAttributes()
+            }
+        }
+    :return:
+    '''
+    variable = getValueForKeyPath(configuration, 'variable')
+    attributes = getValueForKeyPath(configuration, 'ContourAttributes')
+    if variable and attributes:
+        # Open data file
+        visit.OpenDatabase(databaseFile)
+        # Add the plot
+        visit.AddPlot("Contour", variable)
+        p = visit.ContourAttributes()
         updateVisitObjectFromDictionary(p, attributes)
         visit.SetPlotOptions(p)
         # Threshold?
@@ -235,7 +271,7 @@ def addPseudocolorPlots(databaseFile, configuration, path):
     if plots:
         visit.OpenDatabase(databaseFile)
         for plot in plots:
-            addPseudolorPlot(databaseFile, plot)
+            addPseudocolorPlot(databaseFile, plot)
     return
 
 

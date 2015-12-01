@@ -89,7 +89,7 @@ def run(conf):
             # Plot the actual track data
             file = conf['tracks_dir'] + os.path.sep + trackFile
             print "Adding plot for " + file
-            utils.addPseudolorPlot(file,trackPlotConf)
+            utils.addPseudocolorPlot(file,trackPlotConf)
 
             count = count + 1
 

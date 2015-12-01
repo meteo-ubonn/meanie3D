@@ -65,7 +65,7 @@ def addClusters(infix,configuration):
         cluster_list = sorted(glob.glob("*_clusters_all.vt*"))
     print "Found %d cluster files." % len(cluster_list)
     for cluster_file in cluster_list:
-        utils.addPseudolorPlot(cluster_file,clusterOptions)
+        utils.addPseudocolorPlot(cluster_file,clusterOptions)
 
     return
 
