@@ -665,6 +665,18 @@ TARGET_LINK_LIBRARIES(meanie3D-minmax
     ${HDF5_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D-minmax PROPERTIES LINKER_LANGUAGE CXX)
 
+ADD_EXECUTABLE(meanie3D-satconv
+    src/executables/meanie3D-satconv.cpp
+)
+
+TARGET_LINK_LIBRARIES(meanie3D-satconv
+    meanie3D
+    ${Boost_LIBRARIES}
+    ${NETCDF_LIBRARIES}
+    ${HDF5_LIBRARIES})
+SET_TARGET_PROPERTIES(meanie3D-satconv PROPERTIES LINKER_LANGUAGE CXX)
+
+
 # ------------------------------------------------------------- #
 # Tests
 # ------------------------------------------------------------- #
@@ -795,6 +807,7 @@ INSTALL(TARGETS meanie3D-trackstats-conrad RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-parallax_correction RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-minmax RUNTIME DESTINATION "/usr/local/bin")
+INSTALL(TARGETS meanie3D-satconv RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-radolan2cfm RUNTIME DESTINATION "/usr/local/bin")
 IF (WITH_VTK)
 INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
