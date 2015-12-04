@@ -366,7 +366,7 @@ namespace m3D {
             std::map<int, double> replacement_values;
 
             // cut at max 0 centigrade
-            upper_thresholds[0] = spectral_radiance(msevi_l15_ir_108, -40);
+            upper_thresholds[0] = spectral_radiance(msevi_l15_ir_108, 0);
 
             NetCDFDataStore<T> *proto_store
                     = new NetCDFDataStore<T>(m_data_store->filename(),
