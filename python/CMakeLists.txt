@@ -29,19 +29,19 @@ ENDIF()
 # Python packaging
 # ------------------------------------------------------------- #
 IF (PYTHONINTERP_FOUND)
-    # TODO: this needs to be enhanced a bit. The copy step needs to happen at compile time.
 
-    # Configure package file
-    FILE(COPY meanie3D DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    # Configure package files
     FILE(COPY setup.py.in DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     FILE(COPY MANIFEST.in DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     FILE(COPY README.txt.in DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
     SET(SETUP_PY ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
     CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/setup.py.in ${SETUP_PY})
     CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/meanie3D/__init__.py.in ${CMAKE_CURRENT_BINARY_DIR}/meanie3D/__init__.py)
     CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/README.txt.in ${CMAKE_CURRENT_BINARY_DIR}/README.txt)
 
+    ADD_CUSTOM_TARGET(copy-python-files ALL
+            COMMAND cmake -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/meanie3D ${CMAKE_CURRENT_BINARY_DIR}
+            DEPENDS meanie3D)
     ADD_CUSTOM_TARGET(${PROJECT_NAME} ALL COMMAND ${PYTHON_EXECUTABLE} setup.py build)
     ADD_CUSTOM_TARGET(${PROJECT_NAME}-clean COMMAND rm -rf build dist *.egg-info setup.py meanie3D/__init__.py README.txt)
 
