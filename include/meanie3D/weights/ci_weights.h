@@ -413,7 +413,7 @@ namespace m3D {
             // Write protoclusters out
 
             boost::filesystem::path input_path(m_data_store->filename());
-            std::string proto_filename = input_path.stem().generic_string<std::string>() + "-protoclusters.nc";
+            std::string proto_filename = "protoclusters-" + input_path.stem().generic_string<std::string>() + ".nc";
             m_protoclusters.write(proto_filename);
 
             // clean up
@@ -533,10 +533,10 @@ namespace m3D {
 
                 //::m3D::utils::opencv:: display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
                 boost::filesystem::path ppath(m_previous_protoclusters->source_file);
-                std::string fn = ppath.filename().stem().generic_string() + "-shifted.nc";
+                std::string fn = "shifted-" + ppath.filename().stem().generic_string() + ".nc";
                 m_ci_comparison_data_store->save_as(fn);
 #if WITH_VTK
-                fn = ppath.filename().stem().generic_string() + "-vectors.vtk";
+                fn = "vectors-" + ppath.filename().stem().generic_string() + ".vtk";
                 VisitUtils<T>::write_vectors_vtk(fn, origins, vectors);
 #endif
             }
@@ -657,7 +657,7 @@ namespace m3D {
             }
 
             boost::filesystem::path ppath(ds->filename());
-            std::string fn = ppath.filename().stem().generic_string() + "-25perc.nc";
+            std::string fn = "25perc-" + ppath.filename().stem().generic_string() + ".nc";
             ds->save_as(fn);
         }
 
@@ -691,26 +691,29 @@ namespace m3D {
             boost::filesystem::path ppath(m_data_store->filename());
             std::string basename = ppath.filename().stem().generic_string();
 
-            std::string fn = basename + "-score_108.vtk";
+            std::string fn = "ci-score-" + basename + ".vtk";
+            VisitUtils<T>::write_multiarray_vtk(fn, "ci-score", m_coordinate_system, m_weight);
+
+            fn = "score_108-" + basename + ".vtk";
             VisitUtils<T>::write_multiarray_vtk(fn, "10.8 ", m_coordinate_system, m_score_108);
 
-            fn = basename + "-score_6.2-10.8.vtk";
+            fn = "score_6.2-10.8-" + basename + ".vtk";
             VisitUtils<T>::write_multiarray_vtk(fn, "6.2-10.8", m_coordinate_system, m_score_62_108);
 
-            fn = basename + "-score_13.4-10.8.vtk";
+            fn = "score_13.4-10.8-" + basename + ".vtk";
             VisitUtils<T>::write_multiarray_vtk(fn, "13.4-10.8", m_coordinate_system, m_score_134_108);
 
-            fn = basename + "-score_10.8-trend.vtk";
+            fn = "score_10.8-trend-" + basename + ".vtk";
             VisitUtils<T>::write_multiarray_vtk(fn, "10.8-trend", m_coordinate_system, m_score_108_trend);
 
-            fn = basename + "-score_6.2-10.8-trend.vtk";
+            fn = "score_6.2-10.8-trend-" + basename + ".vtk";
             VisitUtils<T>::write_multiarray_vtk(fn, "6.2-10.8-trend", m_coordinate_system, m_62_108_trend);
 
-            fn = basename + "-score_13.4-10.8-trend.vtk";
+            fn = "score_13.4-10.8-trend-" + basename + ".vtk";
             VisitUtils<T>::write_multiarray_vtk(fn, "13.4-10.8-trend", m_coordinate_system, m_134_108_trend);
 
             if (m_overlap != NULL) {
-                fn = basename + "-overlap.vtk";
+                fn = "overlap-" + basename + ".vtk";
                 VisitUtils<T>::write_multiarray_vtk(fn, "overlap", m_coordinate_system, m_overlap);
             }
 #endif

@@ -248,7 +248,7 @@ def run(config,time_index):
             # add ci-comparison-file if applicable
             if run_count >= 3 and utils.getSafe(detection,'useCIScore'):
                 params += " --ci-comparison-file " + netcdf_list[run_count-3]
-                proto_file = os.path.splitext(os.path.basename(netcdf_list[run_count-3]))[0] + "-protoclusters.nc"
+                proto_file = "protoclusters-" + os.path.splitext(os.path.basename(netcdf_list[run_count-3]))[0] + ".nc"
                 params += " --ci-comparison-protocluster-file " + proto_file;
 
             # Input file
