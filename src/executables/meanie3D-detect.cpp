@@ -41,142 +41,113 @@ static const double NO_SCALE = numeric_limits<double>::min();
 /* ******************************************************************** */
 
 void parse_commmandline(program_options::variables_map vm,
-        NcFile **filePtr,
-        string &filename,
-        string &output_filename,
-        vector<NcDim> &dimensions,
-        vector<NcVar> &dimension_variables,
-        vector<NcVar> &variables,
-        int &time_index,
-        map<int, double> &lower_thresholds,
-        map<int, double> &upper_thresholds,
-        map<int, double> &replacement_values,
-        double &scale,
-        vector<NcVar> &exclude_from_scale_space_filtering,
-        std::string &kernel_name,
-        std::string &weight_function_name,
-        FS_TYPE &wwf_lower_threshold,
-        FS_TYPE &wwf_upper_threshold,
-        bool include_weight,
-        int &convection_filter_index,
-        string &parameters,
-        vector<FS_TYPE> &ranges,
-        std::string **previous_file,
-        std::string **ci_comparison_file,
-        std::string **ci_comparison_protocluster_file,
-        bool &ci_satellite_only,
-        FS_TYPE &cluster_coverage_threshold,
-        bool &spatial_range_only,
-        bool &coalesceWithStrongestNeighbour,
-        bool &write_vtk,
-        bool &write_weight_function,
-        bool &write_meanshift_vectors,
-        bool &write_weight_response,
-        bool &write_cluster_modes,
-        bool &write_cluster_centers,
-        vector<size_t> &vtk_dimension_indexes,
-        Verbosity &verbosity,
-        unsigned int &min_cluster_size,
-        vector<NcVar> &vtk_variables) {
+                        NcFile **filePtr,
+                        string &filename,
+                        string &output_filename,
+                        vector<NcDim> &dimensions,
+                        vector<NcVar> &dimension_variables,
+                        vector<NcVar> &variables,
+                        int &time_index,
+                        map<int, double> &lower_thresholds,
+                        map<int, double> &upper_thresholds,
+                        map<int, double> &replacement_values,
+                        double &scale,
+                        vector<NcVar> &exclude_from_scale_space_filtering,
+                        std::string &kernel_name,
+                        std::string &weight_function_name,
+                        FS_TYPE &wwf_lower_threshold,
+                        FS_TYPE &wwf_upper_threshold,
+                        bool include_weight,
+                        vector<int> &replacementFilterVariableIndex,
+                        map<int, ReplacementFilter<FS_TYPE>::ReplacementMode> &replacementFilterModes,
+                        map<int, float> &replacementFilterPercentages,
+                        int &convection_filter_index,
+                        string &parameters,
+                        vector<FS_TYPE> &ranges,
+                        std::string **previous_file,
+                        std::string **ci_comparison_file,
+                        std::string **ci_comparison_protocluster_file,
+                        bool &ci_satellite_only,
+                        FS_TYPE &cluster_coverage_threshold,
+                        bool &spatial_range_only,
+                        bool &coalesceWithStrongestNeighbour,
+                        bool &write_vtk,
+                        bool &write_weight_function,
+                        bool &write_meanshift_vectors,
+                        bool &write_weight_response,
+                        bool &write_cluster_modes,
+                        bool &write_cluster_centers,
+                        vector<size_t> &vtk_dimension_indexes,
+                        Verbosity &verbosity,
+                        unsigned int &min_cluster_size,
+                        vector<NcVar> &vtk_variables)
+{
     if (vm.count("file") == 0) {
         cerr << "Missing input file argument" << endl;
-
         exit(1);
     }
-
     filename = vm["file"].as<string>();
-
     try {
         output_filename = vm["output"].as<string>();
-    } catch (const boost::exception& e) {
+    } catch (const boost::exception &e) {
         cerr << "Missing parameter -o " << endl;
-
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     }
 
     // Open NetCDF file
-
     NcFile *file = NULL;
-
     try {
         file = new NcFile(filename, NcFile::read);
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "Error opening file '" << filename << "' : " << e.what() << endl;
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     }
 
     *filePtr = file;
 
     // Extract dimensions
-
     if (vm.count("dimensions") == 0) {
         cerr << "Missing parameter --dimensions" << endl;
-
         exit(1);
     }
 
     // parse dimension list
-
     typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
     boost::char_separator<char> sep(",");
-
     tokenizer dim_tokens(vm["dimensions"].as<string>(), sep);
-
     for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
-        const char* name = (*tok_iter).c_str();
-
+        const char *name = (*tok_iter).c_str();
         dimensions.push_back(file->getDim(name));
-
         NcVar dimVar = file->getVar(name);
-
         if (dimVar.isNull()) {
             cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
-            exit(EXIT_FAILURE);
-            ;
+            exit(EXIT_FAILURE);;
         }
-
         dimension_variables.push_back(dimVar);
     }
-
     parameters = parameters + "dimensions=" + vm["dimensions"].as<string>() + " ";
 
-
     // parse variables
-
     if (vm.count("variables") == 0) {
         cerr << "Missing mandatory parameter --variables" << endl;
-
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     }
-
     tokenizer var_tokens(vm["variables"].as<string>(), sep);
-
     for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter) {
         NcVar var = file->getVar(*tok_iter);
-
         if (var.isNull()) {
             cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
-            exit(EXIT_FAILURE);
-            ;
+            exit(EXIT_FAILURE);;
         }
-
         variables.push_back(var);
     }
-
     parameters = parameters + "variables=" + vm["variables"].as<string>() + " ";
 
     // time
-
     time_index = vm["time-index"].as<int>();
 
     // Convection filter index
-
     convection_filter_index = -1;
-
     if (vm.count("convection-filter-variable") > 0) {
         std::string cf_var_name = vm["convection-filter-variable"].as<string>();
 
@@ -191,27 +162,84 @@ void parse_commmandline(program_options::variables_map vm,
         }
 
         if (convection_filter_index < 0) {
-            cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name << "' not a featurespace variable" << endl;
-            exit(EXIT_FAILURE);
-            ;
+            cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name <<
+            "' not a featurespace variable" << endl;
+            exit(EXIT_FAILURE);;
         }
     }
 
+    // replacement filter
+    if (vm.count("replacement-filter") > 0) {
+        // format: variableName-replacement-mode[-percentage]
+        // RX-median
+        // RX-lowest-25
+        // RX-highest-50
+        std::string rf = vm["replacement-filter"].as<string>();
+        tokenizer tokens(rf, sep);
+        for (tokenizer::iterator ti = tokens.begin(); ti != tokens.end(); ++ti) {
+            tokenizer filter_tokens(*ti, boost::char_separator<char>("-"));
+            size_t i=0;
+            tokenizer::iterator fi = filter_tokens.begin();
+            ReplacementFilter<FS_TYPE>::ReplacementMode  mode;
+            int variable_index = -1;
+            float percentage = -1.0;
+            while (fi != filter_tokens.end()) {
+                if (i==0) {
+                    std::string varName = *fi;
+                    for (size_t vi=0; vi < variables.size(); vi++) {
+                        if (variables[vi].getName() == varName) {
+                            variable_index = vi;
+                            break;
+                        }
+                    }
+                    if (variable_index < 0) {
+                        cerr << "Illegal variable name for --replacement-filter" << endl;
+                        exit(EXIT_FAILURE);;
+                    }
+                } else if (i==1) {
+                    std::string modeName = *fi;
+                    if (modeName == "median") {
+                        mode = ReplacementFilter<FS_TYPE>::ReplaceWithMedian;
+                    } else if (modeName == "lowest") {
+                        mode = ReplacementFilter<FS_TYPE>::ReplaceWithLowest;
+                    } else if (modeName == "highest") {
+                        mode = ReplacementFilter<FS_TYPE>::ReplaceWithHighest;
+                    } else {
+                        cerr << "Illegal mode name for --replacement-filter" << endl;
+                        exit(EXIT_FAILURE);;
+                    }
+                } else if (i==2) {
+                    std::string perc = *fi;
+                    percentage = strtof(perc.c_str(), (char **)NULL) / 100.0f;
+                }
+                i++;
+                fi++;
+            }
+
+            if ((mode == ReplacementFilter<FS_TYPE>::ReplaceWithHighest
+                 || mode == ReplacementFilter<FS_TYPE>::ReplaceWithLowest)
+                && percentage < 0)
+            {
+                cerr << "Missing percentage in --replacement-filter" << endl;
+                exit(EXIT_FAILURE);;
+            }
+
+            replacementFilterVariableIndex.push_back(variable_index);
+            replacementFilterPercentages[variable_index] = percentage;
+            replacementFilterModes[variable_index] = mode;
+        }
+    }
 
     // parse ranges if there
-
     if (vm.count("ranges") > 0) {
         tokenizer bw_tokens(vm["ranges"].as<string>(), sep);
-
         for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter) {
-            const char* bw = (*tok_iter).c_str();
-
+            const char *bw = (*tok_iter).c_str();
             ranges.push_back((FS_TYPE) strtod(bw, (char **) NULL));
         }
 
         if (ranges.size() != dimension_variables.size() + variables.size()) {
             cerr << "Please provide " << dimension_variables.size() + variables.size() << " bandwidth values" << endl;
-
             exit(1);
         }
 
@@ -245,7 +273,7 @@ void parse_commmandline(program_options::variables_map vm,
                         exit(1);
                     }
 
-                    const char* value = (*subtoken_iter).c_str();
+                    const char *value = (*subtoken_iter).c_str();
                     lower_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
 
                     have_var = true;
@@ -260,39 +288,27 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     // Upper Thresholds
-
     if (vm.count("upper-thresholds") > 0) {
         boost::char_separator<char> equals("=");
-
         tokenizer tokens(vm["upper-thresholds"].as<string>(), sep);
-
         for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
             std::string pair = *tok_iter;
-
             tokenizer subtokens(pair, equals);
-
             tokenizer::iterator subtoken_iter = subtokens.begin();
-
             std::string variableName = *subtoken_iter;
-
             bool have_var = false;
-
             for (int i = 0; i < variables.size(); i++) {
                 if (variables[i].getName() == variableName) {
                     subtoken_iter++;
-
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
                         exit(1);
                     }
-
-                    const char* value = (*subtoken_iter).c_str();
+                    const char *value = (*subtoken_iter).c_str();
                     upper_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
-
                     have_var = true;
                 }
             }
-
             if (!have_var) {
                 cerr << "No variable named " << variableName << " found. Check --upper-thresholds parameter" << endl;
                 exit(1);
@@ -301,87 +317,67 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     // Fill values
-
     if (vm.count("replacement-values") > 0) {
         boost::char_separator<char> equals("=");
-
         tokenizer tokens(vm["replacement-values"].as<string>(), sep);
-
         for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
             std::string pair = *tok_iter;
-
             tokenizer subtokens(pair, equals);
-
             tokenizer::iterator subtoken_iter = subtokens.begin();
-
             std::string variableName = *subtoken_iter;
-
             NcVar variable;
-
             for (size_t i = 0; i < variables.size(); i++) {
                 if (variables[i].getName() == variableName) {
                     variable = variables[i];
                 }
             }
-
             if (variable.isNull()) {
                 cerr << "No variable named " << variableName << " found. Check --replacement-values parameter" << endl;
-
                 exit(1);
             }
-
             subtoken_iter++;
-
             if (subtoken_iter == subtokens.end()) {
                 cerr << "Missing replacement value for variable " << variableName << endl;
                 exit(1);
             }
-
-            const char* value = (*subtoken_iter).c_str();
-
+            const char *value = (*subtoken_iter).c_str();
             double doubleValue = strtod(value, (char **) NULL);
-
             replacement_values[variable.getId()] = doubleValue;
         }
     }
 
 
     // Scale parameter
-
     scale = vm["scale"].as<double>();
 
     // Kernel
-
     kernel_name = vm["kernel-name"].as<string>();
 
-    if (!(kernel_name == "uniform" || kernel_name == "epanechnikov" || kernel_name == "gauss" || kernel_name == "none")) {
-        cerr << "Illegal kernel name " << kernel_name << ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
+    if (!(kernel_name == "uniform" || kernel_name == "epanechnikov" || kernel_name == "gauss" ||
+          kernel_name == "none")) {
+        cerr << "Illegal kernel name " << kernel_name <<
+        ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
         exit(1);
     }
 
     // Weight Function
-
     weight_function_name = vm["weight-function-name"].as<string>();
-
-    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase" || weight_function_name == "pow10")) {
-        cerr << "Illegal weight function name " << weight_function_name << ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
+    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase" ||
+          weight_function_name == "pow10")) {
+        cerr << "Illegal weight function name " << weight_function_name <<
+        ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
         exit(1);
     }
-
     wwf_lower_threshold = vm["wwf-lower-threshold"].as<FS_TYPE>();
-
     wwf_upper_threshold = vm["wwf-upper-threshold"].as<FS_TYPE>();
 
     // Coalescence?
-
     coalesceWithStrongestNeighbour = vm.count("coalesce-with-strongest-neighbour") > 0;
 
     // only spatial range?
-
     spatial_range_only = vm.count("spatial-range-only") > 0;
 
     // VTK output?
-
     write_vtk = vm.count("write-clusters-as-vtk") > 0;
     write_cluster_modes = vm.count("write-cluster-modes") > 0;
     write_cluster_centers = vm.count("write-cluster-centers") > 0;
@@ -392,51 +388,34 @@ void parse_commmandline(program_options::variables_map vm,
     include_weight = vm.count("include-weight-function-in-results") > 0;
 
     // VTK dimension mapping
-
     if (vm.count("vtk-dimensions") > 0) {
         // parse dimension list
-
         typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
         boost::char_separator<char> sep(",");
-
         string str_value = vm["vtk-dimensions"].as<string>();
-
         tokenizer dim_tokens(str_value, sep);
-
         for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
-            const char* name = (*tok_iter).c_str();
-
+            const char *name = (*tok_iter).c_str();
             NcDim dim = file->getDim(name);
-
             vector<NcDim>::const_iterator fi = find(dimensions.begin(), dimensions.end(), dim);
-
             if (fi == dimensions.end()) {
                 cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of --dimensions" << endl;
-                exit(EXIT_FAILURE);
-                ;
+                exit(EXIT_FAILURE);;
             }
-
             size_t index = fi - dimensions.begin();
-
             vtk_dimension_indexes.push_back(index);
         }
 
         if (vtk_dimension_indexes.size() != dimensions.size()) {
             cerr << "The number of vtk-dimensions must be identical to dimensions" << endl;
-
-            exit(EXIT_FAILURE);
-            ;
+            exit(EXIT_FAILURE);;
         }
     }
 
     // Previous file
-
     if (vm.count("previous-file") > 0) {
         std::string previous = vm["previous-file"].as<string>();
-
         boost::filesystem::path previous_path(previous);
-
         if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
             *previous_file = new std::string(previous);
         } else {
@@ -448,9 +427,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     if (vm.count("ci-comparison-file") > 0) {
         std::string previous = vm["ci-comparison-file"].as<string>();
-
         boost::filesystem::path previous_path(previous);
-
         if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
             *ci_comparison_file = new std::string(previous);
         } else {
@@ -459,58 +436,50 @@ void parse_commmandline(program_options::variables_map vm,
     }
 
     // ci-comparison-protocluster-file
-
     if (vm.count("ci-comparison-protocluster-file") > 0) {
         std::string previous = vm["ci-comparison-protocluster-file"].as<string>();
-
         boost::filesystem::path previous_path(previous);
-
         if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
             *ci_comparison_protocluster_file = new std::string(previous);
         } else {
-            cerr << "Illegal value for parameter --ci-comparison-protocluster-file: does not exist or is no regular file" << endl;
+            cerr <<
+            "Illegal value for parameter --ci-comparison-protocluster-file: does not exist or is no regular file" <<
+            endl;
         }
     }
 
+    // previous-cluster-coverage-threshold
     cluster_coverage_threshold = vm["previous-cluster-coverage-threshold"].as<FS_TYPE>();
 
     // Verbosity
-
-    unsigned int vb = vm["verbosity"].as<unsigned int>();
+    unsigned int vb = vm["verbosity"].as < unsigned
+    int > ();
 
     if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
-
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     } else {
         verbosity = (Verbosity) vb;
     }
 
-    min_cluster_size = vm["min-cluster-size"].as<unsigned int>();
+    // min cluster size
+    min_cluster_size = vm["min-cluster-size"].as < unsigned int > ();
 
     // vtk-variables
-
     if (vm.count("write-variables-as-vtk") > 0) {
         tokenizer bw_tokens(vm["write-variables-as-vtk"].as<string>(), sep);
-
         for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter) {
-            const char* bw = (*tok_iter).c_str();
-
+            const char *bw = (*tok_iter).c_str();
             try {
                 NcVar var = file->getVar(bw);
-
                 if (var.isNull()) {
                     cerr << "Can't open variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                    exit(EXIT_FAILURE);
-                    ;
+                    exit(EXIT_FAILURE);;
                 }
-
                 vtk_variables.push_back(var);
             } catch (const netCDF::exceptions::NcException &e) {
                 cerr << "Can't find variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                exit(EXIT_FAILURE);
-                ;
+                exit(EXIT_FAILURE);;
             }
         }
     }
@@ -549,7 +518,7 @@ void print_compile_time_options() {
 
 /* ******************************************************************** */
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     using namespace m3D;
 
     // Declare the supported options.
@@ -559,30 +528,55 @@ int main(int argc, char** argv) {
             ("version", "print version information and exit")
             ("file,f", program_options::value<string>(), "CF-Metadata compliant NetCDF-file")
             ("output,o", program_options::value<string>(), "Name of output file for clustering results")
-            ("dimensions,d", program_options::value<string>(), "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
-            ("variables,v", program_options::value<string>(), "Comma-separated variables used to construct feature space. Do not include dimension variables")
-            ("time-index,t", program_options::value<int>()->default_value(-1), "Index of the point in time you wish to use in files with a time dimension. -1 means no time dimension in the variables.")
-            ("lower-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
-            ("upper-thresholds", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
-            ("replacement-values", program_options::value<string>(), "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
-            ("kernel-name,k", program_options::value<string>()->default_value("uniform"), "uniform,gauss,epnachnikov or none")
-            ("weight-function-name,w", program_options::value<string>()->default_value("default"), "default,inverse,pow10 or oase")
-            ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0), "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
-            ("wwf-upper-threshold", program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()), "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
-            ("ci-comparison-file", program_options::value<string>(), "File for calculating time trends for CI-score according to Walker et al. 2012.")
-            ("ci-comparison-protocluster-file", program_options::value<string>(), "Protoclusters from the comparison file")
+            ("dimensions,d", program_options::value<string>(),
+             "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
+            ("variables,v", program_options::value<string>(),
+             "Comma-separated variables used to construct feature space. Do not include dimension variables")
+            ("time-index,t", program_options::value<int>()->default_value(-1),
+             "Index of the point in time you wish to use in files with a time dimension. -1 means no time dimension in the variables.")
+            ("lower-thresholds", program_options::value<string>(),
+             "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
+            ("upper-thresholds", program_options::value<string>(),
+             "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
+            ("replacement-values", program_options::value<string>(),
+             "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
+            ("kernel-name,k", program_options::value<string>()->default_value("uniform"),
+             "uniform,gauss,epnachnikov or none")
+            ("weight-function-name,w", program_options::value<string>()->default_value("default"),
+             "default,inverse,pow10 or oase")
+            ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0),
+             "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
+            ("wwf-upper-threshold",
+             program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()),
+             "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
+            ("replacement-filter", program_options::value<string>(),
+             "Comma-separated list varname-<lowest|highest|median>-[percentage],... to replace values with average of lowest/highest percent or median of neighbours")
+            ("ci-comparison-file", program_options::value<string>(),
+             "File for calculating time trends for CI-score according to Walker et al. 2012.")
+            ("ci-comparison-protocluster-file", program_options::value<string>(),
+             "Protoclusters from the comparison file")
             ("ci-satellite-only", "If present, only satellite values are used (original score), otherwise ")
-            ("coalesce-with-strongest-neighbour", "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
-            ("scale,s", program_options::value<double>()->default_value(NO_SCALE), "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
-            ("filter-size,l", program_options::value<double>()->default_value(0.0), "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
-            ("ranges,r", program_options::value<string>(), "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
-            ("min-cluster-size,m", program_options::value<unsigned int>()->default_value(1u), "Discard clusters smaller than this number of points.")
-            ("previous-file,p", program_options::value<string>(), "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
-            ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66), "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
-            ("include-weight-function-in-results,i", "Add a netcdf variable 'weight' to the result file, containining the weight function response at each point in the feature-space")
+            ("coalesce-with-strongest-neighbour",
+             "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
+            ("scale,s", program_options::value<double>()->default_value(NO_SCALE),
+             "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
+            ("filter-size,l", program_options::value<double>()->default_value(0.0),
+             "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
+            ("ranges,r", program_options::value<string>(),
+             "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
+            ("min-cluster-size,m", program_options::value<unsigned int>()->default_value(1u),
+             "Discard clusters smaller than this number of points.")
+            ("previous-file,p", program_options::value<string>(),
+             "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
+            ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66),
+             "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
+            ("include-weight-function-in-results,i",
+             "Add a netcdf variable 'weight' to the result file, containining the weight function response at each point in the feature-space")
 #if WITH_VTK
-            ("vtk-dimensions", program_options::value<string>(), "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
-            ("write-variables-as-vtk", program_options::value<string>(), "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
+            ("vtk-dimensions", program_options::value<string>(),
+             "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
+            ("write-variables-as-vtk", program_options::value<string>(),
+             "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
             ("write-weight-function", "write weight function out as .vtk file")
             ("write-meanshift-vectors", "write out .vtk files containing the meanshift vectors")
             ("write-clusters-as-vtk", "write clusters out as .vtk files")
@@ -590,7 +584,8 @@ int main(int argc, char** argv) {
             ("write-cluster-centers", "write cluster centers out in .vtk file format")
             ("write-cluster-weight-response", "write out the clusters with weight responses as value")
 #endif
-            ("verbosity", program_options::value<unsigned int>()->default_value(1u), "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.");
+            ("verbosity", program_options::value<unsigned int>()->default_value(1u),
+             "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.");
 
     program_options::variables_map vm;
     try {
@@ -599,16 +594,14 @@ int main(int argc, char** argv) {
     } catch (std::exception &e) {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-detect --help for command line options" << endl;
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     }
 
     // Version
 
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     }
 
     if (vm.count("help") == 1 || argc < 2) {
@@ -647,6 +640,10 @@ int main(int argc, char** argv) {
     bool spatial_range_only = false;
     double scale = NO_SCALE;
 
+    vector<int> replacementFilterVariableIndex;
+    map<int, ReplacementFilter<FS_TYPE>::ReplacementMode > replacementFilterModes;
+    map<int, float> replacementFilterPercentages;
+
     vector<NcVar> vtk_variables;
     SearchParameters *search_params = NULL;
     bool write_vtk = false;
@@ -661,43 +658,46 @@ int main(int argc, char** argv) {
     FS_TYPE kernel_width = 0.0;
     try {
         parse_commmandline(vm,
-                &file,
-                filename,
-                output_filename,
-                dimensions,
-                dimension_variables,
-                variables,
-                time_index,
-                lower_thresholds,
-                upper_thresholds,
-                replacement_values,
-                scale,
-                exclude_from_scale_space_filtering,
-                kernel_name,
-                weight_function_name,
-                wwf_lower_threshold,
-                wwf_upper_threshold,
-                include_weight_in_result,
-                convection_filter_index,
-                parameters,
-                ranges,
-                &previous_file,
-                &ci_comparison_file,
-                &ci_comparison_protocluster_file,
-                ci_satellite_only,
-                cluster_coverage_threshold,
-                spatial_range_only,
-                coalesceWithStrongestNeighbour,
-                write_vtk,
-                write_weight_function,
-                write_meanshift_vectors,
-                write_weight_response,
-                write_cluster_modes,
-                write_cluster_centers,
-                vtk_dimension_indexes,
-                verbosity,
-                min_cluster_size,
-                vtk_variables);
+                           &file,
+                           filename,
+                           output_filename,
+                           dimensions,
+                           dimension_variables,
+                           variables,
+                           time_index,
+                           lower_thresholds,
+                           upper_thresholds,
+                           replacement_values,
+                           scale,
+                           exclude_from_scale_space_filtering,
+                           kernel_name,
+                           weight_function_name,
+                           wwf_lower_threshold,
+                           wwf_upper_threshold,
+                           include_weight_in_result,
+                           replacementFilterVariableIndex,
+                           replacementFilterModes,
+                           replacementFilterPercentages,
+                           convection_filter_index,
+                           parameters,
+                           ranges,
+                           &previous_file,
+                           &ci_comparison_file,
+                           &ci_comparison_protocluster_file,
+                           ci_satellite_only,
+                           cluster_coverage_threshold,
+                           spatial_range_only,
+                           coalesceWithStrongestNeighbour,
+                           write_vtk,
+                           write_weight_function,
+                           write_meanshift_vectors,
+                           write_weight_response,
+                           write_cluster_modes,
+                           write_cluster_centers,
+                           vtk_dimension_indexes,
+                           verbosity,
+                           min_cluster_size,
+                           vtk_variables);
 
         // Make the mapping known to the visualization routines
 
@@ -766,7 +766,8 @@ int main(int argc, char** argv) {
             if (ranges.empty()) {
                 kernel_width = width;
             }
-            cout << "\tpre-smoothing data with scale parameter " << scale << " (kernel width = " << width << ")" << endl;
+            cout << "\tpre-smoothing data with scale parameter " << scale << " (kernel width = " << width << ")" <<
+            endl;
         } else {
             cout << "\tno scale-space smoothing" << endl;
         }
@@ -792,12 +793,37 @@ int main(int argc, char** argv) {
             cout << "\tminimum cluster size = " << min_cluster_size << endl;
         }
 
+        if (!replacementFilterVariableIndex.empty()) {
+            cout << "\treplacement filters on " << endl;
+            for (size_t i=0; i < replacementFilterVariableIndex.size(); i++) {
+                int rvi = replacementFilterVariableIndex[i];
+                cout << "Variable: " << variables[rvi].getName()
+                << " : replace by ";
+                ReplacementFilter<FS_TYPE>::ReplacementMode mode = replacementFilterModes[rvi];
+                float percent = replacementFilterPercentages[rvi];
+                switch (mode) {
+                    case ReplacementFilter<FS_TYPE>::ReplaceWithHighest:
+                        cout << "highest " << percent << "%";
+                        break;
+                    case ReplacementFilter<FS_TYPE>::ReplaceWithLowest:
+                        cout << "lowest " << percent << "%";
+                        break;
+                    case ReplacementFilter<FS_TYPE>::ReplaceWithMedian:
+                        cout << "median";
+                        break;
+                }
+                cout << " of neighbouring points" << endl;
+            }
+        }
+
         cout << "\tmean-shift is limited to spatial range: " << (spatial_range_only ? "yes" : "no") << endl;
-        cout << "\tcoalesce results with strongest neighbor: " << (coalesceWithStrongestNeighbour ? "yes" : "no") << endl;
+        cout << "\tcoalesce results with strongest neighbor: " << (coalesceWithStrongestNeighbour ? "yes" : "no") <<
+        endl;
         cout << "\toutput written to file: " << output_filename << endl;
 
         if (!vtk_variables.empty()) {
-            cout << "\twriting out these variables as vtk after processing:" << vm["write-variables-as-vtk"].as<string>() << endl;
+            cout << "\twriting out these variables as vtk after processing:" <<
+            vm["write-variables-as-vtk"].as<string>() << endl;
         }
 
         cout << "\twriting weight function to vtk:" << (write_weight_function ? "yes" : "no") << endl;
@@ -829,18 +855,11 @@ int main(int argc, char** argv) {
             = new NetCDFDataStore<FS_TYPE>(filename, coord_system, variable_names, time_index);
 
     FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(coord_system,
-            data_store,
-            lower_thresholds,
-            upper_thresholds,
-            replacement_values,
-            show_progress);
-
-#if WRITE_FEATURESPACE
-    static size_t fs_index = 0;
-    std::string fn = path.stem().string() + "_featurespace_" + boost::lexical_cast<string>(fs_index++) + ".vtk";
-    VisitUtils<FS_TYPE>::write_featurespace_vtk(fn, fs);
-#endif
-
+                                                          data_store,
+                                                          lower_thresholds,
+                                                          upper_thresholds,
+                                                          replacement_values,
+                                                          show_progress);
     if (ranges.empty()) {
         // spatial range
         FS_TYPE t = (scale == NO_SCALE) ? 1.0 : scale;
@@ -857,26 +876,55 @@ int main(int argc, char** argv) {
     }
     search_params = new RangeSearchParams<FS_TYPE>(ranges);
 
+    if (!replacementFilterVariableIndex.empty()) {
+        for (size_t i=0; i < replacementFilterVariableIndex.size(); i++) {
+
+            int rvi = replacementFilterVariableIndex[i];
+            cout << "Applying replacement filter for " << variables[rvi].getName()
+            << " replacing values by ";
+            ReplacementFilter<FS_TYPE>::ReplacementMode mode = replacementFilterModes[rvi];
+            float percent = replacementFilterPercentages[rvi];
+            switch (mode) {
+                case ReplacementFilter<FS_TYPE>::ReplaceWithHighest:
+                    cout << "highest " << percent << "%";
+                    break;
+                case ReplacementFilter<FS_TYPE>::ReplaceWithLowest:
+                    cout << "lowest " << percent << "%";
+                    break;
+                case ReplacementFilter<FS_TYPE>::ReplaceWithMedian:
+                    cout << "median";
+                    break;
+            }
+            cout << " of neighbours ...";
+            start_timer();
+            ReplacementFilter<FS_TYPE> rf(mode,rvi,ranges,percent);
+            rf.apply(fs);
+            stop_timer("done.");
+        }
+    }
+
+#if WRITE_FEATURESPACE
+    static size_t fs_index = 0;
+    std::string fn = path.stem().string() + "_featurespace_" + boost::lexical_cast<string>(fs_index++) + ".vtk";
+    VisitUtils<FS_TYPE>::write_featurespace_vtk(fn, fs);
+#endif
+
 #if WRITE_OFF_LIMITS_MASK
     std::string ol_fname = path.filename().stem().string() + "-off_limits.vtk";
     VisitUtils<FS_TYPE>::write_multiarray_vtk(ol_fname, "off_limits", coord_system, fs->off_limits());
 #endif
 
     // Convection Filter?
-
     if (convection_filter_index >= 0) {
         ConvectionFilter<FS_TYPE> convection_filter(ranges, convection_filter_index, show_progress);
         convection_filter.apply(fs);
     }
 
     // Scale-Space Smoothing
-
     WeightFunction<FS_TYPE> *weight_function = NULL;
 
     // Scale-Space smoothing
-
     if (scale != NO_SCALE) {
-
         // TODO: make decay a parameter or at least a constant
         FS_TYPE decay = 0.01;
         vector<FS_TYPE> resolution = fs->coordinate_system->resolution();
@@ -895,17 +943,19 @@ int main(int argc, char** argv) {
 
         if (weight_function_name == "oase") {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
-                    filename,
-                    ranges,
-                    ci_comparison_file,
-                    ci_comparison_protocluster_file,
-                    ci_satellite_only);
+                                                                filename,
+                                                                ranges,
+                                                                ci_comparison_file,
+                                                                ci_comparison_protocluster_file,
+                                                                ci_satellite_only);
         } else if (weight_function_name == "inverse") {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(),
+                                                                        sf.get_filtered_max());
         } else if (weight_function_name == "pow10") {
             weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
         } else {
-            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(), sf.get_filtered_max());
+            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(),
+                                                                 sf.get_filtered_max());
         }
         cout << " done (" << stop_timer() << "s)." << endl;
 
@@ -925,14 +975,15 @@ int main(int argc, char** argv) {
 
         if (weight_function_name == "oase") {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
-                    filename,
-                    ranges,
-                    ci_comparison_file,
-                    ci_comparison_protocluster_file,
-                    ci_satellite_only);
+                                                                filename,
+                                                                ranges,
+                                                                ci_comparison_file,
+                                                                ci_comparison_protocluster_file,
+                                                                ci_satellite_only);
             //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
         } else if (weight_function_name == "inverse") {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, lower_thresholds, upper_thresholds);
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, lower_thresholds,
+                                                                        upper_thresholds);
         } else if (weight_function_name == "pow10") {
             weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
         } else {
@@ -952,7 +1003,7 @@ int main(int argc, char** argv) {
 #if WITH_VTK
 
     if (write_weight_function) {
-        std::string wfname = path.filename().stem().string() + "-weights";
+        std::string wfname = "weights-" + path.filename().stem().string();
         VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
     }
 
@@ -972,9 +1023,8 @@ int main(int argc, char** argv) {
             vtk_variable_names.push_back(vtk_variables[i].getName());
 
         VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs,
-                data_store->variable_names(),
-                vtk_variable_names);
-
+                                                              data_store->variable_names(),
+                                                              vtk_variable_names);
         if (verbosity > VerbositySilent)
             cout << " done." << endl;
     }
@@ -994,14 +1044,15 @@ int main(int argc, char** argv) {
     // Run the clustering
     PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
     ClusterOperation<FS_TYPE> cop(fs, data_store, index);
-    ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour, show_progress);
+    ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour,
+                                                show_progress);
 
-    #if WITH_VTK
+#if WITH_VTK
     if (write_meanshift_vectors) {
-        std::string ms_path = path.filename().stem().string() + "-meanshift-vectors.vtk";
+        std::string ms_path = "meanshift-vectors-" + path.filename().stem().string() + ".vtk";
         VisitUtils<FS_TYPE>::write_shift_vectors(ms_path, fs, true);
     }
-    #endif
+#endif
 
     // Axe weenies
     clusters.apply_size_threshold(min_cluster_size);
@@ -1011,7 +1062,7 @@ int main(int argc, char** argv) {
     // of the detection process. The id is something only
     // to be assigned/changed in tracking!
     m3D::id_t id = m3D::MIN_ID;
-    ClusterUtils<FS_TYPE>::provideIds(&clusters,id);
+    ClusterUtils<FS_TYPE>::provideIds(&clusters, id);
     clusters.highest_id = id;
 
     // Give (provisional) universal identifiers
@@ -1021,7 +1072,7 @@ int main(int argc, char** argv) {
     // the tracking can provide this by getting the highest_uuid
     // from the previous file.
     m3D::uuid_t uuid = m3D::MIN_UUID;
-    ClusterUtils<FS_TYPE>::provideUuids(&clusters,uuid);
+    ClusterUtils<FS_TYPE>::provideUuids(&clusters, uuid);
     clusters.highest_uuid = uuid;
 
     // Collate with previous clusters, if provided
@@ -1055,7 +1106,7 @@ int main(int argc, char** argv) {
     } else {
         // No previous file? Provide UUIDs from scratch
     }
-    
+
     // Announce final results
     if (verbosity > VerbositySilent)
         cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
@@ -1070,16 +1121,17 @@ int main(int argc, char** argv) {
         ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(&clusters, coord_system, path.filename().string());
     }
     if (write_cluster_modes) {
-        string modes_path = path.filename().stem().string() + "-clusters_modes.vtk";
+        string modes_path = "clusters_modes-" + path.filename().stem().string() + ".vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, clusters.clusters, true);
     }
     if (write_cluster_centers) {
-        string centers_path = path.filename().stem().string() + "-clusters_centers.vtk";
+        string centers_path = "clusters_centers-" + path.filename().stem().string() + ".vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, clusters.clusters);
     }
     if (write_weight_response && clusters.clusters.size() > 0) {
-        string wr_path = path.filename().stem().string() + "-clusters_weight";
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters, weight_function, false);
+        string wr_path = "clusters_weight-" + path.filename().stem().string();
+        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters,
+                                                                             weight_function, false);
     }
 #endif
 
@@ -1088,7 +1140,7 @@ int main(int argc, char** argv) {
 
     // Before writing, set the timestamp!!
     clusters.timestamp = timestamp;
-    
+
     clusters.write(output_filename);
 
     if (include_weight_in_result) {

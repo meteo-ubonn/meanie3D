@@ -36,6 +36,7 @@
 #include<meanie3D/filters/convection_filter_impl.h>
 #include<meanie3D/filters/scalespace_filter_impl.h>
 #include<meanie3D/filters/scalespace_kernel_impl.h>
+#include<meanie3D/filters/replacement_filter_impl.h>
 #include<meanie3D/filters/threshold_filter_impl.h>
 #include<meanie3D/filters/weight_filter_impl.h>
 #include<meanie3D/index/index_impl.h>
