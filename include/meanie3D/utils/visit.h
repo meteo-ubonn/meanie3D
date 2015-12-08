@@ -147,18 +147,6 @@ namespace m3D {
                     const vector<string> &vtk_variables,
                     bool write_legacy = false);
 
-            /** Writes out the given variables of the featurespace individually
-             * as VTK image data files.
-             * @param output filename
-             * @param the featurespace
-             * @param list of variables to include
-             */
-            static
-            void
-            write_featurespace_variables_vti(const string &filename,
-                    FeatureSpace<T> *fs,
-                    const vector<NcVar> &vtk_variables);
-
             static
             void
             write_vectors_vtk(const string& filename,

@@ -196,13 +196,12 @@ namespace m3D {
         copy_vtk_coordinate_data(const CoordinateSystem<T> *cs, size_t index, vtkDoubleArray* coords)
         {
             NcVar vx = cs->dimension_variables().at(index);
-
             const T* dim_data = cs->get_dimension_data_ptr(vx);
-
             NcDim dx = cs->dimensions().at(index);
-
+            coords->SetNumberOfValues(dx.getSize());
             for (int i = 0; i < dx.getSize(); i++) {
-                coords->InsertNextValue(dim_data[i]);
+                double value = dim_data[i];
+                coords->SetValue(i,value);
             }
         }
 
@@ -212,18 +211,15 @@ namespace m3D {
                 vector<vtkDoubleArray *> &coord_pointers)
         {
             assert(cs->rank() > 0 && cs->rank() <= 3);
-
             int nx = 0, ny = 0, nz = 0;
             get_vtk_image_dimensions(cs, nx, ny, nz);
-
             vtkRectilinearGrid *rgrid = vtkRectilinearGrid::New();
             rgrid->SetDimensions(nx, ny, nz);
-
             for (int i = 0; i < cs->rank(); i++) {
                 vtkDoubleArray *coords = vtkDoubleArray::New();
+                coords->SetNumberOfComponents(1);
                 copy_vtk_coordinate_data(cs, VTK_DIMENSION_INDEXES[i], coords);
                 coord_pointers.push_back(coords);
-
                 if (i == 0) {
                     rgrid->SetXCoordinates(coords);
                 } else if (i == 1) {
@@ -235,13 +231,12 @@ namespace m3D {
 
             // supply 1-D arrays with value 0 for the
             // empty dimensions
-
             for (int i = 2; i >= 0; i--) {
                 if (i >= cs->rank()) {
                     vtkDoubleArray *coords = vtkDoubleArray::New();
+                    coords->SetNumberOfComponents(1);
                     coords->InsertNextValue(0.0);
                     coord_pointers.push_back(coords);
-
                     if (i == 0) {
                         rgrid->SetXCoordinates(coords);
                     } else if (i == 1) {
@@ -251,7 +246,6 @@ namespace m3D {
                     }
                 }
             }
-
             return rgrid;
         }
 
@@ -920,23 +914,15 @@ namespace m3D {
         VisitUtils<T>::write_ellipsis_2d(const string &filename, const vector<T> &half_axis, size_t number_of_segements, const vector<T> *origin)
         {
             ofstream fs(filename.c_str());
-
             // fs.imbue( locale("de_DE.UTF-8") );
-
             fs << "# bandwidth" /* << fixed << setprecision(0)*/ << endl;
-
             vector<T> x0 = (origin == NULL) ? vector<T>(2, 0.0) : *origin;
-
             for (size_t i = 0; i < number_of_segements; i++) {
                 float phi = i * 2 * M_PI / ((float) number_of_segements);
-
                 float x = x0[1] + half_axis[0] * cos(phi);
-
                 float y = x0[0] + half_axis[1] * sin(phi);
-
                 fs << y << "\t" << x << endl;
             }
-
             fs.close();
         }
 
@@ -952,25 +938,16 @@ namespace m3D {
         VisitUtils<T>::write_ellipsis_3d(const string &filename, const vector<T> &half_axis, size_t number_of_segements, const vector<T> *origin)
         {
             ofstream fs(filename.c_str());
-
             // fs.imbue( locale("de_DE.UTF-8") );
-
             fs << "x\ty\tz\tv" << endl;
-
             vector<T> x0 = (origin == NULL) ? vector<T>(2, 0.0) : *origin;
-
             for (size_t i = 0; i < number_of_segements; i++) {
                 float u = i * 2 * M_PI / ((float) number_of_segements);
-
                 for (size_t j = 0; j < number_of_segements; j++) {
                     float v = j * 2 * M_PI / ((float) number_of_segements);
-
                     float x = half_axis[0] * cos(u) * sin(v);
-
                     float y = half_axis[1] * sin(u) * sin(v);
-
                     float z = half_axis[2] * cos(v);
-
                     if (origin != NULL) {
                         x += origin->at(0);
                         y += origin->at(1);
@@ -980,7 +957,6 @@ namespace m3D {
                     fs << x << "\t" << y << "\t" << z << "\t" << 1.0 << endl;
                 }
             }
-
             fs.close();
         }
 
@@ -999,49 +975,37 @@ namespace m3D {
             f << "POINTS " << fs->points.size() << " FLOAT" << endl;
 
             // Write point coordinates out as unstructured grid
-
             for (size_t pi = 0; pi < fs->points.size(); pi++) {
                 typename Point<T>::ptr p = fs->points[pi];
-
                 vector<T> c = p->values;
-
                 for (size_t ri = 0; ri < c.size(); ri++) {
                     size_t index = ri;
-
                     if (ri < p->coordinate.size()) {
                         index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
                     }
-
                     f << c[ index ] << "\t";
                 }
-
                 if (c.size() < 3) {
                     f << "0.0";
                 }
-
                 f << endl;
             }
 
             // use then LAST variable to colour the value
-
             f << endl;
             f << "POINT_DATA " << fs->points.size() << endl;
             f << "SCALARS " << variable_name << " FLOAT" << endl;
             f << "LOOKUP_TABLE default" << endl;
             for (size_t pi = 0; pi < fs->points.size(); pi++) {
                 typename Point<T>::ptr p = fs->points[pi];
-
                 vector<T> v = p->values;
-
                 T value = v.back();
-
                 f << value << endl;
             }
-
             f.close();
         }
 
-        template <typename T>
+ template <typename T>
         void
         VisitUtils<T>::write_featurespace_variables_vtk(const string &filename,
                 FeatureSpace<T> *fs,
@@ -1056,28 +1020,36 @@ namespace m3D {
 
             vector<vtkDoubleArray *> coords;
             vtkRectilinearGrid *rgrid = allocate_vtk_rectilinear_grid(cs, coords);
-
+            rgrid->DebugOn();
+            rgrid->CheckAttributes();
+            
             for (size_t vi = 0; vi < vtk_variables.size(); vi++) {
                 std::string var = vtk_variables[vi];
-                size_t value_index = vectors::index_of_first<string>(feature_variables, var);
+                size_t value_index = fs->spatial_rank() + vectors::index_of_first<string>(feature_variables, var);
+                
+                cout << "Writing variable " << var << " (index=" << value_index << ")" << endl;
 
                 vtkDoubleArray* variable = vtkDoubleArray::New();
                 variable->SetName(var.c_str());
                 variable->SetNumberOfComponents(1); // scalar
                 variable->SetNumberOfValues(nx * ny * nz);
-
+                variable->FillComponent(0,0);
+//                variable->CreateDefaultLookupTable();
+                
+//                for (size_t ix=0; ix < nx; ix++) {
+//                    int gridIndex = to_single_index(cs, nx, ny, nz, ix, ix, 0);
+//                    variable->SetValue(gridIndex,100);
+//                }
+                
                 for (size_t i = 0; i < fs->points.size(); ++i) {
                     typename Point<T>::ptr p = fs->points.at(i);
-                    T value = p->values[fs->spatial_rank() + value_index];
-
+                    double value = (double) p->values[value_index];
                     int gx, gy, gz;
                     VisitUtils<T>::get_vtk_gridpoint(p->gridpoint, gx, gy, gz);
-
                     int gridIndex = to_single_index(cs, nx, ny, nz, gx, gy, gz);
-
-                    variable->SetValue(gridIndex, value);
+                    variable->SetValue(gridIndex,value);
                 }
-
+                
                 rgrid->GetPointData()->AddArray(variable);
             }
 
@@ -1085,13 +1057,10 @@ namespace m3D {
 
             if (write_legacy) {
                 // ASCII
-
                 vtkSmartPointer<vtkRectilinearGridWriter>
                         writer = vtkSmartPointer<vtkRectilinearGridWriter>::New();
-
                 std::string fn = filename + ".vtk";
                 writer->SetFileName(fn.c_str());
-
 #if VTK_MAJOR_VERSION <= 5
                 writer->SetInput(rgrid);
 #else
@@ -1100,7 +1069,6 @@ namespace m3D {
                 writer->Write();
             } else {
                 // XML
-
                 vtkSmartPointer<vtkXMLRectilinearGridWriter>
                         xmlWriter = vtkSmartPointer<vtkXMLRectilinearGridWriter>::New();
                 std::string xml_fn = filename + "." + xmlWriter->GetDefaultFileExtension();
@@ -1115,122 +1083,17 @@ namespace m3D {
             }
 
             // Clean up
-
             for (size_t ci = 0; ci < coords.size(); ci++) {
                 coords.at(ci)->Delete();
             }
-
             rgrid->Delete();
         }
-
-        // LEGACY CODE
-
-        //            ofstream f( fname.c_str() );
-        //            f << fixed << setprecision(4);
-        //            
-        //            // Write Header
-        //            f << "# vtk DataFile Version 3.0" << endl;
-        //            f << "Featurespace" << endl;
-        //            f << "ASCII" << endl;
-        //            f << "DATASET UNSTRUCTURED_GRID" << endl;
-        //            f << "POINTS " << fs->points.size() << " FLOAT" << endl;
-        //            
-        //            // Write point coordinates out as unstructured grid
-        //            
-        //            for ( size_t pi = 0; pi < fs->points.size(); pi++ )
-        //            {
-        //                typename Point<T>::ptr p = fs->points[pi];
-        //                
-        //                vector<T> c = p->coordinate;
-        //                
-        //                for ( size_t ri=0; ri < c.size(); ri++ )
-        //                {
-        //                    size_t index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
-        //                    
-        //                    f << c[ index ] << "\t";
-        //                }
-        //                
-        //                if ( c.size() < 3 )
-        //                {
-        //                    f << "0.0";
-        //                }
-        //                
-        //                f << endl;
-        //            }
-        //            
-        //            // which is the index?
-        //            
-        //            size_t value_index = index_of_first( fs->feature_variables(), variable );
-        //            
-        //            f << endl;
-        //            f << "POINT_DATA " << fs->points.size() << endl;
-        //            f << "SCALARS " << variable.getName() << " FLOAT" << endl;
-        //            f << "LOOKUP_TABLE default" << endl;
-        //            for ( size_t pi = 0; pi < fs->points.size(); pi++ )
-        //            {
-        //                typename Point<T>::ptr p = fs->points[pi];
-        //                
-        //                vector<T> v = p->values;
-        //                
-        //                f << v[value_index] << endl;
-        //            }
-        //
-        //            f.close();
-        //        }
-
         template <typename T>
         void
-        VisitUtils<T>::write_featurespace_variables_vti(const string &filename,
-                FeatureSpace<T> *fs,
-                const vector<NcVar> &vtk_variables)
-        {
-            CoordinateSystem<T> *cs = fs->coordinate_system;
-
-            size_t nx, ny, nz;
-            VisitUtils<T>::get_vtk_image_dimensions(cs, nx, ny, nz);
-
-            for (size_t vi = 0; vi < vtk_variables.size(); vi++) {
-                NcVar ncVar = vtk_variables[vi];
-
-                vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
-                imageData->SetDimensions(nx, ny, nz);
-
-#if VTK_MAJOR_VERSION <= 5
-                imageData->SetNumberOfScalarComponents(1);
-                imageData->SetScalarTypeToDouble();
-#else
-                imageData->AllocateScalars(VTK_DOUBLE, 1);
-#endif
-                size_t value_index = vectors::index_of_first<NcVar>(fs->feature_variables(), ncVar);
-
-                for (size_t i = 0; i < fs->points.size(); ++i) {
-                    typename Point<T>::ptr p = fs->points.at(i);
-
-                    T value = p->values[value_index];
-
-                    int gx, gy, gz;
-                    VisitUtils<T>::get_vtk_gridpoint(p->gridpoint, gx, gy, gz);
-
-                    double* pixel = static_cast<double*> (imageData->GetScalarPointer(gx, gy, gz));
-                    pixel[0] = boost::numeric_cast<double>(value);
-                }
-
-                vtkSmartPointer<vtkXMLImageDataWriter> writer = vtkSmartPointer<vtkXMLImageDataWriter>::New();
-                std::string fname = filename + "_" + ncVar.getName() + ".vti";
-                writer->SetFileName(fname.c_str());
-
-#if VTK_MAJOR_VERSION <= 5
-                writer->SetInputConnection(imageData->GetProducerPort());
-#else
-                writer->SetInputData(imageData);
-#endif
-                writer->Write();
-            }
-        }
-
-        template <typename T>
-        void
-        VisitUtils<T>::write_vectors_vtk(const string &filename, const vector< vector<T> > &origins, const vector< vector<T> > &vectors, string var_name)
+        VisitUtils<T>::write_vectors_vtk(const string &filename,
+                                         const vector< vector<T> > &origins,
+                                         const vector< vector<T> > &vectors,
+                                         string var_name)
         {
             assert(origins.size() == vectors.size());
 

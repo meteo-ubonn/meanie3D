@@ -199,11 +199,9 @@ namespace m3D {
         void for_each_recursive(ForEachFunctor *f, size_t dim_index, vector<int> &index) const
         {
             size_t dimSize = this->get_dimensions()[dim_index];
-
             if (dim_index < (this->get_dimensions().size() - 1)) {
                 for (size_t i = 0; i < dimSize; i++) {
                     index[dim_index] = i;
-
                     for_each_recursive(f, dim_index + 1, index);
                 }
             } else {
@@ -211,7 +209,6 @@ namespace m3D {
 
                 for (size_t i = 0; i < dimSize; i++) {
                     gIter[dim_index] = i;
-
                     f->operator()(gIter, this->get(gIter));
                 }
             }

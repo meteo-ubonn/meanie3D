@@ -237,12 +237,10 @@ void parse_commmandline(program_options::variables_map vm,
             const char *bw = (*tok_iter).c_str();
             ranges.push_back((FS_TYPE) strtod(bw, (char **) NULL));
         }
-
         if (ranges.size() != dimension_variables.size() + variables.size()) {
             cerr << "Please provide " << dimension_variables.size() + variables.size() << " bandwidth values" << endl;
             exit(1);
         }
-
         parameters = parameters + "ranges=" + vm["ranges"].as<string>();
     }
 
@@ -255,27 +253,19 @@ void parse_commmandline(program_options::variables_map vm,
 
         for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
             std::string pair = *tok_iter;
-
             tokenizer subtokens(pair, equals);
-
             tokenizer::iterator subtoken_iter = subtokens.begin();
-
             std::string variableName = *subtoken_iter;
-
             bool have_var = false;
-
             for (int i = 0; i < variables.size() && !have_var; i++) {
                 if (variables[i].getName() == variableName) {
                     subtoken_iter++;
-
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
                         exit(1);
                     }
-
                     const char *value = (*subtoken_iter).c_str();
                     lower_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
-
                     have_var = true;
                 }
             }
@@ -1024,7 +1014,8 @@ int main(int argc, char **argv) {
 
         VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs,
                                                               data_store->variable_names(),
-                                                              vtk_variable_names);
+                                                              vtk_variable_names, 
+                                                              false);
         if (verbosity > VerbositySilent)
             cout << " done." << endl;
     }
