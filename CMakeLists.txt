@@ -297,6 +297,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/filters/scalespace_filter_impl.h
     include/meanie3D/filters/scalespace_kernel.h
     include/meanie3D/filters/scalespace_kernel_impl.h
+    include/meanie3D/filters/replacement_filter.h
+    include/meanie3D/filters/replacement_filter_impl.h
     include/meanie3D/filters/threshold_filter.h
     include/meanie3D/filters/threshold_filter_impl.h
     include/meanie3D/filters/weight_filter.h
@@ -427,6 +429,8 @@ SOURCE_GROUP("meanie3d/filters" FILES
     include/meanie3D/filters/scalespace_filter_impl.h
     include/meanie3D/filters/scalespace_kernel.h
     include/meanie3D/filters/scalespace_kernel_impl.h
+    include/meanie3D/filters/replacement_filter.h
+    include/meanie3D/filters/replacement_filter_impl.h
     include/meanie3D/filters/threshold_filter.h
     include/meanie3D/filters/threshold_filter_impl.h
     include/meanie3D/filters/weight_filter.h
