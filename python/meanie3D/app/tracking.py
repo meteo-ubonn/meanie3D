@@ -197,7 +197,6 @@ def run(config,time_index):
     # Process the files one by one
 
     for netcdf_file in netcdf_list:
-
         basename = os.path.basename(netcdf_file)
         cluster_file= ""
 

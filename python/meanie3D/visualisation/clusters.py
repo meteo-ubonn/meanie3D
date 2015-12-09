@@ -69,11 +69,12 @@ def addClusters(infix,configuration):
 
     return
 
-# ------------------------------------------------------------------------------
-# Generic routine for visualizing 3D clusters in two perspectives
-# \param: configuration
-# ------------------------------------------------------------------------------
 def run(conf):
+    '''
+    Visualises clusters of a given run.
+    :param conf:
+    :return:
+    '''
     #pp = pprint.PrettyPrinter()
     #pp.pprint(conf)
 
@@ -158,7 +159,7 @@ def run(conf):
 
                 # Add timestamp
                 if utils.getValueForKeyPath(clusterConf,'showDateTime'):
-                    utils.add_datetime(netcdf_file)
+                    utils.add_datetime(netcdf_file,0)
 
                 # Add source data and threshold it
                 print "Plotting source data ..."
@@ -215,7 +216,7 @@ def run(conf):
 
                 # Add timestamp
                 if utils.getValueForKeyPath(clusterConf,'showDateTime'):
-                    utils.add_datetime(netcdf_file)
+                    utils.add_datetime(netcdf_file,0)
 
                 # Add background source data
                 if utils.getValueForKeyPath(clusterConf,'showSourceBackground'):

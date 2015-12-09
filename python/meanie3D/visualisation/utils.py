@@ -23,15 +23,17 @@ SOFTWARE.
 '''
 
 import glob
+import netCDF4
 import os
 import os.path
-import string
 from os.path import basename
 from os.path import dirname
 import pdb
+import string
 from subprocess import call
 import sys
 import visit
+
 
 # Own modules
 import meanie3D.app.utils
@@ -618,65 +620,26 @@ def updateVisitObjectFromDictionary(object, dictionary):
             setValueForKeyPath(object, key, value)
     return
 
+def add_datetime(netcdf_file,time_index):
+    '''
+    Reads the timestamp info from NetCDF file. Must comply to the
+    cf-metadata convention.
+    :param filename:
+    :param config:
+    :return:
+    '''
+    import netCDF4
+    ncfile = netCDF4.Dataset(netcdf_file, "r")
+    times = ncfile.variables['time']
+    date = netCDF4.num2date(times[:],units=times.units,calendar=times.calendar)[time_index]
+    date.microsecond = 0
+    addTextAnnotation(0.725, 0.95, date.isoformat());
 
 # ---------------------------------------------------------
 #
 # Code to be phased out.
 #
 # ---------------------------------------------------------
-
-def add_datetime(filename):
-    '''
-    Extracts the date/time from a filename according to the
-    oase 3D composite format and adds it to the currenty image.
-    :param filename:
-    :return:
-    '''
-    # Only use the leaf node
-    fn = basename(filename);
-
-    # OASE 3D
-    # herz-oase-20110605t2355utc-0500m-bonnjue-3d-v01a.nc
-    baseIndex = string.find(fn, "herz-oase")
-    if baseIndex >= 0:
-        year = fn[baseIndex + 10:baseIndex + 14]
-        month = fn[baseIndex + 14:baseIndex + 16]
-        day = fn[baseIndex + 16:baseIndex + 18]
-        hour = fn[baseIndex + 19:baseIndex + 21]
-        minute = fn[baseIndex + 21:baseIndex + 23]
-        text = day + "." + month + "." + year + " " + hour + ":" + minute + " UTC"
-        addTextAnnotation(0.725, 0.95, text);
-        return
-
-    # OASE 2D/3D
-    # oase-20110622t2055z-1km-germany-2d-v01a.nc
-    # oase-20130620t2100z-1km-germany-3d-test2
-    baseIndex = string.find(fn, "oase-")
-
-    if baseIndex >= 0:
-        year = fn[baseIndex + 5:baseIndex + 9]
-        month = fn[baseIndex + 9:baseIndex + 11]
-        day = fn[baseIndex + 11:baseIndex + 13]
-        hour = fn[baseIndex + 14:baseIndex + 16]
-        minute = fn[baseIndex + 16:baseIndex + 18]
-        text = day + "." + month + "." + year + " " + hour + ":" + minute + " UTC"
-        addTextAnnotation(0.725, 0.95, text);
-        return
-
-    # RADOLAN
-    # raa01-rx_10000-YYMMDDhhmm-dwd---bin.nc
-
-    baseIndex = string.find(fn, "raa01-rx_10000")
-    if baseIndex >= 0:
-        year = fn[baseIndex + 15:baseIndex + 17]
-        month = fn[baseIndex + 17:baseIndex + 19]
-        day = fn[baseIndex + 19:baseIndex + 21]
-        hour = fn[baseIndex + 21:baseIndex + 23]
-        minute = fn[baseIndex + 23:baseIndex + 25]
-        text = day + "." + month + ".'" + year + " " + hour + ":" + minute + " UTC"
-        addTextAnnotation(0.725, 0.95, text);
-        return
-
 
 def create_dual_panel(basename_left, basename_right, basename_combined):
     '''
