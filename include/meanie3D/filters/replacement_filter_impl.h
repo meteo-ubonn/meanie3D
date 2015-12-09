@@ -67,7 +67,16 @@ namespace m3D {
             // Get the values around the point (original index)
             T result = fs->points[i]->values[value_index];
 
-            typename Point<T>::list *neighbours = index->search(fs->points[i]->coordinate,params);
+            typename Point<T>::list *neighbours = NULL;
+
+#if WITH_OPENMP
+#pragma omp critical 
+            {
+#endif
+            neighbours = index->search(fs->points[i]->coordinate,params);
+#if WITH_OPENMP
+            }
+#endif          
             if (!(neighbours == NULL || neighbours->size()==0)) {
 
                 vector<T> values;

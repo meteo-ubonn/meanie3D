@@ -63,6 +63,7 @@
 // ---------------------------------------------------- //
 
 #define DEBUG_GRAPH_AGGREGATION 0
+#define DEBUG_CI_SCORE 1
 
 // ---------------------------------------------------- //
 // Debugging Flags (files)

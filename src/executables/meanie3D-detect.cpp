@@ -787,10 +787,9 @@ int main(int argc, char **argv) {
             cout << "\treplacement filters on " << endl;
             for (size_t i=0; i < replacementFilterVariableIndex.size(); i++) {
                 int rvi = replacementFilterVariableIndex[i];
-                cout << "Variable: " << variables[rvi].getName()
-                << " : replace by ";
+                cout << "\t\t" << variables[rvi].getName() << " replace with ";
                 ReplacementFilter<FS_TYPE>::ReplacementMode mode = replacementFilterModes[rvi];
-                float percent = replacementFilterPercentages[rvi];
+                float percent = replacementFilterPercentages[rvi] * 100.0;
                 switch (mode) {
                     case ReplacementFilter<FS_TYPE>::ReplaceWithHighest:
                         cout << "highest " << percent << "%";

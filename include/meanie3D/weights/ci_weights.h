@@ -40,8 +40,6 @@
 #include <vector>
 #include <map>
 
-#define DEBUG_CI_SCORE 1
-
 namespace m3D {
 
     //
@@ -167,12 +165,9 @@ namespace m3D {
 
             try {
                 NcFile file(filename.c_str(), NcFile::read);
-
                 for (size_t i = 0; i < CI_WEIGHT_NUM_VARS; i++) {
                     m_variable_names.push_back(std::string(CI_WEIGHT_VARS[i]));
-
                     NcVar var = file.getVar(CI_WEIGHT_VARS[i]);
-
                     if (var.isNull()) {
                         cerr << "FATAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" << endl;
                         exit(EXIT_FAILURE);
@@ -180,9 +175,7 @@ namespace m3D {
 
                     // Obtain the constants for transforming radiances
                     // into brightness temperatures fromt he attributes:
-
                     namespace nu = m3D::utils::netcdf;
-
                     switch (i) {
                         case msevi_l15_ir_108:
                         case msevi_l15_wv_062:
@@ -202,14 +195,12 @@ namespace m3D {
             }
 
             // Create the data store
-
             this->m_data_store = new NetCDFDataStore<T>(filename,
                     fs->coordinate_system,
                     this->m_variable_names,
                     time_index);
 
             // Set up variables used for protoclustering
-
             try {
                 for (size_t i = 0; i < PROTOCLUSTER_NUM_VARS; i++) {
                     m_protocluster_variables.push_back(std::string(PROTOCLUSTER_VARS[i]));
@@ -220,18 +211,14 @@ namespace m3D {
             }
 
             // index for effective range search ops
-
             m_bandwidth = fs->spatial_component(bandwidth);
-
             m_index = PointIndex<T>::create(&fs->points, fs->coordinate_system->rank());
             m_search_params = new RangeSearchParams<T>(m_bandwidth);
 
             // obtain protoclusters
-
             this->obtain_protoclusters();
 
             if (this->m_ci_comparison_file != NULL) {
-
 #if WITH_OPENCV
                 //
                 // Attempt (b) : estimate dense motion vector field using opencv
@@ -244,7 +231,6 @@ namespace m3D {
                 //                                                                    this->m_variable_names,
                 //                                                                    msevi_l15_hrv, 7.0);
 #endif
-
                 m_ci_comparison_data_store
                         = new NetCDFDataStore<T>(*ci_comparison_file,
                         fs->coordinate_system,
@@ -253,57 +239,44 @@ namespace m3D {
 
                 if (ci_comparison_protocluster_file != NULL) {
                     // Load previous proto-clusters
-
                     m_previous_protoclusters = ClusterList<T>::read(*ci_comparison_protocluster_file);
 
                     // Shift previous data by tracking protoclusters and use
                     // the resulting tracking vectors / clusters
-
                     cout << endl << "Shifting comparison data ...";
                     start_timer();
-
                     this->shift_comparison_data_using_protoclusters(ci_comparison_protocluster_file);
-
                     cout << " done (" << stop_timer() << "s)" << endl;
 
-                    // reduce the data by calculating the cluster overlap area
+                    // Reduce the data by calculating the cluster overlap area
                     // (used later in weight function calculation)
-
                     cout << endl << "Calculating overlap ...";
                     start_timer();
-
                     this->calculate_overlap();
-
                     cout << " done (" << stop_timer() << "s)" << endl;
 
+                    // Replace all pixels with the with average of 25% coldest pixels
+                    // in their vicinity (10km radius).
                     cout << endl << "Replacing with average of 25% coldest pixels (comparison data) ...";
                     start_timer();
-
-                    // TODO: using fs here is not entirely correct, because
+                    // NOTE: using fs here is not entirely correct, because
                     // the featurespace was constructed from the wrong
                     // datastore. This 'should' not be a problem, because
                     // of the overlap calculation
                     this->replace_with_coldest_pixels(m_ci_comparison_data_store, fs);
-
                     cout << " done (" << stop_timer() << "s)" << endl;
-
                 }
             }
 
             cout << endl << "Replacing with average of 25% coldest pixels (current data) ...";
             start_timer();
-
             this->replace_with_coldest_pixels(m_data_store, fs);
-
             cout << " done (" << stop_timer() << "s)" << endl;
 
             cout << endl << "Calculating final weight score ...";
             start_timer();
-
             calculate_weight_function(fs);
-
             cout << " done (" << stop_timer() << "s)" << endl;
-
         }
 
         ~OASECIWeightFunction()
@@ -360,12 +333,11 @@ namespace m3D {
             cout << "+ ---------------------------- +" << endl;
 
             // construct protocluster featurespace
-
             std::map<int, double> lower_thresholds;
             std::map<int, double> upper_thresholds;
             std::map<int, double> replacement_values;
 
-            // cut at max 0 centigrade
+            // cut msevi_l15_ir_108 at max 0 centigrade
             upper_thresholds[0] = spectral_radiance(msevi_l15_ir_108, 0);
 
             NetCDFDataStore<T> *proto_store
@@ -382,36 +354,28 @@ namespace m3D {
                     replacement_values,
                     true);
 
-            // obtain protoclusters
-
-            T kernel_size = 10.0;
-            int size_threshold = 10;
-
+            // Obtain protoclusters
+            T kernel_size = 10.0; // Search radius 10km
+            int size_threshold = 10; // Min 10km^2 area
             Kernel<T> *proto_kernel = new UniformKernel<T>(kernel_size);
             WeightFunction<T> *proto_weight = new DefaultWeightFunction<T>(proto_fs);
             PointIndex<T> *proto_index = PointIndex<T>::create(proto_fs->get_points(), proto_fs->rank());
-
             ClusterOperation<T> proto_cop(proto_fs,
                     proto_store,
                     proto_index);
 
-            // Search radius 10km
             vector<T> bandwidth(m_coordinate_system->rank(), kernel_size);
             SearchParameters *search_params = new RangeSearchParams<T>(bandwidth);
-
             m_protoclusters = proto_cop.cluster(search_params,
                     proto_kernel,
                     proto_weight,
                     false,
                     true);
-
             m_protoclusters.apply_size_threshold(size_threshold);
-
             m3D::uuid_t uuid = m3D::MIN_UUID;
             ClusterUtils<T>::provideUuids(&m_protoclusters,uuid);
 
             // Write protoclusters out
-
             boost::filesystem::path input_path(m_data_store->filename());
             std::string proto_filename = "protoclusters-" + input_path.stem().generic_string<std::string>() + ".nc";
             m_protoclusters.write(proto_filename);
@@ -429,22 +393,16 @@ namespace m3D {
         shift_comparison_data_using_protoclusters(const std::string *ci_comparison_protocluster_file)
         {
             using namespace utils::vectors;
-
             if (ci_comparison_protocluster_file != NULL) {
-
                 vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
 
                 // Perform a tracking run
-                tracking_param_t params;
+                tracking_param_t params = Tracking<T>::defaultParams();
                 // Time difference calculation can be a second or so
                 // off. Allow some slack.
                 params.max_deltaT = ::units::values::s(930);
+
                 Tracking<T> proto_tracker(params);
-
-                // TODO: tracking needs to be refactored to work on
-                // weight function histograms rather than variable
-                // histograms
-
                 proto_tracker.track(m_previous_protoclusters, &m_protoclusters);
                 m_protoclusters.save();
 
@@ -456,7 +414,6 @@ namespace m3D {
                 // Idea: improve on the result by using OpenCV's
                 // affine transformation finder algorithm and
                 // morph the pixels into position
-
                 std::vector< std::vector<T> > origins, vectors;
 
                 // initialize storage for shifted data
@@ -473,8 +430,8 @@ namespace m3D {
 //                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
 
                 // iterate over clusters
-
                 for (size_t pi = 0; pi < m_previous_protoclusters->size(); pi++) {
+
                     typename Cluster<T>::ptr pc = m_previous_protoclusters->clusters.at(pi);
 
                     // find the matched candidate
