@@ -20,9 +20,9 @@ PROJECT(meanie3D)
 ENABLE_LANGUAGE(CXX)
 
 SET(${PROJECT_NAME}_MAJOR_VERSION 1)
-SET(${PROJECT_NAME}_MINOR_VERSION 5)
-SET(${PROJECT_NAME}_PATCH_LEVEL 5)
-SET(PACKAGE_VERSION "1.5.5")
+SET(${PROJECT_NAME}_MINOR_VERSION 6)
+SET(${PROJECT_NAME}_PATCH_LEVEL 0)
+SET(PACKAGE_VERSION "1.6.0")
 SET(PROJECT_URL "http://git.meteo.uni-bonn.de/projects/meanie3d")
 SET(PROJECT_LICENSE "MIT License")
 SET(PROJECT_AUTHOR "Juergen Simon")
@@ -38,7 +38,7 @@ CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/config_h.in
     ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h)
 
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/meanie3D/version.h.in
-        ${PROJECT_BINARY_DIR}/include/meanie3D/version.h)
+        ${PROJECT_SOURCE_DIR}/include/meanie3D/version.h)
 
 # Set default cmake build type to Debug
 # (None, Debug, Release, RelWithDebInfo or MinSizeRel)
