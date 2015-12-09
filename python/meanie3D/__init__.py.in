@@ -5,6 +5,7 @@ __url__ = '${PROJECT_URL}'
 __all__ = ['app', 'visualisation', 'resources']
 
 import os.path
+import sys
 
 def getVersion():
     '''
@@ -19,3 +20,13 @@ def getHome():
     :return:
     '''
     return os.path.abspath(os.path.dirname(__file__))
+
+def appendSystemPythonPath():
+    '''
+    Returns the system's python path to import outside modules.
+    '''
+    system_python_path = "${SYSTEM_PYTHON_PATH}".strip()
+    paths = system_python_path.split(':')
+    for path in paths:
+        if path:
+            sys.path.append(path)

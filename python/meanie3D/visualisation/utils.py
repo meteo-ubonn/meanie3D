@@ -23,7 +23,6 @@ SOFTWARE.
 '''
 
 import glob
-import netCDF4
 import os
 import os.path
 from os.path import basename
@@ -34,10 +33,13 @@ from subprocess import call
 import sys
 import visit
 
-
 # Own modules
 import meanie3D.app.utils
 import meanie3D.app.external
+
+# External modules
+meanie3D.appendSystemPythonPath()
+import netCDF4
 
 # make sure external commands are available
 meanie3D.app.external.locateCommands(['convert', 'composite'])
@@ -628,11 +630,10 @@ def add_datetime(netcdf_file,time_index):
     :param config:
     :return:
     '''
-    import netCDF4
     ncfile = netCDF4.Dataset(netcdf_file, "r")
     times = ncfile.variables['time']
     date = netCDF4.num2date(times[:],units=times.units,calendar=times.calendar)[time_index]
-    date.microsecond = 0
+    date = date.replace(microsecond=0)
     addTextAnnotation(0.725, 0.95, date.isoformat());
 
 # ---------------------------------------------------------

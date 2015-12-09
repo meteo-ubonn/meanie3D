@@ -30,11 +30,16 @@ ENDIF()
 # ------------------------------------------------------------- #
 IF (PYTHONINTERP_FOUND)
 
+    # Use the system's python path to append it to visit's python
+    # path to enable importing modules to visit's python.
+    EXECUTE_PROCESS(COMMAND python -c "import sys; sys.stdout.write(':'.join(sys.path))" OUTPUT_VARIABLE SYSTEM_PYTHON_PATH)
+
     # Configure package file
     FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/meanie3D DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/setup.py.in DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/README.txt.in DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
     SET(SETUP_PY ${CMAKE_CURRENT_BINARY_DIR}/setup.py)
     CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/setup.py.in ${SETUP_PY})
     CONFIGURE_FILE(${CMAKE_CURRENT_BINARY_DIR}/meanie3D/__init__.py.in ${CMAKE_CURRENT_BINARY_DIR}/meanie3D/__init__.py)
