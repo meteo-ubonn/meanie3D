@@ -49,7 +49,7 @@ namespace m3D {
     // Variables used for scoring scheme
 
     static const size_t CI_WEIGHT_NUM_VARS = 6;
-    static const char * CI_WEIGHT_VARS[] = {
+    static const char *CI_WEIGHT_VARS[] = {
         "msevi_l15_ir_108",
         "msevi_l15_wv_062",
         "msevi_l15_ir_134",
@@ -70,7 +70,7 @@ namespace m3D {
     // Variables used for protoclusters
 
     static const size_t PROTOCLUSTER_NUM_VARS = 1;
-    static const char * PROTOCLUSTER_VARS[] = {
+    static const char *PROTOCLUSTER_VARS[] = {
         "msevi_l15_ir_108"
     };
 
@@ -82,7 +82,7 @@ namespace m3D {
      * radius around a given point.
      *
      */
-    template <class T>
+    template<class T>
     class OASECIWeightFunction : public WeightFunction<T>
     {
     private:
@@ -150,14 +150,11 @@ namespace m3D {
                 bool satellite_only = false,
                 bool use_walker_mecikalski_limits = false,
                 const int time_index = -1)
-        : m_data_store(NULL)
-        , m_ci_comparison_file(ci_comparison_file)
-        , m_ci_comparison_data_store(NULL)
-        , m_coordinate_system(fs->coordinate_system)
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0))
-        , m_satellite_only(satellite_only)
-        , m_use_walker_mecikalski_limits(use_walker_mecikalski_limits)
-        , m_previous_protoclusters(NULL)
+        : m_data_store(NULL), m_ci_comparison_file(ci_comparison_file), m_ci_comparison_data_store(NULL),
+        m_coordinate_system(fs->coordinate_system),
+        m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0)),
+        m_satellite_only(satellite_only), m_use_walker_mecikalski_limits(use_walker_mecikalski_limits),
+        m_previous_protoclusters(NULL)
         {
             // Obtain a data store with all the relevant variables
 
@@ -169,7 +166,8 @@ namespace m3D {
                     m_variable_names.push_back(std::string(CI_WEIGHT_VARS[i]));
                     NcVar var = file.getVar(CI_WEIGHT_VARS[i]);
                     if (var.isNull()) {
-                        cerr << "FATAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" << endl;
+                        cerr << "FATAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" <<
+                                endl;
                         exit(EXIT_FAILURE);
                     }
 
@@ -215,7 +213,6 @@ namespace m3D {
             m_index = PointIndex<T>::create(&fs->points, fs->coordinate_system->rank());
             m_search_params = new RangeSearchParams<T>(m_bandwidth);
 
-            // obtain protoclusters
             this->obtain_protoclusters();
 
             if (this->m_ci_comparison_file != NULL) {
@@ -277,6 +274,7 @@ namespace m3D {
             start_timer();
             calculate_weight_function(fs);
             cout << " done (" << stop_timer() << "s)" << endl;
+
         }
 
         ~OASECIWeightFunction()
@@ -340,11 +338,17 @@ namespace m3D {
             // cut msevi_l15_ir_108 at max 0 centigrade
             upper_thresholds[0] = spectral_radiance(msevi_l15_ir_108, 0);
 
+            cout << endl;
+            cout << "protocluster featurespace variables (in): "
+                    << m_protocluster_variables << endl;
+
             NetCDFDataStore<T> *proto_store
                     = new NetCDFDataStore<T>(m_data_store->filename(),
                     m_coordinate_system,
                     m_protocluster_variables,
                     -1);
+            cout << "protocluster featurespace variables (datastore): "
+                    << proto_store->variable_names() << endl;
 
             FeatureSpace<T> *proto_fs
                     = new FeatureSpace<T>(m_coordinate_system,
@@ -371,9 +375,14 @@ namespace m3D {
                     proto_weight,
                     false,
                     true);
+
+            cout << "protocluster featurespace variables (out): "
+                    << m_protoclusters.variable_names << endl;
+
             m_protoclusters.apply_size_threshold(size_threshold);
+
             m3D::uuid_t uuid = m3D::MIN_UUID;
-            ClusterUtils<T>::provideUuids(&m_protoclusters,uuid);
+            ClusterUtils<T>::provideUuids(&m_protoclusters, uuid);
 
             // Write protoclusters out
             boost::filesystem::path input_path(m_data_store->filename());
@@ -398,6 +407,8 @@ namespace m3D {
 
                 // Perform a tracking run
                 tracking_param_t params = Tracking<T>::defaultParams();
+                params.tracking_variable = std::string(PROTOCLUSTER_VARS[0]);
+
                 // Time difference calculation can be a second or so
                 // off. Allow some slack.
                 params.max_deltaT = ::units::values::s(930);
@@ -414,20 +425,20 @@ namespace m3D {
                 // Idea: improve on the result by using OpenCV's
                 // affine transformation finder algorithm and
                 // morph the pixels into position
-                std::vector< std::vector<T> > origins, vectors;
+                std::vector<std::vector<T> > origins, vectors;
 
                 // initialize storage for shifted data
-                typedef std::map< size_t, MultiArray<T> * > data_map_t;
+                typedef std::map<size_t, MultiArray<T> *> data_map_t;
                 data_map_t shifted_data;
                 for (size_t var_index = 0; var_index < m_ci_comparison_data_store->rank(); var_index++) {
                     T NOT_SET = m_ci_comparison_data_store->fill_value(var_index);
                     shifted_data[var_index] = new MultiArrayBlitz<T>(dims, NOT_SET);
                 }
 
-//                ::m3D::utils::opencv::display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
-//                ::m3D::utils::opencv::display_array(m_ci_comparison_data_store->get_data(msevi_l15_ir_108),
-//                                                    m_ci_comparison_data_store->min(msevi_l15_ir_108),
-//                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
+                //                ::m3D::utils::opencv::display_variable(m_ci_comparison_data_store,msevi_l15_ir_108);
+                //                ::m3D::utils::opencv::display_array(m_ci_comparison_data_store->get_data(msevi_l15_ir_108),
+                //                                                    m_ci_comparison_data_store->min(msevi_l15_ir_108),
+                //                                                    m_ci_comparison_data_store->max(msevi_l15_ir_108));
 
                 // iterate over clusters
                 for (size_t pi = 0; pi < m_previous_protoclusters->size(); pi++) {
@@ -451,16 +462,19 @@ namespace m3D {
                             // Move previous data by displacement vector
                             typename Point<T>::list::iterator point_iter;
 
-                            for (point_iter = pc->get_points().begin(); point_iter != pc->get_points().end(); point_iter++) {
+                            for (point_iter = pc->get_points().begin();
+                                    point_iter != pc->get_points().end(); point_iter++) {
                                 typename Point<T>::ptr p = *point_iter;
                                 vector<T> x = p->coordinate + displacement;
                                 vector<int> source_gridpoint = p->gridpoint;
                                 vector<int> dest_gridpoint = m_coordinate_system->newGridPoint();
                                 try {
                                     m_coordinate_system->reverse_lookup(x, dest_gridpoint);
-                                    for (size_t var_index = 0; var_index < m_ci_comparison_data_store->rank(); var_index++) {
+                                    for (size_t var_index = 0;
+                                            var_index < m_ci_comparison_data_store->rank(); var_index++) {
                                         bool is_valid = false;
-                                        T value = m_ci_comparison_data_store->get(var_index, source_gridpoint, is_valid);
+                                        T value = m_ci_comparison_data_store->get(var_index, source_gridpoint,
+                                                is_valid);
                                         if (is_valid) {
                                             // we are manipulating raw data in the NetCDFDataStore, which
                                             // keeps the values in 'packed' format internally. When calling
@@ -538,6 +552,7 @@ namespace m3D {
 
                 MultiArray<bool> *m_overlap;
                 MultiArray<bool> *m_curr_cluster_area;
+
                 OverlapFunctor(MultiArray<bool> *overlap, MultiArray<bool> *curr_cluster_area)
                 : m_overlap(overlap), m_curr_cluster_area(curr_cluster_area)
                 {
@@ -592,7 +607,14 @@ namespace m3D {
                 for (size_t i = 0; i < mapping.size(); i++) {
                     vector<int> gridpoint = mapping.linear_to_grid(i);
                     vector<T> values;
-                    data->values_around(gridpoint, bandwidth, values);
+#if WITH_OPENMP
+#pragma omp critical
+                    {
+#endif
+                        data->values_around(gridpoint, bandwidth, values);
+#if WITH_OPENMP
+                    }
+#endif
                     // sort the data in ascending order
                     std::sort(values.begin(), values.end());
                     // calculate the number of values that make up
@@ -621,7 +643,6 @@ namespace m3D {
         void
         calculate_weight_function(FeatureSpace<T> *fs)
         {
-            // compute the weights
 
 #if DEBUG_CI_SCORE
             vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
@@ -632,7 +653,7 @@ namespace m3D {
             m_62_108_trend = new MultiArrayBlitz<T>(dims, 1000);
             m_134_108_trend = new MultiArrayBlitz<T>(dims, 1000);
 #endif
-
+            // compute the weights
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
                 bool have_overlap = (m_overlap == NULL || m_overlap->get(p->gridpoint) == true);
@@ -724,7 +745,7 @@ namespace m3D {
 
     private:
 
-        /** Calculates the weight at the given point using the 
+        /** Calculates the weight at the given point using the
          * the scoring scheme.
          */
         T compute_weight(Point<T> *p)

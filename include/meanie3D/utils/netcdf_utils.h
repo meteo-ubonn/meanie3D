@@ -359,7 +359,7 @@ namespace m3D {
              * @param variable
              * @param valid_min
              * @param valid_min
-             * @throw std::exception if neither valid_min+valid_max nor valid_range existed
+             * @throw std::runtime_error if neither valid_min+valid_max nor valid_range existed
              */
             template <typename T>
             void
@@ -397,7 +397,9 @@ namespace m3D {
                 // No valid_range or valid_min+valid_max constitutes
                 // a reason for exception
                 if (!have_valid_range) {
-                    throw std::exception();
+                    std::stringstream msgBuf;
+                    msgBuf << "Variable " << var.getName() << " does not have valid range";
+                    throw std::runtime_error(msgBuf.str());
                 }
             }
 

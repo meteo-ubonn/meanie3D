@@ -415,6 +415,9 @@ namespace m3D {
                     }
                 }
             }
+            
+            this->ncFile = file;
+            
         } catch (const std::exception &e) {
             std::cerr << "ERROR:exception while writing cluster file: " << e.what() << endl;
             throw e;

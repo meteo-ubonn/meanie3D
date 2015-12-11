@@ -121,8 +121,11 @@ namespace m3D {
         }
 
         // Check if the feature variables match
-        if (run.previous->feature_variables != run.current->feature_variables) {
-            cerr << "FATAL:Incompatible feature variables in the cluster files:" << endl;
+        if (run.previous->variable_names != run.current->variable_names) {
+            cerr << "FATAL:Incompatible feature variables in the cluster files:"
+                 << " previous:" << run.previous->variable_names
+                 << " current:" <<  run.current->variable_names
+                 << endl;
             exit(EXIT_FAILURE);
         }
 
@@ -193,17 +196,11 @@ namespace m3D {
                 }
             } else {
                 bool found_tracking_var = false;
-                for (size_t i = 0; i < run.current->feature_variables.size(); i++) {
-                    NcVar v = run.current->feature_variables[i];
-                    try {
-                        if (v.getName() == m_params.tracking_variable) {
-                            found_tracking_var = true;
-                            run.tracking_var_index = i;
-                            run.haveHistogramInfo = true;
-                        }
-                    } catch (const std::exception &e) {
-                        cerr << "FATAL:" << e.what() << endl;
-                        exit(EXIT_FAILURE);
+                for (size_t i = 0; i < run.current->variable_names.size(); i++) {
+                    if (run.current->variable_names[i] == m_params.tracking_variable) {
+                        found_tracking_var = true;
+                        run.tracking_var_index = i;
+                        run.haveHistogramInfo = true;
                     }
                 }
                 if (!found_tracking_var) {
@@ -265,7 +262,7 @@ namespace m3D {
             // Bestow the current cluster list with fresh uuids
             ClusterUtils<T>::provideUuids(run.current, run.highestUuid);
 
-            if (m_params.verbosity >= VerbosityNormal) {
+            if (m_params.verbosity > VerbosityNormal) {
                 cout << endl << "-- previous clusters --" << endl;
                 run.previous->print();
                 cout << endl << "-- current clusters --" << endl;

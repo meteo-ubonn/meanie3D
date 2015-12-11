@@ -99,9 +99,9 @@ namespace m3D {
         const CoordinateSystem<T> *cs = this->feature_space->coordinate_system;
         NcFile file(m_data_store->filename(), NcFile::read);
         vector<NcVar> vars(cs->dimension_variables());
-
         for (size_t i = 0; i < m_data_store->rank(); i++) {
-            NcVar variable = file.getVar(m_data_store->variable_names()[i]);
+            std::string var_name = m_data_store->variable_names()[i];
+            NcVar variable = file.getVar(var_name);
             vars.push_back(variable);
         }
         ClusterList<T> cluster_list(vars, cs->dimensions(),
@@ -150,13 +150,13 @@ namespace m3D {
         m3D::id_t id = 0;
         ClusterUtils<T>::provideIds(&cluster_list,id);
 
-        cout << "Cluster list after aggregation:" << endl;
-        cluster_list.print();
+//        cout << "Cluster list after aggregation:" << endl;
+//        cluster_list.print();
 
         // Replace points with original data ()
         ClusterUtils<T>::replace_points_from_datastore(cluster_list, m_data_store);
-        cout << "Cluster list after filtering points:" << endl;
-        cluster_list.print();
+//        cout << "Cluster list after filtering points:" << endl;
+//        cluster_list.print();
 
         // Find margin points (#325)
         ClusterUtils<T>::obtain_margin_flag(cluster_list, this->feature_space);
