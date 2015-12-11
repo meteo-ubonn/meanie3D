@@ -124,7 +124,9 @@ def removeOutputDirectories(config,scales):
             else:
                 dir = output_dir + "/clustering"
                 external.execute_command("rm","-rf %s" % os.path.abspath(dir))
-    return
+        else:
+            return False
+    return True
 
 ##
 # Tests if the dictionary has the given key. If so, it retrieves the

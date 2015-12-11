@@ -173,7 +173,8 @@ def main():
 
     # Remove previous results
     if resume == False:
-        meanie3D.app.utils.removeOutputDirectories(configuration,scales)
+        if not meanie3D.app.utils.removeOutputDirectories(configuration,scales):
+            return
 
     # Run the detection and tracking steps
     detection = meanie3D.app.utils.getSafe(configuration,'detection')
