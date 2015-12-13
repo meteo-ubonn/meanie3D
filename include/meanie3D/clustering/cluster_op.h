@@ -28,6 +28,7 @@
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
 #include <meanie3D/parallel.h>
+#include <meanie3D/operations/kernels.h>
 #include <meanie3D/clustering/cluster_list.h>
 #include <meanie3D/operations/operation.h>
 

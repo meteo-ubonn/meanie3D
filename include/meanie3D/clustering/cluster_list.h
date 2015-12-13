@@ -27,10 +27,8 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/array.h>
 #include <meanie3D/clustering/id.h>
 #include <meanie3D/featurespace.h>
-#include <meanie3D/weights.h>
 #include <meanie3D/utils/netcdf_utils.h>
 
 #include <vector>

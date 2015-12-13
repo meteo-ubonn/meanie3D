@@ -26,9 +26,11 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+#include <meanie3D/array/linear_index_mapping.h>
+#include <meanie3D/clustering/cluster.h>
+#include <meanie3D/clustering/cluster_list.h>
 #include <meanie3D/utils/matrix.h>
-#include <meanie3D/utils.h>
-#include <meanie3D/clustering.h>
+#include <meanie3D/utils/time_utils.h>
 
 #include <netcdf>
 

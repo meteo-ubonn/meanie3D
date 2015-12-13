@@ -26,12 +26,16 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+#include <meanie3D/array/array_index.h>
 #include <meanie3D/filters/filter.h>
 #include <meanie3D/filters/scalespace_kernel.h>
 
 #include <boost/progress.hpp>
 
 namespace m3D {
+
+    template <class T>
+    class ArrayIndex;
 
     /** Smoothes the data with a scale-space filter. This filter does NOT create
      * new points. Only the existing points are smoothed out.

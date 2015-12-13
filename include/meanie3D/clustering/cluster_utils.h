@@ -30,8 +30,11 @@
 
 #include <meanie3D/clustering/cluster.h>
 #include <meanie3D/clustering/cluster_list.h>
+#include <meanie3D/utils/verbosity.h>
 
 namespace m3D {
+
+    using utils::Verbosity;
 
     template <typename T>
     class ClusterUtils
@@ -56,7 +59,7 @@ namespace m3D {
                 typename ClusterList<T>::ptr current,
                 CoordinateSystem<T> *coord_system,
                 WeightFunction<T> *weight_function,
-                const Verbosity verbosity = VerbosityNormal);
+                const Verbosity verbosity = utils::VerbosityNormal);
 
         /** Iterates over all clusters in the list and replaces the 
          * points in each cluster with the value from the data store. 
