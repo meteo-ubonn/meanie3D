@@ -26,19 +26,20 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+
 #include <meanie3D/array.h>
-#include <meanie3D/array/linear_index_mapping.h>
-#include <meanie3D/clustering/cluster.h>
-#include <meanie3D/clustering/cluster_list.h>
 #include <meanie3D/clustering/cluster_op.h>
-#include <meanie3D/clustering/cluster_utils.h>
-#include <meanie3D/weights/weight_function.h>
-#include <meanie3D/utils.h>
+#include <meanie3D/clustering/cluster_list.h>
+#include <meanie3D/filters/scalespace_filter.h>
+#include <meanie3D/filters.h>
 #include <meanie3D/tracking.h>
+#include <meanie3D/utils/time_utils.h>
 
 #include <netcdf>
 #include <vector>
 #include <map>
+
+#include "weight_function.h"
 
 namespace m3D {
 
@@ -357,6 +358,12 @@ namespace m3D {
                     upper_thresholds,
                     replacement_values,
                     true);
+
+            T decay = 0.01;
+            vector<T> resolution = proto_fs->coordinate_system->resolution();
+            vector<netCDF::NcVar> excluded;
+            ScaleSpaceFilter<T> sf(5.0, resolution, excluded, decay, false);
+            sf.apply(proto_fs);
 
             // Obtain protoclusters
             T kernel_size = 10.0; // Search radius 10km
