@@ -30,6 +30,7 @@
 #include <meanie3D/weights/weight_function.h>
 #include <meanie3D/index/search_parameters.h>
 #include <meanie3D/operations/kernels.h>
+#include <meanie3D/utils/vector_utils.h>
 
 #include <netcdf>
 #include <vector>
@@ -38,7 +39,7 @@
 namespace m3D {
 
     using namespace netCDF;
-    using namespace ::m3D;
+    using namespace utils::vectors;
     using std::vector;
     using std::map;
 
@@ -64,29 +65,18 @@ namespace m3D {
         calculate_weight_function(FeatureSpace<T> *fs)
         {
             size_t spatial_dim = fs->coordinate_system->rank();
-
             vector<size_t> indexes(spatial_dim);
-
             for (size_t i = 0; i < spatial_dim; i++) indexes[i] = i;
-
             m_index = PointIndex<T>::create(&fs->points, indexes);
-
             m_kernel = new GaussianNormalKernel<T>(vector_norm(m_bandwidth));
-
             m_search_params = new RangeSearchParams<T>(m_bandwidth);
-
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
-
                 T saliency = this->compute_weight(p);
-
                 m_weight->set(p->gridpoint, saliency);
             }
-
             delete m_index;
-
             delete m_kernel;
-
             delete m_search_params;
         };
 
