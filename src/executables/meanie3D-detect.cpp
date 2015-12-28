@@ -17,6 +17,7 @@
 #include <limits>
 #include <stdlib.h>
 #include <netcdf>
+#include <meanie3D/utils/time_utils.h>
 
 using namespace std;
 using namespace boost;
@@ -68,6 +69,9 @@ void parse_commmandline(program_options::variables_map vm,
                         std::string **ci_comparison_file,
                         std::string **ci_comparison_protocluster_file,
                         bool &ci_satellite_only,
+                        bool &ci_use_walker_mecikalski,
+                        FS_TYPE &ci_protocluster_scale,
+                        int &ci_protocluster_min_size,
                         FS_TYPE &cluster_coverage_threshold,
                         bool &spatial_range_only,
                         bool &coalesceWithStrongestNeighbour,
@@ -84,7 +88,7 @@ void parse_commmandline(program_options::variables_map vm,
 {
     if (vm.count("file") == 0) {
         cerr << "Missing input file argument" << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     filename = vm["file"].as<string>();
     try {
@@ -108,7 +112,7 @@ void parse_commmandline(program_options::variables_map vm,
     // Extract dimensions
     if (vm.count("dimensions") == 0) {
         cerr << "Missing parameter --dimensions" << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // parse dimension list
@@ -239,7 +243,7 @@ void parse_commmandline(program_options::variables_map vm,
         }
         if (ranges.size() != dimension_variables.size() + variables.size()) {
             cerr << "Please provide " << dimension_variables.size() + variables.size() << " bandwidth values" << endl;
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         parameters = parameters + "ranges=" + vm["ranges"].as<string>();
     }
@@ -262,7 +266,7 @@ void parse_commmandline(program_options::variables_map vm,
                     subtoken_iter++;
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
-                        exit(1);
+                        exit(EXIT_FAILURE);
                     }
                     const char *value = (*subtoken_iter).c_str();
                     lower_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
@@ -272,7 +276,7 @@ void parse_commmandline(program_options::variables_map vm,
 
             if (!have_var) {
                 cerr << "No variable named " << variableName << " found. Check --lower-thresholds parameter" << endl;
-                exit(1);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -292,7 +296,7 @@ void parse_commmandline(program_options::variables_map vm,
                     subtoken_iter++;
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
-                        exit(1);
+                        exit(EXIT_FAILURE);
                     }
                     const char *value = (*subtoken_iter).c_str();
                     upper_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
@@ -301,7 +305,7 @@ void parse_commmandline(program_options::variables_map vm,
             }
             if (!have_var) {
                 cerr << "No variable named " << variableName << " found. Check --upper-thresholds parameter" << endl;
-                exit(1);
+                exit(EXIT_FAILURE);
             }
         }
     }
@@ -323,12 +327,12 @@ void parse_commmandline(program_options::variables_map vm,
             }
             if (variable.isNull()) {
                 cerr << "No variable named " << variableName << " found. Check --replacement-values parameter" << endl;
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             subtoken_iter++;
             if (subtoken_iter == subtokens.end()) {
                 cerr << "Missing replacement value for variable " << variableName << endl;
-                exit(1);
+                exit(EXIT_FAILURE);
             }
             const char *value = (*subtoken_iter).c_str();
             double doubleValue = strtod(value, (char **) NULL);
@@ -347,16 +351,20 @@ void parse_commmandline(program_options::variables_map vm,
           kernel_name == "none")) {
         cerr << "Illegal kernel name " << kernel_name <<
         ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // Weight Function
     weight_function_name = vm["weight-function-name"].as<string>();
-    if (!(weight_function_name == "default" || weight_function_name == "inverse" || weight_function_name == "oase" ||
-          weight_function_name == "pow10")) {
+    if (!(weight_function_name == "default" 
+            || weight_function_name == "inverse" 
+            || weight_function_name == "pow10"
+            || weight_function_name == "oase" 
+            || weight_function_name == "oase-ci" )) 
+    {
         cerr << "Illegal weight function name " << weight_function_name <<
         ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     wwf_lower_threshold = vm["wwf-lower-threshold"].as<FS_TYPE>();
     wwf_upper_threshold = vm["wwf-upper-threshold"].as<FS_TYPE>();
@@ -374,7 +382,6 @@ void parse_commmandline(program_options::variables_map vm,
     write_weight_response = vm.count("write-cluster-weight-response") > 0;
     write_weight_function = vm.count("write-weight-function") > 0;
     write_meanshift_vectors = vm.count("write-meanshift-vectors") > 0;
-    ci_satellite_only = vm.count("ci-satellite-only") > 0;
     include_weight = vm.count("include-weight-function-in-results") > 0;
 
     // VTK dimension mapping
@@ -402,6 +409,7 @@ void parse_commmandline(program_options::variables_map vm,
         }
     }
 
+    
     // Previous file
     if (vm.count("previous-file") > 0) {
         std::string previous = vm["previous-file"].as<string>();
@@ -413,8 +421,11 @@ void parse_commmandline(program_options::variables_map vm,
         }
     }
 
+    // CI flags
+    ci_satellite_only = vm.count("ci-satellite-only") > 0;
+    ci_use_walker_mecikalski = vm.count("ci-use-walker-mecikalski") > 0;
+    
     // ci_comparison_file
-
     if (vm.count("ci-comparison-file") > 0) {
         std::string previous = vm["ci-comparison-file"].as<string>();
         boost::filesystem::path previous_path(previous);
@@ -436,6 +447,13 @@ void parse_commmandline(program_options::variables_map vm,
             "Illegal value for parameter --ci-comparison-protocluster-file: does not exist or is no regular file" <<
             endl;
         }
+    }
+    
+    if (vm.count("ci-protocluster-scale") > 0) {
+        ci_protocluster_scale = vm["ci-protocluster-scale"].as<FS_TYPE>();
+    }
+    if (vm.count("ci-protocluster-min-size") > 0) {
+        ci_protocluster_min_size = vm["ci-protocluster-min-size"].as<int>();
     }
 
     // previous-cluster-coverage-threshold
@@ -546,6 +564,10 @@ int main(int argc, char **argv) {
             ("ci-comparison-protocluster-file", program_options::value<string>(),
              "Protoclusters from the comparison file")
             ("ci-satellite-only", "If present, only satellite values are used (original score), otherwise ")
+            ("ci-use-walker-mecikalski", "If present, the original limits by Walker and Mecicalski are used for CI score. If absent, the modified version is used")
+            ("ci-protocluster-scale", program_options::value<FS_TYPE>()->default_value(25.0), "Scale parameter for protocluster detection")
+            ("ci-protocluster-min-size", program_options::value<int>()->default_value(10), "Minimum size of protoclusters")
+            ("ci-use-walker-mecikalski", "If present, the original limits by Walker and Mecicalski are used for CI score. If absent, the modified version is used")
             ("coalesce-with-strongest-neighbour",
              "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
             ("scale,s", program_options::value<double>()->default_value(NO_SCALE),
@@ -622,7 +644,10 @@ int main(int argc, char **argv) {
     std::string *previous_file = NULL;
     std::string *ci_comparison_file = NULL;
     std::string *ci_comparison_protocluster_file = NULL;
+    bool ci_use_walker_mecikalski = false;
     bool ci_satellite_only = false;
+    FS_TYPE ci_protocluster_scale;
+    int ci_protocluster_min_size;
     bool include_weight_in_result = false;
     FS_TYPE cluster_coverage_threshold = 0.66;
     int convection_filter_index = -1;
@@ -675,6 +700,9 @@ int main(int argc, char **argv) {
                            &ci_comparison_file,
                            &ci_comparison_protocluster_file,
                            ci_satellite_only,
+                           ci_use_walker_mecikalski,
+                           ci_protocluster_scale,
+                           ci_protocluster_min_size,
                            cluster_coverage_threshold,
                            spatial_range_only,
                            coalesceWithStrongestNeighbour,
@@ -752,7 +780,7 @@ int main(int argc, char **argv) {
         }
 
         if (scale != NO_SCALE) {
-            double width = sqrt(ceil(-2.0 * scale * log(0.01))) / 2;
+            double width = ScaleSpaceFilter<FS_TYPE>::scale_to_filter_width(scale);
             if (ranges.empty()) {
                 kernel_width = width;
             }
@@ -930,26 +958,37 @@ int main(int argc, char **argv) {
             start_timer();
         }
 
-        if (weight_function_name == "oase") {
+        if (weight_function_name == "oase-ci") 
+        {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
-                                                                filename,
-                                                                ranges,
-                                                                ci_comparison_file,
-                                                                ci_comparison_protocluster_file,
-                                                                ci_satellite_only);
-        } else if (weight_function_name == "inverse") {
+                    filename, ranges,
+                    ci_protocluster_scale, ci_protocluster_min_size,
+                    ci_comparison_file, ci_comparison_protocluster_file,
+                    ci_satellite_only, ci_use_walker_mecikalski);
+        } 
+        else  if (weight_function_name == "oase") 
+        {
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
+        } 
+        else if (weight_function_name == "inverse") 
+        {
             weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(),
                                                                         sf.get_filtered_max());
-        } else if (weight_function_name == "pow10") {
+        } 
+        else if (weight_function_name == "pow10") 
+        {
             weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
-        } else {
+        } 
+        else 
+        {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(),
                                                                  sf.get_filtered_max());
         }
         cout << " done (" << stop_timer() << "s)." << endl;
 
         // Apply weight function filter
-        WeightThresholdFilter<FS_TYPE> wtf(weight_function, wwf_lower_threshold, wwf_upper_threshold, true);
+        WeightThresholdFilter<FS_TYPE> wtf(weight_function, 
+                wwf_lower_threshold, wwf_upper_threshold, true);
         wtf.apply(fs);
 
         if (verbosity > VerbositySilent) {
@@ -962,20 +1001,28 @@ int main(int argc, char **argv) {
             start_timer();
         }
 
-        if (weight_function_name == "oase") {
+        if (weight_function_name == "oase-ci") {
             weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
-                                                                filename,
-                                                                ranges,
-                                                                ci_comparison_file,
-                                                                ci_comparison_protocluster_file,
-                                                                ci_satellite_only);
-            //            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
-        } else if (weight_function_name == "inverse") {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, lower_thresholds,
-                                                                        upper_thresholds);
-        } else if (weight_function_name == "pow10") {
+                    filename, ranges, 
+                    ci_protocluster_scale, ci_protocluster_min_size,
+                    ci_comparison_file, ci_comparison_protocluster_file,
+                    ci_satellite_only, ci_use_walker_mecikalski);
+        } 
+        else if (weight_function_name == "oase") 
+        {
+            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
+        } 
+        else if (weight_function_name == "inverse") 
+        {
+            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, 
+                    lower_thresholds, upper_thresholds);
+        } 
+        else if (weight_function_name == "pow10") 
+        {
             weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
-        } else {
+        } 
+        else 
+        {
             weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
         }
         cout << " done (" << stop_timer() << "s)." << endl;
@@ -985,7 +1032,9 @@ int main(int argc, char **argv) {
         wtf.apply(fs);
 
         if (verbosity > VerbositySilent) {
-            cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
+            cout << "Filtered featurespace contains " 
+                    << fs->count_original_points() 
+                    << " original points " << endl;
         }
     }
 
@@ -993,7 +1042,9 @@ int main(int argc, char **argv) {
 
     if (write_weight_function) {
         std::string wfname = "weights-" + path.filename().stem().string();
+        start_timer("Writing weight function");
         VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
+        stop_timer("done");
     }
 
     if (!vtk_variables.empty()) {

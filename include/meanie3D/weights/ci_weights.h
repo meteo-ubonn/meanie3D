@@ -51,12 +51,12 @@ namespace m3D {
 
     static const size_t CI_WEIGHT_NUM_VARS = 6;
     static const char *CI_WEIGHT_VARS[] = {
-        "msevi_l15_ir_108",
-        "msevi_l15_wv_062",
-        "msevi_l15_ir_134",
-        "cband_radolan_rx",
-        "linet_oase_tl",
-        "msevi_l15_hrv"
+            "msevi_l15_ir_108",
+            "msevi_l15_wv_062",
+            "msevi_l15_ir_134",
+            "cband_radolan_rx",
+            "linet_oase_tl",
+            "msevi_l15_hrv"
     };
 
     // Shorthands used to access variables in order
@@ -72,7 +72,7 @@ namespace m3D {
 
     static const size_t PROTOCLUSTER_NUM_VARS = 1;
     static const char *PROTOCLUSTER_VARS[] = {
-        "msevi_l15_ir_108"
+            "msevi_l15_ir_108"
     };
 
     /** This class represents a weight function loosely based on the CI score
@@ -84,8 +84,7 @@ namespace m3D {
      *
      */
     template<class T>
-    class OASECIWeightFunction : public WeightFunction<T>
-    {
+    class OASECIWeightFunction : public WeightFunction<T> {
     private:
 
         //
@@ -105,6 +104,8 @@ namespace m3D {
         std::vector<std::string> m_protocluster_variables;
         ClusterList<T> m_protoclusters;
         ClusterList<T> *m_previous_protoclusters;
+        T m_protocluster_scale;
+        int m_protocluster_min_size;
 
         MultiArray<bool> *m_prev_cluster_area;
         MultiArray<bool> *m_curr_cluster_area;
@@ -144,23 +145,29 @@ namespace m3D {
          * @param featurespace
          */
         OASECIWeightFunction(FeatureSpace<T> *fs,
-                const std::string &filename,
-                const vector<T> &bandwidth,
-                const std::string *ci_comparison_file = NULL,
-                const std::string *ci_comparison_protocluster_file = NULL,
-                bool satellite_only = false,
-                bool use_walker_mecikalski_limits = false,
-                const int time_index = -1)
-        : m_data_store(NULL), m_ci_comparison_file(ci_comparison_file), m_ci_comparison_data_store(NULL),
-        m_coordinate_system(fs->coordinate_system),
-        m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0)),
-        m_satellite_only(satellite_only), m_use_walker_mecikalski_limits(use_walker_mecikalski_limits),
-        m_previous_protoclusters(NULL)
+                             const std::string &filename,
+                             const vector<T> &bandwidth,
+                             T protocluster_scale,
+                             int protocluster_min_size,
+                             const std::string *ci_comparison_file = NULL,
+                             const std::string *ci_comparison_protocluster_file = NULL,
+                             bool satellite_only = false,
+                             bool use_walker_mecikalski_limits = false,
+                             const int time_index = -1)
+                : m_data_store(NULL),
+                  m_ci_comparison_file(ci_comparison_file),
+                  m_ci_comparison_data_store(NULL),
+                  m_coordinate_system(fs->coordinate_system),
+                  m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0)),
+                  m_satellite_only(satellite_only),
+                  m_use_walker_mecikalski_limits(use_walker_mecikalski_limits),
+                  m_previous_protoclusters(NULL),
+                  m_protocluster_scale(protocluster_scale),
+                  m_protocluster_min_size(protocluster_min_size)
         {
+
             // Obtain a data store with all the relevant variables
-
             using namespace utils;
-
             try {
                 NcFile file(filename.c_str(), NcFile::read);
                 for (size_t i = 0; i < CI_WEIGHT_NUM_VARS; i++) {
@@ -168,7 +175,7 @@ namespace m3D {
                     NcVar var = file.getVar(CI_WEIGHT_VARS[i]);
                     if (var.isNull()) {
                         cerr << "FATAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" <<
-                                endl;
+                        endl;
                         exit(EXIT_FAILURE);
                     }
 
@@ -178,8 +185,7 @@ namespace m3D {
                     switch (i) {
                         case msevi_l15_ir_108:
                         case msevi_l15_wv_062:
-                        case msevi_l15_ir_134:
-                        {
+                        case msevi_l15_ir_134: {
                             m_c1[i] = nu::get_attribute_value<T>(var, "rad_const1");
                             m_c2[i] = nu::get_attribute_value<T>(var, "rad_const2");
                             m_alpha[i] = nu::get_attribute_value<T>(var, "alpha");
@@ -195,9 +201,9 @@ namespace m3D {
 
             // Create the data store
             this->m_data_store = new NetCDFDataStore<T>(filename,
-                    fs->coordinate_system,
-                    this->m_variable_names,
-                    time_index);
+                                                        fs->coordinate_system,
+                                                        this->m_variable_names,
+                                                        time_index);
 
             // Set up variables used for protoclustering
             try {
@@ -231,9 +237,9 @@ namespace m3D {
 #endif
                 m_ci_comparison_data_store
                         = new NetCDFDataStore<T>(*ci_comparison_file,
-                        fs->coordinate_system,
-                        this->m_variable_names,
-                        time_index);
+                                                 fs->coordinate_system,
+                                                 this->m_variable_names,
+                                                 time_index);
 
                 if (ci_comparison_protocluster_file != NULL) {
                     // Load previous proto-clusters
@@ -278,8 +284,7 @@ namespace m3D {
 
         }
 
-        ~OASECIWeightFunction()
-        {
+        ~OASECIWeightFunction() {
             if (this->m_data_store != NULL) {
                 delete this->m_data_store;
                 this->m_data_store = NULL;
@@ -324,8 +329,7 @@ namespace m3D {
     private:
 
         void
-        obtain_protoclusters()
-        {
+        obtain_protoclusters() {
             cout << endl << endl;
             cout << "+ ---------------------------- +" << endl;
             cout << "+ Obtaining protoclusters      +" << endl;
@@ -341,52 +345,51 @@ namespace m3D {
 
             cout << endl;
             cout << "protocluster featurespace variables (in): "
-                    << m_protocluster_variables << endl;
+            << m_protocluster_variables << endl;
 
             NetCDFDataStore<T> *proto_store
                     = new NetCDFDataStore<T>(m_data_store->filename(),
-                    m_coordinate_system,
-                    m_protocluster_variables,
-                    -1);
+                                             m_coordinate_system,
+                                             m_protocluster_variables,
+                                             -1);
             cout << "protocluster featurespace variables (datastore): "
-                    << proto_store->variable_names() << endl;
+            << proto_store->variable_names() << endl;
 
             FeatureSpace<T> *proto_fs
                     = new FeatureSpace<T>(m_coordinate_system,
-                    proto_store,
-                    lower_thresholds,
-                    upper_thresholds,
-                    replacement_values,
-                    true);
-
-            T decay = 0.01;
-            vector<T> resolution = proto_fs->coordinate_system->resolution();
-            vector<netCDF::NcVar> excluded;
-            ScaleSpaceFilter<T> sf(5.0, resolution, excluded, decay, false);
-            sf.apply(proto_fs);
+                                          proto_store,
+                                          lower_thresholds,
+                                          upper_thresholds,
+                                          replacement_values,
+                                          true);
 
             // Obtain protoclusters
-            T kernel_size = 10.0; // Search radius 10km
-            int size_threshold = 10; // Min 10km^2 area
+            T kernel_size = ScaleSpaceFilter<T>::scale_to_filter_width(m_protocluster_scale);
+
+            vector<T> resolution = proto_fs->coordinate_system->resolution();
+            vector<netCDF::NcVar> excluded;
+            ScaleSpaceFilter<T> sf(kernel_size, resolution, excluded);
+            sf.apply(proto_fs);
+
             Kernel<T> *proto_kernel = new UniformKernel<T>(kernel_size);
             WeightFunction<T> *proto_weight = new DefaultWeightFunction<T>(proto_fs);
             PointIndex<T> *proto_index = PointIndex<T>::create(proto_fs->get_points(), proto_fs->rank());
             ClusterOperation<T> proto_cop(proto_fs,
-                    proto_store,
-                    proto_index);
+                                          proto_store,
+                                          proto_index);
 
             vector<T> bandwidth(m_coordinate_system->rank(), kernel_size);
             SearchParameters *search_params = new RangeSearchParams<T>(bandwidth);
             m_protoclusters = proto_cop.cluster(search_params,
-                    proto_kernel,
-                    proto_weight,
-                    false,
-                    true);
+                                                proto_kernel,
+                                                proto_weight,
+                                                false,
+                                                true);
 
             cout << "protocluster featurespace variables (out): "
-                    << m_protoclusters.variable_names << endl;
+            << m_protoclusters.variable_names << endl;
 
-            m_protoclusters.apply_size_threshold(size_threshold);
+            m_protoclusters.apply_size_threshold(m_protocluster_min_size);
 
             m3D::uuid_t uuid = m3D::MIN_UUID;
             ClusterUtils<T>::provideUuids(&m_protoclusters, uuid);
@@ -406,8 +409,7 @@ namespace m3D {
         }
 
         void
-        shift_comparison_data_using_protoclusters(const std::string *ci_comparison_protocluster_file)
-        {
+        shift_comparison_data_using_protoclusters(const std::string *ci_comparison_protocluster_file) {
             using namespace utils::vectors;
             if (ci_comparison_protocluster_file != NULL) {
                 vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
@@ -470,7 +472,7 @@ namespace m3D {
                             typename Point<T>::list::iterator point_iter;
 
                             for (point_iter = pc->get_points().begin();
-                                    point_iter != pc->get_points().end(); point_iter++) {
+                                 point_iter != pc->get_points().end(); point_iter++) {
                                 typename Point<T>::ptr p = *point_iter;
                                 vector<T> x = p->coordinate + displacement;
                                 vector<int> source_gridpoint = p->gridpoint;
@@ -478,10 +480,10 @@ namespace m3D {
                                 try {
                                     m_coordinate_system->reverse_lookup(x, dest_gridpoint);
                                     for (size_t var_index = 0;
-                                            var_index < m_ci_comparison_data_store->rank(); var_index++) {
+                                         var_index < m_ci_comparison_data_store->rank(); var_index++) {
                                         bool is_valid = false;
                                         T value = m_ci_comparison_data_store->get(var_index, source_gridpoint,
-                                                is_valid);
+                                                                                  is_valid);
                                         if (is_valid) {
                                             // we are manipulating raw data in the NetCDFDataStore, which
                                             // keeps the values in 'packed' format internally. When calling
@@ -523,8 +525,7 @@ namespace m3D {
         // calculate overlap mask
 
         void
-        calculate_overlap()
-        {
+        calculate_overlap() {
             vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
             m_overlap = new MultiArrayBlitz<bool>(dims, false);
             m_prev_cluster_area = new MultiArrayBlitz<bool>(dims, false);
@@ -553,23 +554,20 @@ namespace m3D {
 
             // Collate
 
-            class OverlapFunctor : public MultiArray<bool>::ForEachFunctor
-            {
+            class OverlapFunctor : public MultiArray<bool>::ForEachFunctor {
             public:
 
                 MultiArray<bool> *m_overlap;
                 MultiArray<bool> *m_curr_cluster_area;
 
                 OverlapFunctor(MultiArray<bool> *overlap, MultiArray<bool> *curr_cluster_area)
-                : m_overlap(overlap), m_curr_cluster_area(curr_cluster_area)
-                {
+                        : m_overlap(overlap), m_curr_cluster_area(curr_cluster_area) {
                 };
 
                 // for_each callback functor
 
                 void
-                operator()(const vector<int> &index, const bool have_previous)
-                {
+                operator()(const vector<int> &index, const bool have_previous) {
                     bool have_current = m_curr_cluster_area->get(index);
                     m_overlap->set(index, have_current && have_previous);
                 }
@@ -590,8 +588,7 @@ namespace m3D {
         // within a radius h around it
 
         void
-        replace_with_coldest_pixels(NetCDFDataStore<T> *ds, FeatureSpace<T> *fs)
-        {
+        replace_with_coldest_pixels(NetCDFDataStore<T> *ds, FeatureSpace<T> *fs) {
             float percentage = 0.25;
 
             // calculate bandwidth in pixels
@@ -618,7 +615,7 @@ namespace m3D {
 #pragma omp critical
                     {
 #endif
-                        data->values_around(gridpoint, bandwidth, values);
+                    data->values_around(gridpoint, bandwidth, values);
 #if WITH_OPENMP
                     }
 #endif
@@ -648,8 +645,7 @@ namespace m3D {
         }
 
         void
-        calculate_weight_function(FeatureSpace<T> *fs)
-        {
+        calculate_weight_function(FeatureSpace<T> *fs) {
 
 #if DEBUG_CI_SCORE
             vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
@@ -729,8 +725,7 @@ namespace m3D {
          * @param radiance value for the given channel
          * @return brightness temperature in [C]
          */
-        T brightness_temperature(const size_t var_index, const T &radiance)
-        {
+        T brightness_temperature(const size_t var_index, const T &radiance) {
             T wavenum = m_wavenumber[var_index];
             T Tbb = m_c2[var_index] * wavenum / log(1 + wavenum * wavenum * wavenum * m_c1[var_index] / radiance);
             T Tb = (Tbb - m_beta[var_index]) / m_alpha[var_index];
@@ -743,8 +738,7 @@ namespace m3D {
          * @param brightness temperature in [C]
          * @return radiance value for the given channel
          */
-        T spectral_radiance(const size_t var_index, const T &temperature)
-        {
+        T spectral_radiance(const size_t var_index, const T &temperature) {
             T wavenum = m_wavenumber[var_index];
             T Tbb = (temperature + 273.15) * m_alpha[var_index] + m_beta[var_index];
             return wavenum * wavenum * wavenum * m_c1[var_index] / (exp(m_c2[var_index] * wavenum / Tbb) - 1);
@@ -755,8 +749,7 @@ namespace m3D {
         /** Calculates the weight at the given point using the
          * the scoring scheme.
          */
-        T compute_weight(Point<T> *p)
-        {
+        T compute_weight(Point<T> *p) {
             // Silke's suggestion: when radar is present, use max score to
             // make sure objects are tracked.
             T max_score = (this->m_ci_comparison_file != NULL) ? 8 : 6;
@@ -882,8 +875,8 @@ namespace m3D {
 
                     if (!has_radar) {
                         cband_rx = this->m_data_store->get(cband_radolan_rx,
-                                n->gridpoint,
-                                neighbour_is_valid);
+                                                           n->gridpoint,
+                                                           neighbour_is_valid);
 
                         // Start using radar at light rain (>= 25dBZ)
                         has_radar = (neighbour_is_valid && cband_rx >= 25.0 && cband_rx <= 65);
@@ -893,8 +886,8 @@ namespace m3D {
                         neighbour_is_valid = false;
 
                         linet_count = this->m_data_store->get(linet_oase_tl,
-                                n->gridpoint,
-                                neighbour_is_valid);
+                                                              n->gridpoint,
+                                                              neighbour_is_valid);
 
                         has_lightning = (neighbour_is_valid && linet_count > 0.0);
                     }
@@ -920,8 +913,7 @@ namespace m3D {
             return score;
         }
 
-        T operator()(const typename Point<T>::ptr p) const
-        {
+        T operator()(const typename Point<T>::ptr p) const {
             return m_weight->get(p->gridpoint);
         }
 
