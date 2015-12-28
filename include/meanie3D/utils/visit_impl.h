@@ -86,7 +86,6 @@ namespace m3D {
 
         /* ---------------------------------------------------------------- */
         /* General VTK data structure mapping/handling                      */
-
         /* ---------------------------------------------------------------- */
 
         template <typename T>
@@ -1026,21 +1025,12 @@ namespace m3D {
             for (size_t vi = 0; vi < vtk_variables.size(); vi++) {
                 std::string var = vtk_variables[vi];
                 size_t value_index = fs->spatial_rank() + vectors::index_of_first<string>(feature_variables, var);
-                
                 cout << "Writing variable " << var << " (index=" << value_index << ")" << endl;
-
                 vtkDoubleArray* variable = vtkDoubleArray::New();
                 variable->SetName(var.c_str());
                 variable->SetNumberOfComponents(1); // scalar
                 variable->SetNumberOfValues(nx * ny * nz);
                 variable->FillComponent(0,0);
-//                variable->CreateDefaultLookupTable();
-                
-//                for (size_t ix=0; ix < nx; ix++) {
-//                    int gridIndex = to_single_index(cs, nx, ny, nz, ix, ix, 0);
-//                    variable->SetValue(gridIndex,100);
-//                }
-                
                 for (size_t i = 0; i < fs->points.size(); ++i) {
                     typename Point<T>::ptr p = fs->points.at(i);
                     double value = (double) p->values[value_index];
@@ -1588,43 +1578,38 @@ namespace m3D {
                 bool write_legacy)
         {
             const CoordinateSystem<T> *cs = fs->coordinate_system;
-
             int nx, ny, nz;
             VisitUtils<T>::get_vtk_image_dimensions(cs, nx, ny, nz);
-
             vector<vtkDoubleArray *> coords;
             vtkRectilinearGrid *rgrid = allocate_vtk_rectilinear_grid(cs, coords);
-
+            
             vtkDoubleArray* variable = vtkDoubleArray::New();
             variable->SetName("weight");
             variable->SetNumberOfComponents(1); // scalar
             variable->SetNumberOfValues(nx * ny * nz);
+            variable->FillComponent(0,0);
 
             for (size_t i = 0; i < fs->points.size(); ++i) {
                 typename Point<T>::ptr p = fs->points.at(i);
-                T value = weight_function->operator()(p);
-
+                double value = (double) weight_function->operator()(p);
+                if (i % 100 == 0) {
+                    cout << "weight function at " << p->gridpoint << " = " << value << endl;
+                }
                 int gx, gy, gz;
                 VisitUtils<T>::get_vtk_gridpoint(p->gridpoint, gx, gy, gz);
-
                 int gridIndex = to_single_index(cs, nx, ny, nz, gx, gy, gz);
-
                 variable->SetValue(gridIndex, value);
             }
-
             rgrid->GetPointData()->AddArray(variable);
 
             // Write out
-
             if (write_legacy) {
                 // ASCII
-
                 vtkSmartPointer<vtkRectilinearGridWriter>
                         writer = vtkSmartPointer<vtkRectilinearGridWriter>::New();
 
                 std::string fn = filename + ".vtk";
                 writer->SetFileName(fn.c_str());
-
 #if VTK_MAJOR_VERSION <= 5
                 writer->SetInput(rgrid);
 #else
@@ -1633,12 +1618,10 @@ namespace m3D {
                 writer->Write();
             } else {
                 // XML
-
                 vtkSmartPointer<vtkXMLRectilinearGridWriter>
                         xmlWriter = vtkSmartPointer<vtkXMLRectilinearGridWriter>::New();
                 std::string xml_fn = filename + "." + xmlWriter->GetDefaultFileExtension();
                 xmlWriter->SetFileName(xml_fn.c_str());
-
 #if VTK_MAJOR_VERSION <= 5
                 xmlWriter->SetInput(rgrid);
 #else
@@ -1648,11 +1631,9 @@ namespace m3D {
             }
 
             // Clean up
-
             for (size_t ci = 0; ci < coords.size(); ci++) {
                 coords.at(ci)->Delete();
             }
-
             rgrid->Delete();
         }
 
@@ -1685,11 +1666,8 @@ namespace m3D {
                 {
                     int gx, gy, gz;
                     VisitUtils<T>::get_vtk_gridpoint(index, gx, gy, gz);
-
                     int gridIndex = VisitUtils<T>::to_single_index(m_cs, nx, ny, nz, gx, gy, gz);
-
                     m_array->SetValue(gridIndex, value);
-
                 }
             };
 
