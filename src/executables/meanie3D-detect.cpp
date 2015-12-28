@@ -567,7 +567,6 @@ int main(int argc, char **argv) {
             ("ci-use-walker-mecikalski", "If present, the original limits by Walker and Mecicalski are used for CI score. If absent, the modified version is used")
             ("ci-protocluster-scale", program_options::value<FS_TYPE>()->default_value(25.0), "Scale parameter for protocluster detection")
             ("ci-protocluster-min-size", program_options::value<int>()->default_value(10), "Minimum size of protoclusters")
-            ("ci-use-walker-mecikalski", "If present, the original limits by Walker and Mecicalski are used for CI score. If absent, the modified version is used")
             ("coalesce-with-strongest-neighbour",
              "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
             ("scale,s", program_options::value<double>()->default_value(NO_SCALE),
