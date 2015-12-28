@@ -146,6 +146,29 @@ namespace m3D {
         map<size_t, T>
         getRangeFactors();
 
+#pragma mark -
+#pragma mark Utility methods
+
+        /**
+         * Calculates the effective filter width given a specific
+         * scale. The width depends on the decay parameter, which
+         * indicates the percentage of the filter value at 0 to
+         * which the filter value must drop before it's truncated.
+         * @param scale parameter
+         * @param decay (defaults to 1%)
+         * @return the truncated filter's width.
+         */
+        static T scale_to_filter_width(T scale, T decay=0.01);
+
+        /**
+         * Calculates the effective scale given a specific filter
+         * width. See {{scale_to_filter_width}}
+         * @param filter width
+         * @param decay (defaults to 1%)
+         * @return the equivalent scale parameter
+         */
+        static T filter_width_to_scale(T width, T decay=0.01);
+
     };
 }
 

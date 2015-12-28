@@ -43,6 +43,24 @@ namespace m3D {
 
     using namespace std;
 
+#pragma mark -
+#pragma mark Utility methods
+
+    template <typename T>
+    T ScaleSpaceFilter<T>::scale_to_filter_width(T t, T decay) {
+        T filter_width = sqrt(ceil(-2.0 * t * log(decay))) / 2.0;
+        return filter_width;
+    }
+
+    template <typename T>
+    T ScaleSpaceFilter<T>::filter_width_to_scale(T width, T decay) {
+        T scale = -2.0 * width * width / log(decay);
+        return scale;
+    }
+
+#pragma mark -
+#pragma mark Constructor/Destructor
+
     template <typename T>
     ScaleSpaceFilter<T>::ScaleSpaceFilter(T scale,
             const vector<T> &resolution,
