@@ -622,6 +622,7 @@ def updateVisitObjectFromDictionary(object, dictionary):
             setValueForKeyPath(object, key, value)
     return
 
+
 def add_datetime(conf, netcdf_file,time_index):
     '''
     Reads the timestamp info from NetCDF file. Must comply to the

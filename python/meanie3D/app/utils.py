@@ -98,7 +98,7 @@ def askYesNo(prompt):
         result = raw_input(msg)
     return result in ('y','Y')
 
-def removeOutputDirectories(config,scales):
+def removeOutputDirectories(config):
     '''
     :param config:
     :param scales:
@@ -107,8 +107,8 @@ def removeOutputDirectories(config,scales):
 
     dirsExist = False
     output_dir = config['output_dir']
-    if scales:
-        for scale in scales:
+    if config['scales']:
+        for scale in config['scales']:
             dir = output_dir + "/scale"+str(scale)
             dirsExist = (dirsExist or os.path.exists(dir))
     else:
@@ -117,8 +117,8 @@ def removeOutputDirectories(config,scales):
 
     if dirsExist:
         if askYesNo("Results exist from previous runs. They will be removed. Do you wish to proceed?"):
-            if scales:
-                for scale in scales:
+            if config['scales']:
+                for scale in config['scales']:
                     dir = output_dir + "/scale"+str(scale)
                     external.execute_command("rm","-rf %s" % os.path.abspath(dir))
             else:

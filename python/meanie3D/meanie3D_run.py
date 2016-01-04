@@ -176,10 +176,11 @@ def main():
     configuration["resume"] = resume
     configuration['config_file'] = os.path.abspath(config_file)
     configuration['time_operations'] = time_operations
+    configuration['scales'] = scales
 
     # Remove previous results
     if resume == False:
-        if not meanie3D.app.utils.removeOutputDirectories(configuration,scales):
+        if not meanie3D.app.utils.removeOutputDirectories(configuration):
             return
 
     # Run the detection and tracking steps

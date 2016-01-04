@@ -248,6 +248,112 @@ def plot_trackstats(configuration, directory):
 
 # ----------------------------------------------------------------------------
 
+def plot_stats_comparison(configuration):
+    '''
+    Plots comparison charts for each of the parameters to meanie3D-trackstats,
+    namely--length, --directions, --speed and --direction
+    :param configuration:
+    :return:
+    '''
+    scales = configuration['scales']
+    if not scales:
+        print "No scales found, no comparison is done."
+        return False
+
+    pconf = configuration['postprocessing']
+    if not pconf:
+        return False
+
+    if not utils.getValueForKeyPath(pconf,'runScaleComparison'):
+        return False
+
+    conf = utils.getValueForKeyPath(pconf, 'meanie3D-trackstats')
+
+    print "Plotting .eps files for comparison"
+
+    # create a tempfile for gnuplot
+    f = open('plot_stats_comparison.gp', 'w')
+
+    f.write('set terminal png\n')
+    f.write('set style fill transparent pattern 4 border 2\n')
+
+    # track length
+    if utils.getValueForKeyPath(conf,'length'):
+        f.write('set title "Distribution of track length"\n')
+        f.write('set xlabel "Track length in [#steps]"\n')
+        f.write('set ylabel "log(#tracks)"\n')
+        f.write('set xtics 5\n')
+        f.write('set xrange [2:50]\n')
+        f.write('set logscale y\n')
+        f.write('set output "lengths-hist-comparison.png"\n')
+        f.write('plot ')
+        for i in range(0, len(scales)):
+            scale = scales[i]
+            f.write('"scale%s/lengths-hist.txt" with linespoints title "t=%s"' % (scale,scale))
+            if (i < len(scales)-2):
+                f.write(",")
+        f.write('unset logscale y\n')
+        f.write('set autoscale x\n')
+
+    # cluster size
+    if utils.getValueForKeyPath(conf,'size'):
+        f.write('set title "Distribution of cluster size"\n')
+        f.write('set xlabel "log(cluster size in [#gridpoints])"\n')
+        f.write('set ylabel "number of clusters"\n')
+        f.write('set logscale x\n')
+        f.write('set xrange [10:10000]\n')
+        f.write('set xtics auto\n')
+        f.write('set output "sizes-hist-comparison.png"\n')
+        f.write('plot ')
+        for i in range(0, len(scales)):
+            scale = scales[i]
+            f.write('"scale%s/sizes-hist.txt" with linespoints title "t=%s"' % (scale,scale))
+            if (i < len(scales)-2):
+                f.write(",")
+        f.write('unset logscale x\n')
+        f.write('set autoscale x\n')
+
+    # speed
+    if utils.getValueForKeyPath(conf,'speed'):
+        f.write('set title "Distribution of cluster speeds"\n')
+        f.write('set xlabel "Cluster speed in [m/s]"\n')
+        f.write('set ylabel "Number of clusters"\n')
+        f.write('set xtics 5\n')
+        f.write('set output "speeds-hist-comparison.png"\n')
+        f.write('plot ')
+        for i in range(0, len(scales)):
+            scale = scales[i]
+            f.write('"scale%s/speeds-hist.txt" with linespoints title "t=%s"' % (scale,scale))
+            if (i < len(scales)-2):
+                f.write(",")
+
+    # directions
+    if utils.getValueForKeyPath(conf,'direction'):
+        f.write('set title "Distribution of tracking direction"\n')
+        f.write('set xlabel "Cluster direction in [deg]"\n')
+        f.write('set ylabel "Number of clusters"\n')
+        f.write('set xtics 30\n')
+        f.write('set xrange [15:360]\n')
+        f.write('set output "directions-hist-comparison.png"\n')
+        f.write('plot ')
+        for i in range(0, len(scales)):
+            scale = scales[i]
+            f.write('"scale%s/directions-hist.txt" with linespoints title "t=%s"' % (scale,scale))
+            if (i < len(scales)-2):
+                f.write(",")
+
+    f.close()
+
+    return_code = -1
+    try:
+        return_code = external.execute_command("gnuplot", "plot_stats_comparison.gp")
+    except:
+        print "ERROR:%s" % sys.exc_info()[0]
+
+    os.chdir("..")
+    return (return_code == 0)
+
+
 def run_comparison(configuration):
     '''
     Runs cross-scale analysis.
@@ -255,7 +361,7 @@ def run_comparison(configuration):
     :return:
     '''
     print "Running cross-scale comparison"
-    return
+    return plot_stats_comparison(configuration)
 
 
 # ----------------------------------------------------------------------------
@@ -413,9 +519,11 @@ def run(configuration):
 
     # In case scale parameters were given, the output dirs are scaleXYZ.
     # Otherwise it's 'clustering'. To be safe, iterate over both
-    directories = sorted(glob.glob("scale*"), reverse=True)
-    if (os.path.isdir("clustering")):
-        directories.append("clustering")
+    scales = configuration['scales']
+    if scales:
+        directories = ['scale%s' % (scale) for scale in scales]
+    else:
+        directories = ['clustering']
 
     print "Processing directories: %s" % str(directories)
     for directory in directories:
