@@ -622,19 +622,34 @@ def updateVisitObjectFromDictionary(object, dictionary):
             setValueForKeyPath(object, key, value)
     return
 
-def add_datetime(netcdf_file,time_index):
+def add_datetime(conf, netcdf_file,time_index):
     '''
     Reads the timestamp info from NetCDF file. Must comply to the
-    cf-metadata convention.
+    cf-metadata convention. The timestamp position and format can be
+    controlled through the (optional) configuration entry:
+    :param conf:
     :param filename:
-    :param config:
+    :param time_index:
     :return:
     '''
     ncfile = netCDF4.Dataset(netcdf_file, "r")
     times = ncfile.variables['time']
     date = netCDF4.num2date(times[:],units=times.units,calendar=times.calendar)[time_index]
     date = date.replace(microsecond=0)
-    addTextAnnotation(0.725, 0.95, date.isoformat());
+    x = 0.725
+    y = 0.95
+    format = '__default__'
+    if getValueForKeyPath(conf,'timestamp'):
+        if getValueForKeyPath(conf,'timestamp.x'):
+            x = getValueForKeyPath(conf,'timestamp.x')
+        if getValueForKeyPath(conf,'timestamp.y'):
+            y = getValueForKeyPath(conf,'timestamp.y')
+        if getValueForKeyPath(conf,'timestamp.format'):
+            format = getValueForKeyPath(conf,'timestamp.format')
+    if format == '__default__':
+        addTextAnnotation(x, y, date.isoformat())
+    else:
+        addTextAnnotation(x, y, date.strftime(format))
 
 # ---------------------------------------------------------
 #

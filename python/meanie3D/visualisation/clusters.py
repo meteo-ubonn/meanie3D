@@ -159,7 +159,7 @@ def run(conf):
 
                 # Add timestamp
                 if utils.getValueForKeyPath(clusterConf,'showDateTime'):
-                    utils.add_datetime(netcdf_file,0)
+                    utils.add_datetime(clusterConf,netcdf_file,0)
 
                 # Add source data and threshold it
                 print "Plotting source data ..."
@@ -216,7 +216,7 @@ def run(conf):
 
                 # Add timestamp
                 if utils.getValueForKeyPath(clusterConf,'showDateTime'):
-                    utils.add_datetime(netcdf_file,0)
+                    utils.add_datetime(clusterConf,netcdf_file,0)
 
                 # Add background source data
                 if utils.getValueForKeyPath(clusterConf,'showSourceBackground'):
