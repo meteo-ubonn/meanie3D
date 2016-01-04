@@ -27,6 +27,7 @@ import os
 import shutil
 import sys
 import tempfile
+import time
 import visit
 
 # Own packages
@@ -425,7 +426,14 @@ def run(configuration):
             continue
 
         # run the track statistics
+        if configuration['time_operations']:
+            print "Running trackstats ..."
+            start_time = time.time()
+
         if (run_trackstats(configuration, directory)):
+
+            if configuration['time_operations']:
+                print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
             # Copy HTML files
             copy_html_files(configuration, directory)
@@ -436,10 +444,27 @@ def run(configuration):
 
             # run the track visualisations
             if utils.getValueForKeyPath(configuration, 'postprocessing.tracks.visualiseTracks'):
+
+                if configuration['time_operations']:
+                    print "Visualising tracks ..."
+                    start_time = time.time()
+
                 visualise_tracks(configuration, directory)
 
+                if configuration['time_operations']:
+                    print "Finished. (%.2f seconds)" % (time.time()-start_time)
+
         if utils.getValueForKeyPath(configuration, 'postprocessing.clusters.visualiseClusters'):
+
+            if configuration['time_operations']:
+                print "Visualising clusters ..."
+                start_time = time.time()
+
             visualise_clusters(configuration, directory)
+
+            if configuration['time_operations']:
+                print "Finished. (%.2f seconds)" % (time.time()-start_time)
+
 
         cleanup(configuration, directory)
 

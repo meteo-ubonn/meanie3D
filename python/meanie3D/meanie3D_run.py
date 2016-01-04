@@ -42,7 +42,7 @@ meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie
 ## Prints usage and exits
 #
 def usage():
-    print "meanie3D -c=<json file> -f=<netcdf directory> [-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] [--version]"
+    print "meanie3D -c=<json file> -f=<netcdf directory> [-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] [--version] [--time-operations]"
     print "runs a complete set of netcdf files through the clustering/tracking"
     print "-c : json config file specifying variables etc."
     print "-f : directory containing the files. It is assumed that"
@@ -56,6 +56,7 @@ def usage():
     print "              results will be erased before starting"
     print "--help, -h  : print this message and exit."
     print "--version   : prints the version information and exits"
+    print "--time-operations : Print out running time of processing steps"
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -89,13 +90,14 @@ def main():
     # Parse command line
     try:
         argv = sys.argv[1:]
-        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["json-example","resume","help","version","start=","end="])
+        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["json-example","resume","help","version","start=","end=","time-operations"])
     except getopt.GetoptError as detail:
         print detail
         sys.exit(2)
 
     scales = []
     resume = False
+    time_operations = False
     config_file = ""
     output_dir = "."
     netcdf_dir = ""
@@ -139,6 +141,9 @@ def main():
         elif o in ["--version"]:
             print_version()
 
+        elif o in ["--time-operations"]:
+            time_operations = True
+
         else:
             usage()
 
@@ -170,6 +175,7 @@ def main():
     configuration["output_dir"] = os.path.abspath(output_dir)
     configuration["resume"] = resume
     configuration['config_file'] = os.path.abspath(config_file)
+    configuration['time_operations'] = time_operations
 
     # Remove previous results
     if resume == False:

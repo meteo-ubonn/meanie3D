@@ -257,10 +257,14 @@ def run(config,time_index):
             params = params + " > " + logfile
 
             # execute
-            start_time = time.time()
+            if config['time_operations']:
+                start_time = time.time()
+
             print "meanie3D-detect " + params
             external.execute_command("meanie3D-detect",params,True)
-            print "Finished. (%.2f seconds)" % (time.time()-start_time)
+
+            if config['time_operations']:
+                print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
         # ----------------------------------------------
         # Tracking
@@ -280,10 +284,14 @@ def run(config,time_index):
                 params = params + " > " + logfile
 
                 # execute
-                start_time = time.time()
+                if config['time_operations']:
+                    start_time = time.time()
+
                 print "meanie3D-track" + params
                 external.execute_command("meanie3D-track",params,True)
-                print "Finished. (%.2f seconds)" % (time.time()-start_time)
+
+                if config['time_operations']:
+                    print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
         # keep track
         last_cluster_file = cluster_file
