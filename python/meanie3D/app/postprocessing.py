@@ -454,17 +454,16 @@ def run(configuration):
                 if configuration['time_operations']:
                     print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
-        if utils.getValueForKeyPath(configuration, 'postprocessing.clusters.visualiseClusters'):
+            if utils.getValueForKeyPath(configuration, 'postprocessing.clusters.visualiseClusters'):
 
-            if configuration['time_operations']:
-                print "Visualising clusters ..."
-                start_time = time.time()
+                if configuration['time_operations']:
+                    print "Visualising clusters ..."
+                    start_time = time.time()
 
-            visualise_clusters(configuration, directory)
+                visualise_clusters(configuration, directory)
 
-            if configuration['time_operations']:
-                print "Finished. (%.2f seconds)" % (time.time()-start_time)
-
+                if configuration['time_operations']:
+                    print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
         cleanup(configuration, directory)
 
