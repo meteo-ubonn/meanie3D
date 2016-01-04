@@ -67,28 +67,31 @@ namespace m3D {
 
                     dir_iter++;
                 }
-
+                
                 if (!files.empty()) {
-                    size_t token_len = 1;
-
-                    bool have_common = true;
-
-                    while (have_common) {
-                        std::string token = files.at(0).substr(0, token_len);
-
-                        size_t num_matching = 0;
-
-                        for (size_t i = 0; i < files.size(); i++) {
-                            if (boost::algorithm::starts_with(files.at(i), token)) {
-                                num_matching++;
+                    
+                    if (files.size() == 1) {
+                        common = files.at(0);
+                    } 
+                    else 
+                    {
+                        size_t token_len = 1;
+                        bool have_common = true;
+                        while (have_common) {
+                            std::string token = files.at(0).substr(0, token_len);
+                            size_t num_matching = 0;
+                            for (size_t i = 0; i < files.size(); i++) {
+                                std::string file = files.at(i);
+                                if (boost::algorithm::starts_with(file, token)) {
+                                    num_matching++;
+                                }
                             }
-                        }
-
-                        if (num_matching == files.size()) {
-                            common = token;
-                            token_len++;
-                        } else {
-                            have_common = false;
+                            if (num_matching == files.size()) {
+                                common = token;
+                                token_len++;
+                            } else {
+                                have_common = false;
+                            }
                         }
                     }
                 }
