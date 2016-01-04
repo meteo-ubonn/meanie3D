@@ -264,10 +264,10 @@ def plot_stats_comparison(configuration):
     if not pconf:
         return False
 
-    if not utils.getValueForKeyPath(pconf,'runScaleComparison'):
+    if not utils.getValueForKeyPath(pconf,'tracks.runScaleComparison'):
         return False
 
-    conf = utils.getValueForKeyPath(pconf, 'meanie3D-trackstats')
+    conf = utils.getValueForKeyPath(pconf, 'tracks.meanie3D-trackstats')
 
     print "Plotting .eps files for comparison"
 
@@ -290,9 +290,9 @@ def plot_stats_comparison(configuration):
         for i in range(0, len(scales)):
             scale = scales[i]
             f.write('"scale%s/lengths-hist.txt" with linespoints title "t=%s"' % (scale,scale))
-            if (i < len(scales)-2):
+            if (i < len(scales)-1):
                 f.write(",")
-        f.write('unset logscale y\n')
+        f.write('\nunset logscale y\n')
         f.write('set autoscale x\n')
 
     # cluster size
@@ -308,9 +308,9 @@ def plot_stats_comparison(configuration):
         for i in range(0, len(scales)):
             scale = scales[i]
             f.write('"scale%s/sizes-hist.txt" with linespoints title "t=%s"' % (scale,scale))
-            if (i < len(scales)-2):
+            if (i < len(scales)-1):
                 f.write(",")
-        f.write('unset logscale x\n')
+        f.write('\nunset logscale x\n')
         f.write('set autoscale x\n')
 
     # speed
@@ -324,8 +324,9 @@ def plot_stats_comparison(configuration):
         for i in range(0, len(scales)):
             scale = scales[i]
             f.write('"scale%s/speeds-hist.txt" with linespoints title "t=%s"' % (scale,scale))
-            if (i < len(scales)-2):
+            if (i < len(scales)-1):
                 f.write(",")
+        f.write("\n")
 
     # directions
     if utils.getValueForKeyPath(conf,'direction'):
@@ -339,8 +340,9 @@ def plot_stats_comparison(configuration):
         for i in range(0, len(scales)):
             scale = scales[i]
             f.write('"scale%s/directions-hist.txt" with linespoints title "t=%s"' % (scale,scale))
-            if (i < len(scales)-2):
+            if (i < len(scales)-1):
                 f.write(",")
+        f.write("\n")
 
     f.close()
 
