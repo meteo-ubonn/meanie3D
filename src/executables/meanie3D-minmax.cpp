@@ -1,6 +1,5 @@
 //
-//  meanie3D-detect
-//  cf-algorithms
+//  meanie3D-minmax
 //
 //  Created by Jürgen Lorenz Simon on 5/3/12.
 //  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
@@ -33,6 +32,7 @@ using namespace std;
 using namespace boost;
 using namespace netCDF;
 using namespace m3D;
+using namespace m3D::utils;
 
 #pragma mark -
 #pragma mark Definitions
@@ -128,6 +128,7 @@ void get_limits(NcVar variable, T& min, T& max)
         values = allocate<T>(numElements);
         variable.getVar(values);
     }
+    
     else if (variable.getDimCount() == 2)
     {
         // 2D
@@ -168,28 +169,16 @@ void get_limits(NcVar variable, T& min, T& max)
         return;
     }
 
-#if WITH_OPENMP
-#pragma omp parallel for 
-#endif
     for (size_t j = 0; j < numElements; j++)
     {
         T value = values[j];
-
         if (have_fill_value && value == fill_value) continue;
-
         if (value < min)
         {
-#if WITH_OPENMP
-#pragma omp critical
-#endif
             min = value;
         }
-
         if (value > max)
         {
-#if WITH_OPENMP
-#pragma omp critical
-#endif
             max = value;
         }
     }
