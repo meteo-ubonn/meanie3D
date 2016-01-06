@@ -167,15 +167,16 @@ def run(config,time_index):
     # In case a scale T parameter is given, the output dir
     # is scale<T>. Otherwise it's 'clustering'
     output_dir = config['output_dir']
-    if (config.get('scale') == "None"):
-        output_dir = output_dir + "/clustering"
+    scale = utils.getValueForKeyPath(config,'scale')
+    if scale:
+        output_dir = output_dir + "/scale" + scale
     else:
-        output_dir = output_dir + "/scale"+str(config['scale'])
+        output_dir = output_dir + "/clustering"
 
     print "Writing output to " + output_dir
 
     # Resume?
-    if config['resume'] == False:
+    if not utils.getValueForKeyPath(config,'resume'):
         # consider time index. Even if not resuming, the
         # output directories should only be created at
         # the first time step
@@ -187,14 +188,17 @@ def run(config,time_index):
         resume_at_index = utils.number_of_netcdf_files(output_dir+"/netcdf")
         print "Resuming at index " + str(resume_at_index)
 
-    # Get a list of the files we need to process
+    # Get a list of the files we need to process.
+    source = utils.getValueForKeyPath(config,'source_directory')
+    if os.path.isdir(source):
+        # Multiple files in a directory
+        netcdf_list = sorted(glob.glob(source + os.path.sep + '*.nc'))
+    else:
+        # Single file
+        netcdf_list = [source]
 
-    netcdf_pattern = config['source_directory'] + "/*.nc"
-    netcdf_list=sorted(glob.glob(netcdf_pattern))
     last_cluster_file=""
     run_count = 0
-
-    # Process the files one by one
 
     for netcdf_file in netcdf_list:
         basename = os.path.basename(netcdf_file)
@@ -236,8 +240,9 @@ def run(config,time_index):
                 logfile = output_dir+"/log/clustering_" + str(time_index)+".log"
 
             # scale?
-            if not config.get('scale') == "None":
-                scale_param = " -s " + config['scale']
+            scale = utils.getValueForKeyPath(config,'scale')
+            if scale and scale is not 'None':
+                scale_param = " -s " + scale
                 params += scale_param
 
             # use previous result to enhance current?
