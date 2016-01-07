@@ -197,11 +197,11 @@ void convert_clusters(const string &filename,
                 displacements.push_back(c->displacement);
             }
         }
-        string displacements_path = path.filename().stem().string() + "_displacements.vtk";
+        string displacements_path = path.filename().stem().string() + "-displacements.vtk";
         ::m3D::utils::VisitUtils<FS_TYPE>::write_vectors_vtk(displacements_path, origins, displacements, "displacement");
     }
 
-    string centers_path = path.filename().stem().string() + "_centers.vtk";
+    string centers_path = path.filename().stem().string() + "-centers.vtk";
     ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, list->clusters);
 
     delete list;

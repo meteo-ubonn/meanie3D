@@ -39,6 +39,9 @@ _CLUSTER_DIR    = "P_CLUSTER_DIR"
 _M3D_HOME       = "P_M3D_HOME"
 _RESUME         = "P_RESUME"
 _CONFIG_FILE    = "P_CONFIGURATION_FILE"
+_USES_TIME      = P_USES_TIME
+_START_TIME     = "P_START_TIME_INDEX"
+_END_TIME       = "P_END_TIME_INDEX"
 
 # Import modules
 import sys
@@ -55,6 +58,9 @@ configuration["cluster_directory"] = _CLUSTER_DIR
 configuration["source_directory"] = _NETCDF_DIR
 configuration['resume'] = meanie3D.app.utils.strToBool(_RESUME)
 configuration['config_file'] = _CONFIG_FILE
+configuration['uses_time'] = _USES_TIME
+configuration['start_time_index'] = _START_TIME
+configuration['end_time_index'] = _END_TIME
 
 # run it
 # pdb.set_trace()

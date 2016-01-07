@@ -24,7 +24,7 @@
 #ifndef M3D_VISUALIZATIONUTILS_IMPL_H
 #define M3D_VISUALIZATIONUTILS_IMPL_H
 
-#if WITH_VTK
+// #if WITH_VTK
 
 #include <iostream>
 #include <stdlib.h>
@@ -461,8 +461,8 @@ namespace m3D {
         {
             // escape dangerous characters from basename
             string basename = boost::filesystem::path(base_name).stem().string();
-            string mesh_filename = basename + "_clusters_all" + (write_xml ? ".vtu" : ".vtk");
-            string poly_filename = basename + "_boundary_all" + (write_xml ? ".vtu" : ".vtk");
+            string mesh_filename = basename + "-clusters" + (write_xml ? ".vtu" : ".vtk");
+            string poly_filename = basename + "-boundaries" + (write_xml ? ".vtu" : ".vtk");
 
             size_t num_points = 0;
             size_t point_dim = 0;
@@ -1809,5 +1809,5 @@ namespace m3D {
     }
 }
 
-#endif
+// #endif
 #endif

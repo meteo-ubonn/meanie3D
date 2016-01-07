@@ -40,7 +40,7 @@ def run(conf):
     # pp.pprint(conf)
 
     # Make sure the global configuration is in place
-    utils.runGlobalVisitConf(conf)
+    utils.run_global_visit_configuration(conf)
 
     visitConf = utils.getValueForKeyPath(conf,'postprocessing.tracks.visit')
     if not visitConf:

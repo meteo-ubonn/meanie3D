@@ -202,13 +202,10 @@ def run(config,time_index):
 
     for netcdf_file in netcdf_list:
         basename = os.path.basename(netcdf_file)
-        cluster_file= ""
-
-        if time_index < 0:
-            cluster_file= output_dir+"/netcdf/" + os.path.splitext(basename)[0] + "-clusters.nc"
-        else:
-            cluster_file= output_dir+"/netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index) + ".nc"
-            last_cluster_file = output_dir+"/netcdf/" + os.path.splitext(basename)[0] +"-clusters_" +str(time_index-1) + ".nc"
+        cluster_file = output_dir + os.path.sep + "netcdf" +os.path.sep + os.path.splitext(basename)[0];
+        if time_index >= 0:
+            cluster_file = cluster_file + "-" + str(time_index)
+        cluster_file += "-clusters.nc"
 
         print "-------------------------------------------------------------------------------------"
         print "Processing " + netcdf_file

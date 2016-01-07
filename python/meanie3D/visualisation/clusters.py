@@ -36,6 +36,7 @@ import utils
 from meanie3D.app import external
 external.locateCommands(['meanie3D-cfm2vtk'])
 
+
 # ------------------------------------------------------------------------------
 # Adds clusters with names "*_infix_*.vtk" to the current visualisation window.
 # The clusters are colored according to the cluster_colors colortable,
@@ -49,25 +50,17 @@ external.locateCommands(['meanie3D-cfm2vtk'])
 # on the available options, check PseudocolorAttributes()
 #
 # ------------------------------------------------------------------------------
-def addClusters(infix,configuration):
+def add_clusters(cluster_vtk_file,configuration):
     # Get the configuration
     clusterOptions = utils.getValueForKeyPath(configuration,'postprocessing.clusters.visit.cluster')
     if not clusterOptions:
         sys.stderr.write("ERROR:no value found for postprocessing.clusters.visit.cluster")
         return
-
-    # now the clusters
-    cluster_pattern = "*"+infix+"*.vt*"
-    print "Looking for cluster files at " + cluster_pattern
-    cluster_list = sorted(glob.glob(cluster_pattern))
-    if not cluster_list:
-        # all?
-        cluster_list = sorted(glob.glob("*_clusters_all.vt*"))
-    print "Found %d cluster files." % len(cluster_list)
-    for cluster_file in cluster_list:
-        utils.addPseudocolorPlot(cluster_file,clusterOptions)
-
+    # plot the clusters
+    print "Adding clusters from file %s" % cluster_vtk_file
+    utils.addPseudocolorPlot(cluster_vtk_file, clusterOptions)
     return
+
 
 def run(conf):
     '''
@@ -79,7 +72,7 @@ def run(conf):
     #pp.pprint(conf)
 
     # Make sure the global configuration is in place
-    utils.runGlobalVisitConf(conf)
+    utils.run_global_visit_configuration(conf)
     #pdb.set_trace()
 
     clusterConf = utils.getValueForKeyPath(conf,'postprocessing.clusters')
@@ -107,25 +100,52 @@ def run(conf):
         print "Removing intermediary files from previous runs"
         subprocess.call("rm -f *.vtk *.vtr", shell=True)
 
-    # Glob the netcdf directory
+    # Glob the netcdf directory or find the single file
+    uses_time = utils.getValueForKeyPath(conf,'uses_time')
+
     print "Current work directory: " + os.path.abspath(os.getcwd())
-    print "Processing files in directory " + conf['source_directory']
-    netcdf_files = sorted(glob.glob(conf['source_directory']+"/*.nc"))
+    if uses_time:
+        print "Processing file " + conf['source_directory']
+        netcdf_file = conf['source_directory']
+    else:
+        print "Processing files in directory " + conf['source_directory']
+        netcdf_files = sorted(glob.glob(conf['source_directory']+"/*.nc"))
 
     # Keep track of number of images to allow
     # forced re-set in time to circumvent the
     # Visit memory leak
-    image_count=0
+    image_count = 0
 
-    for netcdf_file in netcdf_files:
+    index_range = []
+    if uses_time:
+        t1 = int(utils.getValueForKeyPath(conf,'start_time_index'))
+        t2 = int(utils.getValueForKeyPath(conf,'end_time_index'))
+        index_range = range(t1,t2+1)
+    else:
+        index_range = range(len(netcdf_files))
+        time_index = -1
+
+    for index in index_range:
 
         # construct the cluster filename and find it
         # in the cluster directory
-        netcdf_path,filename    = os.path.split(netcdf_file);
-        basename                = os.path.splitext(filename)[0]
-        cluster_file            = conf['cluster_directory']+"/"+basename+"-clusters.nc"
-        label_file              = basename+"-clusters_centers.vtk"
-        displacements_file      = basename+"-clusters_displacements.vtk"
+        if not uses_time:
+            netcdf_file = netcdf_files[index]
+        else:
+            time_index = index
+
+        netcdf_path,filename = os.path.split(netcdf_file)
+        basename = os.path.splitext(filename)[0]
+        if uses_time:
+            basename = basename + "-" + str(time_index)
+        cluster_file = conf['cluster_directory'] + os.path.sep + basename + "-clusters.nc"
+
+        # cluster file gets it's basename from the input file rather than the cluster file
+        cluster_vtk_file = os.path.splitext(filename)[0] + "-clusters.vtk"
+
+        # label and displacement files are based on the cluster file name
+        label_vtk_file        = basename + "-clusters-centers.vtk"
+        displacement_vtk_file = basename + "-clusters-displacements.vtk"
 
         print "netcdf_file  = " + netcdf_file
         print "cluster_file = " + cluster_file
@@ -144,7 +164,7 @@ def run(conf):
         if conf['resume'] == True:
             exists = utils.images_exist(visitConf['views'],"source",image_count)
             if exists == "all":
-                print "Source visualization "+number_postfix+" exists. Skipping."
+                print "Source visualization " + number_postfix + " exists. Skipping."
                 skip_source = True
             elif exists == "partial":
                 print "Deleting partial visualization " + number_postfix
@@ -159,13 +179,14 @@ def run(conf):
 
                 # Add timestamp
                 if utils.getValueForKeyPath(clusterConf,'showDateTime'):
-                    utils.add_datetime(clusterConf,netcdf_file,0)
+                    utils.add_datetime(clusterConf,netcdf_file,time_index)
 
                 # Add source data and threshold it
                 print "Plotting source data ..."
                 start_time = time.time()
 
-                utils.addPseudocolorPlots(netcdf_file,visitConf,'source.plots')
+
+                utils.addPseudocolorPlots(netcdf_file,visitConf,'source.plots',time_index)
                 source_open = True
                 visit.DrawPlots()
 
@@ -208,6 +229,12 @@ def run(conf):
                 meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
                 print "    done. (%.2f seconds)" % (time.time()-start_time)
 
+                # Move cluster output file to individual file
+                if uses_time:
+                    cluster_vtk_file_dst = basename + "-clusters.vtk"
+                    os.rename(cluster_vtk_file,cluster_vtk_file_dst)
+                    cluster_vtk_file = cluster_vtk_file_dst
+
                 print "-- Rendering cluster scene --"
                 start_time = time.time()
 
@@ -216,27 +243,26 @@ def run(conf):
 
                 # Add timestamp
                 if utils.getValueForKeyPath(clusterConf,'showDateTime'):
-                    utils.add_datetime(clusterConf,netcdf_file,0)
+                    utils.add_datetime(clusterConf,netcdf_file,time_index)
 
                 # Add background source data
                 if utils.getValueForKeyPath(clusterConf,'showSourceBackground'):
-                    utils.addPseudocolorPlots(netcdf_file,visitConf,'sourceBackground.plots')
+                    utils.addPseudocolorPlots(netcdf_file,visitConf,'sourceBackground.plots',time_index)
                     source_open = True
 
                 # Add the clusters
-                basename = conf['cluster_directory'] + "/"
-                addClusters("_cluster_",conf)
+                add_clusters(cluster_vtk_file, conf)
 
                 # Add modes as labels
                 labelConf = utils.getValueForKeyPath(visitConf,'label')
                 if labelConf:
-                    utils.addLabelPlot(label_file,labelConf)
+                    utils.addLabelPlot(label_vtk_file,labelConf)
 
                 # Add displacement vectors
                 if utils.getValueForKeyPath(clusterConf,'showDisplacementVectors'):
                     vectorConf = utils.getValueForKeyPath(visitConf,'displacementVectors')
                     if vectorConf:
-                        utils.addVectorPlot(displacements_file,vectorConf)
+                        utils.addVectorPlot(displacement_vtk_file,vectorConf)
 
                 visit.DrawPlots()
                 utils.saveImagesForViews(views,"tracking")
@@ -249,10 +275,13 @@ def run(conf):
         visit.ClearWindow()
         if source_open:
             visit.CloseDatabase(netcdf_file)
-            visit.CloseDatabase(label_file)
+            visit.CloseDatabase(label_vtk_file)
         utils.close_pattern(basename+"*.vtr")
         utils.close_pattern(basename+"*.vtk")
-        subprocess.call("rm -f *.vt*", shell=True)
+        utils.close_pattern(basename+"*.vtu")
+
+        if utils.getValueForKeyPath(conf,'cleanup_vtk'):
+            subprocess.call("rm -f *.vt*", shell=True)
 
         # periodically kill computing engine to
         # work around the memory leak fix
@@ -282,6 +311,7 @@ def run(conf):
     subprocess.call("mv *source_*.png images", shell=True)
     subprocess.call("mkdir movies", shell=True)
     subprocess.call("mv *source*.gif *tracking*.gif *.m4v movies", shell=True)
-    subprocess.call("rm -f *.vt* visitlog.py", shell=True)
+    if utils.getValueForKeyPath(conf,'cleanup_vtk'):
+        subprocess.call("rm -f *.vt* visitlog.py", shell=True)
     return
 

@@ -55,7 +55,7 @@ meanie3D.app.external.locateCommands(['convert', 'composite'])
 did_global_config_execute = False
 
 
-def runGlobalVisitConf(configuration):
+def run_global_visit_configuration(configuration):
     '''
     Creates any configuration items regarded as global,
     such as creating color tables and named views.
@@ -91,7 +91,7 @@ def runGlobalVisitConf(configuration):
 #
 # ---------------------------------------------------------
 
-def addPseudocolorPlot(databaseFile, configuration):
+def addPseudocolorPlot(databaseFile, configuration, time_index=-1):
     '''
     Adds a pseudocolor plot
     :param databaseFile:
@@ -105,18 +105,27 @@ def addPseudocolorPlot(databaseFile, configuration):
                 see visit.ThresholdAttributes()
             }
         }
+    :param time_index:
     :return:
     '''
     variable = getValueForKeyPath(configuration, 'variable')
     attributes = getValueForKeyPath(configuration, 'PseudocolorAttributes')
     if variable and attributes:
+
         # Open data file
         visit.OpenDatabase(databaseFile)
+
         # Add the plot
         visit.AddPlot("Pseudocolor", variable)
+
+        # Set time slider if necessary
+        if time_index >= 0:
+            visit.SetTimeSliderState(time_index)
+
         p = visit.PseudocolorAttributes()
         updateVisitObjectFromDictionary(p, attributes)
         visit.SetPlotOptions(p)
+
         # Threshold?
         threshold = getValueForKeyPath(configuration, "ThresholdAttributes")
         if threshold:
@@ -261,7 +270,7 @@ def setView(configuration, path):
     setViewFromDict(viewConfig)
 
 
-def addPseudocolorPlots(databaseFile, configuration, path):
+def addPseudocolorPlots(databaseFile, configuration, path, time_index = -1):
     '''
     Plots mapdata according to the configuration given. Note
     that $ variables will be replaced with the value found in
@@ -269,13 +278,14 @@ def addPseudocolorPlots(databaseFile, configuration, path):
     :param databaseFile:
     :param configuration:
     :param path:
+    :param time_index:
     :return:
     '''
     plots = getValueForKeyPath(configuration, path)
     if plots:
         visit.OpenDatabase(databaseFile)
         for plot in plots:
-            addPseudocolorPlot(databaseFile, plot)
+            addPseudocolorPlot(databaseFile, plot, time_index)
     return
 
 
@@ -635,8 +645,21 @@ def add_datetime(conf, netcdf_file,time_index):
     '''
     ncfile = netCDF4.Dataset(netcdf_file, "r")
     times = ncfile.variables['time']
-    date = netCDF4.num2date(times[:],units=times.units,calendar=times.calendar)[time_index]
-    date = date.replace(microsecond=0)
+    ti = time_index
+    if time_index < 0:
+        ti = 0
+
+    have_valid_time = False
+    try:
+        date = netCDF4.num2date(times[:],units=times.units,calendar=times.calendar)[ti]
+        date = date.replace(microsecond=0)
+        have_valid_time = True
+    except ValueError as vi:
+        print "Error reading time information from file:"
+        print vi.message
+        print "Falling back on time index"
+        date = time_index
+
     x = 0.725
     y = 0.95
     format = '__default__'
@@ -647,10 +670,14 @@ def add_datetime(conf, netcdf_file,time_index):
             y = getValueForKeyPath(conf,'timestamp.y')
         if getValueForKeyPath(conf,'timestamp.format'):
             format = getValueForKeyPath(conf,'timestamp.format')
-    if format == '__default__':
-        addTextAnnotation(x, y, date.isoformat())
+
+    if have_valid_time:
+        if format == '__default__':
+            addTextAnnotation(x, y, date.isoformat())
+        else:
+            addTextAnnotation(x, y, date.strftime(format))
     else:
-        addTextAnnotation(x, y, date.strftime(format))
+        addTextAnnotation(x, y, "time index: %d" % time_index)
 
 # ---------------------------------------------------------
 #

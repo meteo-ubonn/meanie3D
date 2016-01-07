@@ -56,7 +56,8 @@ def usage():
     print "              results will be erased before starting"
     print "--help, -h  : print this message and exit."
     print "--version   : prints the version information and exits"
-    print "--time-operations : Print out running time of processing steps"
+    print "--time-operations: time operations and print out their elapsed time"
+    print "--skip-trackstats: skip meanie3D-trackstats, even if the configuration is present"
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -90,7 +91,8 @@ def main():
     # Parse command line
     try:
         argv = sys.argv[1:]
-        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", ["json-example","resume","help","version","start=","end=","time-operations"])
+        long_args = ["json-example","resume","help","version","start=","end=","time-operations","skip-trackstats"]
+        opts, args = getopt.getopt(argv, "c:f:s:o:r:h", long_args)
     except getopt.GetoptError as detail:
         print detail
         sys.exit(2)
@@ -98,6 +100,7 @@ def main():
     scales = []
     resume = False
     time_operations = False
+    skip_trackstats = False
     config_file = ""
     output_dir = "."
     netcdf_dir = ""
@@ -144,6 +147,9 @@ def main():
         elif o in ["--time-operations"]:
             time_operations = True
 
+        elif o in ["--skip-trackstats"]:
+            skip_trackstats = True
+
         else:
             usage()
 
@@ -176,7 +182,11 @@ def main():
     configuration["resume"] = resume
     configuration['config_file'] = os.path.abspath(config_file)
     configuration['time_operations'] = time_operations
+    configuration['skip_trackstats'] = skip_trackstats
     configuration['scales'] = scales
+    configuration['uses_time'] = uses_time
+    configuration['start_time_index'] = start_time_index
+    configuration['end_time_index'] = end_time_index
 
     # Remove previous results
     if resume == False:
