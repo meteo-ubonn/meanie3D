@@ -561,7 +561,7 @@ void readTrackingData(trackstats_context_t &ctx) {
         //            double time_constructing = 0;
 
         fs::path f = dir_iter->path();
-        if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), "-clusters.nc")) {
+        if (fs::is_regular_file(f) && boost::algorithm::ends_with(f.filename().generic_string(), ".nc")) {
 
             std::string path = f.generic_string();
             std::string filename = f.filename().generic_string();
