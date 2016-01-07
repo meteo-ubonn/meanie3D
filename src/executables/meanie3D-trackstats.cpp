@@ -136,11 +136,11 @@ typedef struct
     vector<link_t> links;
     unsigned int step;
 
-    ClusterList<FS_TYPE>::ptr cluster_list;     // current processed cluster list
-    Track<FS_TYPE>::ptr track;                  // current processed track
-    ArrayIndex<FS_TYPE> *track_index;           // current processed track's index
-    TrackCluster<FS_TYPE> *cluster;             // current processed cluster
-    TrackCluster<FS_TYPE> *previous_cluster;    // last processed cluster
+    ClusterList<FS_TYPE>::ptr cluster_list; // current processed cluster list
+    Track<FS_TYPE>::ptr track; // current processed track
+    ArrayIndex<FS_TYPE> *track_index; // current processed track's index
+    TrackCluster<FS_TYPE> *cluster; // current processed cluster
+    TrackCluster<FS_TYPE> *previous_cluster; // last processed cluster
     size_t points_processed;
 
     bin_t length_histogram;
@@ -187,7 +187,7 @@ trackstats_context_t initialiseContext(parameter_t params) {
     ctx.direction_histogram = bin_t(params.direction_histogram_bins.size(), 0);
     ctx.coords_file = NULL;
     ctx.need_points = params.create_cumulated_size_stats
-                      || params.write_cumulated_tracks_as_vtk;
+            || params.write_cumulated_tracks_as_vtk;
     ctx.step = 0;
     ctx.average_cluster_size = 0;
     ctx.number_of_clusters = 0;
@@ -423,7 +423,7 @@ addUniqueLink(trackstats_context_t &ctx, node_t source, node_t target, link_type
     bool haveLink = false;
     for (int li = 0; li < ctx.links.size() && !haveLink; li++) {
         link_t link = ctx.links[li];
-        haveLink = (link.source == source.uuid 
+        haveLink = (link.source == source.uuid
                 && link.target == target.uuid
                 && link.type == type);
     }
@@ -432,7 +432,8 @@ addUniqueLink(trackstats_context_t &ctx, node_t source, node_t target, link_type
         link.source = source.uuid;
         link.target = target.uuid;
         link.type = type;
-        switch(type) {
+        switch (type)
+        {
             case Split:
             case Continue:
                 link.id = source.id;
@@ -456,7 +457,7 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
     for (mi = ctx.cluster_list->splits.begin(); mi != ctx.cluster_list->splits.end(); ++mi) {
         m3D::id_t sourceId = mi->first;
         node_t source;
-        if (findNode(ctx.nodes, sourceId, node.step-1, source)) {
+        if (findNode(ctx.nodes, sourceId, node.step - 1, source)) {
             id_set_t::const_iterator si;
             for (si = mi->second.begin(); si != mi->second.end(); si++) {
                 m3D::id_t targetId = *si;
@@ -477,7 +478,7 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
             for (si = mi->second.begin(); si != mi->second.end(); si++) {
                 node_t source;
                 m3D::id_t sourceId = (*si);
-                if (findNode(ctx.nodes, sourceId, node.step-1, source)) {
+                if (findNode(ctx.nodes, sourceId, node.step - 1, source)) {
                     addUniqueLink(ctx, source, node, Merge);
                 }
             }
@@ -489,7 +490,7 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
             ctx.cluster_list->tracked_ids.end(), node.id);
     if (ti != ctx.cluster_list->tracked_ids.end()) {
         node_t source;
-        if (findNode(ctx.nodes, node.id, node.step-1, source)) {
+        if (findNode(ctx.nodes, node.id, node.step - 1, source)) {
             addUniqueLink(ctx, source, node, Continue);
         }
     }
@@ -623,7 +624,7 @@ void readTrackingData(trackstats_context_t &ctx) {
                     // it back on demand, saving memory.
 
                     // start_timer();
-                    TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(cluster,timeDifference,ctx.need_points);
+                    TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(cluster, timeDifference, ctx.need_points);
                     // time_constructing_clusters += stop_timer();
 
                     node_t node;
@@ -687,7 +688,7 @@ void readTrackingData(trackstats_context_t &ctx) {
         dir_iter++;
         ctx.step++;
     }
-    
+
     // Clear out all point data
     Track<FS_TYPE>::trackmap::iterator tmi;
     for (tmi = ctx.track_map.begin(); tmi != ctx.track_map.end(); ++tmi) {
@@ -724,11 +725,11 @@ void getSpeedHistogramData(trackstats_context_t &ctx) {
             exceeded_max_class);
     if (exceeded_max_class) {
         cout << "Cluster uuid:" << ctx.cluster->uuid
-             << " id:" << ctx.cluster->id
-             << " (speed " << speed << " m/s)"
-             << " exceeded max speed "
-             << ctx.params.speed_histogram_bins.back() << " m/s"
-             << endl;
+                << " id:" << ctx.cluster->id
+                << " (speed " << speed << " m/s)"
+                << " exceeded max speed "
+                << ctx.params.speed_histogram_bins.back() << " m/s"
+                << endl;
     }
     map<float, size_t>::iterator si = ctx.speeds.find(speed);
     if (si == ctx.speeds.end()) {
@@ -752,7 +753,7 @@ void getDirectionHistogramData(trackstats_context_t &ctx) {
     RDCoordinateSystem *rcs = new RDCoordinateSystem(RD_RX);
 
     // calculate speed in m/s. All vectors 2D at this time
-    vector<FS_TYPE> dP = reinterpret_cast<Cluster<FS_TYPE>::ptr>(ctx.cluster)->displacement;
+    vector<FS_TYPE> dP = reinterpret_cast<Cluster<FS_TYPE>::ptr> (ctx.cluster)->displacement;
     if (vector_norm(dP) == 0) return;
 
     // Assuming --vtk-dimensions=x,y
@@ -817,9 +818,9 @@ void getDirectionHistogramData(trackstats_context_t &ctx) {
 void getSizeHistogramData(trackstats_context_t &ctx) {
     size_t cluster_size = ctx.cluster->size();
     bool exceeded_max_class = false;
-    add_value_to_histogram(ctx.params.cluster_histogram_bins, 
-            ctx.cluster_histogram, 
-            cluster_size, 
+    add_value_to_histogram(ctx.params.cluster_histogram_bins,
+            ctx.cluster_histogram,
+            cluster_size,
             exceeded_max_class);
     if (exceeded_max_class) {
         cout << "Cluster uuid:" << ctx.cluster->uuid
@@ -846,9 +847,8 @@ void getSizeHistogramData(trackstats_context_t &ctx) {
  */
 void addToCumulativeStats(trackstats_context_t &ctx) {
     Point<FS_TYPE>::list::iterator pi;
-    for (pi = ctx.cluster->get_points().begin(); 
-            pi != ctx.cluster->get_points().end(); ++pi) 
-    {
+    for (pi = ctx.cluster->get_points().begin();
+            pi != ctx.cluster->get_points().end(); ++pi) {
         Point<FS_TYPE>::ptr p = *pi;
         Point<FS_TYPE>::ptr indexed = ctx.track_index->get(p->gridpoint);
         if (indexed == NULL) {
@@ -861,7 +861,7 @@ void addToCumulativeStats(trackstats_context_t &ctx) {
         for (size_t k = 0; k < ctx.value_rank; k++) {
             indexed->values[ctx.spatial_rank + k] += p->values[ctx.spatial_rank + k];
         }
-        
+
         ctx.points_processed++;
     }
 }
@@ -875,16 +875,16 @@ void addToCumulativeStats(trackstats_context_t &ctx) {
 void getLengthHistogramData(trackstats_context_t &ctx) {
     size_t track_length = ctx.track->size();
     bool exceeded_max_class = false;
-    add_value_to_histogram(ctx.params.length_histogram_bins, 
-            ctx.length_histogram, 
-            track_length, 
+    add_value_to_histogram(ctx.params.length_histogram_bins,
+            ctx.length_histogram,
+            track_length,
             exceeded_max_class);
     if (exceeded_max_class) {
         cout << "Track id:" << ctx.track->id
-        << " (track length " << track_length << " m/s)"
-        << " exceeded max speed "
-        << ctx.params.speed_histogram_bins.back() << " m/s"
-        << endl;
+                << " (track length " << track_length << " m/s)"
+                << " exceeded max speed "
+                << ctx.params.speed_histogram_bins.back() << " m/s"
+                << endl;
     }
 
     map<size_t, size_t>::iterator tlfi = ctx.track_lengths.find(track_length);
@@ -897,17 +897,17 @@ void getLengthHistogramData(trackstats_context_t &ctx) {
 void getCumulatedStatsData(trackstats_context_t& ctx) {
     size_t cumulatedSize = ctx.track_index->count();
     bool exceeded_max_class = false;
-    add_value_to_histogram(ctx.params.size_histogram_bins, 
-            ctx.size_histogram, 
-            cumulatedSize, 
+    add_value_to_histogram(ctx.params.size_histogram_bins,
+            ctx.size_histogram,
+            cumulatedSize,
             exceeded_max_class);
 
     if (exceeded_max_class) {
         cout << "Track id:" << ctx.track->id
-        << " (cumulative size " << cumulatedSize
-        << " exceeded max cumulated size class: "
-        << ctx.params.size_histogram_bins.back()
-        << endl;
+                << " (cumulative size " << cumulatedSize
+                << " exceeded max cumulated size class: "
+                << ctx.params.size_histogram_bins.back()
+                << endl;
     }
 
     map<size_t, size_t>::iterator tlfi = ctx.track_sizes.find(cumulatedSize);
@@ -941,7 +941,7 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
             continue;
         }
 
-        if (j > 0 && j < (ctx.track_map.size()-1)) {
+        if (j > 0 && j < (ctx.track_map.size() - 1)) {
             dict << "," << endl;
         }
 
@@ -1068,7 +1068,7 @@ void writeStats(trackstats_context_t &ctx) {
 
     file << endl;
     cout << endl;
-    
+
     // length of tracks (in time steps)
 
     if (ctx.params.create_length_stats) {
@@ -1094,7 +1094,7 @@ void writeStats(trackstats_context_t &ctx) {
 
         map<size_t, size_t>::iterator si;
 
-        for (si = ctx.track_lengths.begin(); 
+        for (si = ctx.track_lengths.begin();
                 si != ctx.track_lengths.end(); si++) {
             file << si->first << "," << si->second << endl;
             cout << si->first << "," << si->second << endl;
@@ -1115,11 +1115,11 @@ void writeStats(trackstats_context_t &ctx) {
         print_histogram(ctx.params.length_histogram_bins, ctx.length_histogram, file);
 
         if (ctx.params.write_gnuplot_files) {
-            write_histogram("lengths-hist.txt", "number of tracks", "track length", 
-                    ctx.params.length_histogram_bins, 
+            write_histogram("lengths-hist.txt", "number of tracks", "track length",
+                    ctx.params.length_histogram_bins,
                     ctx.length_histogram);
-            
-            write_values<size_t>("lengths.txt", "number of tracks", "track length", 
+
+            write_values<size_t>("lengths.txt", "number of tracks", "track length",
                     ctx.track_lengths);
         }
     }
@@ -1165,14 +1165,14 @@ void writeStats(trackstats_context_t &ctx) {
         file << "speed class,number" << endl;
         cout << "speed class,number" << endl;
 
-        print_histogram<float>(ctx.params.speed_histogram_bins, 
+        print_histogram<float>(ctx.params.speed_histogram_bins,
                 ctx.speed_histogram, file);
 
         if (ctx.params.write_gnuplot_files) {
-            write_histogram("speeds-hist.txt", "number of clusters", "speed [m/s]", 
+            write_histogram("speeds-hist.txt", "number of clusters", "speed [m/s]",
                     ctx.params.speed_histogram_bins,
                     ctx.speed_histogram);
-            write_values<float>("speeds.txt", "number of clusters", "speed in [m/s]", 
+            write_values<float>("speeds.txt", "number of clusters", "speed in [m/s]",
                     ctx.speeds);
         }
     }
@@ -1196,7 +1196,7 @@ void writeStats(trackstats_context_t &ctx) {
 
         map<float, size_t>::iterator spi;
 
-        for (spi = ctx.directions.begin(); 
+        for (spi = ctx.directions.begin();
                 spi != ctx.directions.end(); spi++) {
             file << spi->first << "," << spi->second << endl;
             cout << spi->first << "," << spi->second << endl;
@@ -1215,14 +1215,14 @@ void writeStats(trackstats_context_t &ctx) {
         file << "direction class,number" << endl;
         cout << "direction class,number" << endl;
 
-        print_histogram<float>(ctx.params.direction_histogram_bins, 
+        print_histogram<float>(ctx.params.direction_histogram_bins,
                 ctx.direction_histogram, file);
 
         if (ctx.params.write_gnuplot_files) {
-            write_histogram("directions-hist.txt", "number of clusters", "direction in [deg]", 
-                    ctx.params.direction_histogram_bins, 
+            write_histogram("directions-hist.txt", "number of clusters", "direction in [deg]",
+                    ctx.params.direction_histogram_bins,
                     ctx.direction_histogram);
-            write_values<float>("directions.txt", "number of clusters", "direction in [deg]", 
+            write_values<float>("directions.txt", "number of clusters", "direction in [deg]",
                     ctx.directions);
         }
     }
@@ -1269,14 +1269,14 @@ void writeStats(trackstats_context_t &ctx) {
         file << "max size,number" << endl;
         cout << "max size,number" << endl;
 
-        print_histogram(ctx.params.cluster_histogram_bins, 
+        print_histogram(ctx.params.cluster_histogram_bins,
                 ctx.cluster_histogram, file);
 
         if (ctx.params.write_gnuplot_files) {
-            write_histogram("sizes-hist.txt", "number of clusters", "size [#gridpoints]", 
-                    ctx.params.cluster_histogram_bins, 
+            write_histogram("sizes-hist.txt", "number of clusters", "size [#gridpoints]",
+                    ctx.params.cluster_histogram_bins,
                     ctx.cluster_histogram);
-            write_values("sizes.txt", "number of clusters", "size [#gridpoints]", 
+            write_values("sizes.txt", "number of clusters", "size [#gridpoints]",
                     ctx.cluster_sizes);
         }
     }
@@ -1326,16 +1326,16 @@ void writeStats(trackstats_context_t &ctx) {
         print_histogram(ctx.params.size_histogram_bins, ctx.size_histogram, file);
 
         if (ctx.params.write_gnuplot_files) {
-            write_histogram("cumulative-sizes-hist.txt", "number of tracks", "size [#gridpoints]", 
+            write_histogram("cumulative-sizes-hist.txt", "number of tracks", "size [#gridpoints]",
                     ctx.params.size_histogram_bins, ctx.size_histogram);
-            write_values<size_t>("cumulative-sizes.txt", "number of tracks", "size [#gridpoints]", 
+            write_values<size_t>("cumulative-sizes.txt", "number of tracks", "size [#gridpoints]",
                     ctx.track_sizes);
         }
     }
 }
 
-# pragma mark -
-# pragma mark Processing control
+#pragma mark -
+#pragma mark Processing control
 
 /**
  * Processes the entire track map.
@@ -1343,7 +1343,7 @@ void writeStats(trackstats_context_t &ctx) {
  * @param ctx
  */
 void processTracks(trackstats_context_t &ctx) {
-    
+
     cout << endl << "Keying up tracks: " << endl;
 
     // Iterate over the collated tracks
@@ -1351,16 +1351,16 @@ void processTracks(trackstats_context_t &ctx) {
     for (tmi = ctx.track_map.begin(); tmi != ctx.track_map.end(); ++tmi) {
 
         ctx.track = tmi->second;
-        
+
         // Handle degenerate tracks?
         if (ctx.track->clusters.size() == 1) {
             ctx.number_of_degenerates++;
             if (ctx.params.exclude_degenerates) continue;
         }
 
-        cout << "Processing track #" << tmi->first 
-             <<  " (" << ctx.track->clusters.size() << " clusters)" 
-             << endl;
+        cout << "Processing track #" << tmi->first
+                << " (" << ctx.track->clusters.size() << " clusters)"
+                << endl;
 
         if (ctx.params.create_length_stats) {
             getLengthHistogramData(ctx);
@@ -1373,10 +1373,9 @@ void processTracks(trackstats_context_t &ctx) {
 
         // Process the track's clusters
         std::list<Cluster<FS_TYPE>::ptr>::iterator ti;
-        for (ti = ctx.track->clusters.begin(); 
-                ti != ctx.track->clusters.end(); ++ti) 
-        {
-            ctx.cluster = (TrackCluster<FS_TYPE> *) *ti;
+        for (ti = ctx.track->clusters.begin();
+                ti != ctx.track->clusters.end(); ++ti) {
+            ctx.cluster = (TrackCluster<FS_TYPE> *) * ti;
 
             if (ctx.params.create_cluster_stats) {
                 getSizeHistogramData(ctx);
@@ -1394,7 +1393,7 @@ void processTracks(trackstats_context_t &ctx) {
             if (ctx.params.create_cumulated_size_stats) {
                 addToCumulativeStats(ctx);
             }
-            
+
             // Purge points in memory
             ctx.previous_cluster = ctx.cluster;
             ctx.cluster->clear(true);
@@ -1404,9 +1403,9 @@ void processTracks(trackstats_context_t &ctx) {
         if (ctx.params.write_cumulated_tracks_as_vtk) {
             Point<FS_TYPE>::list cumulatedList;
             ctx.track_index->replace_points(cumulatedList);
-            string vtk_path = ctx.params.basename + "_cumulated_track_" 
+            string vtk_path = ctx.params.basename + "_cumulated_track_"
                     + boost::lexical_cast<string>(tmi->first) + ".vtk";
-            VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path, 
+            VisitUtils<FS_TYPE>::write_pointlist_all_vars_vtk(vtk_path,
                     &cumulatedList, vector<string>());
         }
 #endif
@@ -1418,7 +1417,7 @@ void processTracks(trackstats_context_t &ctx) {
             ctx.track_index->clear(true);
             delete ctx.track_index;
             ctx.track_index = NULL;
-            
+
             cout << "  (processed " << ctx.points_processed << " points)" << endl;
         }
         delete ctx.track;
@@ -1511,7 +1510,7 @@ int main(int argc, char** argv) {
     // accessing coordinate system
     if (!fs::is_directory(ctx.params.sourcepath)) {
         cerr << "Argument --sourcepath does not point to a directory "
-                "(--sourcepath=" << ctx.params.sourcepath << ")" 
+                "(--sourcepath=" << ctx.params.sourcepath << ")"
                 << endl;
         return EXIT_FAILURE;
     }
