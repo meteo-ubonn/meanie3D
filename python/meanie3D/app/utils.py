@@ -200,7 +200,9 @@ def setValueForKeyPath(object,keypath,value):
 def getValueForKeyPath(object,keypath):
     keys = keypath.split(".")
     if len(keys) > 1:
-        if type(object) is dict:
+        if object is None:
+            return None
+        elif type(object) is dict:
             nextObject = getSafe(object,keys[0])
         else:
             nextObject = getattr(object,keys[0])
