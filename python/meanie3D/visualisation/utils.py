@@ -464,8 +464,9 @@ def createMoviesForViews(views, basename, formats):
     :param formats: ("gif","m4v" etc.)
     :return:
     '''
-    for k in range(0, len(formats)):
-        createMovieForViews(views, basename, formats[k])
+    if formats:
+        for k in range(0, len(formats)):
+            createMovieForViews(views, basename, formats[k])
 
 
 def delete_images(views, basename, image_count):
