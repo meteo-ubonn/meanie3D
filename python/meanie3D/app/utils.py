@@ -215,7 +215,9 @@ def getValueForKeyPath(object,keypath):
         # in visualisation objects. Try to set an enumerated value when hitting
         # this combination
         value = None
-        if type(object) is dict:
+        if object is None:
+            return None
+        elif type(object) is dict:
             value = getSafe(object,keypath)
         else:
             value = getattr(object,keypath)
