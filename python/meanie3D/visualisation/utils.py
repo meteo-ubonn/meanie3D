@@ -525,6 +525,7 @@ def create_movie(basename, moviename):
     '''
     print "Creating movie '" + moviename + "' from files '" + basename + "*.png ..."
     args = "-limit memory 4GB -delay 50 -quality 100 -dispose Background %s*.png %s" % (basename, moviename)
+    print "convert %s" % args
     meanie3D.app.external.execute_command('convert', args, False)
     print "done."
     return
