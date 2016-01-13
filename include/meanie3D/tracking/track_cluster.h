@@ -42,10 +42,25 @@ namespace m3D {
     template<typename T>
     class TrackCluster : public Cluster<T>
     {
-    private:
+
+#pragma mark -
+#pragma mark Public type definitions
+
+    public:
+        typedef TrackCluster<T> *ptr;
+
+#pragma mark -
+#pragma mark Public properties
+
+    public:
+        
+        unsigned int step;
+        unsigned long timestamp;
 
 #pragma mark -
 #pragma mark Private members
+
+    private:
 
         // The file containing the actual data
         std::string m_filename;
@@ -171,7 +186,7 @@ namespace m3D {
         ~TrackCluster() {
             this->clear(true);
         }
-
+        
 #pragma mark -
 #pragma mark Public member functions
 

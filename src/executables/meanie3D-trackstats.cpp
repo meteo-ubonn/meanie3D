@@ -63,8 +63,9 @@ typedef struct
 {
     m3D::uuid_t uuid;
     m3D::id_t id;
-    unsigned int step;
-    unsigned int size;
+    unsigned int step;      
+    unsigned int size;       // number of points
+    unsigned long timestamp; // seconds since epoch
 } node_t;
 
 /**
@@ -135,7 +136,8 @@ typedef struct
     vector<node_t> nodes;
     vector<link_t> links;
     unsigned int step;
-
+    unsigned long timestamp; // seconds since epoch
+    
     ClusterList<FS_TYPE>::ptr cluster_list; // current processed cluster list
     Track<FS_TYPE>::ptr track; // current processed track
     ArrayIndex<FS_TYPE> *track_index; // current processed track's index
@@ -189,6 +191,7 @@ trackstats_context_t initialiseContext(parameter_t params) {
     ctx.need_points = params.create_cumulated_size_stats
             || params.write_cumulated_tracks_as_vtk;
     ctx.step = 0;
+    ctx.timestamp = 0;
     ctx.average_cluster_size = 0;
     ctx.number_of_clusters = 0;
     ctx.params = params;
@@ -376,13 +379,13 @@ bool compareNodesByStep(const node_t &a, const node_t &b) {
 }
 
 /**
- * Finds all nodes with the given id in the node list and returns
- * them in ascending order of step
+ * Finds the node with the given id in the node list.
  * 
  * @param nodes
  * @param id
- * @param only include nodes in this step
- * @return 
+ * @param step
+ * @param contains the node after the call
+ * @return <code>true</code> if node exists. 
  */
 bool
 findNode(const vector<node_t> &nodes, const m3D::id_t &id, const unsigned int &step, node_t &node) {
@@ -552,6 +555,7 @@ void readTrackingData(trackstats_context_t &ctx) {
     // run the directory's files
     fs::directory_iterator dir_iter(ctx.params.sourcepath);
     fs::directory_iterator end;
+
     while (dir_iter != end) {
         //            double time_reading = 0;
         //            double time_searching = 0;
@@ -573,7 +577,9 @@ void readTrackingData(trackstats_context_t &ctx) {
             try {
                 // start_timer();
                 ctx.cluster_list = ClusterList<FS_TYPE>::read(path);
+
                 int timeDifference = ctx.cluster_list->tracking_time_difference;
+                ctx.timestamp = (unsigned long) ctx.cluster_list->get_time_in_seconds().get();
                 // time_reading += stop_timer();
 
                 cout << "Processing " << filename << " (" << ctx.cluster_list->size() << " clusters) ... ";
@@ -625,6 +631,9 @@ void readTrackingData(trackstats_context_t &ctx) {
 
                     // start_timer();
                     TrackCluster<FS_TYPE>::ptr tc = new TrackCluster<FS_TYPE>(cluster, timeDifference, ctx.need_points);
+                    tc->step = ctx.step;
+                    tc->timestamp = ctx.timestamp;
+                    
                     // time_constructing_clusters += stop_timer();
 
                     node_t node;
@@ -632,6 +641,7 @@ void readTrackingData(trackstats_context_t &ctx) {
                     node.id = cluster->id;
                     node.step = ctx.step;
                     node.size = cluster->size();
+                    node.timestamp = ctx.timestamp;
 
                     addGraphNode(ctx, node);
 
@@ -961,7 +971,7 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
             min = ctx.cluster_min.at(c->id);
             max = ctx.cluster_max.at(c->id);
             median = ctx.cluster_median.at(c->id);
-
+            
             dict << "        {" << endl;
             dict << "          \"size\":" << c->size() << "," << endl;
             dict << "          \"uuid\":" << c->uuid << "," << endl;
@@ -971,6 +981,8 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
             dict << "          \"min\":" << to_json(min) << "," << endl;
             dict << "          \"max\":" << to_json(max) << "," << endl;
             dict << "          \"median\":" << to_json(median) << "," << endl;
+            dict << "          \"step\":" << c->step << "," << endl;
+            dict << "          \"timestamp\":" << c->timestamp << "," << endl;
             dict << "          \"has_margin_points\":" << (c->has_margin_points() ? "true" : "false") << endl;
             dict << "        }";
 
