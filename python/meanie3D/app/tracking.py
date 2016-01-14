@@ -71,10 +71,6 @@ def checkConfiguration(conf):
 #
 def run(config,time_index):
 
-    print "---------------------------------------------------"
-    print "Configuration: " + config['description']
-    print "---------------------------------------------------"
-
     checkConfiguration(config)
     data = utils.getSafe(config,'data')
     detection = utils.getSafe(config,'detection')
@@ -186,6 +182,8 @@ def run(config,time_index):
             utils.create_ouput_directories(output_dir)
     else:
         resume_at_index = utils.number_of_netcdf_files(output_dir+"/netcdf")
+        if time_index >= 0 and time_index < resume_at_index:
+            return
         print "Resuming at index " + str(resume_at_index)
 
     # Get a list of the files we need to process.
@@ -197,13 +195,17 @@ def run(config,time_index):
         # Single file
         netcdf_list = [source]
 
-    last_cluster_file=""
+    last_cluster_file = None
     run_count = 0
+    if time_index >= 0:
+        run_count = time_index + 1
 
     for netcdf_file in netcdf_list:
+
         basename = os.path.basename(netcdf_file)
-        cluster_file = output_dir + os.path.sep + "netcdf" +os.path.sep + os.path.splitext(basename)[0];
+        cluster_file = output_dir + os.path.sep + "netcdf" + os.path.sep + os.path.splitext(basename)[0];
         if time_index >= 0:
+            last_cluster_file = cluster_file + "-" + str(time_index-1) + "-clusters.nc"
             cluster_file = cluster_file + "-" + str(time_index)
         cluster_file += "-clusters.nc"
 
@@ -216,11 +218,11 @@ def run(config,time_index):
         # ----------------------------------------------
 
         if detection:
+
             # if there is a resume counter, keep skipping until the count is right
             # Note: this only applies to clustering, which is expensive. Tracking
             # will be re-run
             if (resume_at_index > 0) and (run_count <= resume_at_index):
-                last_cluster_file = cluster_file
                 run_count = run_count + 1
                 continue
 
@@ -282,7 +284,8 @@ def run(config,time_index):
                     logfile = output_dir+"/log/tracking_" + str(time_index)+".log"
 
                 print "-- Tracking --"
-                params = tracking_params + " -p "+last_cluster_file+" -c "+cluster_file
+                print "last_cluster_file = " + last_cluster_file
+                params = tracking_params + " -p  %s -c %s " % (last_cluster_file,cluster_file)
                 params = params + " > " + logfile
 
                 # execute
@@ -297,6 +300,8 @@ def run(config,time_index):
 
         # keep track
         last_cluster_file = cluster_file
+        print "last_cluster_file = " + last_cluster_file
+
         # don't forget to increment run counter
         run_count = (run_count + 1)
 

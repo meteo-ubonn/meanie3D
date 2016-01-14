@@ -176,6 +176,10 @@ def main():
 
     configuration = meanie3D.app.utils.load_configuration(config_file);
 
+    print "-------------------------------------------------------------------------------------"
+    print "Configuration: " + configuration['description']
+    print "-------------------------------------------------------------------------------------"
+
     # Enrich the configuration with env/command line stuff
     configuration["source_directory"] = os.path.abspath(netcdf_dir)
     configuration["output_dir"] = os.path.abspath(output_dir)
