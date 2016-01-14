@@ -169,8 +169,6 @@ def run(config,time_index):
     else:
         output_dir = output_dir + "/clustering"
 
-    print "Writing output to " + output_dir
-
     # Resume?
     if not utils.getValueForKeyPath(config,'resume'):
         # consider time index. Even if not resuming, the
@@ -276,7 +274,7 @@ def run(config,time_index):
 
         if tracking:
             # if we have a previous scan, run the tracking command
-            if (run_count > 0) or (time_index > 0):
+            if (time_index <= 0 and (run_count > 0)) or (time_index > 0):
 
                 if time_index < 0:
                     logfile = output_dir+"/log/tracking_" + str(run_count)+".log"
@@ -284,7 +282,6 @@ def run(config,time_index):
                     logfile = output_dir+"/log/tracking_" + str(time_index)+".log"
 
                 print "-- Tracking --"
-                print "last_cluster_file = " + last_cluster_file
                 params = tracking_params + " -p  %s -c %s " % (last_cluster_file,cluster_file)
                 params = params + " > " + logfile
 
@@ -300,7 +297,6 @@ def run(config,time_index):
 
         # keep track
         last_cluster_file = cluster_file
-        print "last_cluster_file = " + last_cluster_file
 
         # don't forget to increment run counter
         run_count = (run_count + 1)
