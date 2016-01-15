@@ -28,11 +28,14 @@
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
 
+#include <meanie3D/utils/verbosity.h>
 #include <meanie3D/clustering/cluster.h>
 #include <meanie3D/clustering/cluster_list.h>
 
 namespace m3D {
 
+    using namespace utils;
+  
     template <typename T>
     class ClusterUtils
     {

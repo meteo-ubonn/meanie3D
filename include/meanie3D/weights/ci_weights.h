@@ -26,6 +26,8 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+
+#include <meanie3D/utils/verbosity.h>
 #include <meanie3D/array.h>
 #include <meanie3D/array/linear_index_mapping.h>
 #include <meanie3D/clustering/cluster.h>
