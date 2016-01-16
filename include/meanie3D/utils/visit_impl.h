@@ -24,7 +24,7 @@
 #ifndef M3D_VISUALIZATIONUTILS_IMPL_H
 #define M3D_VISUALIZATIONUTILS_IMPL_H
 
-// #if WITH_VTK
+#if WITH_VTK
 
 #include <iostream>
 #include <stdlib.h>
@@ -1809,5 +1809,5 @@ namespace m3D {
     }
 }
 
-// #endif
+#endif
 #endif
