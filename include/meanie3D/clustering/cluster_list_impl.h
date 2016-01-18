@@ -124,7 +124,114 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Writing/Reading
+    
+    /**
+     * Deletes a number of attributes.
+     * @param netcdf file
+     * @param number of attributes
+     * @param attribute names
+     * @throw netCDF::exceptions::
+     */
+    void delete_top_level_attributes(netCDF::NcFile *file,  size_t num, const std::string names[]) 
+    {
+        using netCDF::exceptions::NcException;
+        for (size_t i = 0; i < num; i++) {
+            int id = 0;
+            const char *name = names[i].c_str();
+            int status = nc_inq_attid(file->getId(), NC_GLOBAL, name, &id);
+            if (!(status == NC_NOERR || status == NC_ENOTATT)) {
+                cout << "ERROR:status=" << status << endl;
+                throw new NcException("ERROR", "could not delete attribute "+names[i], file->getName().c_str(), 0);
+            }
+        }
+    }
 
+    template <typename T>
+    void
+    ClusterList<T>::save_top_level_attributes()
+    {
+        using namespace utils::vectors;
+
+        if (this->filename.empty()) {
+            throw std::runtime_error("Can not use save() because cluster list was not written or read before.");
+        }
+
+        try {
+            bool file_existed = boost::filesystem::exists(filename);
+            NcFile *file = this->ncFile;
+            
+            if (file != NULL && !file->isNull()) {
+                // force close
+                delete file;
+            }
+            
+            // open for writing
+            file = new NcFile(filename, NcFile::write);
+            this->ncFile = file;
+            
+            // write version attribute
+            if (file_existed) {
+                std::string names[] = {
+                    "version",
+                    "num_clusters",
+                    "source",
+                    "highest_id",
+                    "highest_uuid",
+                    "cluster_ids",
+                    "tracking_performed",
+                    "tracking_time_difference", 
+                    "tracked_ids", 
+                    "new_ids", 
+                    "dropped_ids",
+                    "merges",
+                    "splits"
+                };
+                delete_top_level_attributes(file,13,names);
+            }
+            
+            file->putAtt("version", m3D::VERSION);
+            
+            file->putAtt("source", this->source_file);
+            file->putAtt("num_clusters", ncInt, (int) clusters.size());
+
+            // Save highest ID
+            unsigned long long hid = boost::numeric_cast<unsigned long long>(this->highest_id);
+            file->putAtt("highest_id", boost::lexical_cast<std::string>(hid));
+
+            // Save highest UUID
+            unsigned long long huuid = boost::numeric_cast<unsigned long long>(this->highest_uuid);
+            file->putAtt("highest_uuid", boost::lexical_cast<std::string>(huuid));
+
+            // Record IDs in attribute
+            id_set_t cluster_ids;
+            for (size_t ci = 0; ci < clusters.size(); ci++)
+                cluster_ids.insert(clusters[ci]->id);
+            file->putAtt("cluster_ids", sets::to_string(cluster_ids));
+
+            // Add tracking meta-info
+            if (this->tracking_performed) {
+                file->putAtt("tracking_performed", "yes");
+                file->putAtt("tracking_time_difference", ncInt, this->tracking_time_difference);
+                file->putAtt("tracked_ids", sets::to_string(this->tracked_ids));
+                file->putAtt("new_ids", sets::to_string(this->new_ids));
+                file->putAtt("dropped_ids", sets::to_string(this->dropped_ids));
+                file->putAtt("merges", maps::id_map_to_string(this->merges));
+                file->putAtt("splits", maps::id_map_to_string(this->splits));
+            }
+
+            // Featurespace Variables
+            std::string fvarnames = to_string(variable_names);
+            file->putAtt("featurespace_variables", fvarnames);
+
+            // Update the file pointer just in case
+            this->ncFile = file;
+            
+        } catch (const std::exception &e) {
+            std::cerr << "ERROR:exception while writing cluster file: " << e.what() << endl;
+            throw e;
+        }
+    }
+    
     template <typename T>
     void
     ClusterList<T>::save()

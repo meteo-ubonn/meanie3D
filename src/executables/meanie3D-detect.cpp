@@ -1175,8 +1175,10 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    if (verbosity > VerbositySilent)
-        cout << "Writing clusters to NetCDF file " << output_filename << " ..." << endl;
+    if (verbosity > VerbositySilent) {
+        std::string msg = "Writing clusters to NetCDF file " + output_filename + " ...";
+        start_timer(msg);
+    }
 
     // Before writing, set the timestamp!!
     clusters.timestamp = timestamp;
@@ -1189,8 +1191,9 @@ int main(int argc, char **argv) {
         // cout << "done." << endl;
     }
 
-    if (verbosity > VerbositySilent)
-        cout << "done." << endl;
+    if (verbosity > VerbositySilent) {
+        cout << " done (" << stop_timer() << "s)." << endl;
+    }
 
     // mop up
     delete kernel;

@@ -424,7 +424,7 @@ namespace m3D {
 
                 Tracking<T> proto_tracker(params);
                 proto_tracker.track(m_previous_protoclusters, &m_protoclusters);
-                m_protoclusters.save();
+                m_protoclusters.save_top_level_attributes();
 
                 // Find object pairs and shift the all data from
                 // the comparison scan within that object's area

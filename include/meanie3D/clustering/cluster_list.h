@@ -350,6 +350,13 @@ namespace m3D {
          * written or read.
          */
         void save();
+        
+        /** Persists only the top level attributes. Used to add 
+         * tracking information etc. without re-writing the whole 
+         * file.
+         * @throws std::runtime_error 
+         */
+        void save_top_level_attributes();
 
         /** Static method for reading cluster lists back in.
          * @param path      : path to the cluster file
