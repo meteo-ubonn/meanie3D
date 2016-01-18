@@ -29,6 +29,7 @@
 #include<meanie3D/clustering/cluster_list_impl.h>
 #include<meanie3D/clustering/cluster_op_impl.h>
 #include<meanie3D/clustering/cluster_utils_impl.h>
+#include<meanie3D/clustering/detection_impl.h>
 #include<meanie3D/clustering/histogram_impl.h>
 #include<meanie3D/featurespace/coordinate_system_impl.h>
 #include<meanie3D/featurespace/featurespace_impl.h>
@@ -47,5 +48,6 @@
 #include<meanie3D/utils/cluster_index_impl.h>
 #include<meanie3D/utils/matrix_impl.h>
 #include<meanie3D/utils/visit_impl.h>
+#include<meanie3D/weights/weight_function_factory_impl.h>
 
 #endif

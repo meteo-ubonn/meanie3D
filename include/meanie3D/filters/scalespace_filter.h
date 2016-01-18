@@ -99,11 +99,11 @@ namespace m3D {
          * @param show progress indicator while filtering (default no)
          * @throws logic_error if scale < 0 or decay < 0 or > 1.
          */
-        ScaleSpaceFilter(T scale,
+        ScaleSpaceFilter(const T scale,
                 const vector<T> &resolution,
-                vector<netCDF::NcVar> &exclude_from_scale_space_filtering,
-                T decay = 0.01,
-                bool show_progress = false);
+                const vector<netCDF::NcVar> &exclude_from_scale_space_filtering,
+                const T decay = 0.01,
+                const bool show_progress = false);
 
         /** Destructor
          */

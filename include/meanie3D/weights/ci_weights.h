@@ -374,6 +374,7 @@ namespace m3D {
             Kernel<T> *proto_kernel = new UniformKernel<T>(kernel_size);
             WeightFunction<T> *proto_weight = new DefaultWeightFunction<T>(proto_fs);
             PointIndex<T> *proto_index = PointIndex<T>::create(proto_fs->get_points(), proto_fs->rank());
+
             ClusterOperation<T> proto_cop(proto_fs,
                                           proto_store,
                                           proto_index);

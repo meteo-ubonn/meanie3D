@@ -26,8 +26,10 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+
 #include <meanie3D/parallel.h>
 #include <meanie3D/utils.h>
+#include "detection.h"
 
 #include <vector>
 
@@ -62,21 +64,18 @@ namespace m3D {
 #pragma mark Clustering Code
 
     template <typename T>
-    ClusterList<T>
-    ClusterOperation<T>::cluster(
-            const SearchParameters *params,
-            const Kernel<T> *kernel,
-            const WeightFunction<T> *weight_function,
-            const bool coalesceWithStrongestNeighbour,
-            const bool show_progress_bar)
+    ClusterList<T> *
+    ClusterOperation<T>::cluster()
     {
         using namespace m3D::utils::vectors;
+        
+        const CoordinateSystem<T> *cs = m_context.coord_system;
         vector<T> resolution;
-        if (params->search_type() == SearchTypeRange) {
-            RangeSearchParams<T> *p = (RangeSearchParams<T> *) params;
+        if (m_context.search_params->search_type() == SearchTypeRange) {
+            RangeSearchParams<T> *p = (RangeSearchParams<T> *) m_context.search_params;
             // Physical grid resolution in the
             // spatial range
-            resolution = this->feature_space->coordinate_system->resolution();
+            resolution = cs->resolution();
             resolution = ((T) 4.0) * resolution;
             // Supplement with bandwidth values for
             // the value range
@@ -84,29 +83,30 @@ namespace m3D {
                 resolution.push_back(p->bandwidth[i]);
             }
         } else {
-            KNNSearchParams<T> *p = (KNNSearchParams<T> *) params;
+            KNNSearchParams<T> *p = (KNNSearchParams<T> *) m_context.search_params;
             resolution = p->resolution;
         }
 
-        if (show_progress_bar) {
+        if (m_context.show_progress) {
             cout << endl << "Creating meanshift vector graph ...";
             start_timer();
             m_progress_bar = new boost::progress_display(this->feature_space->size());
         }
 
         // Compile list of dimension names
-
-        const CoordinateSystem<T> *cs = this->feature_space->coordinate_system;
-        NcFile file(m_data_store->filename(), NcFile::read);
+        NcFile file(m_context.data_store->filename(), NcFile::read);
         vector<NcVar> vars(cs->dimension_variables());
-        for (size_t i = 0; i < m_data_store->rank(); i++) {
-            std::string var_name = m_data_store->variable_names()[i];
+        for (size_t i = 0; i < m_context.data_store->rank(); i++) {
+            std::string var_name = m_context.data_store->variable_names()[i];
             NcVar variable = file.getVar(var_name);
             vars.push_back(variable);
         }
-        ClusterList<T> cluster_list(vars, cs->dimensions(),
-                m_data_store->filename(),
-                m_data_store->get_time_index());
+        
+        // Create an empty cluster list
+        ClusterList<T> *cluster_list = new ClusterList<T>(vars, 
+                cs->dimensions(),
+                m_context.data_store->filename(),
+                m_context.data_store->get_time_index());
 
         // Guard against empty feature-space
         if (this->feature_space->points.size() == 0) {
@@ -115,46 +115,55 @@ namespace m3D {
         }
 
         MeanshiftOperation<T> meanshiftOperator(this->feature_space, this->point_index);
-        meanshiftOperator.prime_index(params);
+        meanshiftOperator.prime_index(m_context.search_params);
 
 #if WITH_OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
         for (size_t index = 0; index < this->feature_space->size(); index++) {
-            if (show_progress_bar) {
+            if (m_context.show_progress) {
 #if WITH_OPENMP
 #pragma omp critical
 #endif
                 m_progress_bar->operator++();
             }
+            
             // Get the meanshift vector for this point
             typename Point<T>::ptr x = this->feature_space->points[ index ];
-            x->shift = meanshiftOperator.meanshift(x->values, params, kernel, weight_function);
+            x->shift = meanshiftOperator.meanshift(x->values, 
+                    m_context.search_params, 
+                    m_context.kernel, 
+                    m_context.weight_function);
+            
             // Extract the spatial component and obtain the grid
             vector<T> spatial_shift = this->feature_space->spatial_component(x->shift);
             x->gridded_shift = this->feature_space->coordinate_system->to_gridpoints(spatial_shift);
         }
 
-        if (show_progress_bar) {
+        if (m_context.show_progress) {
             cout << "done. (" << stop_timer() << "s)" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
         }
 
         // Analyse the graph and create clusters
-        cluster_list.aggregate_cluster_graph(this->feature_space, weight_function, coalesceWithStrongestNeighbour, show_progress_bar);
+        cluster_list->aggregate_cluster_graph(
+                this->feature_space, 
+                m_context.weight_function, 
+                m_params.coalesceWithStrongestNeighbour, 
+                m_context.show_progress);
 
         // Provide fresh ids right away
         m3D::uuid_t uuid = 0;
-        ClusterUtils<T>::provideUuids(&cluster_list,uuid);
+        ClusterUtils<T>::provideUuids(cluster_list,uuid);
         m3D::id_t id = 0;
-        ClusterUtils<T>::provideIds(&cluster_list,id);
+        ClusterUtils<T>::provideIds(cluster_list,id);
 
 //        cout << "Cluster list after aggregation:" << endl;
 //        cluster_list.print();
 
         // Replace points with original data ()
-        ClusterUtils<T>::replace_points_from_datastore(cluster_list, m_data_store);
+        ClusterUtils<T>::replace_points_from_datastore(cluster_list, m_context.data_store);
 //        cout << "Cluster list after filtering points:" << endl;
 //        cluster_list.print();
 

@@ -273,6 +273,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/clustering/conrad_cluster.h
     include/meanie3D/clustering/histogram.h
     include/meanie3D/clustering/histogram_impl.h
+    include/meanie3D/clustering/detection.h
+    include/meanie3D/clustering/detection_impl.h
     include/meanie3D/clustering/id.h
     include/meanie3D/clustering.h
     include/meanie3D/defines.h
@@ -358,6 +360,8 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/weights/inverse_default.h
     include/meanie3D/weights/oase_weights.h
     include/meanie3D/weights/weight_function.h
+    include/meanie3D/weights/weight_function_factory.h
+    include/meanie3D/weights/weight_function_factory_impl.h
     include/meanie3D/weights.h
     src/adaptors/Radolan.cpp
     src/exceptions/CFFileConversionException.cpp

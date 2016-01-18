@@ -74,7 +74,7 @@ namespace m3D {
          */
         static
         void
-        replace_points_from_datastore(ClusterList<T> &list,
+        replace_points_from_datastore(typename ClusterList<T>::ptr list,
                 typename DataStore<T>::ptr dataStore);
 
         /** Iterates over the clusters in the list and checks on each 
@@ -86,7 +86,7 @@ namespace m3D {
          * @param fs
          */
         static
-        void obtain_margin_flag(ClusterList<T> &list,
+        void obtain_margin_flag(typename ClusterList<T>::ptr list,
                 typename FeatureSpace<T>::ptr fs);
 
         /**
@@ -96,7 +96,7 @@ namespace m3D {
          * and contains the highest updated uuid after the call.
          */
         static
-        void provideUuids(ClusterList<T> *list, uuid_t &uuid);
+        void provideUuids(typename ClusterList<T>::ptr list, uuid_t &uuid);
 
         /**
          * Tags the clusters in the list with ids.
@@ -105,7 +105,7 @@ namespace m3D {
          * and contains the highest updated uuid after the call.
          */
         static
-        void provideIds(ClusterList<T> *list, id_t &id);
+        void provideIds(typename ClusterList<T>::ptr list, id_t &id);
 
     };
 }

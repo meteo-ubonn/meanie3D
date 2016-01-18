@@ -34,8 +34,6 @@
 
 #include <netcdf>
 
-#include "tracking.h"
-
 namespace m3D {
 
     using namespace utils;

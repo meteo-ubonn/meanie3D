@@ -54,7 +54,6 @@ namespace m3D {
         }
 
         // sanity check
-
         if (current->clusters.size() == 0 || previous->clusters.size() == 0) {
             if (verbosity >= VerbosityNormal) {
                 cout << "Nothing to do." << endl;
@@ -62,11 +61,8 @@ namespace m3D {
             }
         }
 
-
         // Provide index for overlap calculations
-
         ClusterIndex<T> index_of_previous(previous->clusters, coord_system->get_dimension_sizes());
-
         size_t new_count = current->clusters.size();
         size_t old_count = previous->clusters.size();
         id_t current_id = current->clusters[current->clusters.size() - 1]->id;
@@ -75,7 +71,6 @@ namespace m3D {
         typename SimpleMatrix<T>::matrix_t coverNewByOld = SimpleMatrix<T>::create_matrix(new_count, old_count);
 
         // compute overlap
-
         size_t n, m;
 
         boost::progress_display *progress = NULL;
@@ -211,27 +206,16 @@ namespace m3D {
 
     template<typename T>
     void
-    ClusterUtils<T>::replace_points_from_datastore(ClusterList <T> &list,
+    ClusterUtils<T>::replace_points_from_datastore(typename ClusterList<T>::ptr list,
                                                    typename DataStore<T>::ptr dataStore) {
-        //        #if WITH_OPENMP
-        //        #pragma omp parallel for
-        //        #endif
-        for (size_t ci = 0; ci < list.size(); ci++) {
-            typename Cluster<T>::ptr c = list[ci];
-
+        for (size_t ci = 0; ci < list->size(); ci++) {
+            typename Cluster<T>::ptr c = list->clusters.at(ci);
             typename Point<T>::list::iterator pi;
-
             for (pi = c->get_points().begin(); pi != c->get_points().end(); ++pi) {
                 typename Point<T>::ptr p = *pi;
-
                 for (int vi = 0; vi < dataStore->rank(); vi++) {
                     bool isValid;
-
                     T value = dataStore->get(vi, p->gridpoint, isValid);
-
-                    //                    #if WITH_OPENMP
-                    //                    #pragma omp critical
-                    //                    #endif
                     p->values[c->spatial_rank() + vi] = value;
                 }
             }
@@ -240,13 +224,12 @@ namespace m3D {
 
     template<typename T>
     void
-    ClusterUtils<T>::obtain_margin_flag(ClusterList <T> &list,
+    ClusterUtils<T>::obtain_margin_flag(typename ClusterList<T>::ptr list,
                                         typename FeatureSpace<T>::ptr fs) {
-        // Create an array index of the points in the featurespace
         vector<size_t> dims = fs->coordinate_system->get_dimension_sizes();
         ArrayIndex<T> index(dims, fs->points, false);
         typename Cluster<T>::list::iterator ci;
-        for (ci = list.clusters.begin(); ci != list.clusters.end(); ++ci) {
+        for (ci = list->clusters.begin(); ci != list->clusters.end(); ++ci) {
             typename Cluster<T>::ptr c = *ci;
             typename Point<T>::list::iterator pi;
             for (pi = c->get_points().begin(); pi != c->get_points().end() && !c->has_margin_points(); ++pi) {
@@ -268,7 +251,7 @@ namespace m3D {
 
     template<typename T>
     void
-    ClusterUtils<T>::provideUuids(ClusterList <T> *list, uuid_t &uuid) {
+    ClusterUtils<T>::provideUuids(typename ClusterList<T>::ptr list, uuid_t &uuid) {
         typename Cluster<T>::list::iterator ci;
         for (ci = list->clusters.begin(); ci != list->clusters.end(); ++ci) {
             typename Cluster<T>::ptr c = *ci;
@@ -279,7 +262,7 @@ namespace m3D {
 
     template<typename T>
     void
-    ClusterUtils<T>::provideIds(ClusterList <T> *list, id_t &id) {
+    ClusterUtils<T>::provideIds(typename ClusterList<T>::ptr list, id_t &id) {
         typename Cluster<T>::list::iterator ci;
         for (ci = list->clusters.begin(); ci != list->clusters.end(); ++ci) {
             typename Cluster<T>::ptr c = *ci;

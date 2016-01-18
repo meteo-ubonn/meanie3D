@@ -42,7 +42,7 @@
 #include "tracking.h"
 
 namespace m3D {
-    using namespace units;
+    using namespace ::units;
     using namespace utils;
     using namespace utils::vectors;
 
@@ -59,8 +59,8 @@ namespace m3D {
         params.continueIDs = true;
         params.mergeSplitThreshold = 1.0f / 3.0f;
         params.mergeSplitContinuationThreshold = 0.75;
-        params.maxVelocity = ::units::values::meters_per_second(50.0);
-        params.max_deltaT = ::units::values::s(915);
+        params.maxVelocity = values::meters_per_second(50.0);
+        params.max_deltaT = values::s(915);
         params.useOverlapConstraint = true;
         params.max_size_deviation = 3;
         params.useMeanVelocityConstraint = false;

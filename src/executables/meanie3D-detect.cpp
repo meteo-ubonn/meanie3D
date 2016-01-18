@@ -1,4 +1,25 @@
-#include <meanie3D/meanie3D.h>
+/* The MIT License (MIT)
+ * 
+ * (c) Jürgen Simon 2014 (juergen.simon@uni-bonn.de)
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #include <boost/tokenizer.hpp>
 #include <boost/program_options.hpp>
@@ -17,7 +38,8 @@
 #include <limits>
 #include <stdlib.h>
 #include <netcdf>
-#include <meanie3D/utils/time_utils.h>
+
+#include <meanie3D/meanie3D.h>
 
 using namespace std;
 using namespace boost;
@@ -32,82 +54,38 @@ using namespace m3D;
  */
 typedef double FS_TYPE;
 
-/** Defines 'no scale' parameter.
- */
-static const double NO_SCALE = numeric_limits<double>::min();
-
 /* ******************************************************************** */
 /* Command line parsing                                                 */
 
 /* ******************************************************************** */
 
+template <typename T>
 void parse_commmandline(program_options::variables_map vm,
-                        NcFile **filePtr,
-                        string &filename,
-                        string &output_filename,
-                        vector<NcDim> &dimensions,
-                        vector<NcVar> &dimension_variables,
-                        vector<NcVar> &variables,
-                        int &time_index,
-                        map<int, double> &lower_thresholds,
-                        map<int, double> &upper_thresholds,
-                        map<int, double> &replacement_values,
-                        double &scale,
-                        vector<NcVar> &exclude_from_scale_space_filtering,
-                        std::string &kernel_name,
-                        std::string &weight_function_name,
-                        FS_TYPE &wwf_lower_threshold,
-                        FS_TYPE &wwf_upper_threshold,
-                        bool include_weight,
-                        vector<int> &replacementFilterVariableIndex,
-                        map<int, ReplacementFilter<FS_TYPE>::ReplacementMode> &replacementFilterModes,
-                        map<int, float> &replacementFilterPercentages,
-                        int &convection_filter_index,
-                        string &parameters,
-                        vector<FS_TYPE> &ranges,
-                        std::string **previous_file,
-                        std::string **ci_comparison_file,
-                        std::string **ci_comparison_protocluster_file,
-                        bool &ci_satellite_only,
-                        bool &ci_use_walker_mecikalski,
-                        FS_TYPE &ci_protocluster_scale,
-                        int &ci_protocluster_min_size,
-                        FS_TYPE &cluster_coverage_threshold,
-                        bool &spatial_range_only,
-                        bool &coalesceWithStrongestNeighbour,
-                        bool &write_vtk,
-                        bool &write_weight_function,
-                        bool &write_meanshift_vectors,
-                        bool &write_weight_response,
-                        bool &write_cluster_modes,
-                        bool &write_cluster_centers,
-                        vector<size_t> &vtk_dimension_indexes,
-                        Verbosity &verbosity,
-                        unsigned int &min_cluster_size,
-                        vector<NcVar> &vtk_variables)
-{
+        detection_params_t<T> &params) {
     if (vm.count("file") == 0) {
         cerr << "Missing input file argument" << endl;
         exit(EXIT_FAILURE);
     }
-    filename = vm["file"].as<string>();
+    params.filename = vm["file"].as<string>();
     try {
-        output_filename = vm["output"].as<string>();
+        params.output_filename = vm["output"].as<string>();
     } catch (const boost::exception &e) {
         cerr << "Missing parameter -o " << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Open NetCDF file
     NcFile *file = NULL;
     try {
-        file = new NcFile(filename, NcFile::read);
+        file = new NcFile(params.filename, NcFile::read);
     } catch (const netCDF::exceptions::NcException &e) {
-        cerr << "Error opening file '" << filename << "' : " << e.what() << endl;
-        exit(EXIT_FAILURE);;
+        cerr << "Error opening file '" << params.filename << "' : " << e.what() << endl;
+        exit(EXIT_FAILURE);
+        ;
     }
 
-    *filePtr = file;
+    params.filePtr = file;
 
     // Extract dimensions
     if (vm.count("dimensions") == 0) {
@@ -121,54 +99,60 @@ void parse_commmandline(program_options::variables_map vm,
     tokenizer dim_tokens(vm["dimensions"].as<string>(), sep);
     for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
         const char *name = (*tok_iter).c_str();
-        dimensions.push_back(file->getDim(name));
+        params.dimensions.push_back(file->getDim(name));
         NcVar dimVar = file->getVar(name);
         if (dimVar.isNull()) {
             cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
-        dimension_variables.push_back(dimVar);
+        params.dimension_variables.push_back(dimVar);
     }
-    parameters = parameters + "dimensions=" + vm["dimensions"].as<string>() + " ";
+    params.parameters = params.parameters
+            + "dimensions=" + vm["dimensions"].as<string>() + " ";
 
     // parse variables
     if (vm.count("variables") == 0) {
         cerr << "Missing mandatory parameter --variables" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
     tokenizer var_tokens(vm["variables"].as<string>(), sep);
     for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter) {
         NcVar var = file->getVar(*tok_iter);
         if (var.isNull()) {
             cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
-        variables.push_back(var);
+        params.variables.push_back(var);
     }
-    parameters = parameters + "variables=" + vm["variables"].as<string>() + " ";
+    params.parameters += params.parameters
+            + "variables=" + vm["variables"].as<string>() + " ";
 
     // time
-    time_index = vm["time-index"].as<int>();
+    params.time_index = vm["time-index"].as<int>();
 
     // Convection filter index
-    convection_filter_index = -1;
+    params.convection_filter_index = -1;
     if (vm.count("convection-filter-variable") > 0) {
         std::string cf_var_name = vm["convection-filter-variable"].as<string>();
 
-        for (int index = 0; index < variables.size(); index++) {
-            NcVar v = variables.at(index);
+        for (int index = 0; index < params.variables.size(); index++) {
+            NcVar v = params.variables.at(index);
 
             if (v.getName() == cf_var_name) {
                 // give the index in the complete feature-space vector
                 // not just the list of variables handed in
-                convection_filter_index = dimensions.size() + index;
+                params.convection_filter_index = params.dimensions.size() + index;
             }
         }
 
-        if (convection_filter_index < 0) {
+        if (params.convection_filter_index < 0) {
             cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name <<
-            "' not a featurespace variable" << endl;
-            exit(EXIT_FAILURE);;
+                    "' not a featurespace variable" << endl;
+            exit(EXIT_FAILURE);
+            ;
         }
     }
 
@@ -182,25 +166,26 @@ void parse_commmandline(program_options::variables_map vm,
         tokenizer tokens(rf, sep);
         for (tokenizer::iterator ti = tokens.begin(); ti != tokens.end(); ++ti) {
             tokenizer filter_tokens(*ti, boost::char_separator<char>("-"));
-            size_t i=0;
+            size_t i = 0;
             tokenizer::iterator fi = filter_tokens.begin();
-            ReplacementFilter<FS_TYPE>::ReplacementMode  mode;
+            ReplacementFilter<FS_TYPE>::ReplacementMode mode;
             int variable_index = -1;
             float percentage = -1.0;
             while (fi != filter_tokens.end()) {
-                if (i==0) {
+                if (i == 0) {
                     std::string varName = *fi;
-                    for (size_t vi=0; vi < variables.size(); vi++) {
-                        if (variables[vi].getName() == varName) {
+                    for (size_t vi = 0; vi < params.variables.size(); vi++) {
+                        if (params.variables[vi].getName() == varName) {
                             variable_index = vi;
                             break;
                         }
                     }
                     if (variable_index < 0) {
                         cerr << "Illegal variable name for --replacement-filter" << endl;
-                        exit(EXIT_FAILURE);;
+                        exit(EXIT_FAILURE);
+                        ;
                     }
-                } else if (i==1) {
+                } else if (i == 1) {
                     std::string modeName = *fi;
                     if (modeName == "median") {
                         mode = ReplacementFilter<FS_TYPE>::ReplaceWithMedian;
@@ -210,27 +195,28 @@ void parse_commmandline(program_options::variables_map vm,
                         mode = ReplacementFilter<FS_TYPE>::ReplaceWithHighest;
                     } else {
                         cerr << "Illegal mode name for --replacement-filter" << endl;
-                        exit(EXIT_FAILURE);;
+                        exit(EXIT_FAILURE);
+                        ;
                     }
-                } else if (i==2) {
+                } else if (i == 2) {
                     std::string perc = *fi;
-                    percentage = strtof(perc.c_str(), (char **)NULL) / 100.0f;
+                    percentage = strtof(perc.c_str(), (char **) NULL) / 100.0f;
                 }
                 i++;
                 fi++;
             }
 
             if ((mode == ReplacementFilter<FS_TYPE>::ReplaceWithHighest
-                 || mode == ReplacementFilter<FS_TYPE>::ReplaceWithLowest)
-                && percentage < 0)
-            {
+                    || mode == ReplacementFilter<FS_TYPE>::ReplaceWithLowest)
+                    && percentage < 0) {
                 cerr << "Missing percentage in --replacement-filter" << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
 
-            replacementFilterVariableIndex.push_back(variable_index);
-            replacementFilterPercentages[variable_index] = percentage;
-            replacementFilterModes[variable_index] = mode;
+            params.replacementFilterVariableIndex.push_back(variable_index);
+            params.replacementFilterPercentages[variable_index] = percentage;
+            params.replacementFilterModes[variable_index] = mode;
         }
     }
 
@@ -239,13 +225,15 @@ void parse_commmandline(program_options::variables_map vm,
         tokenizer bw_tokens(vm["ranges"].as<string>(), sep);
         for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter) {
             const char *bw = (*tok_iter).c_str();
-            ranges.push_back((FS_TYPE) strtod(bw, (char **) NULL));
+            params.ranges.push_back((FS_TYPE) strtod(bw, (char **) NULL));
         }
-        if (ranges.size() != dimension_variables.size() + variables.size()) {
-            cerr << "Please provide " << dimension_variables.size() + variables.size() << " bandwidth values" << endl;
+        if (params.ranges.size() != params.dimension_variables.size() + params.variables.size()) {
+            cerr << "Please provide " << params.dimension_variables.size()
+                    + params.variables.size() << " bandwidth values" << endl;
             exit(EXIT_FAILURE);
         }
-        parameters = parameters + "ranges=" + vm["ranges"].as<string>();
+        params.parameters = params.parameters
+                + "ranges=" + vm["ranges"].as<string>();
     }
 
     // Lower Thresholds
@@ -261,15 +249,15 @@ void parse_commmandline(program_options::variables_map vm,
             tokenizer::iterator subtoken_iter = subtokens.begin();
             std::string variableName = *subtoken_iter;
             bool have_var = false;
-            for (int i = 0; i < variables.size() && !have_var; i++) {
-                if (variables[i].getName() == variableName) {
+            for (int i = 0; i < params.variables.size() && !have_var; i++) {
+                if (params.variables[i].getName() == variableName) {
                     subtoken_iter++;
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
                         exit(EXIT_FAILURE);
                     }
                     const char *value = (*subtoken_iter).c_str();
-                    lower_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
+                    params.lower_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
                     have_var = true;
                 }
             }
@@ -291,15 +279,15 @@ void parse_commmandline(program_options::variables_map vm,
             tokenizer::iterator subtoken_iter = subtokens.begin();
             std::string variableName = *subtoken_iter;
             bool have_var = false;
-            for (int i = 0; i < variables.size(); i++) {
-                if (variables[i].getName() == variableName) {
+            for (int i = 0; i < params.variables.size(); i++) {
+                if (params.variables[i].getName() == variableName) {
                     subtoken_iter++;
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
                         exit(EXIT_FAILURE);
                     }
                     const char *value = (*subtoken_iter).c_str();
-                    upper_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
+                    params.upper_thresholds[i] = boost::numeric_cast<FS_TYPE>(strtod(value, (char **) NULL));
                     have_var = true;
                 }
             }
@@ -320,9 +308,9 @@ void parse_commmandline(program_options::variables_map vm,
             tokenizer::iterator subtoken_iter = subtokens.begin();
             std::string variableName = *subtoken_iter;
             NcVar variable;
-            for (size_t i = 0; i < variables.size(); i++) {
-                if (variables[i].getName() == variableName) {
-                    variable = variables[i];
+            for (size_t i = 0; i < params.variables.size(); i++) {
+                if (params.variables[i].getName() == variableName) {
+                    variable = params.variables[i];
                 }
             }
             if (variable.isNull()) {
@@ -336,53 +324,54 @@ void parse_commmandline(program_options::variables_map vm,
             }
             const char *value = (*subtoken_iter).c_str();
             double doubleValue = strtod(value, (char **) NULL);
-            replacement_values[variable.getId()] = doubleValue;
+            params.replacement_values[variable.getId()] = doubleValue;
         }
     }
 
 
     // Scale parameter
-    scale = vm["scale"].as<double>();
+    params.scale = vm["scale"].as<double>();
 
     // Kernel
-    kernel_name = vm["kernel-name"].as<string>();
+    params.kernel_name = vm["kernel-name"].as<string>();
 
-    if (!(kernel_name == "uniform" || kernel_name == "epanechnikov" || kernel_name == "gauss" ||
-          kernel_name == "none")) {
-        cerr << "Illegal kernel name " << kernel_name <<
-        ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
+    if (!(params.kernel_name == "uniform"
+            || params.kernel_name == "epanechnikov"
+            || params.kernel_name == "gauss"
+            || params.kernel_name == "none")) {
+        cerr << "Illegal kernel name " << params.kernel_name <<
+                ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
         exit(EXIT_FAILURE);
     }
 
     // Weight Function
-    weight_function_name = vm["weight-function-name"].as<string>();
-    if (!(weight_function_name == "default" 
-            || weight_function_name == "inverse" 
-            || weight_function_name == "pow10"
-            || weight_function_name == "oase" 
-            || weight_function_name == "oase-ci" )) 
-    {
-        cerr << "Illegal weight function name " << weight_function_name <<
-        ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
+    params.weight_function_name = vm["weight-function-name"].as<string>();
+    if (!(params.weight_function_name == "default"
+            || params.weight_function_name == "inverse"
+            || params.weight_function_name == "pow10"
+            || params.weight_function_name == "oase"
+            || params.weight_function_name == "oase-ci")) {
+        cerr << "Illegal weight function name " << params.weight_function_name <<
+                ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
         exit(EXIT_FAILURE);
     }
-    wwf_lower_threshold = vm["wwf-lower-threshold"].as<FS_TYPE>();
-    wwf_upper_threshold = vm["wwf-upper-threshold"].as<FS_TYPE>();
+    params.wwf_lower_threshold = vm["wwf-lower-threshold"].as<FS_TYPE>();
+    params.wwf_upper_threshold = vm["wwf-upper-threshold"].as<FS_TYPE>();
 
     // Coalescence?
-    coalesceWithStrongestNeighbour = vm.count("coalesce-with-strongest-neighbour") > 0;
+    params.coalesceWithStrongestNeighbour = vm.count("coalesce-with-strongest-neighbour") > 0;
 
     // only spatial range?
-    spatial_range_only = vm.count("spatial-range-only") > 0;
+    params.spatial_range_only = vm.count("spatial-range-only") > 0;
 
     // VTK output?
-    write_vtk = vm.count("write-clusters-as-vtk") > 0;
-    write_cluster_modes = vm.count("write-cluster-modes") > 0;
-    write_cluster_centers = vm.count("write-cluster-centers") > 0;
-    write_weight_response = vm.count("write-cluster-weight-response") > 0;
-    write_weight_function = vm.count("write-weight-function") > 0;
-    write_meanshift_vectors = vm.count("write-meanshift-vectors") > 0;
-    include_weight = vm.count("include-weight-function-in-results") > 0;
+    params.write_vtk = vm.count("write-clusters-as-vtk") > 0;
+    params.write_cluster_modes = vm.count("write-cluster-modes") > 0;
+    params.write_cluster_centers = vm.count("write-cluster-centers") > 0;
+    params.write_weight_response = vm.count("write-cluster-weight-response") > 0;
+    params.write_weight_function = vm.count("write-weight-function") > 0;
+    params.write_meanshift_vectors = vm.count("write-meanshift-vectors") > 0;
+    params.include_weight_in_result = vm.count("include-weight-function-in-results") > 0;
 
     // VTK dimension mapping
     if (vm.count("vtk-dimensions") > 0) {
@@ -394,43 +383,44 @@ void parse_commmandline(program_options::variables_map vm,
         for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
             const char *name = (*tok_iter).c_str();
             NcDim dim = file->getDim(name);
-            vector<NcDim>::const_iterator fi = find(dimensions.begin(), dimensions.end(), dim);
-            if (fi == dimensions.end()) {
+            vector<NcDim>::const_iterator fi = find(params.dimensions.begin(), params.dimensions.end(), dim);
+            if (fi == params.dimensions.end()) {
                 cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of --dimensions" << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
-            size_t index = fi - dimensions.begin();
-            vtk_dimension_indexes.push_back(index);
+            size_t index = fi - params.dimensions.begin();
+            params.vtk_dimension_indexes.push_back(index);
         }
 
-        if (vtk_dimension_indexes.size() != dimensions.size()) {
+        if (params.vtk_dimension_indexes.size() != params.dimensions.size()) {
             cerr << "The number of vtk-dimensions must be identical to dimensions" << endl;
-            exit(EXIT_FAILURE);;
+            exit(EXIT_FAILURE);
+            ;
         }
     }
 
-    
     // Previous file
     if (vm.count("previous-file") > 0) {
         std::string previous = vm["previous-file"].as<string>();
         boost::filesystem::path previous_path(previous);
         if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
-            *previous_file = new std::string(previous);
+            params.previous_clusters_filename = new std::string(previous);
         } else {
             cerr << "Illegal value for parameter --previous-file: does not exist or is no regular file" << endl;
         }
     }
 
     // CI flags
-    ci_satellite_only = vm.count("ci-satellite-only") > 0;
-    ci_use_walker_mecikalski = vm.count("ci-use-walker-mecikalski") > 0;
-    
+    params.ci_satellite_only = vm.count("ci-satellite-only") > 0;
+    params.ci_use_walker_mecikalski = vm.count("ci-use-walker-mecikalski") > 0;
+
     // ci_comparison_file
     if (vm.count("ci-comparison-file") > 0) {
         std::string previous = vm["ci-comparison-file"].as<string>();
         boost::filesystem::path previous_path(previous);
         if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
-            *ci_comparison_file = new std::string(previous);
+            params.ci_comparison_file = new std::string(previous);
         } else {
             cerr << "Illegal value for parameter --ci-comparison-file: does not exist or is no regular file" << endl;
         }
@@ -441,37 +431,38 @@ void parse_commmandline(program_options::variables_map vm,
         std::string previous = vm["ci-comparison-protocluster-file"].as<string>();
         boost::filesystem::path previous_path(previous);
         if (boost::filesystem::exists(previous_path) && boost::filesystem::is_regular_file(previous_path)) {
-            *ci_comparison_protocluster_file = new std::string(previous);
+            params.ci_comparison_protocluster_file = new std::string(previous);
         } else {
             cerr <<
-            "Illegal value for parameter --ci-comparison-protocluster-file: does not exist or is no regular file" <<
-            endl;
+                    "Illegal value for parameter --ci-comparison-protocluster-file: does not exist or is no regular file" <<
+                    endl;
         }
     }
-    
+
     if (vm.count("ci-protocluster-scale") > 0) {
-        ci_protocluster_scale = vm["ci-protocluster-scale"].as<FS_TYPE>();
+        params.ci_protocluster_scale = vm["ci-protocluster-scale"].as<FS_TYPE>();
     }
     if (vm.count("ci-protocluster-min-size") > 0) {
-        ci_protocluster_min_size = vm["ci-protocluster-min-size"].as<int>();
+        params.ci_protocluster_min_size = vm["ci-protocluster-min-size"].as<int>();
     }
 
     // previous-cluster-coverage-threshold
-    cluster_coverage_threshold = vm["previous-cluster-coverage-threshold"].as<FS_TYPE>();
+    params.cluster_coverage_threshold = vm["previous-cluster-coverage-threshold"].as<FS_TYPE>();
 
     // Verbosity
     unsigned int vb = vm["verbosity"].as < unsigned
-    int > ();
+            int > ();
 
     if (vb > VerbosityAll) {
         cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     } else {
-        verbosity = (Verbosity) vb;
+        params.verbosity = (Verbosity) vb;
     }
 
     // min cluster size
-    min_cluster_size = vm["min-cluster-size"].as < unsigned int > ();
+    params.min_cluster_size = vm["min-cluster-size"].as < unsigned int > ();
 
     // vtk-variables
     if (vm.count("write-variables-as-vtk") > 0) {
@@ -482,12 +473,14 @@ void parse_commmandline(program_options::variables_map vm,
                 NcVar var = file->getVar(bw);
                 if (var.isNull()) {
                     cerr << "Can't open variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                    exit(EXIT_FAILURE);;
+                    exit(EXIT_FAILURE);
+                    ;
                 }
-                vtk_variables.push_back(var);
+                params.vtk_variables.push_back(var);
             } catch (const netCDF::exceptions::NcException &e) {
                 cerr << "Can't find variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
-                exit(EXIT_FAILURE);;
+                exit(EXIT_FAILURE);
+                ;
             }
         }
     }
@@ -529,6 +522,8 @@ void print_compile_time_options() {
 int main(int argc, char **argv) {
     using namespace m3D;
 
+    detection_params_t<FS_TYPE> params = Detection<FS_TYPE>::defaultParams();
+
     // Declare the supported options.
     program_options::options_description desc("Options");
     desc.add_options()
@@ -537,57 +532,57 @@ int main(int argc, char **argv) {
             ("file,f", program_options::value<string>(), "CF-Metadata compliant NetCDF-file")
             ("output,o", program_options::value<string>(), "Name of output file for clustering results")
             ("dimensions,d", program_options::value<string>(),
-             "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
+            "Comma-separatred list of the dimensions to be used. The program expects dimension variables with identical names.")
             ("variables,v", program_options::value<string>(),
-             "Comma-separated variables used to construct feature space. Do not include dimension variables")
-            ("time-index,t", program_options::value<int>()->default_value(-1),
-             "Index of the point in time you wish to use in files with a time dimension. -1 means no time dimension in the variables.")
+            "Comma-separated variables used to construct feature space. Do not include dimension variables")
+            ("time-index,t", program_options::value<int>()->default_value(params.time_index),
+            "Index of the point in time you wish to use in files with a time dimension. -1 means no time dimension in the variables.")
             ("lower-thresholds", program_options::value<string>(),
-             "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
+            "Comma-separated list var1=val,var2=val,... of lower tresholds. Values below this are ignored when constructing feature space")
             ("upper-thresholds", program_options::value<string>(),
-             "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
+            "Comma-separated list var1=val,var2=val,... of lower tresholds. Values above this are ignored when constructing feature space")
             ("replacement-values", program_options::value<string>(),
-             "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
-            ("kernel-name,k", program_options::value<string>()->default_value("uniform"),
-             "uniform,gauss,epnachnikov or none")
-            ("weight-function-name,w", program_options::value<string>()->default_value("default"),
-             "default,inverse,pow10 or oase")
-            ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(0),
-             "Lower threshold for weight function filter. Defaults to 0.05 (5%)")
+            "Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
+            ("kernel-name,k", program_options::value<string>()->default_value(params.kernel_name),
+            "uniform,gauss,epnachnikov or none")
+            ("weight-function-name,w", program_options::value<string>()->default_value(params.weight_function_name),
+            "default,inverse,pow10 or oase")
+            ("wwf-lower-threshold", program_options::value<FS_TYPE>()->default_value(params.wwf_lower_threshold),
+            "Lower threshold for weight function filter.")
             ("wwf-upper-threshold",
-             program_options::value<FS_TYPE>()->default_value(std::numeric_limits<FS_TYPE>::max()),
-             "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
+            program_options::value<FS_TYPE>()->default_value(params.wwf_upper_threshold),
+            "Upper threshold for weight function filter. Defaults to std::numeric_limits::max()")
             ("replacement-filter", program_options::value<string>(),
-             "Comma-separated list varname-<lowest|highest|median>-[percentage],... to replace values with average of lowest/highest percent or median of neighbours")
+            "Comma-separated list varname-<lowest|highest|median>-[percentage],... to replace values with average of lowest/highest percent or median of neighbours")
             ("ci-comparison-file", program_options::value<string>(),
-             "File for calculating time trends for CI-score according to Walker et al. 2012.")
+            "File for calculating time trends for CI-score according to Walker et al. 2012.")
             ("ci-comparison-protocluster-file", program_options::value<string>(),
-             "Protoclusters from the comparison file")
+            "Protoclusters from the comparison file")
             ("ci-satellite-only", "If present, only satellite values are used (original score), otherwise ")
             ("ci-use-walker-mecikalski", "If present, the original limits by Walker and Mecicalski are used for CI score. If absent, the modified version is used")
-            ("ci-protocluster-scale", program_options::value<FS_TYPE>()->default_value(25.0), "Scale parameter for protocluster detection")
-            ("ci-protocluster-min-size", program_options::value<int>()->default_value(10), "Minimum size of protoclusters")
+            ("ci-protocluster-scale", program_options::value<FS_TYPE>()->default_value(params.ci_protocluster_scale), "Scale parameter for protocluster detection")
+            ("ci-protocluster-min-size", program_options::value<int>()->default_value(params.ci_protocluster_min_size), "Minimum size of protoclusters")
             ("coalesce-with-strongest-neighbour",
-             "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
-            ("scale,s", program_options::value<double>()->default_value(NO_SCALE),
-             "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
+            "Clusters are post-processed, coalescing each cluster with their strongest neighbour")
+            ("scale,s", program_options::value<double>()->default_value(params.scale),
+            "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
             ("filter-size,l", program_options::value<double>()->default_value(0.0),
-             "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
+            "Scale parameter to pre-smooth the data with. Scale parameter is calculated from this automatically.")
             ("ranges,r", program_options::value<string>(),
-             "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
-            ("min-cluster-size,m", program_options::value<unsigned int>()->default_value(1u),
-             "Discard clusters smaller than this number of points.")
+            "Override the automatic bandwidth calculation with a set of given bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
+            ("min-cluster-size,m", program_options::value<unsigned int>()->default_value(params.min_cluster_size),
+            "Discard clusters smaller than this number of points.")
             ("previous-file,p", program_options::value<string>(),
-             "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
-            ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(0.66),
-             "Minimum overlap in percent between current and previous clusters to be taken into consideration. Defaults to 2/3 (0.66)")
+            "Optional file containing the clustering results from the previous timeslice. Helps to keep the clustering more stable over time.")
+            ("previous-cluster-coverage-threshold", program_options::value<double>()->default_value(params.cluster_coverage_threshold),
+            "Minimum overlap in percent between current and previous clusters to be taken into consideration.")
             ("include-weight-function-in-results,i",
-             "Add a netcdf variable 'weight' to the result file, containining the weight function response at each point in the feature-space")
+            "Add a netcdf variable 'weight' to the result file, containining the weight function response at each point in the feature-space")
 #if WITH_VTK
             ("vtk-dimensions", program_options::value<string>(),
-             "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
+            "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
             ("write-variables-as-vtk", program_options::value<string>(),
-             "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
+            "Comma separated list of variables that should be written out as VTK files (after applying scale/threshold)")
             ("write-weight-function", "write weight function out as .vtk file")
             ("write-meanshift-vectors", "write out .vtk files containing the meanshift vectors")
             ("write-clusters-as-vtk", "write clusters out as .vtk files")
@@ -595,8 +590,8 @@ int main(int argc, char **argv) {
             ("write-cluster-centers", "write cluster centers out in .vtk file format")
             ("write-cluster-weight-response", "write out the clusters with weight responses as value")
 #endif
-            ("verbosity", program_options::value<unsigned int>()->default_value(1u),
-             "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.");
+            ("verbosity", program_options::value<unsigned int>()->default_value(params.verbosity),
+            "Verbosity level [0..3], 0=silent, 1=normal, 2=show details, 3=show all details). Default is 1.");
 
     program_options::variables_map vm;
     try {
@@ -605,219 +600,114 @@ int main(int argc, char **argv) {
     } catch (std::exception &e) {
         cerr << "Error parsing command line: " << e.what() << endl;
         cerr << "Check meanie3D-detect --help for command line options" << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
     // Version
-
     if (vm.count("version") != 0) {
         cout << m3D::VERSION << endl;
-        exit(EXIT_FAILURE);;
+        exit(EXIT_FAILURE);
+        ;
     }
 
+    // Help
     if (vm.count("help") == 1 || argc < 2) {
         cout << desc << "\n";
         return 1;
     }
 
-    // Evaluate user input
-    NcFile *file = NULL;
-    string filename;
-    string output_filename;
-    string parameters;
-    vector<NcDim> dimensions;
-    vector<size_t> vtk_dimension_indexes;
-    vector<NcVar> dimension_variables;
-    vector<NcVar> variables;
-    vector<NcVar> exclude_from_scale_space_filtering;
-    int time_index = 0;
-    vector<FS_TYPE> ranges;
-    unsigned int min_cluster_size = 1;
-    map<int, double> lower_thresholds; // ncvar.id / value
-    map<int, double> upper_thresholds; // ncvar.id / value
-    map<int, double> replacement_values; // ncvar.id / value
-    FS_TYPE wwf_lower_threshold;
-    FS_TYPE wwf_upper_threshold;
-    std::string weight_function_name = "default";
-    std::string kernel_name = "uniform";
-    std::string *previous_file = NULL;
-    std::string *ci_comparison_file = NULL;
-    std::string *ci_comparison_protocluster_file = NULL;
-    bool ci_use_walker_mecikalski = false;
-    bool ci_satellite_only = false;
-    FS_TYPE ci_protocluster_scale;
-    int ci_protocluster_min_size;
-    bool include_weight_in_result = false;
-    FS_TYPE cluster_coverage_threshold = 0.66;
-    int convection_filter_index = -1;
-    bool coalesceWithStrongestNeighbour = false;
-    bool spatial_range_only = false;
-    double scale = NO_SCALE;
+    // Parse command line and go
 
-    vector<int> replacementFilterVariableIndex;
-    map<int, ReplacementFilter<FS_TYPE>::ReplacementMode > replacementFilterModes;
-    map<int, float> replacementFilterPercentages;
-
-    vector<NcVar> vtk_variables;
-    SearchParameters *search_params = NULL;
-    bool write_vtk = false;
-    bool write_meanshift_vectors = false;
-    bool write_weight_function = false;
-    bool write_weight_response = false;
-    bool write_cluster_modes = false;
-    bool write_cluster_centers = false;
-    Verbosity verbosity = VerbosityNormal;
-
-    timestamp_t timestamp;
-    FS_TYPE kernel_width = 0.0;
     try {
-        parse_commmandline(vm,
-                           &file,
-                           filename,
-                           output_filename,
-                           dimensions,
-                           dimension_variables,
-                           variables,
-                           time_index,
-                           lower_thresholds,
-                           upper_thresholds,
-                           replacement_values,
-                           scale,
-                           exclude_from_scale_space_filtering,
-                           kernel_name,
-                           weight_function_name,
-                           wwf_lower_threshold,
-                           wwf_upper_threshold,
-                           include_weight_in_result,
-                           replacementFilterVariableIndex,
-                           replacementFilterModes,
-                           replacementFilterPercentages,
-                           convection_filter_index,
-                           parameters,
-                           ranges,
-                           &previous_file,
-                           &ci_comparison_file,
-                           &ci_comparison_protocluster_file,
-                           ci_satellite_only,
-                           ci_use_walker_mecikalski,
-                           ci_protocluster_scale,
-                           ci_protocluster_min_size,
-                           cluster_coverage_threshold,
-                           spatial_range_only,
-                           coalesceWithStrongestNeighbour,
-                           write_vtk,
-                           write_weight_function,
-                           write_meanshift_vectors,
-                           write_weight_response,
-                           write_cluster_modes,
-                           write_cluster_centers,
-                           vtk_dimension_indexes,
-                           verbosity,
-                           min_cluster_size,
-                           vtk_variables);
-
-        // Make the mapping known to the visualization routines
-
-#if WITH_VTK
-        VisitUtils<FS_TYPE>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
-#endif
-        // Get timestamp
-        if (boost::contains(filename, "rico.out.xy.")) {
-            // TODO: this block was put in for a specific tracking
-            // inter-comparison problem. Remove when the project is through!!
-            // time for this is days since simulation start
-            double time_in_days = utils::netcdf::get_time<double>(filename, time_index);
-            // a day has 24 * 60 * 60 seconds
-            timestamp = (long) round(time_in_days * 24.0 * 60.0 * 60.0);
-        } else {
-            // Seconds since epoch
-            timestamp = utils::netcdf::get_time<long>(filename, time_index);
-        }
+        parse_commmandline(vm, params);
     } catch (const std::exception &e) {
         cerr << e.what() << endl;
         exit(EXIT_FAILURE);
     }
 
-    bool show_progress = (verbosity > VerbositySilent);
+    // Initialise the context beforehand to allow giving the user
+    // some feedback before the run.
+    detection_context_t<FS_TYPE> ctx;
+    Detection<FS_TYPE>::initialiseContext(params, ctx);
 
-    if (verbosity > VerbositySilent) {
+    // Give some user feedback on the choices
+    if (params.verbosity > VerbositySilent) {
         cout << "----------------------------------------------------" << endl;
-        cout << "meanie3D-detect" << endl;
+        cout << "meanie3D detection" << endl;
         cout << "----------------------------------------------------" << endl;
         cout << endl;
 
-        cout << "Command line options:" << endl;
-        cout << "\tinput file = " << filename << endl;
+        cout << "Parameters:" << endl;
+        cout << "\tinput file = " << params.filename << endl;
 
-        if (time_index >= 0) {
-            cout << "\tusing point in time at index " << time_index << " (timestamp=" << timestamp << ")" << endl;
+        if (params.time_index >= 0) {
+            cout << "\tusing point in time at index " << params.time_index
+                    << " (timestamp=" << ctx.timestamp << ")" << endl;
         } else {
-            cout << "\ttime is not a variable dimension. Using timestamp " << timestamp << endl;
+            cout << "\ttime is not a variable dimension. Using timestamp " 
+                    << ctx.timestamp << endl;
         }
         cout << "\tdimensions = " << vm["dimensions"].as<string>() << endl;
         cout << "\tvariables = " << vm["variables"].as<string>() << endl;
 
-        if (!ranges.empty()) {
-            cout << "\tranges = " << ranges << endl;
-
-            // calculate kernel width as average of ranges
-            kernel_width = boost::numeric_cast<FS_TYPE>(0.0);
-            for (size_t i = 0; i < dimensions.size(); i++) {
-                kernel_width += ranges[i];
-            }
-            kernel_width = kernel_width / boost::numeric_cast<FS_TYPE>(dimensions.size());
+        if (!params.ranges.empty()) {
+            cout << "\tranges = " << params.ranges << endl;
         } else {
             cout << "\tautomatic bandwidth selection" << endl;
         }
 
-        if (!lower_thresholds.empty()) {
+        if (!params.lower_thresholds.empty()) {
             cout << "\tusing lower thresholds " << vm["lower-thresholds"].as<string>() << endl;
         }
 
-        if (!upper_thresholds.empty()) {
+        if (!params.upper_thresholds.empty()) {
             cout << "\tusing upper thresholds " << vm["upper-thresholds"].as<string>() << endl;
         }
 
-        if (scale != NO_SCALE) {
-            double width = ScaleSpaceFilter<FS_TYPE>::scale_to_filter_width(scale);
-            if (ranges.empty()) {
-                kernel_width = width;
-            }
-            cout << "\tpre-smoothing data with scale parameter " << scale << " (kernel width = " << width << ")" <<
-            endl;
+        if (params.scale != Detection<FS_TYPE>::NO_SCALE) {
+            cout << "\tpre-smoothing data with scale parameter " 
+                    << params.scale << " (kernel width = " 
+                    << ctx.kernel_width << ")" << endl;
         } else {
             cout << "\tno scale-space smoothing" << endl;
         }
 
-        cout << "\tkernel:" << kernel_name << endl;
-        cout << "\tweight-function:" << weight_function_name << endl;
-        cout << "\t\tlower weight-function threshold: " << wwf_lower_threshold << endl;
-        cout << "\t\tupper weight-function threshold: " << wwf_upper_threshold << endl;
+        cout << "\tkernel:" << params.kernel_name << endl;
+        cout << "\tweight-function:" << params.weight_function_name << endl;
+        cout << "\t\tlower weight-function threshold: " 
+                << params.wwf_lower_threshold << endl;
+        cout << "\t\tupper weight-function threshold: " 
+                << params.wwf_upper_threshold << endl;
 
-        if (ci_comparison_file != NULL) {
-            cout << "\tCI comparison file for time trends:" << *ci_comparison_file << endl;
+        if (params.ci_comparison_file != NULL) {
+            cout << "\tCI comparison file for time trends:" 
+                    << *params.ci_comparison_file << endl;
         }
 
-        if (previous_file != NULL) {
-            cout << "\tprevious file:" << *previous_file << endl;
+        if (params.previous_clusters_filename != NULL) {
+            cout << "\tprevious file:" << *params.previous_clusters_filename << endl;
 
             if (vm.count("previous-cluster-coverage-threshold") > 0) {
-                cout << "\tprevious file coverage threshold:" << cluster_coverage_threshold << endl;
+                cout << "\tprevious file coverage threshold:" 
+                        << params.cluster_coverage_threshold << endl;
             }
         }
 
-        if (min_cluster_size > 1) {
-            cout << "\tminimum cluster size = " << min_cluster_size << endl;
+        if (params.min_cluster_size > 1) {
+            cout << "\tminimum cluster size = " 
+                    << params.min_cluster_size << endl;
         }
 
-        if (!replacementFilterVariableIndex.empty()) {
+        if (!params.replacementFilterVariableIndex.empty()) {
             cout << "\treplacement filters on " << endl;
-            for (size_t i=0; i < replacementFilterVariableIndex.size(); i++) {
-                int rvi = replacementFilterVariableIndex[i];
-                cout << "\t\t" << variables[rvi].getName() << " replace with ";
-                ReplacementFilter<FS_TYPE>::ReplacementMode mode = replacementFilterModes[rvi];
-                float percent = replacementFilterPercentages[rvi] * 100.0;
-                switch (mode) {
+            for (size_t i = 0; i < params.replacementFilterVariableIndex.size(); i++) {
+                int rvi = params.replacementFilterVariableIndex[i];
+                cout << "\t\t" << params.variables[rvi].getName() << " replace with ";
+                ReplacementFilter<FS_TYPE>::ReplacementMode mode = params.replacementFilterModes[rvi];
+                float percent = params.replacementFilterPercentages[rvi] * 100.0;
+                switch (mode)
+                {
                     case ReplacementFilter<FS_TYPE>::ReplaceWithHighest:
                         cout << "highest " << percent << "%";
                         break;
@@ -828,378 +718,44 @@ int main(int argc, char **argv) {
                         cout << "median";
                         break;
                 }
-                cout << " of neighbouring points" << endl;
+                cout << " of neighboring points" << endl;
             }
         }
 
-        cout << "\tmean-shift is limited to spatial range: " << (spatial_range_only ? "yes" : "no") << endl;
-        cout << "\tcoalesce results with strongest neighbor: " << (coalesceWithStrongestNeighbour ? "yes" : "no") <<
-        endl;
-        cout << "\toutput written to file: " << output_filename << endl;
+        cout << "\tmean-shift is limited to spatial range: " 
+                << (params.spatial_range_only ? "yes" : "no") << endl;
+        
+        cout << "\tcoalesce results with strongest neighbor: " 
+                << (params.coalesceWithStrongestNeighbour ? "yes" : "no") <<
+                endl;
+        
+        cout << "\toutput written to file: " << params.output_filename << endl;
 
-        if (!vtk_variables.empty()) {
+#if WITH_VTK
+        if (!params.vtk_variables.empty()) {
             cout << "\twriting out these variables as vtk after processing:" <<
-            vm["write-variables-as-vtk"].as<string>() << endl;
+                    vm["write-variables-as-vtk"].as<string>() << endl;
         }
-
-        cout << "\twriting weight function to vtk:" << (write_weight_function ? "yes" : "no") << endl;
-        cout << "\twriting mean-shift vectors to vtk:" << (write_meanshift_vectors ? "yes" : "no") << endl;
-        cout << "\tclusters written as vtk: " << (write_vtk ? "yes" : "no") << endl;
-        cout << "\twrite cluster centers as vtk: " << (write_cluster_centers ? "yes" : "no") << endl;
-        cout << "\twriting cluster weights as vtk: " << (write_weight_response ? "yes" : "no") << endl;
-
-        if (verbosity > VerbosityNormal) {
+        cout << "\twriting weight function to vtk:" << (params.write_weight_function ? "yes" : "no") << endl;
+        cout << "\twriting mean-shift vectors to vtk:" << (params.write_meanshift_vectors ? "yes" : "no") << endl;
+        cout << "\tclusters written as vtk: " << (params.write_vtk ? "yes" : "no") << endl;
+        cout << "\twrite cluster centers as vtk: " << (params.write_cluster_centers ? "yes" : "no") << endl;
+        cout << "\twriting cluster weights as vtk: " << (params.write_weight_response ? "yes" : "no") << endl;
+#endif
+        
+        if (params.verbosity > VerbosityNormal) {
             cout << endl;
             cout << "Compiled options (use -D to switch them on and off during compile time)" << endl;
             print_compile_time_options();
         }
     }
-
-    CoordinateSystem<FS_TYPE> *coord_system = new CoordinateSystem<FS_TYPE>(dimensions, dimension_variables);
-
-    start_timer();
-
-    // used in writing out debug data
-    boost::filesystem::path path(filename);
-
-    // Compile a list of variable names
-    vector<std::string> variable_names;
-    for (size_t i = 0; i < variables.size(); i++)
-        variable_names.push_back(variables.at(i).getName());
-
-    NetCDFDataStore<FS_TYPE> *data_store
-            = new NetCDFDataStore<FS_TYPE>(filename, coord_system, variable_names, time_index);
-
-    FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(coord_system,
-                                                          data_store,
-                                                          lower_thresholds,
-                                                          upper_thresholds,
-                                                          replacement_values,
-                                                          show_progress);
-    if (ranges.empty()) {
-        // spatial range
-        FS_TYPE t = (scale == NO_SCALE) ? 1.0 : scale;
-        FS_TYPE filter_width = sqrt(ceil(-2.0 * t * log(0.01))) / 2.0;
-        for (size_t i = 0; i < dimensions.size(); i++) {
-            ranges.push_back(filter_width);
-        }
-        // value range
-        for (size_t i = 0; i < data_store->rank(); i++) {
-            FS_TYPE range = data_store->valid_max(i) - data_store->valid_min(i);
-            ranges.push_back(range);
-        }
-        cout << "Automatically calculated bandwidth:" << ranges << endl;
-    }
-    search_params = new RangeSearchParams<FS_TYPE>(ranges);
-
-    if (!replacementFilterVariableIndex.empty()) {
-        for (size_t i=0; i < replacementFilterVariableIndex.size(); i++) {
-
-            int rvi = replacementFilterVariableIndex[i];
-            cout << "Applying replacement filter for " << variables[rvi].getName()
-            << " replacing values by ";
-            ReplacementFilter<FS_TYPE>::ReplacementMode mode = replacementFilterModes[rvi];
-            float percent = replacementFilterPercentages[rvi];
-            switch (mode) {
-                case ReplacementFilter<FS_TYPE>::ReplaceWithHighest:
-                    cout << "highest " << percent << "%";
-                    break;
-                case ReplacementFilter<FS_TYPE>::ReplaceWithLowest:
-                    cout << "lowest " << percent << "%";
-                    break;
-                case ReplacementFilter<FS_TYPE>::ReplaceWithMedian:
-                    cout << "median";
-                    break;
-            }
-            cout << " of neighbours ...";
-            start_timer();
-            ReplacementFilter<FS_TYPE> rf(mode,rvi,ranges,percent);
-            rf.apply(fs);
-            stop_timer("done.");
-        }
-    }
-
-#if WRITE_FEATURESPACE
-    static size_t fs_index = 0;
-    std::string fn = path.stem().string() + "_featurespace_" + boost::lexical_cast<string>(fs_index++) + ".vtk";
-    VisitUtils<FS_TYPE>::write_featurespace_vtk(fn, fs);
-#endif
-
-#if WRITE_OFF_LIMITS_MASK
-    std::string ol_fname = path.filename().stem().string() + "-off_limits.vtk";
-    VisitUtils<FS_TYPE>::write_multiarray_vtk(ol_fname, "off_limits", coord_system, fs->off_limits());
-#endif
-
-    // Convection Filter?
-    if (convection_filter_index >= 0) {
-        ConvectionFilter<FS_TYPE> convection_filter(ranges, convection_filter_index, show_progress);
-        convection_filter.apply(fs);
-    }
-
-    // Scale-Space Smoothing
-    WeightFunction<FS_TYPE> *weight_function = NULL;
-
-    // Scale-Space smoothing
-    if (scale != NO_SCALE) {
-        // TODO: make decay a parameter or at least a constant
-        FS_TYPE decay = 0.01;
-        vector<FS_TYPE> resolution = fs->coordinate_system->resolution();
-
-        ScaleSpaceFilter<FS_TYPE> sf(scale, resolution, exclude_from_scale_space_filtering, decay, show_progress);
-        sf.apply(fs);
-
-#if WRITE_FEATURESPACE
-        std::string fn = path.stem().string() + "_scale_" + boost::lexical_cast<string>(scale) + ".vtk";
-        VisitUtils<FS_TYPE>::write_featurespace_vtk(fn, fs);
-#endif
-        if (verbosity > VerbositySilent) {
-            cout << endl << "Constructing " << weight_function_name << " weight function ...";
-            start_timer();
-        }
-
-        if (weight_function_name == "oase-ci") 
-        {
-            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
-                    filename, ranges,
-                    ci_protocluster_scale, ci_protocluster_min_size,
-                    ci_comparison_file, ci_comparison_protocluster_file,
-                    ci_satellite_only, ci_use_walker_mecikalski);
-        } 
-        else  if (weight_function_name == "oase") 
-        {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
-        } 
-        else if (weight_function_name == "inverse") 
-        {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(),
-                                                                        sf.get_filtered_max());
-        } 
-        else if (weight_function_name == "pow10") 
-        {
-            weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
-        } 
-        else 
-        {
-            weight_function = new DefaultWeightFunction<FS_TYPE>(fs, data_store, sf.get_filtered_min(),
-                                                                 sf.get_filtered_max());
-        }
-        cout << " done (" << stop_timer() << "s)." << endl;
-
-        // Apply weight function filter
-        WeightThresholdFilter<FS_TYPE> wtf(weight_function, 
-                wwf_lower_threshold, wwf_upper_threshold, true);
-        wtf.apply(fs);
-
-        if (verbosity > VerbositySilent) {
-            cout << "Filtered featurespace contains " << fs->count_original_points() << " original points " << endl;
-        }
-
-    } else {
-        if (verbosity > VerbositySilent) {
-            cout << endl << "Constructing " << weight_function_name << " weight function ...";
-            start_timer();
-        }
-
-        if (weight_function_name == "oase-ci") {
-            weight_function = new OASECIWeightFunction<FS_TYPE>(fs,
-                    filename, ranges, 
-                    ci_protocluster_scale, ci_protocluster_min_size,
-                    ci_comparison_file, ci_comparison_protocluster_file,
-                    ci_satellite_only, ci_use_walker_mecikalski);
-        } 
-        else if (weight_function_name == "oase") 
-        {
-            weight_function = new OASEWeightFunction<FS_TYPE>(fs,data_store,ranges);
-        } 
-        else if (weight_function_name == "inverse") 
-        {
-            weight_function = new InverseDefaultWeightFunction<FS_TYPE>(fs, data_store, 
-                    lower_thresholds, upper_thresholds);
-        } 
-        else if (weight_function_name == "pow10") 
-        {
-            weight_function = new EXP10WeightFunction<FS_TYPE>(fs, data_store);
-        } 
-        else 
-        {
-            weight_function = new DefaultWeightFunction<FS_TYPE>(fs);
-        }
-        cout << " done (" << stop_timer() << "s)." << endl;
-
-        // Apply weight function filter
-        WeightThresholdFilter<FS_TYPE> wtf(weight_function, wwf_lower_threshold, wwf_upper_threshold, true);
-        wtf.apply(fs);
-
-        if (verbosity > VerbositySilent) {
-            cout << "Filtered featurespace contains " 
-                    << fs->count_original_points() 
-                    << " original points " << endl;
-        }
-    }
-
-#if WITH_VTK
-
-    if (write_weight_function) {
-        std::string wfname = "weights-" + path.filename().stem().string();
-        start_timer("Writing weight function");
-        VisitUtils<FS_TYPE>::write_weight_function_response(wfname, fs, weight_function);
-        stop_timer("done");
-    }
-
-    if (!vtk_variables.empty()) {
-        string filename_only = path.filename().string();
-        boost::filesystem::path destination_path = boost::filesystem::path(".");
-
-        destination_path /= filename_only;
-        destination_path.replace_extension();
-
-        string dest_path = destination_path.generic_string();
-        if (verbosity > VerbositySilent)
-            cout << "Writing featurespace-variables ...";
-
-        vector<string> vtk_variable_names;
-        for (size_t i = 0; i < vtk_variables.size(); i++)
-            vtk_variable_names.push_back(vtk_variables[i].getName());
-
-        VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(dest_path, fs,
-                                                              data_store->variable_names(),
-                                                              vtk_variable_names, 
-                                                              false);
-        if (verbosity > VerbositySilent)
-            cout << " done." << endl;
-    }
-
-#endif
-
-    // Create specified kernel
-    Kernel<FS_TYPE> *kernel = NULL;
-    if (kernel_name == "uniform") {
-        kernel = new UniformKernel<FS_TYPE>(kernel_width);
-    } else if (kernel_name == "gauss") {
-        kernel = new GaussianNormalKernel<FS_TYPE>(kernel_width);
-    } else if (kernel_name == "epanechnikov") {
-        kernel = new EpanechnikovKernel<FS_TYPE>(kernel_width);
-    }
-
-    // Run the clustering
-    PointIndex<FS_TYPE> *index = PointIndex<FS_TYPE>::create(fs->get_points(), fs->rank());
-    ClusterOperation<FS_TYPE> cop(fs, data_store, index);
-    ClusterList<FS_TYPE> clusters = cop.cluster(search_params, kernel, weight_function, coalesceWithStrongestNeighbour,
-                                                show_progress);
-
-#if WITH_VTK
-    if (write_meanshift_vectors) {
-        std::string ms_path = "meanshift-vectors-" + path.filename().stem().string() + ".vtk";
-        VisitUtils<FS_TYPE>::write_shift_vectors(ms_path, fs, true);
-    }
-#endif
-
-    // Axe weenies
-    clusters.apply_size_threshold(min_cluster_size);
-
-    // The survivors are now eligible for an actual id
-    // TODO: we need to move away from doing this as part
-    // of the detection process. The id is something only
-    // to be assigned/changed in tracking!
-    m3D::id_t id = m3D::MIN_ID;
-    ClusterUtils<FS_TYPE>::provideIds(&clusters, id);
-    clusters.highest_id = id;
-
-    // Give (provisional) universal identifiers
-    // TODO: store the uuid in a place that can be accessed 
-    // between the runs, so that the uuid becomes a true
-    // uuid from the point of detection. At this time, only
-    // the tracking can provide this by getting the highest_uuid
-    // from the previous file.
-    m3D::uuid_t uuid = m3D::MIN_UUID;
-    ClusterUtils<FS_TYPE>::provideUuids(&clusters, uuid);
-    clusters.highest_uuid = uuid;
-
-    // Collate with previous clusters, if provided
-    if (previous_file != NULL) {
-        cout << endl << "Collating with previous results:" << endl;
-        if (verbosity >= VerbosityDetails)
-            clusters.print();
-
-        try {
-            ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(previous_file->c_str());
-            if (verbosity >= VerbosityNormal)
-                cout << "Comparing " << clusters.clusters.size() << " new clusters to "
-                << previous->clusters.size() << " clusters" << endl;
-
-            if (verbosity >= VerbosityDetails) {
-                cout << "List of new clusters:" << endl;
-                clusters.print();
-                cout << endl << "List of previous clusters:" << endl;
-                previous->print();
-            }
-            ClusterUtils<FS_TYPE> cluster_filter(cluster_coverage_threshold);
-            cluster_filter.filter_with_previous_clusters(previous, &clusters, coord_system, weight_function, verbosity);
-        } catch (const std::exception &e) {
-            cerr << "FATAL:exception reading previous cluster file: " << e.what() << endl;
-            exit(EXIT_FAILURE);
-        }
-        cout << endl << "Done. Have " << clusters.clusters.size() << " clusters:" << endl;
-
-        if (verbosity >= VerbosityDetails)
-            clusters.print();
-    } else {
-        // No previous file? Provide UUIDs from scratch
-    }
-
-    // Announce final results
-    if (verbosity > VerbositySilent)
-        cout << endl << "Final result: found " << clusters.clusters.size() << " objects: " << endl;
-
-    if (verbosity >= VerbosityDetails)
-        clusters.print();
-
-    // Write out the cluster list
-
-#if WITH_VTK
-    if (write_vtk && clusters.clusters.size() > 0) {
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(&clusters, coord_system, path.filename().string());
-    }
-    if (write_cluster_modes) {
-        string modes_path = "clusters_modes-" + path.filename().stem().string() + ".vtk";
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(modes_path, clusters.clusters, true);
-    }
-    if (write_cluster_centers) {
-        string centers_path = "clusters_centers-" + path.filename().stem().string() + ".vtk";
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, clusters.clusters);
-    }
-    if (write_weight_response && clusters.clusters.size() > 0) {
-        string wr_path = "clusters_weight-" + path.filename().stem().string();
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_weight_response_vtk(wr_path, clusters.clusters,
-                                                                             weight_function, false);
-    }
-#endif
-
-    if (verbosity > VerbositySilent) {
-        std::string msg = "Writing clusters to NetCDF file " + output_filename + " ...";
-        start_timer(msg);
-    }
-
-    // Before writing, set the timestamp!!
-    clusters.timestamp = timestamp;
-
-    clusters.write(output_filename);
-
-    if (include_weight_in_result) {
-        cout << "NOT IMPLEMENTED" << endl;
-        // cout << "Writing weight function to result file ... ";
-        // cout << "done." << endl;
-    }
-
-    if (verbosity > VerbositySilent) {
-        cout << " done (" << stop_timer() << "s)." << endl;
-    }
-
-    // mop up
-    delete kernel;
-    delete index;
-    delete coord_system;
-    delete fs;
+    
+    // Off we go
+    Detection<FS_TYPE>::run(params, ctx);
+    
+    // TODO: insert the immediate tracking here
+    
+    Detection<FS_TYPE>::cleanup(params,ctx);
 
     return EXIT_SUCCESS;
 }

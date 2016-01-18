@@ -30,6 +30,7 @@
 #include <meanie3D/parallel.h>
 #include <meanie3D/operations/kernels.h>
 #include <meanie3D/clustering/cluster_list.h>
+#include <meanie3D/clustering/detection.h>
 #include <meanie3D/operations/operation.h>
 
 namespace m3D {
@@ -55,9 +56,10 @@ namespace m3D {
     {
     private:
 
-        NetCDFDataStore<T> *m_data_store;
-        boost::progress_display *m_progress_bar;
-        size_t m_cluster_threadcount;
+        size_t                          m_cluster_threadcount;
+        boost::progress_display         *m_progress_bar;
+        const detection_params_t<T>     m_params;
+        const detection_context_t<T>    m_context;
 
     public:
 
@@ -72,41 +74,27 @@ namespace m3D {
          */
         void report_done();
 
-        ClusterOperation(FeatureSpace<T> *fs,
-                NetCDFDataStore<T> *data_store,
-                PointIndex<T> *index)
-        : Operation<T>(fs, index)
+        ClusterOperation(const detection_params_t<T> &params,
+                         const detection_context_t<T> &ctx) 
+        : Operation<T>(ctx.fs, ctx.index)
+        , m_cluster_threadcount(0)
         , m_progress_bar(NULL)
-        , m_data_store(data_store)
-        {
-        }
+        , m_params(params)
+        , m_context(ctx) {};
 
-        virtual ~ClusterOperation()
-        {
-        }
+        virtual ~ClusterOperation() {};
 
         /** Clustering the whole feature space by running an iterative procedure for each point
          * in feature space.
          *
          * Note, that each point in feature space will be assigned a cluster afterwards. In order
          * to clear this, call reset_clustering() on the feature space.
-         *
-         * @param params                : range search or knn search parameter
-         * @param kernel                : kernel function for weighing sample points
-         * @param weight function       : externally handed in weighing function, can be NULL
-         * @param write_vectors         : If <code>true</code>, vtk. files containing the
-         *                                vectors are written out. Defaults to <code>false</code>
-         * @param coalesce              : If <code>true</code> the coalescence post-processing
-         *                                is engaged. Note that this is a big performance hit.
-         * @param show_progress_bar     : bool flag. if true, clustering progress is printed out in the console.
-         *
+         * 
+         * @param params 
+         * 
          * @return ClusterList object with the results.
          */
-        ClusterList<T> cluster(const SearchParameters *params,
-                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
-                const WeightFunction<T> *weight_function = NULL,
-                const bool coalesceWithStrongestNeighbour = false,
-                const bool show_progress_bar = true);
+        ClusterList<T> *cluster();
 
 #pragma mark -
 #pragma mark Some public helpers for visualization
