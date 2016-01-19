@@ -204,6 +204,31 @@ namespace m3D {
                         << endl;
             }
         };
+        
+        /**
+         * Copy constructor
+         * @param o
+         */
+        ClusterList(const ClusterList &o) 
+        : ncFile(o.ncFile)
+        , filename(o.filename)
+        , feature_variables(o.feature_variables)
+        , variable_names(o.variable_names)
+        , dimensions(dimensions)
+        , source_file(o.source_file)
+        , clusters(o.clusters)
+        , tracking_performed(o.tracking_performed)
+        , tracking_time_difference(o.tracking_time_difference)
+        , tracked_ids(o.tracked_ids)
+        , dropped_ids(o.dropped_ids)
+        , new_ids(o.new_ids)
+        , splits(o.splits)
+        , merges(o.merges)
+        , highest_id(o.highest_id)
+        , highest_uuid(o.highest_uuid)
+        , timestamp(o.timestamp)
+        , m_use_original_points_only(o.m_use_original_points_only)
+        {}
 
         /** Destructor
          */
