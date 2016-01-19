@@ -48,54 +48,26 @@ namespace m3D {
         }
 
         WeightFunction<T> *weight_function = NULL;
-        if (params.weight_function_name == "oase-ci") {
-            weight_function = new OASECIWeightFunction<T>(
-                    ctx.fs,
-                    params.filename,
-                    ctx.bandwidth,
-                    params.ci_protocluster_scale,
-                    params.ci_protocluster_min_size,
-                    params.ci_comparison_file,
-                    params.ci_comparison_protocluster_file,
-                    params.ci_satellite_only,
-                    params.ci_use_walker_mecikalski);
+        
+        if (params.weight_function_name == "oase-ci") 
+        {
+            weight_function = new OASECIWeightFunction<T>(params,ctx);
         }
         else if (params.weight_function_name == "oase") 
         {
-            weight_function = new OASEWeightFunction<T>(ctx.fs, ctx.data_store, ctx.bandwidth);
+            weight_function = new OASEWeightFunction<T>(params,ctx);
         }
         else if (params.weight_function_name == "inverse") 
         {
-            if (ctx.sf != NULL) {
-                weight_function = new InverseDefaultWeightFunction<T>(ctx.fs,
-                        ctx.data_store,
-                        ctx.sf->get_filtered_min(),
-                        ctx.sf->get_filtered_max());
-            } else {
-                weight_function = new InverseDefaultWeightFunction<T>(
-                        ctx.fs,
-                        ctx.data_store,
-                        params.lower_thresholds,
-                        params.upper_thresholds);
-
-            }
+            weight_function = new InverseDefaultWeightFunction<T>(params,ctx);
         }
         else if (params.weight_function_name == "pow10") 
         {
-            weight_function = new EXP10WeightFunction<T>(ctx.fs, ctx.data_store);
+            weight_function = new EXP10WeightFunction<T>(params, ctx);
         }
         else 
         {
-            // Default 
-            if (ctx.sf != NULL) {
-                weight_function = new DefaultWeightFunction<T>(
-                        ctx.fs,
-                        ctx.data_store,
-                        ctx.sf->get_filtered_min(),
-                        ctx.sf->get_filtered_max());
-            } else {
-                weight_function = new DefaultWeightFunction<T>(ctx.fs);
-            }
+            weight_function = new DefaultWeightFunction<T>(params,ctx);
         }
 
         return weight_function;

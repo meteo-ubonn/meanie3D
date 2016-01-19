@@ -31,6 +31,7 @@
 #include <meanie3D/index/search_parameters.h>
 #include <meanie3D/operations/kernels.h>
 #include <meanie3D/utils/vector_utils.h>
+#include <meanie3D/filters/scalespace_filter.h>
 
 #include <netcdf>
 #include <vector>
@@ -86,43 +87,26 @@ namespace m3D {
          * for valid_min/valid_max
          * @param featurespace
          */
-        OASEWeightFunction(FeatureSpace<T> *fs,
-                const NetCDFDataStore<T> *data_store,
-                const vector<T> &bandwidth)
-        : m_vars(data_store->variable_names())
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(fs->coordinate_system)
-        , m_bandwidth(bandwidth)
+        OASEWeightFunction(const detection_params_t<T> &params, 
+                             const detection_context_t<T> &ctx)
+        : m_vars(ctx.data_store->variable_names())
+        , m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
+        , m_coordinate_system(ctx.coord_system)
+        , m_bandwidth(ctx.bandwidth)
         {
-            // Get original limits
-
-            for (size_t index = 0; index < m_vars.size(); index++) {
-                m_min[index] = data_store->min(index);
-                m_max[index] = data_store->max(index);
+            // If scale-space filter is present, use the filtered
+            // limits. If not, use the original limits
+            if (ctx.sf == NULL) {
+                for (size_t index = 0; index < m_vars.size(); index++) {
+                    m_min[index] = ctx.data_store->min(index);
+                    m_max[index] = ctx.data_store->max(index);
+                }
+            } else {
+                m_min = ctx.sf->get_filtered_min();
+                m_max = ctx.sf->get_filtered_max();
             }
 
-            calculate_weight_function(fs);
-        }
-
-        /** Construct the weight function, using the given values
-         * for valid_min/valid_max
-         * @param featurespace
-         * @param map of lower bounds
-         * @param map of upper bounds
-         */
-        OASEWeightFunction(FeatureSpace<T> *fs,
-                const NetCDFDataStore<T> *data_store,
-                const vector<T> &bandwidth,
-                const map<size_t, T> &min,
-                const map<size_t, T> &max)
-        : m_vars(data_store->variable_names())
-        , m_min(min)
-        , m_max(max)
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(fs->coordinate_system)
-        , m_bandwidth(bandwidth)
-        {
-            calculate_weight_function(fs);
+            calculate_weight_function(ctx.fs);
         }
 
         ~OASEWeightFunction()

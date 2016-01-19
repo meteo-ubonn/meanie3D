@@ -53,37 +53,31 @@ namespace m3D {
 
     public:
 
-        /** Construct the weight function, using the default values
-         * for valid_min/valid_max
-         * @param featurespace
-         */
-        DefaultWeightFunction(const FeatureSpace<T> *fs)
-        : m_fs(fs)
-        , m_min(fs->min())
-        , m_max(fs->max())
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0))
-        {
-            calculate_weight_function(fs);
-        }
-
         /** Construct the weight function, using the given values
          * for valid_min/valid_max
          * @param featurespace
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        DefaultWeightFunction(FeatureSpace<T> *fs,
-                const DataStore<T> *data_store,
-                const map<size_t, T> &min,
-                const map<size_t, T> &max)
-        : m_fs(fs)
-        , m_min(min)
-        , m_max(max)
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0))
+        DefaultWeightFunction(const detection_params_t<T> &params, 
+                             const detection_context_t<T> &ctx)
+        : m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
         {
-            calculate_weight_function(fs);
-        }
+            // If scale-space filter is present, use the filtered
+            // limits. If not, use the original limits
+            if (ctx.sf == NULL) {
+                for (size_t index = 0; index < ctx.data_store->rank(); index++) {
+                    m_min[index] = ctx.data_store->min(index);
+                    m_max[index] = ctx.data_store->max(index);
+                }
+            } else {
+                m_min = ctx.sf->get_filtered_min();
+                m_max = ctx.sf->get_filtered_max();
+            }
 
+            calculate_weight_function(ctx.fs);
+        }
+        
         ~DefaultWeightFunction()
         {
             if (this->m_weight != NULL) {

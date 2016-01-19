@@ -69,22 +69,25 @@ namespace m3D {
          * for valid_min/valid_max
          * @param featurespace
          */
-        InverseDefaultWeightFunction(FeatureSpace<T> *fs,
-                const NetCDFDataStore<T> *data_store,
-                const map<int, double> &lower_thresholds,
-                const map<int, double> &upper_thresholds)
-        : m_vars(data_store->variable_names())
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(fs->coordinate_system)
+        InverseDefaultWeightFunction(const detection_params_t<T> &params, 
+                             const detection_context_t<T> &ctx)
+        : m_vars(ctx.data_store->variable_names())
+        , m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
+        , m_coordinate_system(ctx.coord_system)
         {
-            // Get original limits
-
-            for (size_t index = 0; index < m_vars.size(); index++) {
-                m_min[index] = data_store->min(index);
-                m_max[index] = data_store->max(index);
+            // If scale-space filter is present, use the filtered
+            // limits. If not, use the original limits
+            if (ctx.sf == NULL) {
+                for (size_t index = 0; index < m_vars.size(); index++) {
+                    m_min[index] = ctx.data_store->min(index);
+                    m_max[index] = ctx.data_store->max(index);
+                }
+            } else {
+                m_min = ctx.sf->get_filtered_min();
+                m_max = ctx.sf->get_filtered_max();
             }
 
-            calculate_weight_function(fs);
+            calculate_weight_function(ctx.fs);
         }
 
         /** Construct the weight function, using the given values
