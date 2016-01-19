@@ -315,7 +315,7 @@ namespace m3D {
 
         /** Clears the points array and releases the memory.
          */
-        void clear_points();
+        void clear();
 
         /** @return vector containing the indexes of the
          * spatial range component

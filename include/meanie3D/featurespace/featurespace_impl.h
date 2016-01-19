@@ -368,16 +368,13 @@ namespace m3D {
 
     template <typename T>
     void
-    FeatureSpace<T>::clear_points()
+    FeatureSpace<T>::clear()
     {
         for (size_t i = 0; i < points.size(); i++) {
             typename Point<T>::ptr p = points[i];
-
             points[i] = NULL;
-
             delete p;
         }
-
         points.clear();
     }
 
