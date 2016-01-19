@@ -195,6 +195,12 @@ namespace m3D {
                     detection_context_t<T> &ctx) 
     {
         // context
+
+        // Delete the clusters (not done by default destructor)
+        ctx.clusters->clear();
+        // Delete the points (not done by default destructor)
+        ctx.fs->clear();
+
         delete_and_clear(ctx.search_params)
         delete_and_clear(ctx.data_store);
         delete_and_clear(ctx.fs);
@@ -205,30 +211,13 @@ namespace m3D {
         delete_and_clear(ctx.index);
         delete_and_clear(ctx.clusters);
         delete_and_clear(ctx.previous_clusters);
-        
 
         // params
+        
         delete_and_clear(params.filePtr);
-        params.dimensions.clear();
-        params.dimension_variables.clear();
-        params.variables.clear();
-        params.lower_thresholds.clear();
-        params.upper_thresholds.clear();
-        params.replacement_values.clear();
-        params.exclude_from_scale_space_filtering.clear();
-        params.parameters = "";
-        params.ranges.clear();
         delete_and_clear(params.previous_clusters_filename);
-        params.replacementFilterVariableIndex.clear();
-        params.replacementFilterModes.clear();
-        params.replacementFilterPercentages.clear();
         delete_and_clear(params.ci_comparison_file);
         delete_and_clear(params.ci_comparison_protocluster_file);
-
-        #if WITH_VTK
-        params.vtk_variables.clear();
-        params.vtk_dimension_indexes.clear();
-        #endif
     }
     
     template <typename T>
@@ -310,7 +299,6 @@ namespace m3D {
                 stop_timer("done.");
             }
         }
-
 
         // Scale-Space smoothing
         if (params.scale != NO_SCALE) {
