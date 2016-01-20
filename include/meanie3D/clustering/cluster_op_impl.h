@@ -93,20 +93,12 @@ namespace m3D {
             m_progress_bar = new boost::progress_display(this->feature_space->size());
         }
 
-        // Compile list of dimension names
-        NcFile file(m_context.data_store->filename(), NcFile::read);
-        vector<NcVar> vars(cs->dimension_variables());
-        for (size_t i = 0; i < m_context.data_store->rank(); i++) {
-            std::string var_name = m_context.data_store->variable_names()[i];
-            NcVar variable = file.getVar(var_name);
-            vars.push_back(variable);
-        }
-        
         // Create an empty cluster list
-        ClusterList<T> *cluster_list = new ClusterList<T>(vars, 
-                cs->dimensions(),
-                m_context.data_store->filename(),
-                m_context.data_store->get_time_index());
+        ClusterList<T> *cluster_list = new ClusterList<T>(
+                m_params.variables,
+                m_params.dimensions,
+                m_params.filename,
+                m_params.time_index);
 
         // Guard against empty feature-space
         if (this->feature_space->points.size() == 0) {

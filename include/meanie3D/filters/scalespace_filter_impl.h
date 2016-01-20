@@ -64,7 +64,7 @@ namespace m3D {
     template <typename T>
     ScaleSpaceFilter<T>::ScaleSpaceFilter(T scale,
             const vector<T> &resolution,
-            const vector<NcVar> &excluded_vars,
+            const vector<string> &excluded_vars,
             T decay,
             bool show_progress)
     : FeatureSpaceFilter<T>(show_progress)

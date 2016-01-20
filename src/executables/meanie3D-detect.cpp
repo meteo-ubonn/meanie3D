@@ -72,7 +72,6 @@ void parse_commmandline(program_options::variables_map vm,
     } catch (const boost::exception &e) {
         cerr << "Missing parameter -o " << endl;
         exit(EXIT_FAILURE);
-        ;
     }
 
     // Open NetCDF file
@@ -82,10 +81,7 @@ void parse_commmandline(program_options::variables_map vm,
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "Error opening file '" << params.filename << "' : " << e.what() << endl;
         exit(EXIT_FAILURE);
-        ;
     }
-
-    params.filePtr = file;
 
     // Extract dimensions
     if (vm.count("dimensions") == 0) {
@@ -99,14 +95,14 @@ void parse_commmandline(program_options::variables_map vm,
     tokenizer dim_tokens(vm["dimensions"].as<string>(), sep);
     for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
         const char *name = (*tok_iter).c_str();
-        params.dimensions.push_back(file->getDim(name));
+        params.dimensions.push_back(name);
         NcVar dimVar = file->getVar(name);
         if (dimVar.isNull()) {
             cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
             exit(EXIT_FAILURE);
             ;
         }
-        params.dimension_variables.push_back(dimVar);
+        params.dimension_variables.push_back(name);
     }
     params.parameters = params.parameters
             + "dimensions=" + vm["dimensions"].as<string>() + " ";
@@ -119,13 +115,14 @@ void parse_commmandline(program_options::variables_map vm,
     }
     tokenizer var_tokens(vm["variables"].as<string>(), sep);
     for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter) {
-        NcVar var = file->getVar(*tok_iter);
+        std::string name = *tok_iter;
+        NcVar var = file->getVar(name);
         if (var.isNull()) {
             cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
             exit(EXIT_FAILURE);
             ;
         }
-        params.variables.push_back(var);
+        params.variables.push_back(name);
     }
     params.parameters += params.parameters
             + "variables=" + vm["variables"].as<string>() + " ";
@@ -137,11 +134,9 @@ void parse_commmandline(program_options::variables_map vm,
     params.convection_filter_index = -1;
     if (vm.count("convection-filter-variable") > 0) {
         std::string cf_var_name = vm["convection-filter-variable"].as<string>();
-
         for (int index = 0; index < params.variables.size(); index++) {
-            NcVar v = params.variables.at(index);
-
-            if (v.getName() == cf_var_name) {
+            std::string name = params.variables.at(index);
+            if (name == cf_var_name) {
                 // give the index in the complete feature-space vector
                 // not just the list of variables handed in
                 params.convection_filter_index = params.dimensions.size() + index;
@@ -149,10 +144,10 @@ void parse_commmandline(program_options::variables_map vm,
         }
 
         if (params.convection_filter_index < 0) {
-            cerr << "Bad value for convection-filter-variable. Variable '" << cf_var_name <<
-                    "' not a featurespace variable" << endl;
+            cerr << "Bad value for convection-filter-variable. Variable '" 
+                 << cf_var_name << "' is not a feature space variable" 
+                 << endl;
             exit(EXIT_FAILURE);
-            ;
         }
     }
 
@@ -175,7 +170,7 @@ void parse_commmandline(program_options::variables_map vm,
                 if (i == 0) {
                     std::string varName = *fi;
                     for (size_t vi = 0; vi < params.variables.size(); vi++) {
-                        if (params.variables[vi].getName() == varName) {
+                        if (params.variables[vi] == varName) {
                             variable_index = vi;
                             break;
                         }
@@ -250,7 +245,7 @@ void parse_commmandline(program_options::variables_map vm,
             std::string variableName = *subtoken_iter;
             bool have_var = false;
             for (int i = 0; i < params.variables.size() && !have_var; i++) {
-                if (params.variables[i].getName() == variableName) {
+                if (params.variables[i] == variableName) {
                     subtoken_iter++;
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
@@ -280,7 +275,7 @@ void parse_commmandline(program_options::variables_map vm,
             std::string variableName = *subtoken_iter;
             bool have_var = false;
             for (int i = 0; i < params.variables.size(); i++) {
-                if (params.variables[i].getName() == variableName) {
+                if (params.variables[i] == variableName) {
                     subtoken_iter++;
                     if (subtoken_iter == subtokens.end()) {
                         cerr << "Missing threshold value for variable " << variableName << endl;
@@ -307,10 +302,14 @@ void parse_commmandline(program_options::variables_map vm,
             tokenizer subtokens(pair, equals);
             tokenizer::iterator subtoken_iter = subtokens.begin();
             std::string variableName = *subtoken_iter;
+            
+            // TODO: utilizes netCDF specific feature (getId()) which
+            // should be removed to decouple this from netCDF layer.
+            
             NcVar variable;
             for (size_t i = 0; i < params.variables.size(); i++) {
-                if (params.variables[i].getName() == variableName) {
-                    variable = params.variables[i];
+                if (params.variables[i] == variableName) {
+                    variable = file->getVar(params.variables[i]);
                 }
             }
             if (variable.isNull()) {
@@ -381,11 +380,10 @@ void parse_commmandline(program_options::variables_map vm,
         string str_value = vm["vtk-dimensions"].as<string>();
         tokenizer dim_tokens(str_value, sep);
         for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
-            const char *name = (*tok_iter).c_str();
-            NcDim dim = file->getDim(name);
-            vector<NcDim>::const_iterator fi = find(params.dimensions.begin(), params.dimensions.end(), dim);
+            std::string name = *tok_iter;
+            vector<string>::const_iterator fi = find(params.dimensions.begin(), params.dimensions.end(), name);
             if (fi == params.dimensions.end()) {
-                cerr << "--vtk-dimension parameter " << dim.getName() << " is not part of --dimensions" << endl;
+                cerr << "--vtk-dimension parameter " << name << " is not part of --dimensions" << endl;
                 exit(EXIT_FAILURE);
                 ;
             }
@@ -468,19 +466,21 @@ void parse_commmandline(program_options::variables_map vm,
     if (vm.count("write-variables-as-vtk") > 0) {
         tokenizer bw_tokens(vm["write-variables-as-vtk"].as<string>(), sep);
         for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter) {
-            const char *bw = (*tok_iter).c_str();
+            std::string name = *tok_iter;
             try {
-                NcVar var = file->getVar(bw);
+                NcVar var = file->getVar(name);
                 if (var.isNull()) {
-                    cerr << "Can't open variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
+                    cerr << "Can't open variable " << name 
+                         << " from NetCDF file. Check --write-variables-as-vtk" 
+                         << endl;
                     exit(EXIT_FAILURE);
-                    ;
                 }
-                params.vtk_variables.push_back(var);
+                params.vtk_variables.push_back(name);
             } catch (const netCDF::exceptions::NcException &e) {
-                cerr << "Can't find variable " << bw << " from NetCDF file. Check --write-variables-as-vtk" << endl;
+                cerr << "Can't find variable " << name 
+                     << " from NetCDF file. Check --write-variables-as-vtk" 
+                     << endl;
                 exit(EXIT_FAILURE);
-                ;
             }
         }
     }
@@ -703,7 +703,7 @@ int main(int argc, char **argv) {
             cout << "\treplacement filters on " << endl;
             for (size_t i = 0; i < params.replacementFilterVariableIndex.size(); i++) {
                 int rvi = params.replacementFilterVariableIndex[i];
-                cout << "\t\t" << params.variables[rvi].getName() << " replace with ";
+                cout << "\t\t" << params.variables[rvi] << " replace with ";
                 ReplacementFilter<FS_TYPE>::ReplacementMode mode = params.replacementFilterModes[rvi];
                 float percent = params.replacementFilterPercentages[rvi] * 100.0;
                 switch (mode)

@@ -89,7 +89,7 @@ namespace m3D {
          */
         OASEWeightFunction(const detection_params_t<T> &params, 
                              const detection_context_t<T> &ctx)
-        : m_vars(ctx.data_store->variable_names())
+        : m_vars(params.variables)
         , m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
         , m_coordinate_system(ctx.coord_system)
         , m_bandwidth(ctx.bandwidth)

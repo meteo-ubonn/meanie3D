@@ -56,7 +56,7 @@ namespace m3D {
         map<size_t, T> m_max; /// maximum tracker
 
         boost::progress_display *m_progress_bar; /// Progress meter
-        vector<netCDF::NcVar> m_excluded_vars;
+        vector<string> m_excluded_vars;
 
         void
         applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
@@ -101,7 +101,7 @@ namespace m3D {
          */
         ScaleSpaceFilter(const T scale,
                 const vector<T> &resolution,
-                const vector<netCDF::NcVar> &exclude_from_scale_space_filtering,
+                const vector<string> &exclude_from_scale_space_filtering,
                 const T decay = 0.01,
                 const bool show_progress = false);
 

@@ -67,7 +67,6 @@ namespace m3D {
     Detection<T>::defaultParams()
     {
         detection_params_t<T> p;
-        p.filePtr = NULL;
         p.filename = "";
         p.output_filename = "";
         p.parameters = "";
@@ -98,7 +97,17 @@ namespace m3D {
     void
     Detection<T>::initialiseContext(const detection_params_t<T> &params,
             detection_context_t<T> &ctx)
+
     {
+        ctx.file = NULL;
+        try {
+            ctx.file = new NcFile(params.filename, NcFile::read);
+        } catch (const netCDF::exceptions::NcException &e) {
+            cerr << "ERROR: could not open file '" << params.filename 
+                 << "' for reading: " << e.what() << endl;
+            exit(EXIT_FAILURE);
+        }
+                
         ctx.search_params = NULL;
         ctx.kernel_width = 0.0;
         ctx.show_progress = (params.verbosity > VerbositySilent);
@@ -107,7 +116,6 @@ namespace m3D {
         ctx.decay = 0.01;
 
         for (size_t i = 0; i < params.variables.size(); i++)
-            ctx.variable_names.push_back(params.variables.at(i).getName());
         
         // Get timestamp
         // TODO: this block was put in for a specific tracking
@@ -159,20 +167,13 @@ namespace m3D {
 
         // Construct a coordinate system object from the dimensions
         // and dimension variables given
-        ctx.coord_system = new CoordinateSystem<T>(
-                params.dimensions, params.dimension_variables);
-        
+        ctx.coord_system = ctx.data_store->coordinate_system();
         ctx.weight_function = NULL;
         ctx.wwf_apply = (params.wwf_lower_threshold != 0 
             || params.wwf_upper_threshold != std::numeric_limits<T>::max());
 
         ctx.sf = NULL;
         
-        #if WITH_VTK
-        for (size_t i = 0; i < params.vtk_variables.size(); i++)
-            ctx.vtk_variable_names.push_back(params.vtk_variables[i].getName());
-        #endif
-
         // Construct the kernel
         ctx.kernel = NULL;
         if (params.kernel_name == "uniform") {
@@ -243,8 +244,9 @@ namespace m3D {
         // Read the data
         ctx.data_store = new NetCDFDataStore<T>(
                 params.filename, 
-                ctx.coord_system, 
-                ctx.variable_names, 
+                params.variables,
+                params.dimensions,
+                params.dimension_variables,
                 params.time_index);
         
         // Construct Featurespace from data
@@ -266,7 +268,7 @@ namespace m3D {
                 typename ReplacementFilter<T>::ReplacementMode mode = params.replacementFilterModes.at(rvi);
                 float percent = params.replacementFilterPercentages.at(rvi);
                 if (params.verbosity >= VerbosityNormal) {
-                    start_timer("Applying replacement filter for " + params.variables[rvi].getName());
+                    start_timer("Applying replacement filter for " + params.variables[rvi]);
                 }
                 ReplacementFilter<T> rf(mode, rvi, ctx.bandwidth, percent);
                 rf.apply(ctx.fs);
@@ -369,8 +371,8 @@ namespace m3D {
 
             VisitUtils<T>::write_featurespace_variables_vtk(dest_path, 
                     ctx.fs,
-                    ctx.data_store->variable_names(),
-                    ctx.vtk_variable_names,
+                    ctx.data_store->variables(),
+                    params.vtk_variables,
                     false);
             
             if (params.verbosity > VerbositySilent) {

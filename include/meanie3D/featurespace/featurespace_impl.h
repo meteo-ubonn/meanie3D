@@ -184,7 +184,7 @@ namespace m3D {
 
         size_t size = this->m_data_store->size();
 
-        LinearIndexMapping mapping(m_data_store->get_dimension_sizes());
+        LinearIndexMapping mapping(m_data_store->coordinate_system()->get_dimension_sizes());
 
 #if WITH_OPENMP
 #pragma omp parallel for schedule(dynamic,10) 

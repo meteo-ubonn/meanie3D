@@ -41,7 +41,6 @@ namespace m3D {
     CoordinateSystem<T>::CoordinateSystem(NcFile *file, const vector<string> &dimensions)
     {
         using namespace netCDF;
-
         try {
             m_dimensions.clear();
             m_dimension_variables.clear();
@@ -52,6 +51,33 @@ namespace m3D {
             }
 
             this->construct();
+        } catch (const exceptions::NcException &e) {
+            cerr << "FATAL:could not create coordinate system from file "
+                    << file->getName() << " :" << e.what() << endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    template <typename T>
+    CoordinateSystem<T>::CoordinateSystem(NcFile *file,
+            const vector<string> &dimensions,
+            const vector<string> &dimensionVariables)
+     {
+        using namespace netCDF;
+        try {
+            
+            m_dimensions.clear();
+            for (size_t i = 0; i < dimensions.size(); i++) {
+                m_dimensions.push_back(file->getDim(dimensions[i]));
+            }
+            
+            m_dimension_variables.clear();
+            for (size_t i=0; i<dimensionVariables.size(); i++) {
+                m_dimension_variables.push_back(file->getVar(dimensionVariables[i]));
+            }
+
+            this->construct();
+            
         } catch (const exceptions::NcException &e) {
             cerr << "FATAL:could not create coordinate system from file "
                     << file->getName() << " :" << e.what() << endl;

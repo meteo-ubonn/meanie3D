@@ -191,10 +191,10 @@ namespace m3D {
             }
 
             // Create the data store
-            this->m_data_store = new NetCDFDataStore<T>(
-                    params.filename,
-                    ctx.coord_system,
+            this->m_data_store = new NetCDFDataStore<T>(params.filename,
                     m_variable_names,
+                    params.dimensions,
+                    params.dimension_variables,
                     params.time_index);
 
             // index for effective range search ops
@@ -216,11 +216,15 @@ namespace m3D {
                 //                                                                    this->m_variable_names,
                 //                                                                    msevi_l15_hrv, 7.0);
 //#endif
-                m_ci_comparison_data_store
-                        = new NetCDFDataStore<T>(*params.ci_comparison_file,
-                                                 ctx.coord_system,
-                                                 this->m_variable_names,
-                                                 params.time_index);
+                
+                // TODO: there is a problem here. The time index should
+                // be configurable when the comparison file is the same
+                // but has time dimension. 
+                m_ci_comparison_data_store = new NetCDFDataStore<T>(params.filename,
+                            m_variable_names,
+                            params.dimensions,
+                            params.dimension_variables,
+                            params.time_index);
 
                 if (params.ci_comparison_protocluster_file != NULL) {
                     // Load previous proto-clusters
@@ -325,13 +329,13 @@ namespace m3D {
             
             // Dimensions stay the same
             m_params.dimensions = m_super_params.dimensions;
+            m_params.dimension_variables = m_super_params.dimension_variables;
             
             // Add variables
             try {
                 for (size_t i = 0; i < PROTOCLUSTER_NUM_VARS; i++) {
                     std::string name = std::string(PROTOCLUSTER_VARS[i]);
-                    NcVar var = m_super_params.filePtr->getVar(name);
-                    m_params.variables.push_back(var);
+                    m_params.variables.push_back(name);
                 }
             } catch (netCDF::exceptions::NcException &e) {
                 cerr << "FATAL: can not read from netcdf file " << m_ci_comparison_data_store->filename() << endl;
@@ -350,7 +354,7 @@ namespace m3D {
             Detection<T>::run(m_params,m_ctx);
 
             // Write protoclusters out
-            boost::filesystem::path path(m_ctx.data_store->filename());
+            boost::filesystem::path path(m_super_params.filename);
             std::string fn = "protoclusters-" + path.stem().generic_string<std::string>() + ".nc";
             m_ctx.clusters->write(fn);
         }

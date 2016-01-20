@@ -24,15 +24,10 @@ protected:
     //
 
     typename CoordinateSystem<T>::Coordinate *m_center;
-
     vector<T> *m_mean;
-
     vector<T> *m_deviation;
-
     size_t m_cloudSize;
-
     vector< vector<T> > m_bandwidths;
-
     vector< Point<T> > m_origins;
 
     //

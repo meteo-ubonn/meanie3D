@@ -124,6 +124,19 @@ namespace m3D {
          */
         CoordinateSystem(const vector<NcDim> &dimensions,
                 const vector<NcVar> &dimension_variables);
+        
+        /**
+         * Constructor.
+         * TODO: migrate away from NetCDF as sole source of building
+         * a coordinate system. Base on DataStore instead.
+         * 
+         * @param file
+         * @param dimensions
+         * @param dimensionVariables
+         */
+        CoordinateSystem(NcFile *file,
+            const vector<string> &dimensions,
+            const vector<string> &dimensionVariables);
 
         // big three
 

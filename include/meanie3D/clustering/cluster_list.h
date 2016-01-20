@@ -102,9 +102,11 @@ namespace m3D {
 
         NcFile *ncFile;
         std::string filename; // this is filled on read() or write()
+        
         std::vector<NcVar> feature_variables; // all variables, including dimension variables
-        vector<string> variable_names; // vector of strings. this shit needs cleaning up so bad, man
         vector<NcDim> dimensions; // all dimensions that were in the featurespace
+        
+        vector<string> variable_names; // vector of strings. this shit needs cleaning up so bad, man
         string source_file; // Name of the file that the clusters were created from
 
         typename Cluster<T>::list clusters;

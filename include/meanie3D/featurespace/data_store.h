@@ -44,6 +44,12 @@ namespace m3D {
     template <typename T>
     class DataStore
     {
+    private:
+
+        std::vector<std::string> m_variables;
+        std::vector<std::string> m_dimensions;
+        std::vector<std::string> m_dimension_variables;
+
     public:
 
 #pragma mark -
@@ -69,19 +75,43 @@ namespace m3D {
 #pragma mark -
 #pragma mark Consctructor/Destructor
 
-        DataStore()
-        {
-        };
+        /**
+         * Main constructor. Constructs the data store given the variables.
+         * dimensions and dimension variables. 
+         * 
+         * @param variables
+         * @param dimensions
+         * @param dimension_variables
+         */
+        DataStore(const std::vector<std::string> &variables,
+                const std::vector<std::string> &dimensions,
+                const std::vector<std::string> &dimension_variables)
+        : m_variables(variables)
+        , m_dimensions(dimensions)
+        , m_dimension_variables(dimension_variables) {};
 
         /** Destructor
          */
-
-        virtual ~DataStore()
-        {
-        };
+        virtual ~DataStore() {};
 
 #pragma mark -
 #pragma mark Public methods
+
+        virtual 
+        const std::vector<std::string> &variables() const = 0;
+
+        /**
+         * Implementing classes should know how to construct a 
+         * coordinate system from the dimensions and dimension
+         * variables used to configure the data store.
+         * 
+         * @param variable_index
+         * @param index
+         * @param is_valid
+         * @return 
+         */
+        virtual 
+        CoordinateSystem<T> *coordinate_system() const = 0;
 
         /** Retrieves a value.
          *
@@ -105,7 +135,8 @@ namespace m3D {
                 size_t index,
                 bool &is_valid) const = 0;
 
-        /** @return number of variables in the data store
+        /** 
+         * @return number of variables in the data store
          */
         virtual
         const size_t rank() const = 0;
@@ -116,17 +147,16 @@ namespace m3D {
         virtual
         const size_t size() const = 0;
 
-        /** @return extent in the dimensions
-         */
-        virtual
-        const vector<size_t> get_dimension_sizes() const = 0;
-
-        /** @return min value of a variable
+        /** 
+         * @param index variable index
+         * @return min encountered value of a variable.
          */
         virtual
         const T min(size_t index) const = 0;
 
-        /** @return max value of a variable
+        /** 
+         * @param index variable index
+         * @return max encountered value of a variable.
          */
         virtual
         const T max(size_t index) const = 0;
@@ -137,6 +167,52 @@ namespace m3D {
         virtual
         void
         for_each(size_t variable_index, ForEachFunctor *f) = 0;
+
+        // META data
+
+        /**
+         * Lower valid bound of variable values.
+         * @param index variable index
+         * @return 
+         */
+        virtual
+        const T valid_min(size_t index) const = 0;
+
+        /**
+         * Upper valid bound of variable values.
+         * @param index
+         * @return 
+         */
+        virtual
+        const T valid_max(size_t index) const = 0;
+
+        /**
+         * Scale factor for unpacking packed data.
+         * 
+         * @param index
+         * @return 
+         */
+        virtual
+        const T scale_factor(size_t index) const = 0;
+
+        /**
+         * Offset for unpacking packed data.
+         * 
+         * @param index
+         * @return 
+         */
+        virtual
+        const T add_offset(size_t index) const = 0;
+
+        /**
+         * Value representing missing value. 
+         * 
+         * @param index
+         * @return 
+         */
+        virtual
+        const T fill_value(size_t index) const = 0;
+
     };
 }
 

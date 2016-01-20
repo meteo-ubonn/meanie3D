@@ -13,62 +13,44 @@ void FSClusteringTest2D<T>::write_cloud(const NcVar &var, vector<T> mean, vector
     using namespace m3D::utils::vectors;
 
     // start generating random points (with random values between 0 and 1)
-
     size_t numPoints = 0;
 
     // Use a simple gaussian normal function to simulate a value distribution
-
     GaussianNormal<T> gauss;
-
     T gauss_zero = gauss(vector<T>(this->coordinate_system()->rank(), 0));
 
     typename CoordinateSystem<T>::GridPoint gridpoint = this->coordinate_system()->newGridPoint();
-
     do {
-        // genrate a random coordinate
-
+        // generate a random coordinate
         for (size_t d = 0; d < this->coordinate_system()->rank(); d++) {
             bool valid = false;
-
             while (!valid) {
-                NcDim dim = this->coordinate_system()->dimensions()[d];
 
+                NcDim dim = this->coordinate_system()->dimensions()[d];
                 NcVar dimVar = this->coordinate_system()->dimension_variable(dim);
 
                 T min, max;
-
                 dimVar.getAtt("valid_min").getValues(&min);
-
                 dimVar.getAtt("valid_max").getValues(&max);
-
                 float rand = box_muller(mean[d], deviation[d]);
 
                 // re-transform to grid coordinates
-
                 size_t n = (size_t) round((dim.getSize() - 1) * (rand - min) / (max - min));
-
                 if (n < dim.getSize()) {
                     gridpoint[d] = n;
-
                     valid = true;
                 }
             }
         }
 
         // value goes to
-
         vector<T> x = this->coordinate_system()->newCoordinate();
-
         this->coordinate_system()->lookup(gridpoint, x);
-
         T value = (T) (FS_VALUE_MAX * gauss(x - mean)) / gauss_zero;
 
         // cout << "x=" << x << " mean=" << mean << " g(x-m)=" << value << endl;
-
         vector<size_t> gp(gridpoint.begin(), gridpoint.end());
-
         var.putVar(gp, value);
-
         numPoints++;
 
         this->m_pointCount++;
@@ -188,11 +170,8 @@ template<class T>
 FSClusteringTest2D<T>::FSClusteringTest2D() : FSTestBase<T>()
 {
     this->m_settings = new FSTestSettings(2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
-
     this->m_divisions = 3;
-
     this->m_cloudSize = 50 * NUMBER_OF_GRIDPOINTS / m_divisions;
-
     this->m_smoothing_scale = 0.01;
 }
 
@@ -200,11 +179,8 @@ template<class T>
 FSClusteringTest3D<T>::FSClusteringTest3D() : FSClusteringTest2D<T>()
 {
     this->m_settings = new FSTestSettings(3, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
-
     this->m_divisions = 4;
-
     this->m_cloudSize = 50 * NUMBER_OF_GRIDPOINTS / this->m_divisions;
-
     this->m_smoothing_scale = 0.01;
 }
 
@@ -227,8 +203,14 @@ TYPED_TEST(FSClusteringTest2D, FS_Clustering_2D_Range_Test)
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
 
     for (size_t i = 0; i < this->m_bandwidths.size(); i++) {
-        vector<TypeParam> h = this->m_bandwidths.at(i);
-
+        
+        detection_params_t<TypeParam> params = Detection<TypeParam>::defaultParams();
+        params.ranges = this->m_bandwidths.at(i);
+        params.kernel_name = "gauss";
+        params.dimensions = m_coordinate_system->dimensions();
+        params.dimension_variables = this->m_coordinate_sytem->dimension_variables();
+        params.variables = this->m_variable_names
+        
         Kernel<TypeParam> *kernel = new GaussianNormalKernel<TypeParam>(vector_norm(h));
 
         typename Cluster<TypeParam>::list::iterator ci;

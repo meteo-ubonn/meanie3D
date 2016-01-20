@@ -47,20 +47,17 @@ namespace m3D {
         // Input file
         string filename;
         
-        // Contains a pointer to the input file.
-        NcFile *filePtr; 
-        
         // Name of resulting cluster file
         string output_filename;
         
         // Dimensions in the netCDF file to use.
-        vector<NcDim> dimensions;
+        vector<std::string> dimensions;
         
         // Spatial range of Featurespace
-        vector<NcVar> dimension_variables;
+        vector<std::string> dimension_variables;
         
         // Value range of featurespace 
-        vector<NcVar> variables;
+        vector<std::string> variables;
         
         // When running detection in netCDF files with time dimension,
         // this needs to be set to the index in the time dimension to use.
@@ -84,7 +81,7 @@ namespace m3D {
         double scale;
 
         // Contains a list of variables to exclude from scale-space filtering
-        vector<NcVar> exclude_from_scale_space_filtering;
+        vector<std::string> exclude_from_scale_space_filtering;
         
         // The following kernel names are allowed:
         // 'uniform','epanechnikov','gauss','none'
@@ -229,7 +226,7 @@ namespace m3D {
         // Only present when VTK support is compiled in. All represented
         // variables in Featurespace are written out as .vtk files after
         // the processing.
-        vector<NcVar> vtk_variables;
+        vector<std::string> vtk_variables;
 
         // Only present when VTK support is compiled in. 
         // Contains a list of indexes mapping to the variable index 
@@ -250,30 +247,56 @@ namespace m3D {
     struct detection_context_t 
     { 
         bool initialised;
+
+        // TODO: to move away from NetCDF, this reference
+        // should ultimately be removed
+        NcFile *file; 
+        
+        // This is what should be aimed for. An abstract data
+        // store that could be anything.
+        DataStore<T> *data_store;
+
+        // Coordinate system
+        CoordinateSystem<T> *coord_system;
+
         bool show_progress;
         timestamp_t timestamp;
-        CoordinateSystem<T> *coord_system;
-        vector<std::string> variable_names;
-        vector<string> vtk_variable_names;
         
+        // Calculated automatically from scale or taken from the 
+        // --range parameter if given
         vector<T> bandwidth;
+        
+        // Search parameters for mean-shift
         SearchParameters *search_params;
-        NetCDFDataStore<T> *data_store;
+        
+        // The main subject of interest
         FeatureSpace<T> *fs;
 
+        // Automatically calculated 
         T kernel_width;
-        T filter_width;
-        T decay;
+        T filter_width; // TODO: check if this is still needed?
+        T decay; // Gauss filter decay threshold
                
         // Flag set to true if any of the weight function
         // filtering thresholds are set
         bool wwf_apply;
 
+        // Scale-space filter. 
         ScaleSpaceFilter<T> *sf;
+        
+        // Weight function.
         WeightFunction<T> *weight_function;
+        
+        // Kernel for mean-shift 
         Kernel<T> *kernel;
+        
+        // K/D tree or other quick lookup index for mean-shift
         PointIndex<T> *index;
+        
+        // Resulting cluster list.
         typename ClusterList<T>::ptr clusters;
+        
+        // In case previous clusters are loaded, this contains those
         typename ClusterList<T>::ptr previous_clusters;
     };
     

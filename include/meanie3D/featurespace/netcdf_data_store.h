@@ -53,7 +53,8 @@ namespace m3D {
 
         typedef std::map<size_t, MultiArray<T> *> multiarray_map_t;
 
-        std::string m_filename;
+        std::string     m_filename;
+        netCDF::NcFile  *m_file;
 
         /** Parameter used for construction. Points in feature-space,
          * where one variable's value is less than the given threshold,
@@ -79,7 +80,7 @@ namespace m3D {
 
         /** Not sure this needs holding on to, but hey
          */
-        const CoordinateSystem<T> *m_coordinate_system;
+        CoordinateSystem<T> *m_coordinate_system;
 
         /** Index of the time(time) variable to use. If -1, it is assumed
          * that there is no time variable and it is omitted.
@@ -106,45 +107,58 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Constructor/Destructor
-
-        /** TODO: either hand in variable names as strings or give NcFile pointer.
-         * It makes no sense to just hand over a filename and then an array of NcVars,
-         * which necessitate an open file already. Also, the NcVar has the disadvantage 
-         * of tying the algorithm in with NetCDF. The variable concept should be 
-         * abstracted (also the dimension concept).
+        
+        /**
+         * Constructs a DataStore instance based on NetCDF files.
+         * 
+         * @param filename
+         * @param variables
+         * @param dimensions
+         * @param dimension_variables
+         * @param time_index
          */
-        NetCDFDataStore(const std::string &filename,
-                        const CoordinateSystem<T> *coordinate_system,
-                        const vector<std::string> &variable_names,
-                        const int time_index = -1)
-                : m_filename(filename), m_variable_names(variable_names), m_coordinate_system(coordinate_system),
-                  m_time_index(time_index) {
-            NcFile file(filename.c_str(), NcFile::read);
-
-            if (file.isNull()) {
-                throw "ERROR:could not open file " + filename;
+        NetCDFDataStore(const std::string filename,
+                const std::vector<std::string> &variables,
+                const std::vector<std::string> &dimensions,
+                const std::vector<std::string> &dimension_variables,
+                const int time_index = -1)
+        : DataStore<T>(variables, dimensions, dimension_variables)
+        , m_filename(filename)
+        , m_time_index(time_index)
+        {
+            m_file = NULL;
+            try {
+                m_file = new NcFile(filename.c_str(), NcFile::read);
+            } catch (const netCDF::exceptions::NcException &e) {
+                cerr << "FATAL:could not open file '" << m_filename 
+                     << "' for reading" << endl;
+                exit(EXIT_FAILURE);
             }
-
-            m_scale_factor = new T[variable_names.size()];
-            m_offset = new T[variable_names.size()];
-            m_valid_min = new T[variable_names.size()];
-            m_valid_max = new T[variable_names.size()];
-            m_min = new T[variable_names.size()];
-            m_max = new T[variable_names.size()];
-            m_fill_value = new T[variable_names.size()];
+            
+            m_coordinate_system = new CoordinateSystem<T>(m_file,
+                    dimensions,dimension_variables);
+            
+            m_scale_factor = new T[variables.size()];
+            m_offset = new T[variables.size()];
+            m_valid_min = new T[variables.size()];
+            m_valid_max = new T[variables.size()];
+            m_min = new T[variables.size()];
+            m_max = new T[variables.size()];
+            m_fill_value = new T[variables.size()];
 
             // Check if the variables exist
-
-            for (int i = 0; i < variable_names.size(); i++) {
+            for (int i = 0; i < variables.size(); i++) {
                 try {
-                    NcVar var = file.getVar(variable_names[i]);
-
+                    NcVar var = m_file->getVar(variables[i]);
                     if (var.isNull()) {
-                        cerr << "FATAL: no variable " + variable_names[i] + " found in file " + filename << endl;
+                        cerr << "FATAL: no variable " << variables[i] 
+                                << " found in file " << m_filename << endl;
                         exit(EXIT_FAILURE);
                     }
                 } catch (netCDF::exceptions::NcException &e) {
-                    cerr << "FATAL: can't access variable " + variable_names[i] + " in file " + filename << endl;
+                    cerr << "FATAL: can't access variable " 
+                         << variables[i] << " in file " 
+                         << m_filename  << endl;
                     exit(EXIT_FAILURE);
                 }
 
@@ -166,7 +180,6 @@ namespace m3D {
          */
         ~NetCDFDataStore() {
             this->discard_buffer();
-
             delete[] m_offset;
             delete[] m_scale_factor;
             delete[] m_fill_value;
@@ -174,17 +187,18 @@ namespace m3D {
             delete[] m_valid_max;
             delete[] m_min;
             delete[] m_max;
+            delete m_coordinate_system;
         }
 
 #pragma mark -
 #pragma mark Accessors
 
         /** @return coordinate system */
-        const CoordinateSystem<T> *coordinate_system() const {
+        CoordinateSystem<T> *coordinate_system() const {
             return m_coordinate_system;
         }
 
-        const std::vector<std::string> &variable_names() const {
+        const std::vector<std::string> &variables() const {
             return m_variable_names;
         }
 

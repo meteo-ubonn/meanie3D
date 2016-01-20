@@ -214,7 +214,6 @@ void convert_composite(const string &filename,
 {
     try
     {
-
         // construct the destination path
         std::string filename_noext;
         string filename_only = boost::filesystem::path(filename).filename().string();
@@ -224,47 +223,38 @@ void convert_composite(const string &filename,
         string dest_path = destination_path.generic_string();
 
         NcFile *file = new NcFile(filename, NcFile::read);
-        vector<NcDim> dimensions = file->getVar(variable_name).getDims();
-        vector<NcVar> dim_vars;
-        for (size_t i = 0; i < dimensions.size(); i++)
+        vector<NcDim> dims = file->getVar(variable_name).getDims();
+        
+        vector<std::string> dimensions;
+        vector<std::string> dimension_variables;
+        for (size_t i = 0; i < dims.size(); i++)
         {
-            NcVar var = file->getVar(dimensions[i].getName());
-            dim_vars.push_back(var);
+            std::string dimName = dims[i].getName();
+            dimensions.push_back(dimName);
+            dimension_variables.push_back(dimName);
         }
 
-        vector<NcVar> variables;
-        variables.push_back(file->getVar(variable_name));
-        vector<NcVar> feature_variables(dim_vars);
-        for (size_t i = 0; i < variables.size(); i++)
-            feature_variables.push_back(variables[i]);
-
-        CoordinateSystem<FS_TYPE> *cs = new CoordinateSystem<FS_TYPE>(dimensions, dim_vars);
+        vector<std::string> variables;
+        variables.push_back(variable_name);
+        
         const map<int, double> lower_thresholds, upper_thresholds, fill_values;
 
-        vector<string> variable_names;
-        for (size_t i = 0; i < variables.size(); i++)
-            variable_names.push_back(variables.at(i).getName());
-
-        NetCDFDataStore<FS_TYPE> *dataStore =
-                new NetCDFDataStore<FS_TYPE>(filename, cs, variable_names, 0);
-
-        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(cs,
+        NetCDFDataStore<FS_TYPE> *dataStore = new NetCDFDataStore<FS_TYPE>(
+                filename, variables, dimensions, dimension_variables);
+        
+        FeatureSpace<FS_TYPE> *fs = new FeatureSpace<FS_TYPE>(
+                dataStore->coordinate_system(),
                 dataStore,
                 lower_thresholds,
                 upper_thresholds,
                 fill_values);
 
-        vector<string> feature_var_names;
-        for (size_t i = 0; i < feature_variables.size(); i++)
-            feature_var_names.push_back(feature_variables[i].getName());
+        vector<string> feature_variables(dimension_variables);
+        feature_variables.push_back(variable_name);
 
-        vector<string> var_names;
-        for (size_t i = 0; i < variables.size(); i++)
-            var_names.push_back(variables[i].getName());
+        VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(
+            filename, fs, feature_variables, variables);
 
-        VisitUtils<FS_TYPE>::write_featurespace_variables_vtk(filename, fs, feature_var_names, var_names);
-
-        delete cs;
         delete fs;
         delete file;
         delete dataStore;
@@ -272,9 +262,7 @@ void convert_composite(const string &filename,
     } catch (const netCDF::exceptions::NcException &e)
     {
         cerr << e.what() << endl;
-
         exit(EXIT_FAILURE);
-        ;
     }
 }
 
