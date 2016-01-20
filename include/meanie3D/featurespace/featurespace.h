@@ -144,9 +144,7 @@ namespace m3D {
     public:
 
         typename Point<T>::list points;
-
         size_t dimension;
-
         const CoordinateSystem<T> *coordinate_system;
 
 #if WRITE_MEANSHIFT_WEIGHTS
@@ -164,7 +162,6 @@ namespace m3D {
          * @param show_progress
          */
         void construct_featurespace(bool show_progress = true);
-
 
 #pragma mark -
 #pragma mark Public

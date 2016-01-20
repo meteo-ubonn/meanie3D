@@ -46,13 +46,9 @@ namespace m3D {
              * @param variable
              * @return number of values
              */
-            size_t num_vals(const NcVar &var)
+            size_t num_vals(const NcVar &var) 
             {
                 size_t count = 1;
-                //        
-                //        cout << "variable " << var.getName();
-                //        cout << " -> dimCount = " << var.getDimCount() << endl;
-
                 for (int dim_index = 0; dim_index < var.getDimCount(); dim_index++) {
                     count = count * var.getDim(dim_index).getSize();
                 }
@@ -64,102 +60,72 @@ namespace m3D {
             readNcByte(const NcVar &variable, const T &scale_factor, const T &add_offset)
             {
                 unsigned short *values = (unsigned short *) calloc(num_vals(variable), sizeof ( unsigned short));
-
                 variable.getVar(values);
-
                 T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
-
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
-
                 free(values);
-
                 return returnValue;
             }
 
             template <typename T> T* readNcChar(const NcVar &variable, const T &scale_factor, const T &add_offset)
             {
                 char *values = (char *) calloc(num_vals(variable), sizeof (char));
-
                 variable.getVar(values);
-
                 T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
-
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
-
                 free(values);
-
                 return returnValue;
             }
 
             template <typename T> T* readNcDouble(const NcVar &variable, const T &scale_factor, const T &add_offset)
             {
                 double *values = (double *) calloc(num_vals(variable), sizeof (double));
-
                 variable.getVar(values);
-
                 T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
-
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
-
                 free(values);
-
                 return returnValue;
             }
 
             template <typename T> T* readNcFloat(const NcVar &variable, const T &scale_factor, const T &add_offset)
             {
                 float *values = (float *) calloc(num_vals(variable), sizeof (float));
-
                 variable.getVar(values);
-
                 T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
-
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
-
                 free(values);
-
                 return returnValue;
             }
 
             template <typename T> T* readNcInt(const NcVar &variable, const T &scale_factor, const T &add_offset)
             {
                 long *values = (long *) calloc(num_vals(variable), sizeof (long));
-
                 variable.getVar(values);
-
                 T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
-
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
-
                 free(values);
-
                 return returnValue;
             }
 
             template <typename T> T* readNcShort(const NcVar &variable, const T &scale_factor, const T &add_offset)
             {
                 short *values = (short *) calloc(num_vals(variable), sizeof (short));
-
                 variable.getVar(values);
-
                 T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
-
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
-
                 free(values);
-
                 return returnValue;
             }
 
@@ -175,31 +141,19 @@ namespace m3D {
                 using namespace std;
 
                 T * returnValue = NULL;
-
-                // fetch scale_factor and add_offset
-
                 T scale_factor = 1.0;
-
                 try {
-
                     map< std::string, NcVarAtt > attributes = variable.getAtts();
-
                     map< std::string, NcVarAtt >::iterator fi;
-
                     fi = attributes.find("scale_factor");
-
                     if (fi != attributes.end()) {
                         fi->second.getValues(&scale_factor);
                     }
-
                     T offset = 0.0;
-
                     fi = attributes.find("add_offset");
-
                     if (fi != attributes.end()) {
                         fi->second.getValues(&offset);
                     }
-
                     switch (variable.getType().getTypeClass()) {
                         case netCDF::NcType::nc_BYTE:
                             returnValue = readNcByte<T>(variable, scale_factor, offset);
@@ -227,14 +181,12 @@ namespace m3D {
                         default:
                         {
                             std::cerr << "ERROR:variable " << variable.getName() << " has unsupported type " << variable.getType().getTypeClassName() << std::endl;
-
                             returnValue = NULL;
                         }
                     }
                 } catch (netCDF::exceptions::NcException &e) {
                     cerr << "ERROR: can not get attributes of variable " << variable.getName() << e.what() << endl;
                 }
-
                 return returnValue;
             }
 
@@ -262,74 +214,59 @@ namespace m3D {
                     const T offset = 0.0,
                     const T *fill_value = NULL,
                     const T valid_min = std::numeric_limits<T>::min(),
-                    const T valid_max = std::numeric_limits<T>::max())
-            {
-                // retrieve packed value
-
-                // TODO: respect the native type!
-
+                    const T valid_max = std::numeric_limits<T>::max()) {
                 T value = 0.0;
-
                 vector<size_t> index(gridpoint.begin(), gridpoint.end());
-
                 if (time_index >= 0) {
                     index.insert(index.begin(), boost::numeric_cast<size_t>(time_index));
                 }
-
                 switch (var.getType().getTypeClass()) {
                     case netCDF::NcType::nc_BYTE:
                     {
                         unsigned char val;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    }
-                        break;
+                    } break;
 
                     case netCDF::NcType::nc_CHAR:
                     {
                         char val;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    }
-                        break;
+                    } break;
 
                     case netCDF::NcType::nc_DOUBLE:
                     {
                         double val = 0.0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    }
-                        break;
+                    } break;
 
                     case netCDF::NcType::nc_FLOAT:
                     {
                         float val = 0.0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    }
-                        break;
+                    } break;
 
                     case netCDF::NcType::nc_INT:
                     {
                         int val = 0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    }
-                        break;
+                    } break;
 
                     case netCDF::NcType::nc_SHORT:
                     {
                         short val = 0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    }
-                        break;
+                    } break;
 
                     default:
                     {
                         var.getVar(index, &value);
                     }
-
                 }
 
                 if (fill_value != NULL) {
@@ -346,9 +283,7 @@ namespace m3D {
                 }
 
                 // scale first, then offset
-
                 T unpacked_value = scale_factor * value + offset;
-
                 return unpacked_value;
             }
 
@@ -363,8 +298,7 @@ namespace m3D {
              */
             template <typename T>
             void
-            get_valid_range(const NcVar &var, T &valid_min, T &valid_max)
-            {
+            get_valid_range(const NcVar &var, T &valid_min, T &valid_max) {
                 bool have_valid_range = false;
 
                 // check for 'valid_range' attribute first
@@ -433,7 +367,7 @@ namespace m3D {
                 } catch (std::exception &e) {
                 }
 
-                ::m3D::utils::netcdf::get_valid_range(var,valid_min,valid_max);
+                ::m3D::utils::netcdf::get_valid_range(var, valid_min, valid_max);
                 valid_min = offset + scale_factor * valid_min;
                 valid_max = offset + scale_factor * valid_max;
             }
@@ -533,8 +467,7 @@ namespace m3D {
              * @throws std::runtime_error
              */
             template <typename T>
-            T get_time(std::string filename) throw (std::runtime_error)
-            {
+            T get_time(std::string filename) throw (std::runtime_error) {
                 T timestamp;
 
                 try {
@@ -562,8 +495,7 @@ namespace m3D {
              */
             void get_time_dim_and_var(NcFile &file,
                     NcDim &time_dim,
-                    NcVar &time_var) throw (std::runtime_error)
-            {
+                    NcVar &time_var) throw (std::runtime_error) {
                 // find time dimension
 
                 time_dim = file.getDim("time");
@@ -673,7 +605,7 @@ namespace m3D {
                 } catch (const ::netCDF::exceptions::NcException &e) {
                     throw runtime_error("ERROR:can't access file " + filename + ":" + e.what());
                 }
-            };
+            }
 
             /** Extracts the names of the given variables and returns
              * them as vectors.
@@ -771,6 +703,107 @@ namespace m3D {
                 return dest;
             }
 
+            /**
+             * Copy the given list of netCDF dimensions from source file
+             * to destination file.
+             * 
+             * @param dimensions
+             * @param source
+             * @param dest
+             * @return 
+             */
+            vector<NcDim>
+            copy_dimensions(const vector<string> &dimensions,
+                    const NcFile *source, NcFile *dest)
+            {
+                vector<NcDim> ncDimensions;
+                for (size_t di = 0; di < dimensions.size(); di++) {
+                    string dimension = dimensions[di];
+                    int dimensionSize = source->getDim(dimension).getSize();
+                    NcDim ncDimension = dest->addDim(dimension, dimensionSize);
+                    ncDimensions.push_back(ncDimension);
+                }
+                return ncDimensions;
+            }
+
+            /**
+             * Creates a copy of a netCDF variable in another file. This
+             * operation requires, that the dimensions for the variable
+             * to be copied are already in place. 
+             * 
+             * @param variable
+             * @param source
+             * @param dest
+             * @param with_data Only if <code>true</code> the actual data is copied.
+             * @return <code>true</code> if operation was success.
+             * @throws netCDF::exceptions::NcException
+             */
+            template <typename T>
+            bool copy_variable(const std::string &variable,
+                    const NcFile *source, NcFile *dest, bool with_data) {
+                // This should no longer be required with netCDF C++ 4 API
+                // nc_redef(file->getId());                
+
+                NcVar sourceVar = source->getVar(variable);
+
+                // List of dimensions for the copy (in dest file)
+                vector<NcDim> copyDims;
+
+                // collect the dimension info
+                vector<NcDim> sourceDims = sourceVar.getDims();
+                for (size_t j = 0; j < sourceDims.size(); j++) {
+                    NcDim sourceDim = sourceDims[j];
+                    NcDim destDim = dest->getDim(sourceDim.getName());
+                    if (destDim.isNull()) {
+                        cerr << "ERROR:could not find dimension '"
+                                << sourceDim.getName() << "'" << endl;
+                        return false;
+                    }
+                    copyDims.push_back(destDim);
+                }
+
+                // create a dummy variable
+                NcVar copy;
+                copy = dest->addVar(variable, sourceVar.getType(), copyDims);
+                if (copy.isNull()) {
+                    cerr << "ERROR:could not create variable '"
+                            << variable << "'" << endl;
+                    return false;
+                }
+                copy.setCompression(false, true, 3);
+
+                // Copy attributes
+                map< string, NcVarAtt > attributes = sourceVar.getAtts();
+                map< string, NcVarAtt >::iterator at;
+                for (at = attributes.begin(); at != attributes.end(); at++) {
+                    NcVarAtt a = at->second;
+                    size_t size = a.getAttLength();
+                    void *data = (void *) malloc(size);
+                    a.getValues(data);
+                    NcVarAtt att_copy = copy.putAtt(a.getName(), a.getType(), size, data);
+                    free(data);
+    
+                    if (att_copy.isNull()) {
+                        cerr << "ERROR: could not write attribute " << a.getName() << endl;
+                        return false;
+                    }
+                }
+
+                // Copy data is necessary
+                if (with_data) {
+                    size_t number_of_values = num_vals(sourceVar);
+                    T *data = (T*) malloc(sizeof (T) * number_of_values);
+                    if (data == NULL) {
+                        cerr << "ERROR:out of memory" << endl;
+                        return false;
+                    }
+                    sourceVar.getVar(data);
+                    copy.putVar(data);
+                    free(data);
+                }
+                
+                return true;
+            }
         }
     }
 }

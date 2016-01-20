@@ -72,44 +72,37 @@ void FSTestBase<T>::generate_dimensions()
         size_t nupoints = m_settings->num_gridpoints();
 
         // add grid dimensions
-
         vector<NcDim> dimensions;
-
         for (size_t i = 0; i < m_settings->num_dimensions(); i++) {
-
-            dimensions.push_back(this->file()->addDim(dimensionName(i), nupoints + 1));
+            std::string dimension = dimensionName(i);
+            m_dimensions.push_back(dimension);
+            dimensions.push_back(this->file()->addDim(dimension, nupoints + 1));
         }
 
         // and dimension variables
-
         vector<NcVar> dimension_variables;
-
         for (size_t i = 0; i < m_settings->num_dimensions(); i++) {
             // create dimension variable. Values range [-max_h ... to max_h]
-
             float max_h = m_settings->axis_bound_values()[i];
 
             // Create variable with same name as dimension
-
-            NcVar var = this->file()->addVar(dimensionName(i), ncDouble, dimensions[i]);
+            std::string name = dimensionName(i);
+            NcVar var = this->file()->addVar(name, ncDouble, dimensions[i]);
             var.putAtt("valid_min", ncDouble, -max_h);
             var.putAtt("valid_max", ncDouble, max_h);
-
             var.putAtt("units", "m");
 
             // Write out it's axis data
-
             float* values = (float *) malloc((nupoints + 1) * sizeof (float));
-
             for (size_t gridIndex = 0; gridIndex < nupoints + 1; gridIndex++) {
                 values[gridIndex] = -max_h + gridIndex * (2 * max_h / ((float) nupoints));
             }
 
             var.putVar(values);
-
             free(values);
 
             dimension_variables.push_back(var);
+            m_dimension_variables.push_back(name);
         }
 
         m_coordinate_system = new CoordinateSystem<T>(dimensions, dimension_variables);
@@ -163,7 +156,7 @@ FSTestBase<T>::add_variable(string name, T valid_min, T valid_max)
         var.putAtt("valid_max", type, valid_max);
         var.putAtt("_FillValue", type, FSTestBase<T>::FILL_VALUE);
 
-        m_variable_names.push_back(name);
+        m_variables.push_back(name);
 
         return var;
     } catch (netCDF::exceptions::NcException &e) {
@@ -256,14 +249,15 @@ void FSTestBase<T>::generate_featurespace()
     this->reopen_file_for_reading();
 
     INFO << "Creating NetCDFDataStore from variables "
-            << m_variable_names << endl;
+            << m_variables << endl;
 
     m_data_store = new NetCDFDataStore<T>(this->m_filename,
-            this->coordinate_system(),
-            m_variable_names);
+            this->m_variables,
+            this->m_dimensions,
+            this->m_dimension_variables);
 
     INFO << "Creating featurespace from data store "
-            << m_variable_names << endl;
+            << m_variables << endl;
 
     this->m_featureSpace = new FeatureSpace<T>(this->coordinate_system(),
             m_data_store,

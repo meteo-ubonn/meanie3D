@@ -59,6 +59,103 @@ namespace m3D {
 #define inf( v1,v2 ) (v1 < v2 ? v1:v2)
 
 #pragma mark -
+#pragma mark Constructors/Destructors et. Al.
+
+        template <typename T>
+        void 
+        ClusterList<T>::set_time_from_time_index()
+        {
+            long timestamp = 0;
+            if (time_index >= 0) {
+                try {
+                    timestamp = utils::netcdf::get_time<long>(source_file, time_index);
+                } catch (runtime_error &e) {
+                    cerr << "ERROR:could not obtain timestamp from file "
+                         << source_file << "(time_index=" << time_index << endl;
+                }
+            }
+            this->set_time_in_seconds(::units::values::s(timestamp));
+        }
+
+        template <typename T>
+        ClusterList<T>::ClusterList() 
+            : file(NULL)
+            , tracking_performed(false)
+            , highest_id(0)
+            , highest_uuid(0) 
+        {
+        };
+        
+        template <typename T>
+        ClusterList<T>::ClusterList(const string &source,
+                const vector<string> &variables,
+                const vector<string> &dimensions,
+                const vector<string> &dimension_variables,
+                int ti,
+                bool orig_pts)
+        : file(NULL)
+        , tracking_performed(false)
+        , highest_id(0)
+        , highest_uuid(0)
+        , variables(variables)
+        , dimensions(dimensions)
+        , dimension_variables(dimension_variables)
+        , source_file(source)
+        , time_index(ti)
+        , m_use_original_points_only(orig_pts)
+        {
+            set_time_from_time_index();
+        };
+        
+        template <typename T>
+        ClusterList<T>::ClusterList(
+            const typename Cluster<T>::list &list,
+            const string &source,
+            const vector<string> &vars,
+            const vector<string> &dims,
+            const vector<string> &dim_vars,
+            int ti,
+            bool orig_pts)
+        : file(NULL)
+        , tracking_performed(false)
+        , highest_id(0)
+        , highest_uuid(0)
+        , variables(vars)
+        , dimensions(dims)
+        , dimension_variables(dim_vars)
+        , source_file(source)
+        , time_index(ti)
+        , m_use_original_points_only(orig_pts)
+        , clusters(list) 
+        {
+            set_time_from_time_index();
+        };
+        
+        template <typename T>
+        ClusterList<T>::ClusterList(const ClusterList &o)
+        : file(o.file)
+        , filename(o.filename)
+        , variables(o.variables)
+        , dimensions(dimensions)
+        , dimension_variables(o.dimension_variables)
+        , source_file(o.source_file)
+        , clusters(o.clusters)
+        , tracking_performed(o.tracking_performed)
+        , tracking_time_difference(o.tracking_time_difference)
+        , tracked_ids(o.tracked_ids)
+        , dropped_ids(o.dropped_ids)
+        , new_ids(o.new_ids)
+        , splits(o.splits)
+        , merges(o.merges)
+        , highest_id(o.highest_id)
+        , highest_uuid(o.highest_uuid)
+        , timestamp(o.timestamp)
+        , time_index(o.time_index)
+        , m_use_original_points_only(o.m_use_original_points_only)
+        { }
+
+            
+#pragma mark -
 #pragma mark Accessing the list
 
     template <typename T>
@@ -158,7 +255,7 @@ namespace m3D {
 
         try {
             bool file_existed = boost::filesystem::exists(filename);
-            NcFile *file = this->ncFile;
+            NcFile *file = this->file;
             
             if (file != NULL && !file->isNull()) {
                 // force close
@@ -167,7 +264,7 @@ namespace m3D {
             
             // open for writing
             file = new NcFile(filename, NcFile::write);
-            this->ncFile = file;
+            this->file = file;
             
             // write version attribute
             if (file_existed) {
@@ -220,11 +317,11 @@ namespace m3D {
             }
 
             // Featurespace Variables
-            std::string fvarnames = to_string(variable_names);
+            std::string fvarnames = to_string(variables);
             file->putAtt("featurespace_variables", fvarnames);
 
             // Update the file pointer just in case
-            this->ncFile = file;
+            this->file = file;
             
         } catch (const std::exception &e) {
             std::cerr << "ERROR:exception while writing cluster file: " << e.what() << endl;
@@ -251,9 +348,22 @@ namespace m3D {
         try {
             NcFile *file = NULL;
             this->filename = std::string(path);
+
             bool file_existed = boost::filesystem::exists(path);
             std::string filename = file_existed ? path + "-new" : path;
 
+            // We need to get the size of the dimensions and other 
+            // data from somewhere. For this we have to rely on either
+            // the source being present, or a previous instance of the
+            // cluster file (in case of overwriting).
+            string source_path = file_existed ? path : source_file;
+            NcFile *sourcefile = new NcFile(source_path, NcFile::read);
+            if (sourcefile == NULL || sourcefile->isNull()) {
+                cerr << "FATAL:could not open file '"<< source_path
+                        << "' for obtaining dimension data" << endl;
+                exit(EXIT_FAILURE);
+            }
+            
             try {
                 // Be aware of the fact that this->ncFile is probably
                 // open from the tracking at this point. It also needs
@@ -264,31 +374,43 @@ namespace m3D {
                 // the original in that way.
                 file = new NcFile(filename, NcFile::replace);
             } catch (const netCDF::exceptions::NcException &e) {
-                cerr << "FATAL:exception opening file " << filename << " for writing : " << e.what() << endl;
+                cerr << "FATAL:exception opening file " << filename 
+                     << " for writing : " << e.what() << endl;
                 exit(EXIT_FAILURE);
             }
 
             // write version attribute
             file->putAtt("version", m3D::VERSION);
 
-            // Create dimensions
-            NcDim dim, spatial_dim;
-            dim = file->addDim("featurespace_dim", (int) this->feature_variables.size());
-            spatial_dim = file->addDim("spatial_dim", (int) this->dimensions.size());
-
-            // write featurespace_dimensions attribute
-            vector<string> fs_dims;
-            for (size_t di = 0; di<this->dimensions.size(); di++) {
-                fs_dims.push_back(this->dimensions[di].getName());
+            // Create feature-space variables
+            vector<string> featurespace_variables = dimension_variables;
+            for (size_t i=0; i<variables.size(); i++) {
+                featurespace_variables.push_back(variables[i]);
             }
-            file->putAtt("featurespace_dimensions", to_string(fs_dims));
+            
+            // This is one dimension of the clusters and also the rank
+            // (spatial rank + value rank) of the featurespace
+            NcDim dim = file->addDim("rank", (int) featurespace_variables.size());
+            
+            // Record the individual ranks as well
+            file->putAtt("spatial_rank", ncInt, (int) dimensions.size());
+            file->putAtt("value_rank", ncInt, (int) variables.size());
+                        
+            // General dimension/variable info
+            file->putAtt("variables", to_string(variables));
+            file->putAtt("dimensions", to_string(dimensions));
+            file->putAtt("dimension_variables", to_string(dimension_variables));
+            
+            // The actual variables composing the featurespace
+            file->putAtt("featurespace_variables", to_string(featurespace_variables));
 
+            // Add 'time' information
+            netcdf::add_time(file, this->timestamp, true);
+            file->putAtt("time_index", ncInt, time_index);
+            
             // copy dimensions
-            for (size_t di = 0; di<this->dimensions.size(); di++) {
-                NcDim d = this->dimensions[di];
-
-                file->addDim(d.getName(), d.getSize());
-            }
+            vector<NcDim> ncDimensions 
+                    = netcdf::copy_dimensions(dimensions,sourcefile,file);
 
             // Create dummy variables, attributes and other meta-info
             file->putAtt("num_clusters", ncInt, (int) clusters.size());
@@ -319,68 +441,23 @@ namespace m3D {
                 file->putAtt("splits", maps::id_map_to_string(this->splits));
             }
 
-            // Add 'time'
-            netcdf::add_time(file, this->timestamp, true);
-
-            // feature variables
-            NcFile *sourcefile = file_existed
-                    ? new NcFile(path.c_str(), NcFile::read)
-                    : new NcFile(this->source_file.c_str(), NcFile::read);
-
-            for (size_t i = 0; i < this->feature_variables.size(); i++) {
-                NcVar var = sourcefile->getVar(this->variable_names[i]);
-                NcDim *dim = NULL;
-
-                // Copy data (in case of dimension variables)
-                // exploiting once more the fact, that dimension variables
-                // have by convention the same name as the dimension
-                for (size_t di = 0; di<this->dimensions.size() && dim == NULL; di++) {
-                    NcDim d = this->dimensions[di];
-                    dim = (d.getName() == var.getName()) ? &d : NULL;
-                }
-
-                // create a dummy variable
-                NcVar dummyVar;
-                if (dim != NULL) {
-                    nc_redef(file->getId());
-                    dummyVar = file->addVar(var.getName(), var.getType(), *dim);
-                    dummyVar.setCompression(false, true, 3);
-                    nc_enddef(file->getId());
-                    T *data = (T*) malloc(sizeof (T) * dim->getSize());
-                    var.getVar(data);
-                    dummyVar.putVar(data);
-                    delete data;
-                } else {
-                    nc_redef(file->getId());
-                    dummyVar = file->addVar(var.getName(), var.getType(), dimensions);
-                    dummyVar.setCompression(false, true, 3);
-                    nc_enddef(file->getId());
-                }
-
-                // Copy attributes
-                map< string, NcVarAtt > attributes = var.getAtts();
-                map< string, NcVarAtt >::iterator at;
-                nc_redef(file->getId());
-                for (at = attributes.begin(); at != attributes.end(); at++) {
-                    NcVarAtt a = at->second;
-                    size_t size = a.getAttLength();
-                    void *data = (void *) malloc(size);
-                    a.getValues(data);
-                    NcVarAtt copy = dummyVar.putAtt(a.getName(), a.getType(), size, data);
-                    if (copy.isNull()) {
-                        cerr << "ERROR: could not write attribute " << a.getName() << endl;
-                    }
-                    free(data);
-                }
-                nc_enddef(file->getId());
+            // Copy dimension variables including data. This is required
+            // so that on reading a coordinate system can be constructed
+            
+            for (size_t i = 0; i < dimension_variables.size(); i++) {
+                string var = dimension_variables[i];
+                netcdf::copy_variable<T>(var,sourcefile,file,true);
+            }
+                
+            // Copy other variables without data
+            
+            for (size_t i = 0; i < variables.size(); i++) {
+                string var = variables[i];
+                netcdf::copy_variable<T>(var,sourcefile,file,false);
             }
 
             // Featurespace Variables
-            std::string fvarnames = to_string(variable_names);
-
-            // Enter define mode
-            nc_redef(file->getId());
-            file->putAtt("featurespace_variables", fvarnames);
+            std::string fvarnames = to_string(variables);
 
             // Add cluster dimensions and variables
             for (size_t ci = 0; ci < clusters.size(); ci++) {
@@ -401,7 +478,7 @@ namespace m3D {
                 } catch (const netCDF::exceptions::NcException &e) {
                     cerr << "ERROR:exception creating dimension " << dim_name.str()
                             << ":" << e.what() << endl;
-                    continue;
+                    exit(EXIT_FAILURE);
                 }
 
                 // Create variable
@@ -479,18 +556,13 @@ namespace m3D {
                 }
                 var.putVar(data);
                 delete data;
-
-                // Enter define mode
-                nc_redef(file->getId());
             }
 
-            // exit define mode
-            nc_enddef(file->getId());
             if (file_existed) {
                 // close the original and delete it
-                if (this->ncFile != NULL) {
-                    delete this->ncFile;
-                    this->ncFile = NULL;
+                if (this->file != NULL) {
+                    delete this->file;
+                    this->file = NULL;
                 }
 
                 if (boost::filesystem::remove(path)) {
@@ -523,7 +595,7 @@ namespace m3D {
                 }
             }
             
-            this->ncFile = file;
+            this->file = file;
             
         } catch (const std::exception &e) {
             std::cerr << "ERROR:exception while writing cluster file: " << e.what() << endl;
@@ -536,15 +608,12 @@ namespace m3D {
     ClusterList<T>::read(const std::string& path, CoordinateSystem<T> **cs_ptr)
     {
         // meta-info
-        vector<string> feature_variable_names;
-        vector<NcVar> feature_variables;
-        vector<NcVar> dimension_variables;
-        vector<NcDim> dimensions;
+        vector<string> variables;
+        vector<string> dimensions;
+        vector<string> dimension_variables;
+        vector<string> featurespace_variables;
         string source_file;
         id_set_t cluster_ids;
-        typename Cluster<T>::list list;
-        NcFile *file = NULL;
-
         bool tracking_performed = false;
         id_set_t tracked_ids;
         id_set_t new_ids;
@@ -552,32 +621,42 @@ namespace m3D {
         id_map_t merges;
         id_map_t splits;
         int tracking_time_difference = NO_TIME;
+        unsigned int time_index = NO_TIME;
         timestamp_t timestamp = 0;
         m3D::id_t highest_id = NO_ID;
         m3D::uuid_t highest_uuid = NO_UUID;
+        typename Cluster<T>::list list;
+        NcFile *file = NULL;
 
         file = new NcFile(path, NcFile::read);
         try {
             // Read the dimensions
-            NcDim fs_dim = file->getDim("featurespace_dim");
+            NcDim fs_dim = file->getDim("rank");
 
-            // Read the dimensions attribute
-            string dim_str;
-            file->getAtt("featurespace_dimensions").getValues(dim_str);
+            // variables
+            string buffer;
+            file->getAtt("variables").getValues(buffer);
+            variables = vectors::from_string<string>(buffer);
 
-            // Fill the dimensions vector from that
-            vector<string> fs_dim_names = vectors::from_string<string>(dim_str);
-            for (size_t di = 0; di < fs_dim_names.size(); di++) {
-                NcDim d = file->getDim(fs_dim_names[di]);
-                dimensions.push_back(d);
-                NcVar v = file->getVar(fs_dim_names[di]);
-                dimension_variables.push_back(v);
-            }
-
+            // dimensions
+            file->getAtt("dimensions").getValues(buffer);
+            dimensions = vectors::from_string<string>(buffer);
+            
+            // dimension variables
+            file->getAtt("dimension_variables").getValues(buffer);
+            dimension_variables = vectors::from_string<string>(buffer);
+            
+            // featurespace variables
+            file->getAtt("featurespace_variables").getValues(buffer);
+            featurespace_variables = vectors::from_string<string>(buffer);
+            
             // Read time
             file->getVar("time").getVar(&timestamp);
+            
+            // Read time index
+            file->getVar("time_index").getVar(&time_index);
 
-            // Read global attributes
+            // Source file
             file->getAtt("source").getValues(source_file);
 
             int number_of_clusters;
@@ -627,18 +706,10 @@ namespace m3D {
             // Read the feature-variables
 
             file->getAtt("featurespace_variables").getValues(value);
-            feature_variable_names = vectors::from_string<string>(value);
-            for (size_t i = 0; i < feature_variable_names.size(); i++) {
-                NcVar var = file->getVar(feature_variable_names[i]);
-                if (var.isNull()) {
-                    cerr << "FATAL: could not find featurespace variable " << feature_variable_names[i] << endl;
-                    exit(EXIT_FAILURE);
-                }
-                feature_variables.push_back(var);
-            }
+            featurespace_variables = vectors::from_string<string>(value);
 
             // Coordinate system wanted?
-            CoordinateSystem<T> *cs = new CoordinateSystem<T>(dimensions, dimension_variables);
+            CoordinateSystem<T> *cs = new CoordinateSystem<T>(file, dimensions, dimension_variables);
             if (cs_ptr != NULL) {
                 *cs_ptr = cs;
             }
@@ -743,10 +814,14 @@ namespace m3D {
         // When reading, use the cluster file itself as source
         // path so that the timestamp can be read. Set the real
         // source path up afterwards.
-        ClusterList<T>::ptr cl = new ClusterList(feature_variables, dimensions, path, false);
-        cl->source_file = source_file;
-        cl->clusters = list;
-        cl->ncFile = file;
+        ClusterList<T>::ptr cl = new ClusterList(list, 
+                source_file, 
+                variables,
+                dimensions, 
+                dimension_variables, 
+                time_index, 
+                false);
+        
         cl->timestamp = timestamp;
         cl->highest_id = highest_id;
         cl->highest_uuid = highest_uuid;
@@ -758,7 +833,10 @@ namespace m3D {
             cl->merges = merges;
             cl->splits = splits;
         }
+        
         cl->filename = path;
+        cl->file = file;
+
         return cl;
     }
 
@@ -781,25 +859,6 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Clustering by Graph Theory
-
-    template <typename T>
-    void
-    ClusterList<T>::check_clusters(ArrayIndex<T> &index)
-    {
-        // sanity checking
-        typename Cluster<T>::list::iterator ci;
-
-        size_t originalPoints = 0;
-        for (ci = clusters.begin(); ci != clusters.end(); ci++) {
-            typename Cluster<T>::ptr c1 = *ci;
-            typename Point<T>::list::iterator pi;
-            for (pi = c1->points.begin(); pi != c1->points.end(); pi++) {
-                Point<T> *p = *pi;
-                if (p->isOriginalPoint) originalPoints++;
-            }
-        }
-        cout << "Original points in clusters: " << originalPoints << endl;
-    }
 
     template <typename T>
     T

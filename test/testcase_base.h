@@ -44,8 +44,11 @@ protected:
 
     NcFile *m_file;
     std::string m_filename;
-    vector<string> m_variable_names;
-
+    
+    vector<string> m_variables;
+    vector<string> m_dimensions;
+    vector<string> m_dimension_variables;
+  
     DataStore<T> *m_data_store;
     CoordinateSystem<T> *m_coordinate_system;
     FeatureSpace<T> *m_featureSpace;

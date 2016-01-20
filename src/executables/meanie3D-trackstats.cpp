@@ -591,7 +591,7 @@ void readTrackingData(trackstats_context_t &ctx) {
                     exit(EXIT_FAILURE);
                 }
 
-                size_t v_rank = ctx.cluster_list->feature_variables.size() - ctx.spatial_rank;
+                size_t v_rank = ctx.cluster_list->variables.size();
                 if (ctx.value_rank == 0) {
                     ctx.value_rank = v_rank;
                 } else if (v_rank != ctx.value_rank) {

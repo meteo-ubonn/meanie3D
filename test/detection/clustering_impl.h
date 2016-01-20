@@ -96,31 +96,19 @@ void FSClusteringTest2D<T>::create_clouds(const NcVar &var)
 {
     // calculate the divisions in terms of grid points
     // calculate the deviations
-
     vector<NcDim *>::iterator dim_iter;
-
     for (size_t index = 0; index < this->coordinate_system()->rank(); index++) {
         NcDim dim = this->coordinate_system()->dimensions()[index];
-
         NcVar dim_var = this->coordinate_system()->dimension_variable(dim);
-
         size_t number_gridpoints = utils::netcdf::num_vals(dim_var) / m_divisions;
-
         m_division_increments[ dim ] = number_gridpoints;
-
         m_deviation.push_back(0.4 / m_divisions);
     }
-
     typename CoordinateSystem<T>::GridPoint gridpoint = this->coordinate_system()->newGridPoint();
-
     this->m_pointCount = 0;
-
     cout << "Creating clusters at the intersection of " << m_divisions << " lines per axis ..." << endl;
-
     create_clouds_recursive(var, 0, gridpoint);
-
     cout << "done. (" << this->m_pointCount << " points)" << endl;
-
     this->m_totalPointCount += this->m_pointCount;
 }
 
@@ -128,32 +116,22 @@ template<class T>
 void FSClusteringTest2D<T>::SetUp()
 {
     FSTestBase<T>::SetUp();
-
     m_smoothing_scale = 0.01;
-
     // Set the bandwidths
-
     size_t bw_size = this->m_settings->fs_dim();
-
     for (size_t i = 0; i < bw_size; i++) {
         m_fuzziness.push_back(1.0 / m_divisions);
     }
-
     this->m_bandwidths.push_back(vector<T>(bw_size, 1.0 / m_divisions));
 
     // Generate dimensions and dimension variables according to
     // the current settings
-
     this->generate_dimensions();
 
     // Create a variable
-
     // test case 1 : ellipsis for unweighed sample mean
-
     NcVar var = this->add_variable("cluster_test", 0.0, FS_VALUE_MAX);
-
     create_clouds(var);
-
     FSTestBase<T>::generate_featurespace();
 }
 
@@ -184,8 +162,6 @@ FSClusteringTest3D<T>::FSClusteringTest3D() : FSClusteringTest2D<T>()
     this->m_smoothing_scale = 0.01;
 }
 
-
-
 // 2D
 #if RUN_2D
 
@@ -207,53 +183,22 @@ TYPED_TEST(FSClusteringTest2D, FS_Clustering_2D_Range_Test)
         detection_params_t<TypeParam> params = Detection<TypeParam>::defaultParams();
         params.ranges = this->m_bandwidths.at(i);
         params.kernel_name = "gauss";
-        params.dimensions = m_coordinate_system->dimensions();
-        params.dimension_variables = this->m_coordinate_sytem->dimension_variables();
-        params.variables = this->m_variable_names
+        params.variables = this->m_variables;
+        params.dimensions = this->m_dimensions;
+        params.dimension_variables = this->m_dimension_variables;
+        params.min_cluster_size = 20;
         
-        Kernel<TypeParam> *kernel = new GaussianNormalKernel<TypeParam>(vector_norm(h));
-
-        typename Cluster<TypeParam>::list::iterator ci;
-
         start_timer();
-
-        vector<netCDF::NcVar> excluded;
-
-        vector<TypeParam> resolution = this->m_featureSpace->coordinate_system->resolution();
-
-        h.push_back(numeric_limits<TypeParam>::max());
-
-        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(h);
-
-        ClusterOperation<TypeParam> op(this->m_featureSpace,
-                (NetCDFDataStore<TypeParam> *)this->m_data_store,
-                this->m_featureSpaceIndex);
-
-        ClusterList<TypeParam> clusters = op.cluster(params, kernel, NULL, false, true);
-
-        size_t cluster_number = 1;
-        for (ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++) {
-            Cluster<TypeParam> *c = *ci;
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
-        }
-
-        clusters.apply_size_threshold(20);
-
-        EXPECT_EQ(clusters.clusters.size(), 4);
-
-        delete kernel;
-
+        detection_context_t<TypeParam> ctx;
+        Detection<TypeParam>::run(params,ctx);
         double time = stop_timer();
-        cout << "done. (" << time << " seconds, " << clusters.clusters.size() << " modes found:" << endl;
+        cout << "done. (" << time << " seconds, " 
+             << ctx.clusters->size() << " modes found:" << endl;
 
-        cluster_number = 1;
-        for (ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++) {
-            Cluster<TypeParam> *c = *ci;
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
-        }
+        EXPECT_EQ(ctx.clusters->clusters.size(), 4);
 
-        const ::testing::TestInfo * const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-
+        ctx.clusters->print();
+        Detection<TypeParam>::cleanup(params,ctx);
         ClusterList<TypeParam>::reset_clustering(this->m_featureSpace);
     }
 }
@@ -275,55 +220,30 @@ TYPED_TEST(FSClusteringTest3D, FS_Clustering_3D_Test)
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
 
     for (size_t i = 0; i < this->m_bandwidths.size(); i++) {
-        vector<TypeParam> h = this->m_bandwidths.at(i);
-
-        Kernel<TypeParam> *kernel = new GaussianNormalKernel<TypeParam>(vector_norm(h));
-
-        vector<netCDF::NcVar> excluded;
-
-        typename Cluster<TypeParam>::list::iterator ci;
-
+        
+        detection_params_t<TypeParam> params = Detection<TypeParam>::defaultParams();
+        
+        params.ranges = this->m_bandwidths.at(i);
+        params.ranges *= ((TypeParam) 0.25);
+        
+        params.kernel_name = "gauss";
+        params.variables = this->m_variables;
+        params.dimensions = this->m_dimensions;
+        params.dimension_variables = this->m_dimension_variables;
+        params.min_cluster_size = 20;
+        
         start_timer();
-
-        ClusterOperation<TypeParam> op(this->m_featureSpace,
-                (NetCDFDataStore<TypeParam> *)this->m_data_store,
-                this->m_featureSpaceIndex);
-
-        // Create 'bandwidth' parameter from grid resolution and
-        // the maximum value in the value range
-
-        h.push_back(numeric_limits<TypeParam>::max());
-
-        h *= ((TypeParam) 0.25);
-
-        // Search parameters for neighbourhood searches in clustering
-        // should be in the order of the grid resolution
-
-        RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(h);
-
-        ClusterList<TypeParam> clusters = op.cluster(params, kernel, NULL, false, true);
-
-        size_t cluster_number = 1;
-        for (ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++) {
-            Cluster<TypeParam> *c = *ci;
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
-        }
-
-        clusters.apply_size_threshold(50);
-
-        delete kernel;
-
+        detection_context_t<TypeParam> ctx;
+        Detection<TypeParam>::run(params,ctx);
         double time = stop_timer();
-        cout << "done. (" << time << " seconds, " << clusters.clusters.size() << " modes found:" << endl;
+        cout << "done. (" << time << " seconds, " 
+             << ctx.clusters->size() << " modes found:" << endl;
 
-        cluster_number = 1;
-        for (ci = clusters.clusters.begin(); ci != clusters.clusters.end(); ci++) {
-            Cluster<TypeParam> *c = *ci;
+        EXPECT_EQ(ctx.clusters->clusters.size(), 27);
 
-            cout << "Cluster #" << cluster_number++ << " at " << c->mode << " (" << c->size() << " points.)" << endl;
-        }
-
-        EXPECT_EQ(clusters.clusters.size(), 27);
+        ctx.clusters->print();
+        Detection<TypeParam>::cleanup(params,ctx);
+        ClusterList<TypeParam>::reset_clustering(this->m_featureSpace);
     }
 }
 

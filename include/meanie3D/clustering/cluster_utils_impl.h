@@ -113,12 +113,10 @@ namespace m3D {
             }
 
             typename Cluster<T>::ptr old_cluster = previous->clusters[m];
-
             vector<size_t> candidates;
 
             // figure out the largest candidate
             // TODO: do we still need this here?
-
             for (n = 0; n < current->clusters.size(); n++) {
                 T overlap = coverNewByOld[n][m];
 
@@ -139,10 +137,8 @@ namespace m3D {
 
                 typename Cluster<T>::ptr merged_cluster
                         = new Cluster<T>(old_cluster->mode, old_cluster->spatial_rank());
-
                 merged_cluster->id = ++current_id;
-
-                vector<T> mode(previous->feature_variables.size(), 0.0);
+                vector<T> mode(previous->rank(), 0.0);
 
                 // merge with those candidates, that are direct neighbours
                 // neglect those, that have no direct boundary with any of
@@ -152,23 +148,17 @@ namespace m3D {
 
                 for (int i = 0; i < candidates.size(); i++) {
                     bool have_boundary = true;
-
                     if (have_boundary) {
                         typename Cluster<T>::ptr c = current->clusters[candidates[i]];
-
                         merged_cluster->add_points(c->get_points());
-
                         mode += c->mode;
-
                         erased.insert(c);
-
                         num_picked_candidates++;
                     }
                 }
 
                 if (num_picked_candidates > 1) {
                     merged_cluster->mode = mode / ((T) num_picked_candidates);
-
                     merged.insert(merged_cluster);
                 } else {
                     delete merged_cluster;

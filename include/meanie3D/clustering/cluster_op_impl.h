@@ -95,9 +95,10 @@ namespace m3D {
 
         // Create an empty cluster list
         ClusterList<T> *cluster_list = new ClusterList<T>(
+                m_params.filename,
                 m_params.variables,
                 m_params.dimensions,
-                m_params.filename,
+                m_params.dimension_variables,
                 m_params.time_index);
 
         // Guard against empty feature-space

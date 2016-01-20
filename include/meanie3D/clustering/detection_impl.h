@@ -212,10 +212,10 @@ namespace m3D {
         delete_and_clear(ctx.index);
         delete_and_clear(ctx.clusters);
         delete_and_clear(ctx.previous_clusters);
+        delete_and_clear(ctx.file);
 
         // params
         
-        delete_and_clear(params.filePtr);
         delete_and_clear(params.previous_clusters_filename);
         delete_and_clear(params.ci_comparison_file);
         delete_and_clear(params.ci_comparison_protocluster_file);

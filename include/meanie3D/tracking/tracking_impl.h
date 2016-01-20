@@ -121,10 +121,10 @@ namespace m3D {
         }
 
         // Check if the feature variables match
-        if (run.previous->variable_names != run.current->variable_names) {
+        if (run.previous->variables != run.current->variables) {
             cerr << "FATAL:Incompatible feature variables in the cluster files:"
-                 << " previous:" << run.previous->variable_names
-                 << " current:" <<  run.current->variable_names
+                 << " previous:" << run.previous->variables
+                 << " current:" <<  run.current->variables
                  << endl;
             exit(EXIT_FAILURE);
         }
@@ -163,11 +163,8 @@ namespace m3D {
         if (!skip_tracking) {
 
             // Get us a coordinate system
-            std::vector<std::string> dimNames;
-            for (size_t i=0; i < run.current->dimensions.size(); i++) {
-                dimNames.push_back(run.current->dimensions[i].getName());
-            }
-            run.cs = new CoordinateSystem<T>(run.current->ncFile, dimNames);
+            run.cs = new CoordinateSystem<T>(run.current->file, 
+                    run.current->dimensions, run.current->dimension_variables);
 
             // Check cluster sizes
             for (size_t i = 0; i < run.M; i++) {
@@ -187,8 +184,8 @@ namespace m3D {
             run.tracking_var_index = -1;
             run.haveHistogramInfo = false;
             if (m_params.tracking_variable == "__default__") {
-                NcVar v = run.current->feature_variables[run.current->dimensions.size()];
-                m_params.tracking_variable = v.getName();
+                std::string variable = run.current->variables[0];
+                m_params.tracking_variable = variable;
                 run.haveHistogramInfo = true;
                 if (logDetails) {
                     cout << "Choosing default variable for histogram correlation: "
@@ -196,8 +193,8 @@ namespace m3D {
                 }
             } else {
                 bool found_tracking_var = false;
-                for (size_t i = 0; i < run.current->variable_names.size(); i++) {
-                    if (run.current->variable_names[i] == m_params.tracking_variable) {
+                for (size_t i = 0; i < run.current->variables.size(); i++) {
+                    if (run.current->variables[i] == m_params.tracking_variable) {
                         found_tracking_var = true;
                         run.tracking_var_index = i;
                         run.haveHistogramInfo = true;
@@ -211,7 +208,7 @@ namespace m3D {
             }
 
             // Valid min/max of tracking variable
-            utils::netcdf::unpacked_limits(run.current->ncFile->getVar(m_params.tracking_variable), run.valid_min, run.valid_max);
+            utils::netcdf::unpacked_limits(run.current->file->getVar(m_params.tracking_variable), run.valid_min, run.valid_max);
 
             // check time difference and determine displacement restraints
             ::units::values::s p_time = ::units::values::s(run.previous->timestamp);
