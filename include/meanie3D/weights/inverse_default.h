@@ -56,9 +56,7 @@ namespace m3D {
         {
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
-
                 T saliency = compute_weight(p);
-
                 m_weight->set(p->gridpoint, saliency);
             }
         };
@@ -90,25 +88,6 @@ namespace m3D {
             calculate_weight_function(ctx.fs);
         }
 
-        /** Construct the weight function, using the given values
-         * for valid_min/valid_max
-         * @param featurespace
-         * @param map of lower bounds
-         * @param map of upper bounds
-         */
-        InverseDefaultWeightFunction(FeatureSpace<T> *fs,
-                const NetCDFDataStore<T> *data_store,
-                const map<size_t, T> &min,
-                const map<size_t, T> &max)
-        : m_vars(data_store->variables())
-        , m_min(min)
-        , m_max(max)
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(fs->coordinate_system)
-        {
-            calculate_weight_function(fs);
-        }
-
         ~InverseDefaultWeightFunction()
         {
             if (this->m_weight != NULL) {
@@ -122,25 +101,17 @@ namespace m3D {
         virtual T compute_weight(Point<T> *p)
         {
             T sum = 0.0;
-
             size_t num_vars = p->values.size() - p->coordinate.size();
-
             if (p->isOriginalPoint) {
                 for (size_t var_index = 0; var_index < num_vars; var_index++) {
                     T value = p->values[p->coordinate.size() + var_index];
-
                     // value scaled to [0..1]
-
                     T a = -1.0 / (m_max.at(var_index) - m_min.at(var_index));
-
                     T b = 0.5 * (1.0 - a * (m_max.at(var_index) - m_min.at(var_index)));
-
                     T var_weight = a * value + b;
-
                     sum += var_weight;
                 }
             }
-
             return sum;
         }
 

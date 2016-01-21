@@ -46,7 +46,6 @@ namespace m3D {
     {
     private:
 
-        const FeatureSpace<T> *m_fs;
         map<size_t, T> m_min;
         map<size_t, T> m_max;
         MultiArray<T> *m_weight;
@@ -97,7 +96,8 @@ namespace m3D {
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
 
-                T saliency = (fs->off_limits()->get(p->gridpoint)) ? 0.0 : compute_weight(p->values);
+                T saliency = (fs->off_limits()->get(p->gridpoint)) 
+                        ? 0.0 : compute_weight(fs,p->values);
 
                 //                #if WITH_OPENMP
                 //                #pragma omp critical 
@@ -109,12 +109,13 @@ namespace m3D {
         /** Actual weight computation happens here
          */
 
-        T compute_weight(const vector<T> &values) const
+        T compute_weight(const FeatureSpace<T> *fs,
+                const vector<T> &values) const
         {
             T sum = 0.0;
 
-            for (size_t var_index = 0; var_index < m_fs->value_rank(); var_index++) {
-                T value = values.at(m_fs->spatial_rank() + var_index);
+            for (size_t var_index = 0; var_index < fs->value_rank(); var_index++) {
+                T value = values.at(fs->spatial_rank() + var_index);
 
                 // value scaled to [0..1]
                 T max = m_max.find(var_index)->second;
@@ -123,7 +124,7 @@ namespace m3D {
                 sum += var_weight;
             }
 
-            return sum / ((T) m_fs->value_rank());
+            return sum / ((T) fs->value_rank());
         }
 
     public:
