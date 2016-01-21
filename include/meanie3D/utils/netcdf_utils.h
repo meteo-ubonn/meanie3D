@@ -569,6 +569,10 @@ namespace m3D {
             template <typename T>
             T get_time(std::string filename, int time_index) throw (std::runtime_error)
             {
+                if (time_index < 0) {
+                    return 0;
+                }
+                
                 try {
                     NcFile file(filename, NcFile::read);
 
@@ -577,30 +581,30 @@ namespace m3D {
 
                     NcDim time_dim;
                     NcVar time_var;
-
-                    get_time_dim_and_var(file, time_dim, time_var);
-
-                    if (time_index < time_dim.getSize() && time_index >= 0) {
-                        T *times = new T[time_dim.getSize()];
-
-                        time_var.getVar(times);
-
-                        T result = times[time_index];
-
-                        delete[] times;
-
-                        return result;
-                    } else if (time_index == NO_TIME && !time_var.isNull()) {
-                        // timestamp in files where variables
-                        // have no time dependency
-
-                        T time;
-
-                        time_var.getVar(&time);
-
-                        return time;
-                    } else {
+                    try {
+                        get_time_dim_and_var(file, time_dim, time_var);
+                    } catch (std::exception &) {
+                    }
+                    if (time_var.isNull() || time_dim.isNull()) {
+                        // No time(time)
                         return 0;
+                    } else {
+                        if (time_index < time_dim.getSize() && time_index >= 0) {
+                            // Have time(time) and time_index
+                            T *times = new T[time_dim.getSize()];
+                            time_var.getVar(times);
+                            T result = times[time_index];
+                            delete[] times;
+                            return result;
+                        } else if (time_index == NO_TIME) {
+                            // Have time(time) but no time_index 
+                            T time;
+                            time_var.getVar(&time);
+                            return time;
+                        } else {
+                            // Might have time(time) but index is out of range
+                            return 0;
+                        }
                     }
                 } catch (const ::netCDF::exceptions::NcException &e) {
                     throw runtime_error("ERROR:can't access file " + filename + ":" + e.what());
