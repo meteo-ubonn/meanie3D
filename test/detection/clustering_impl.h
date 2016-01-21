@@ -64,28 +64,20 @@ void FSClusteringTest2D<T>::create_clouds_recursive(const NcVar &var, size_t dim
     using namespace netCDF;
 
     NcDim dim = var.getDim(dimensionIndex);
-
     size_t increment = this->m_division_increments[dim];
-
     if (dimensionIndex < (var.getDimCount() - 1)) {
         for (int index = 1; index < m_divisions; index++) {
             gridpoint[dimensionIndex] = index * increment;
-
             create_clouds_recursive(var, dimensionIndex + 1, gridpoint);
         }
     } else {
         for (int index = 1; index < m_divisions; index++) {
             gridpoint[dimensionIndex] = index * increment;
-
             // get the variables together and construct the cartesian coordinate
             // of the current point. If it's on the ellipse, put it in the variable
-
             vector<T> coordinate(var.getDimCount());
-
             this->coordinate_system()->lookup(gridpoint, coordinate);
-
             cout << "\tWriting cloud at gridpoint=" << gridpoint << " coordinate=" << coordinate << " deviation=" << m_deviation << endl;
-
             write_cloud(var, coordinate, m_deviation);
         }
     }
@@ -186,10 +178,12 @@ TYPED_TEST(FSClusteringTest2D, FS_Clustering_2D_Range_Test)
         params.variables = this->m_variables;
         params.dimensions = this->m_dimensions;
         params.dimension_variables = this->m_dimension_variables;
-        params.min_cluster_size = 20;
+        params.min_cluster_size = 25;
+        params.filename = this->m_filename;
         
         start_timer();
         detection_context_t<TypeParam> ctx;
+        Detection<TypeParam>::initialiseContext(ctx);
         Detection<TypeParam>::run(params,ctx);
         double time = stop_timer();
         cout << "done. (" << time << " seconds, " 
@@ -230,10 +224,12 @@ TYPED_TEST(FSClusteringTest3D, FS_Clustering_3D_Test)
         params.variables = this->m_variables;
         params.dimensions = this->m_dimensions;
         params.dimension_variables = this->m_dimension_variables;
-        params.min_cluster_size = 20;
+        params.min_cluster_size = 50;
+        params.filename = this->m_filename;
         
         start_timer();
         detection_context_t<TypeParam> ctx;
+        Detection<TypeParam>::initialiseContext(ctx);
         Detection<TypeParam>::run(params,ctx);
         double time = stop_timer();
         cout << "done. (" << time << " seconds, " 
@@ -248,7 +244,5 @@ TYPED_TEST(FSClusteringTest3D, FS_Clustering_3D_Test)
 }
 
 #endif
-
-
 #endif
 

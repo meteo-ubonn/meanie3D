@@ -190,8 +190,12 @@ TYPED_TEST(FSIterationTest2D, FS_Iteration_2D_Test)
         params.min_cluster_size = 20;
                
         detection_context_t<TypeParam> ctx;
+        Detection<TypeParam>::initialiseContext(ctx);
+        
+        Detection<TypeParam>::initialiseContext(ctx);
         ctx.fs = this->m_featureSpace;
         ctx.coord_system = this->m_coordinate_system;
+        ctx.data_store = this->m_data_store;
 
         WeightFunction<TypeParam> *weight 
                 = new DefaultWeightFunction<TypeParam>(params,ctx);
@@ -251,8 +255,11 @@ TYPED_TEST(FSIterationTest3D, FS_Iteration_3D_Test)
 
         detection_params_t<TypeParam> params;
         detection_context_t<TypeParam> ctx;
+        
+        Detection<TypeParam>::initialiseContext(ctx);
         ctx.fs = this->m_featureSpace;
         ctx.coord_system = this->m_coordinate_system;
+        ctx.data_store = this->m_data_store;
 
         WeightFunction<TypeParam> *weight 
                 = new DefaultWeightFunction<TypeParam>(params,ctx);
