@@ -723,8 +723,10 @@ namespace m3D {
                 vector<NcDim> ncDimensions;
                 for (size_t di = 0; di < dimensions.size(); di++) {
                     string dimension = dimensions[di];
-                    int dimensionSize = source->getDim(dimension).getSize();
-                    NcDim ncDimension = dest->addDim(dimension, dimensionSize);
+                    NcDim ncSourceDim = source->getDim(dimension);
+                    int size = ncSourceDim.getSize();
+                    cout << "Copying dimension " << dimension  << "(size=" << size << ")" << endl;
+                    NcDim ncDimension = dest->addDim(dimension, size);
                     ncDimensions.push_back(ncDimension);
                 }
                 return ncDimensions;

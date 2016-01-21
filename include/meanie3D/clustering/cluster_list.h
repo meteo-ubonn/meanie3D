@@ -70,7 +70,7 @@ namespace m3D {
 
         // General attributes
 
-        unsigned int time_index; // contains index in 'time' dimension
+        int time_index; // contains index in 'time' dimension
         timestamp_t timestamp; // contains the variable 'time(time)' value
         
         vector<string> variables; // Variables (value range)
