@@ -94,12 +94,36 @@ namespace m3D {
     }
 
     template <typename T>
+    void 
+    Detection<T>::initialiseContext(detection_context_t<T> &ctx)
+    {
+        ctx.file = NULL;
+        ctx.clusters = NULL;
+        ctx.previous_clusters = NULL;
+        ctx.search_params = NULL;
+        ctx.kernel = NULL;
+        ctx.kernel_width = 0.0;
+        ctx.show_progress = false;
+        ctx.data_store = NULL;
+        ctx.fs = NULL;
+        ctx.decay = 0.01;
+        ctx.timestamp = 0;
+        ctx.coord_system = NULL;
+        ctx.data_store = NULL;
+        ctx.index = NULL;
+        ctx.initialised = false;
+        ctx.sf = NULL;
+        ctx.weight_function = NULL;
+        ctx.wwf_apply = false;
+    }
+        
+    template <typename T>
     void
     Detection<T>::initialiseContext(const detection_params_t<T> &params,
             detection_context_t<T> &ctx)
 
     {
-        ctx.file = NULL;
+        Detection<T>::initialiseContext(ctx);
         try {
             ctx.file = new NcFile(params.filename, NcFile::read);
         } catch (const netCDF::exceptions::NcException &e) {
@@ -107,16 +131,15 @@ namespace m3D {
                  << "' for reading: " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
-                
-        ctx.search_params = NULL;
-        ctx.kernel_width = 0.0;
-        ctx.show_progress = (params.verbosity > VerbositySilent);
-        ctx.data_store = NULL;
-        ctx.fs = NULL;
-        ctx.decay = 0.01;
-
-        for (size_t i = 0; i < params.variables.size(); i++)
         
+        ctx.data_store = new NetCDFDataStore<T>(params.filename,
+                params.variables,
+                params.dimensions,
+                params.dimension_variables,
+                params.time_index);
+                
+        ctx.show_progress = (params.verbosity > VerbositySilent);
+
         // Get timestamp
         // TODO: this block was put in for a specific tracking
         // inter-comparison problem. Remove when the project is through!!
@@ -168,14 +191,11 @@ namespace m3D {
         // Construct a coordinate system object from the dimensions
         // and dimension variables given
         ctx.coord_system = ctx.data_store->coordinate_system();
-        ctx.weight_function = NULL;
+        
         ctx.wwf_apply = (params.wwf_lower_threshold != 0 
             || params.wwf_upper_threshold != std::numeric_limits<T>::max());
 
-        ctx.sf = NULL;
-        
         // Construct the kernel
-        ctx.kernel = NULL;
         if (params.kernel_name == "uniform") {
             ctx.kernel = new UniformKernel<T>(ctx.kernel_width);
         } else if (params.kernel_name == "gauss") {
@@ -184,7 +204,6 @@ namespace m3D {
             ctx.kernel = new EpanechnikovKernel<T>(ctx.kernel_width);
         }
 
-        ctx.index = NULL;
         ctx.initialised = true;
     };
 
@@ -205,7 +224,6 @@ namespace m3D {
         delete_and_clear(ctx.search_params)
         delete_and_clear(ctx.data_store);
         delete_and_clear(ctx.fs);
-        delete_and_clear(ctx.coord_system);
         delete_and_clear(ctx.weight_function);
         delete_and_clear(ctx.sf);
         delete_and_clear(ctx.kernel);
@@ -236,18 +254,8 @@ namespace m3D {
             Detection<T>::initialiseContext(params, ctx);
         }
 
-        start_timer();
-
         // used in writing out debug data
         boost::filesystem::path path(params.filename);
-
-        // Read the data
-        ctx.data_store = new NetCDFDataStore<T>(
-                params.filename, 
-                params.variables,
-                params.dimensions,
-                params.dimension_variables,
-                params.time_index);
         
         // Construct Featurespace from data
         ctx.fs = new FeatureSpace<T>(
@@ -497,16 +505,14 @@ namespace m3D {
         // Before writing, set the timestamp!!
         ctx.clusters->timestamp = ctx.timestamp;
 
-        ctx.clusters->write(params.output_filename);
+        if (!params.output_filename.empty()) {
+            ctx.clusters->write(params.output_filename);
+        }
 
         if (params.include_weight_in_result) {
             cout << "NOT IMPLEMENTED" << endl;
             // cout << "Writing weight function to result file ... ";
             // cout << "done." << endl;
-        }
-
-        if (params.verbosity > VerbositySilent) {
-            cout << " done (" << stop_timer() << "s)." << endl;
         }
     }
 }

@@ -316,8 +316,17 @@ namespace m3D {
              * this method when creating detection parameters.
              * @return default detection parameters
              */
-            static detection_params_t<T> defaultParams();
-            
+            static
+            detection_params_t<T> defaultParams();
+        
+            /**
+             * Initializes a context with defaults.
+             * @param ctx
+             */
+            static
+            void
+            initialiseContext(detection_context_t<T> &ctx);
+        
             /**
              * Initialize a detection context.
              * @param params
