@@ -243,9 +243,7 @@ template<class T>
 void FSTestBase<T>::generate_featurespace()
 {
     INFO << "Creating featurespace from file " << m_filename << endl;
-
     const map<int, double> lower_thresholds, upper_thresholds, fill_values;
-
     this->reopen_file_for_reading();
 
     INFO << "Creating NetCDFDataStore from variables "

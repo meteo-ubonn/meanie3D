@@ -36,7 +36,6 @@ void FSCircularPatternTest2D<T>::create_ellipsoid_recursive(NcVar &var,
     if (dimensionIndex < (this->coordinate_system()->rank() - 1)) {
         for (int index = 0; index < dim.getSize(); index++) {
             gridpoint[dimensionIndex] = index;
-
             create_ellipsoid_recursive(var, h, dimensionIndex + 1, gridpoint);
         }
     } else {
@@ -48,7 +47,6 @@ void FSCircularPatternTest2D<T>::create_ellipsoid_recursive(NcVar &var,
             typename CoordinateSystem<T>::Coordinate coordinate = this->coordinate_system()->newCoordinate();
             this->coordinate_system()->lookup(gridpoint, coordinate);
             vector<size_t> gp(gridpoint.begin(), gridpoint.end());
-
             if (isPointOnEllipse(coordinate, h)) {
                 T value = (T) FS_VALUE_MAX;
                 var.putVar(gp, value);
@@ -135,11 +133,8 @@ template<class T>
 FSCircularPatternTest2D<T>::FSCircularPatternTest2D() : FSTestBase<T>()
 {
     INFO << "Setting up 2D test with typeid " << typeid (T).name() << endl;
-
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
-
     INFO << "Test filename = " << filename << endl;
-
     this->m_settings = new FSTestSettings(2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
 }
 
@@ -147,11 +142,8 @@ template<class T>
 FSCircularPatternTest3D<T>::FSCircularPatternTest3D() : FSCircularPatternTest2D<T>()
 {
     INFO << "Setting up 3D test with typeid " << typeid (T).name() << endl;
-
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
-
     INFO << "Test filename = " << filename << endl;
-
     this->m_settings = new FSTestSettings(3, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
 }
 
@@ -163,20 +155,17 @@ TYPED_TEST_CASE(FSCircularPatternTest2D, DataTypes);
 TYPED_TEST(FSCircularPatternTest2D, FS_CicrularPattern_2D_Test)
 {
     // origin
-
     vector<TypeParam> x(this->m_settings->fs_dim(), 0);
     x[ x.size() - 1 ] = FS_VALUE_MAX;
 
     // G'is a kernel
-
     GaussianNormalKernel<TypeParam> kernel(1.0f);
-
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
 
     // iterate over the bandwidths
-
     for (size_t i = 0; i < this->m_bandwidths.size(); i++) {
         vector<TypeParam> h = this->m_bandwidths.at(i);
+        h.push_back(FS_VALUE_MAX);
         MeanshiftOperation<TypeParam> op(this->m_featureSpace, this->m_featureSpaceIndex);
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(((TypeParam) 1.1) * h);
         vector<TypeParam> m = op.meanshift(x, params, &kernel);
@@ -193,34 +182,25 @@ TYPED_TEST_CASE(FSCircularPatternTest3D, DataTypes);
 TYPED_TEST(FSCircularPatternTest3D, FS_CicrularPattern_3D_Test)
 {
     // origin
-
     vector<TypeParam> x(this->m_settings->fs_dim(), 0);
     x[ x.size() - 1 ] = FS_VALUE_MAX;
 
     // G'is a kernel
-
     Kernel<TypeParam> *kernel = new GaussianNormalKernel<TypeParam>(1.0f);
-
     cout << setiosflags(ios::fixed) << setprecision(TEST_PRINT_PRECISION);
 
     // iterate over the bandwidths
-
     for (size_t i = 0; i < this->m_bandwidths.size(); i++) {
         vector<TypeParam> h = this->m_bandwidths.at(i);
-
+        h.push_back(FS_VALUE_MAX);
         MeanshiftOperation<TypeParam> op(this->m_featureSpace, this->m_featureSpaceIndex);
-
         RangeSearchParams<TypeParam> *params = new RangeSearchParams<TypeParam>(h);
-
         vector<TypeParam> m = op.meanshift(x, params, kernel);
-
         EXPECT_NEAR(vector_norm(m), 0.0, this->coordinate_system()->resolution_norm());
     }
-
     delete kernel;
 }
 
 #endif
 
 #endif
-
