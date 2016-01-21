@@ -83,6 +83,9 @@ namespace m3D {
         /** Global variable maintaining the dimension mapping */
         template <typename T>
         vector<size_t> VisitUtils<T>::VTK_DIMENSION_INDEXES;
+        
+        // Macro for safe access
+        #define get_vtk_index(i) VTK_DIMENSION_INDEXES.empty() ? i : VTK_DIMENSION_INDEXES[i]
 
         /* ---------------------------------------------------------------- */
         /* General VTK data structure mapping/handling                      */
@@ -135,18 +138,16 @@ namespace m3D {
         VisitUtils<T>::get_vtk_image_dimensions(const CoordinateSystem<T> *cs, int &nx, int &ny, int &nz)
         {
             assert(cs->rank() > 0 && cs->rank() <= 3);
-
             nx = ny = nz = 1;
-
             if (cs->rank() == 1) {
-                nx = cs->dimensions()[VTK_DIMENSION_INDEXES[0]].getSize();
+                nx = cs->dimensions()[get_vtk_index(0)].getSize();
             } else if (cs->rank() == 2) {
-                nx = cs->dimensions()[VTK_DIMENSION_INDEXES[0]].getSize();
-                ny = cs->dimensions()[VTK_DIMENSION_INDEXES[1]].getSize();
+                nx = cs->dimensions()[get_vtk_index(0)].getSize();
+                ny = cs->dimensions()[get_vtk_index(1)].getSize();
             } else {
-                nx = cs->dimensions()[VTK_DIMENSION_INDEXES[0]].getSize();
-                ny = cs->dimensions()[VTK_DIMENSION_INDEXES[1]].getSize();
-                nz = cs->dimensions()[VTK_DIMENSION_INDEXES[2]].getSize();
+                nx = cs->dimensions()[get_vtk_index(0)].getSize();
+                ny = cs->dimensions()[get_vtk_index(1)].getSize();
+                nz = cs->dimensions()[get_vtk_index(2)].getSize();
             }
         }
 
@@ -159,14 +160,14 @@ namespace m3D {
             x = y = z = 0;
 
             if (coords.size() == 1) {
-                x = coords.at(VTK_DIMENSION_INDEXES[0]);
+                x = coords.at(get_vtk_index(0));
             } else if (coords.size() == 2) {
-                x = coords.at(VTK_DIMENSION_INDEXES[0]);
-                y = coords.at(VTK_DIMENSION_INDEXES[1]);
+                x = coords.at(get_vtk_index(0));
+                y = coords.at(get_vtk_index(1));
             } else {
-                x = coords.at(VTK_DIMENSION_INDEXES[0]);
-                y = coords.at(VTK_DIMENSION_INDEXES[1]);
-                z = coords.at(VTK_DIMENSION_INDEXES[2]);
+                x = coords.at(get_vtk_index(0));
+                y = coords.at(get_vtk_index(1));
+                z = coords.at(get_vtk_index(2));
             }
         }
 
@@ -179,14 +180,14 @@ namespace m3D {
             gx = gy = gz = 0;
 
             if (gp.size() == 1) {
-                gx = gp.at(VTK_DIMENSION_INDEXES[0]);
+                gx = gp.at(get_vtk_index(0));
             } else if (gp.size() == 2) {
-                gx = gp.at(VTK_DIMENSION_INDEXES[0]);
-                gy = gp.at(VTK_DIMENSION_INDEXES[1]);
+                gx = gp.at(get_vtk_index(0));
+                gy = gp.at(get_vtk_index(1));
             } else {
-                gx = gp.at(VTK_DIMENSION_INDEXES[0]);
-                gy = gp.at(VTK_DIMENSION_INDEXES[1]);
-                gz = gp.at(VTK_DIMENSION_INDEXES[2]);
+                gx = gp.at(get_vtk_index(0));
+                gy = gp.at(get_vtk_index(1));
+                gz = gp.at(get_vtk_index(2));
             }
         }
 
@@ -217,7 +218,7 @@ namespace m3D {
             for (int i = 0; i < cs->rank(); i++) {
                 vtkDoubleArray *coords = vtkDoubleArray::New();
                 coords->SetNumberOfComponents(1);
-                copy_vtk_coordinate_data(cs, VTK_DIMENSION_INDEXES[i], coords);
+                copy_vtk_coordinate_data(cs, get_vtk_index(i) , coords);
                 coord_pointers.push_back(coords);
                 if (i == 0) {
                     rgrid->SetXCoordinates(coords);
@@ -1228,29 +1229,21 @@ namespace m3D {
             f << fixed << setprecision(4);
 
             // Write Header
-
             f << "# vtk DataFile Version 3.0" << endl;
             f << "point list " << endl;
             f << "ASCII" << endl;
             f << "DATASET UNSTRUCTURED_GRID" << endl;
             f << "POINTS " << list->size() << " FLOAT" << endl;
 
-
             // Write point coordinates out as unstructured grid
-
             for (size_t pi = 0; pi < list->size(); pi++) {
                 Point<T> *p = list->at(pi);
-
                 for (size_t ri = 0; ri < dim; ri++) {
-                    size_t index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
-
-                    f << p->values[index] << "\t";
+                    f << p->values[get_vtk_index(ri)] << "\t";
                 }
-
                 if (dim < 3) {
                     f << "0.0";
                 }
-
                 f << endl;
             }
 
@@ -1289,11 +1282,8 @@ namespace m3D {
 
             for (size_t pi = 0; pi < list->size(); pi++) {
                 p = list->at(pi);
-
                 for (size_t ri = 0; ri < p->coordinate.size(); ri++) {
-                    size_t index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
-
-                    f << p->values[index] << "\t";
+                    f << p->values[get_vtk_index(ri)] << "\t";
                 }
 
                 if (p->coordinate.size() < 3) {
@@ -1348,9 +1338,7 @@ namespace m3D {
 
             for (size_t pi = 0; pi < list->size(); pi++) {
                 for (size_t ri = 0; ri < dim; ri++) {
-                    size_t index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
-
-                    f << list->at(pi)[index] << "\t";
+                    f << list->at(pi)[get_vtk_index(ri)] << "\t";
                 }
 
                 f << endl;
@@ -1396,9 +1384,7 @@ namespace m3D {
 
             for (size_t pi = 0; pi < list.size(); pi++) {
                 for (size_t ri = 0; ri < dim; ri++) {
-                    size_t index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
-
-                    f << list[pi][index] << "\t";
+                    f << list[pi][get_vtk_index(ri)] << "\t";
                 }
 
                 f << endl;
@@ -1515,25 +1501,17 @@ namespace m3D {
             }
 
             // Write point coordinates out as unstructured grid
-
             for (size_t pi = 0; pi < list->size(); pi++) {
                 Point<T> *p = list->at(pi);
-
-
                 // NOTE: modified to be put on top of 2D plots
                 for (size_t ri = 0; ri < (restrict_to_2D ? 2 : dim); ri++) {
-                    size_t index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
-
-                    f << p->values[index] << "\t";
+                    f << p->values[get_vtk_index(ri)] << "\t";
                 }
-
                 f << "0.0";
-
                 f << endl;
             }
 
             // Write weights
-
             f << endl;
             f << "POINT_DATA " << list->size() << endl;
             f << "SCALARS " << var_name << " FLOAT" << endl;
@@ -1592,9 +1570,6 @@ namespace m3D {
             for (size_t i = 0; i < fs->points.size(); ++i) {
                 typename Point<T>::ptr p = fs->points.at(i);
                 double value = (double) weight_function->operator()(p);
-                if (i % 100 == 0) {
-                    cout << "weight function at " << p->gridpoint << " = " << value << endl;
-                }
                 int gx, gy, gz;
                 VisitUtils<T>::get_vtk_gridpoint(p->gridpoint, gx, gy, gz);
                 int gridIndex = to_single_index(cs, nx, ny, nz, gx, gy, gz);
@@ -1764,15 +1739,11 @@ namespace m3D {
                             if (ri < index.size()) {
                                 vector<T> coord(index.size());
                                 m_coord_system->lookup(index, coord);
-
-                                size_t mapped_index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
-
-                                m_stream << coord[mapped_index] << "\t";
+                                m_stream << coord[get_vtk_index(ri)] << "\t";
                             } else {
                                 m_stream << 0.0 << "\t";
                             }
                         }
-
                         m_stream << endl;
                     } else {
                         m_stream << (value ? 1.0 : 0.0) << endl;
