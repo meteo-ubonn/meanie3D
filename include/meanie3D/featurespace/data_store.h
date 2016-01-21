@@ -44,7 +44,7 @@ namespace m3D {
     template <typename T>
     class DataStore
     {
-    private:
+    protected:
 
         std::vector<std::string> m_variables;
         std::vector<std::string> m_dimensions;

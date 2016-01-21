@@ -76,8 +76,6 @@ namespace m3D {
          */
         map<int, double> m_replacement_values;
 
-        std::vector<std::string> m_variable_names;
-
         /** Not sure this needs holding on to, but hey
          */
         CoordinateSystem<T> *m_coordinate_system;
@@ -199,7 +197,7 @@ namespace m3D {
         }
 
         const std::vector<std::string> &variables() const {
-            return m_variable_names;
+            return this->m_variables;
         }
 
         /** @return valid min attributes
@@ -248,8 +246,7 @@ namespace m3D {
             bool time_is_an_issue = this->m_time_index >= 0;
 
             NcFile file(this->m_filename, NcFile::read);
-
-            NcVar variable = file.getVar(m_variable_names[variable_index]);
+            NcVar variable = file.getVar(this->m_variables[variable_index]);
 
             // If we have to take time into the picture,
             // the number of dimensions for the data is
@@ -421,7 +418,7 @@ namespace m3D {
 
             // Open file for writing
             NcFile file(this->m_filename, NcFile::write);
-            NcVar variable = file.getVar(m_variable_names[variable_index]);
+            NcVar variable = file.getVar(this->m_variables[variable_index]);
 
             // If we have to take time into the picture,
             // the number of dimensions for the data is
@@ -602,7 +599,7 @@ namespace m3D {
             using namespace std;
             using namespace netCDF;
             NcFile file(this->m_filename, NcFile::read);
-            NcVar variable = file.getVar(m_variable_names[var_index]);
+            NcVar variable = file.getVar(this->m_variables[var_index]);
 
             // scale_factor
             T scale_factor = 1.0;
@@ -648,7 +645,7 @@ namespace m3D {
 
         void
         read() {
-            for (size_t var_index = 0; var_index < this->m_variable_names.size(); var_index++) {
+            for (size_t var_index = 0; var_index < this->rank(); var_index++) {
                 this->get_limits(var_index);
                 this->read_buffer(var_index);
             }
@@ -656,7 +653,7 @@ namespace m3D {
 
         void
         save() {
-            for (size_t var_index = 0; var_index < this->m_variable_names.size(); var_index++) {
+            for (size_t var_index = 0; var_index < this->rank(); var_index++) {
                 this->write_buffered_data(var_index);
             }
         }
@@ -786,7 +783,8 @@ namespace m3D {
         }
 
         const size_t rank() const {
-            return this->m_variable_names.size();
+            size_t rank = this->m_variables.size();
+            return rank;
         }
 
         const size_t size() const {
