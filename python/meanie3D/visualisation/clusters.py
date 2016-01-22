@@ -98,7 +98,14 @@ def run(conf):
         subprocess.call("rm -rf images movies *.vtk *.vtr *tracking*.png *source*.png", shell=True)
     else:
         print "Removing intermediary files from previous runs"
-        subprocess.call("rm -f *.vtk *.vtr", shell=True)
+        subprocess.call("rm -f *.vtk *.vtr *.vtu", shell=True)
+
+    # Figure out the ending for the cluster vtk files
+    conversion_config = utils.getValueForKeyPath(conf,'postprocessing.clusters.meanie3D-cfm2vtk')
+    if "--write-as-xml" in conversion_config:
+        cluster_vtk_extension = ".vtu"
+    else:
+        cluster_vtk_extension = ".vtk"
 
     # Glob the netcdf directory or find the single file
     uses_time = utils.getValueForKeyPath(conf,'uses_time')
@@ -141,7 +148,7 @@ def run(conf):
         cluster_file = conf['cluster_directory'] + os.path.sep + basename + "-clusters.nc"
 
         # cluster file gets it's basename from the input file rather than the cluster file
-        cluster_vtk_file = os.path.splitext(filename)[0] + "-clusters.vtk"
+        cluster_vtk_file = os.path.splitext(filename)[0] + "-clusters" + cluster_vtk_extension
 
         # label and displacement files are based on the cluster file name
         label_vtk_file        = basename + "-clusters-centers.vtk"
