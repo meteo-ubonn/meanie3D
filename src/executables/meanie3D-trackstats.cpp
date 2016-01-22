@@ -511,42 +511,25 @@ addGraphNode(trackstats_context_t &ctx, const node_t &node) {
  */
 void getFeaturespaceInfo(trackstats_context_t &ctx, const std::string &filename) {
     if (ctx.coord_system == NULL) {
-        cout << "Constructing coordinate system from file " << filename << endl;
+
         ctx.coords_file = new NcFile(filename, NcFile::read);
-        string fs_dimensions;
-        ctx.coords_file->getAtt("featurespace_dimensions").getValues(fs_dimensions);
-        ctx.dim_names = vectors::from_string<string>(fs_dimensions);
-        string fs_vars;
-        ctx.coords_file->getAtt("featurespace_variables").getValues(fs_vars);
-        vector<string> all_var_names = vectors::from_string<string>(fs_vars);
-        for (size_t i = ctx.spatial_rank; i < all_var_names.size(); i++) {
-            ctx.var_names.push_back(all_var_names[i]);
-        }
+        
+        string buffer;
+        ctx.coords_file->getAtt("dimensions").getValues(buffer);
+        ctx.dim_names = from_string<std::string>(buffer);
+        
+        ctx.coords_file->getAtt("dimension_variables").getValues(buffer);
+        vector<string> dimension_variables = from_string<std::string>(buffer);
+        
+        // Construct coordinate system
+        ctx.coord_system = new CoordinateSystem<FS_TYPE>(ctx.coords_file, ctx.dim_names, dimension_variables);
+        ctx.dimensions = ctx.coord_system->dimensions();
+        ctx.dimension_vars = ctx.coord_system->dimension_variables();
+        
 #if WITH_VTK
-        cout << "Setting VTK dimensions:" << ctx.params.vtk_dim_names << endl;
         VisitUtils<FS_TYPE>::update_vtk_dimension_mapping(ctx.dim_names, ctx.params.vtk_dim_names);
 #endif
-        // Construct coordinate system
-        multimap<string, NcVar> vars = ctx.coords_file->getVars();
-        multimap<string, NcVar>::iterator vi;
-        cout << "Collating dimensions and dimension data ..." << endl;
-        for (size_t di = 0; di < ctx.dim_names.size(); di++) {
-            NcDim dim = ctx.coords_file->getDim(ctx.dim_names[di]);
-            if (dim.isNull()) {
-                cerr << "FATAL: dimension " << ctx.dim_names[di] << " does not exist " << endl;
-                exit(EXIT_FAILURE);
-            }
-            NcVar var = ctx.coords_file->getVar(ctx.dim_names[di]);
-            if (var.isNull()) {
-                cerr << "FATAL: variable " << ctx.dim_names[di] << " does not exist " << endl;
-                exit(EXIT_FAILURE);
-            }
-            ctx.dimensions.push_back(dim);
-            ctx.dimension_vars.push_back(var);
-        }
-        cout << "Spatial range variables (dimensions): " << ctx.dim_names << endl;
-        cout << "Value range variables: " << ctx.var_names << endl;
-        ctx.coord_system = new CoordinateSystem<FS_TYPE>(ctx.dimensions, ctx.dimension_vars);
+
     }
 }
 
