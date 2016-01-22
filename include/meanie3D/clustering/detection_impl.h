@@ -141,19 +141,7 @@ namespace m3D {
         ctx.show_progress = (params.verbosity > VerbositySilent);
 
         // Get timestamp
-        // TODO: this block was put in for a specific tracking
-        // inter-comparison problem. Remove when the project is through!!
-        // time for this is days since simulation start
-        if (boost::contains(params.filename, "rico.out.xy.")) {
-            double time_in_days = utils::netcdf::get_time<double>(
-            params.filename, params.time_index);
-            // a day has 24 * 60 * 60 seconds
-            ctx.timestamp = (long) round(time_in_days * 24.0 * 60.0 * 60.0);
-        } else {
-            // Seconds since epoch
-            ctx.timestamp = utils::netcdf::get_time<long>(params.filename, 
-                    params.time_index);
-        }
+        ctx.timestamp = netcdf::get_time_checked<timestamp_t>(params.filename, params.time_index);
         
         // Calculate mean-shift bandwidth if necessary
         if (!params.ranges.empty()) {
@@ -215,12 +203,8 @@ namespace m3D {
                     detection_context_t<T> &ctx) 
     {
         // context
-
-        // Delete the clusters (not done by default destructor)
         ctx.clusters->clear();
-        // Delete the points (not done by default destructor)
         ctx.fs->clear();
-
         delete_and_clear(ctx.search_params)
         delete_and_clear(ctx.data_store);
         delete_and_clear(ctx.fs);
@@ -233,7 +217,6 @@ namespace m3D {
         delete_and_clear(ctx.file);
 
         // params
-        
         delete_and_clear(params.previous_clusters_filename);
         delete_and_clear(params.ci_comparison_file);
         delete_and_clear(params.ci_comparison_protocluster_file);

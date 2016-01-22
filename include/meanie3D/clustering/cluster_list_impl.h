@@ -62,22 +62,6 @@ namespace m3D {
 #pragma mark Constructors/Destructors et. Al.
 
         template <typename T>
-        void 
-        ClusterList<T>::set_time_from_time_index()
-        {
-            long timestamp = 0;
-            if (time_index >= 0) {
-                try {
-                    timestamp = utils::netcdf::get_time<long>(source_file, time_index);
-                } catch (runtime_error &e) {
-                    cerr << "ERROR:could not obtain timestamp from file "
-                         << source_file << "(time_index=" << time_index << endl;
-                }
-            }
-            this->set_time_in_seconds(::units::values::s(timestamp));
-        }
-
-        template <typename T>
         ClusterList<T>::ClusterList() 
             : file(NULL)
             , tracking_performed(false)
@@ -91,6 +75,7 @@ namespace m3D {
                 const vector<string> &variables,
                 const vector<string> &dimensions,
                 const vector<string> &dimension_variables,
+                long timestamp,
                 int ti,
                 bool orig_pts)
         : file(NULL)
@@ -102,10 +87,8 @@ namespace m3D {
         , dimension_variables(dimension_variables)
         , source_file(source)
         , time_index(ti)
-        , m_use_original_points_only(orig_pts)
-        {
-            set_time_from_time_index();
-        };
+        , timestamp(timestamp)
+        , m_use_original_points_only(orig_pts) {};
         
         template <typename T>
         ClusterList<T>::ClusterList(
@@ -114,6 +97,7 @@ namespace m3D {
             const vector<string> &vars,
             const vector<string> &dims,
             const vector<string> &dim_vars,
+            long timestamp,
             int ti,
             bool orig_pts)
         : file(NULL)
@@ -125,11 +109,9 @@ namespace m3D {
         , dimension_variables(dim_vars)
         , source_file(source)
         , time_index(ti)
+        , timestamp(timestamp)
         , m_use_original_points_only(orig_pts)
-        , clusters(list) 
-        {
-            set_time_from_time_index();
-        };
+        , clusters(list) {};
         
         template <typename T>
         ClusterList<T>::ClusterList(const ClusterList &o)
@@ -151,8 +133,7 @@ namespace m3D {
         , highest_uuid(o.highest_uuid)
         , timestamp(o.timestamp)
         , time_index(o.time_index)
-        , m_use_original_points_only(o.m_use_original_points_only)
-        { }
+        , m_use_original_points_only(o.m_use_original_points_only) {};
 
             
 #pragma mark -
@@ -245,7 +226,7 @@ namespace m3D {
 
     template <typename T>
     void
-    ClusterList<T>::save_top_level_attributes()
+    ClusterList<T>::save_tracking_attributes()
     {
         using namespace utils::vectors;
 
@@ -269,9 +250,6 @@ namespace m3D {
             // write version attribute
             if (file_existed) {
                 std::string names[] = {
-                    "version",
-                    "num_clusters",
-                    "source",
                     "highest_id",
                     "highest_uuid",
                     "cluster_ids",
@@ -283,14 +261,9 @@ namespace m3D {
                     "merges",
                     "splits"
                 };
-                delete_top_level_attributes(file,13,names);
+                delete_top_level_attributes(file,10,names);
             }
             
-            file->putAtt("version", m3D::VERSION);
-            
-            file->putAtt("source", this->source_file);
-            file->putAtt("num_clusters", ncInt, (int) clusters.size());
-
             // Save highest ID
             unsigned long long hid = boost::numeric_cast<unsigned long long>(this->highest_id);
             file->putAtt("highest_id", boost::lexical_cast<std::string>(hid));
@@ -315,10 +288,6 @@ namespace m3D {
                 file->putAtt("merges", maps::id_map_to_string(this->merges));
                 file->putAtt("splits", maps::id_map_to_string(this->splits));
             }
-
-            // Featurespace Variables
-            std::string fvarnames = to_string(variables);
-            file->putAtt("featurespace_variables", fvarnames);
 
             // Update the file pointer just in case
             this->file = file;
@@ -621,7 +590,7 @@ namespace m3D {
         id_map_t merges;
         id_map_t splits;
         int tracking_time_difference = NO_TIME;
-        unsigned int time_index = NO_TIME;
+        int time_index = NO_TIME;
         timestamp_t timestamp = 0;
         m3D::id_t highest_id = NO_ID;
         m3D::uuid_t highest_uuid = NO_UUID;
@@ -650,11 +619,11 @@ namespace m3D {
             file->getAtt("featurespace_variables").getValues(buffer);
             featurespace_variables = vectors::from_string<string>(buffer);
             
-            // Read time
-            file->getVar("time").getVar(&timestamp);
-            
             // Read time index
-            file->getVar("time_index").getVar(&time_index);
+            file->getAtt("time_index").getValues(&time_index);
+            
+            // Read time
+            timestamp = netcdf::get_time_checked<timestamp_t>(path,0);
 
             // Source file
             file->getAtt("source").getValues(source_file);

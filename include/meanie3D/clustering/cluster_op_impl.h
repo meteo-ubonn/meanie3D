@@ -100,7 +100,7 @@ namespace m3D {
                 m_params.dimensions,
                 m_params.dimension_variables,
                 m_params.time_index);
-
+        
         // Guard against empty feature-space
         if (this->feature_space->points.size() == 0) {
             cout << "Feature space is empty" << endl;

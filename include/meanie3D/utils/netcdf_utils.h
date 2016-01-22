@@ -402,44 +402,88 @@ namespace m3D {
 
                 return result;
             }
+            
+            /**
+             * Evaluates the presence of time(time). It does this by
+             * evaluating the time variable's attributes. If the attribute
+             * 'long_name' is present and it's value is 'time', it is 
+             * assumed that the time(time) is present (according to the 
+             * cf-metadata convention). If not, the weaker criterion is
+             * used that the variable has one dimension and that this 
+             * dimension is called either 't' or 'time'.
+             *
+             * @param netcdf filename
+             * @param name of time variable (default 'time')
+             * @return <code>true</code> if file has time(time). 
+             */
+            bool
+            have_time(const std::string &filename, 
+                      const std::string &time_var_name = "time" ) {
+                bool result = false;
+                NcFile *file = NULL;
+                try {
+                    file = new NcFile(filename, NcFile::read);
+                    if (!file->isNull()) {
+                        NcVar timeVar = file->getVar(time_var_name);
+                        if (!timeVar.isNull()) {
+                            
+                            // check if the time dimension is explicity denoted
+                            // 'time' by long name
+                            try {
+                                std::string long_name;
+                                NcVarAtt ncLongName = timeVar.getAtt("long_name");
+                                ncLongName.getValues(long_name);
+                                result = (long_name == "time");
+                            } catch (netCDF::exceptions::NcException &e) {
+                            }
+                            
+                            // If that was not the case, we can check if
+                            // the time dimension is called t or time
+                            if (!result) {
+                                if (timeVar.getDimCount()==1) {
+                                    NcDim t = timeVar.getDim(0);
+                                    result = t.getName() == "t" || t.getName() == "time";
+                                }
+                            }
+                        }
+                    }
+                } catch (netCDF::exceptions::NcException &e) {
+                } 
+                if (file != NULL) delete file;
+                return result;
+            }
 
-            /** Adds a dimension and variable time eg. time(time).
+            /** 
+             * Adds a dimension and variable time eg. time(time).
              * Time is a 1-D array with the given value
              */
-            bool add_time(NcFile *file, unsigned long timestamp, bool toggle_defmode = true)
+            bool 
+            add_time(NcFile *file, unsigned long timestamp, 
+                    bool toggle_defmode = true)
             {
                 try {
                     if (toggle_defmode)
                         nc_redef(file->getId());
-
                     // Add a dimension 'time'
-
                     NcDim dTime = file->addDim("time", 1);
-
                     // Add variable 'time(time)'
-
                     // the NetCDF API is HORRIFIC!! Can't use anything
                     // but "int" at this point. Puking out my breakfast.
-
                     NcVar vTime = file->addVar("time", "int", "time");
                     vTime.putAtt("long_name", "time");
                     vTime.putAtt("units", "seconds since Jan 1 1970 00:00:00 GMT");
-
                     if (toggle_defmode)
                         nc_enddef(file->getId());
 
                     // Add value
-
                     unsigned long values[1] = {timestamp};
                     vTime.putVar(&values[0]);
-
                 } catch (const netCDF::exceptions::NcException &e) {
                     cerr << "ERROR:could not add variable 'time(time)' to file '" << file->getName() << "' : " << e.what() << endl;
                     return false;
                 } catch (const std::exception &e) {
                     cerr << "ERROR:could not add variable 'time(time)' to file '" << file->getName() << "' : " << e.what() << endl;
                     return false;
-
                 }
 
                 return true;
@@ -451,39 +495,9 @@ namespace m3D {
             bool add_time(std::string fn, unsigned long timestamp, bool toggle_defmode = true)
             {
                 NcFile *file = new NcFile(fn, NcFile::write);
-
                 bool result = add_time(file, timestamp, toggle_defmode);
-
                 delete file;
-
                 return result;
-            }
-
-            /** Assumes that the file has a 1-D timestamp, that is a dimension time
-             * of value 1 and a variable time(time) with one value in it, which
-             * is the pertinent time.
-             *
-             * @param netcdf filename
-             * @throws std::runtime_error
-             */
-            template <typename T>
-            T get_time(std::string filename) throw (std::runtime_error) {
-                T timestamp;
-
-                try {
-                    NcFile file(filename, NcFile::read);
-
-                    NcVar time_var = file.getVar("time");
-
-                    if (time_var.isNull())
-                        throw runtime_error("ERROR:can't read 'time' variable (variable does not exist)");
-
-                    file.getVar("time").getVar(&timestamp);
-
-                    return boost::numeric_cast<unsigned long>(timestamp);
-                } catch (::netCDF::exceptions::NcException &e) {
-                    throw runtime_error("ERROR:can't read 'time' variable (" + std::string(e.what()) + ")");
-                }
             }
 
             /** Tries to figure out time dimension and time variable. 
@@ -494,36 +508,28 @@ namespace m3D {
              * @throws std::runtime_exception if time can not be defined
              */
             void get_time_dim_and_var(NcFile &file,
-                    NcDim &time_dim,
-                    NcVar &time_var) throw (std::runtime_error) {
-                // find time dimension
-
+                    NcDim &time_dim, NcVar &time_var) 
+            throw (std::runtime_error) 
+            {
+                // find time dimension 'time' or 't'
                 time_dim = file.getDim("time");
-
                 if (time_dim.isNull()) {
                     time_dim = file.getDim("t");
                 }
-
                 if (time_dim.isNull()) {
                     throw runtime_error("ERROR:can't read time dimension");
                 }
 
                 // Find variable time(time)
-
                 std::multimap< std::string, NcVar >::iterator vi;
                 std::multimap< std::string, NcVar > vars = file.getVars();
-
                 for (vi = vars.begin(); vi != vars.end(); ++vi) {
                     try {
                         // check if the variable depends on dimension time_dim alone
-
                         vector<NcDim> dims = vi->second.getDims();
-
                         if (dims.size() != 1) continue;
-
                         if (dims.at(0).getId() == time_dim.getId()) {
                             // Check for standard_name = "time"
-
                             try {
                                 NcVarAtt standard_name = vi->second.getAtt("standard_name");
                                 std::string value;
@@ -536,7 +542,6 @@ namespace m3D {
                             }
 
                             // Check for long_name = "time"
-
                             try {
                                 NcVarAtt long_name = vi->second.getAtt("long_name");
                                 std::string value;
@@ -552,39 +557,41 @@ namespace m3D {
                     } catch (const ::netCDF::exceptions::NcException &e) {
                     }
                 }
-
                 if (time_var.isNull())
                     throw runtime_error("ERROR:can't read time variable");
             }
-
-            /** Getst the time value for the given index.
+            
+            /** 
+             * Get the time value for the given index. This assumes
+             * that there is a time(time) constellation in the file.
              *
              * TODO: time unit handling
              *
              * @param file
              * @param index in time dimension
+             * @param name of time variable (defaults to 'time')
              *
              * @return actual value for time at time_index
              */
             template <typename T>
-            T get_time(std::string filename, int time_index) throw (std::runtime_error)
+            T 
+            get_time(const std::string &filename, 
+                    const int &time_index,
+                    const std::string &time_var_name = "time") 
+            throw (std::runtime_error)
             {
-                if (time_index < 0) {
-                    return 0;
-                }
-                
                 try {
                     NcFile file(filename, NcFile::read);
-
-                    if (file.isNull())
+                    if (file.isNull()) {
                         throw runtime_error("ERROR:can't open file " + filename);
-
+                    }
                     NcDim time_dim;
                     NcVar time_var;
                     try {
                         get_time_dim_and_var(file, time_dim, time_var);
                     } catch (std::exception &) {
                     }
+                    
                     if (time_var.isNull() || time_dim.isNull()) {
                         // No time(time)
                         return 0;
@@ -610,6 +617,54 @@ namespace m3D {
                     throw runtime_error("ERROR:can't access file " + filename + ":" + e.what());
                 }
             }
+
+            
+            /**
+             * Performs a checked method of retrieving time information
+             * from a given file. This is a little complicated, as there
+             * can be a number of cases:
+             * 
+             * a) time_index = NO_TIME and no time(time) exists: really no time
+             * b) time_index = NO_TIME and time(time) exists: t = time(0)
+             * c) time_index > NO_TIME t = time(time_index)
+             * d) filename is "rico.out.xy.*" => use special treatment
+             * 
+             * @param filename
+             * @param time_index 
+             * @param time_var_name (defaults to 'time')
+             * @return 
+             */
+            template <typename T>
+            T
+            get_time_checked(const std::string &filename, 
+                    const int &time_index,
+                    const std::string &time_var_name = "time") 
+            {
+                T timestamp = -1;
+                
+                bool have_t = have_time(filename, time_var_name);
+                
+                if (boost::contains(filename, "rico.out.xy.")) {
+
+                    // TODO: this block was put in for a specific tracking
+                    // inter-comparison problem. Remove when the project is through!!
+                    // time for this is days since simulation start
+
+                    // Days in simulation -> seconds
+                    double time_in_days = get_time<double>(filename,time_index);
+                    // a day has 24 * 60 * 60 seconds
+                    timestamp = (T) round(time_in_days * 24.0 * 60.0 * 60.0);
+                } else if (time_index == NO_TIME && !have_t) {
+                    timestamp = 0l;
+                } else if (time_index == NO_TIME && have_t) {
+                    timestamp = get_time<T>(filename,0);
+                } else if (time_index != NO_TIME && have_t) {
+                    timestamp = get_time<T>(filename,time_index);
+                }
+                
+                return timestamp;
+            }
+
 
             /** Extracts the names of the given variables and returns
              * them as vectors.
@@ -725,7 +780,6 @@ namespace m3D {
                     string dimension = dimensions[di];
                     NcDim ncSourceDim = source->getDim(dimension);
                     int size = ncSourceDim.getSize();
-                    cout << "Copying dimension " << dimension  << "(size=" << size << ")" << endl;
                     NcDim ncDimension = dest->addDim(dimension, size);
                     ncDimensions.push_back(ncDimension);
                 }

@@ -127,6 +127,7 @@ namespace m3D {
                 const vector<string> &variables,
                 const vector<string> &dimensions,
                 const vector<string> &dimension_variables,
+                long timestamp,
                 int ti = NO_TIME,
                 bool use_original_points_only = true);
         /** 
@@ -141,6 +142,7 @@ namespace m3D {
                 const vector<string> &vars,
                 const vector<string> &dims,
                 const vector<string> &dim_vars,
+                long timestamp,
                 int ti = NO_TIME,
                 bool orig_pts = true);
 
@@ -196,15 +198,6 @@ namespace m3D {
             this->timestamp = seconds.get();
         }
         
-    private:
-        
-        /**
-         * Sets the value for seconds since epoch from the time dimension
-         * variable at the given index.
-         */
-        void 
-        set_time_from_time_index();
-
 #pragma mark -
 #pragma mark Clustering by Graph Theory
         
@@ -325,7 +318,8 @@ namespace m3D {
 #pragma mark -
 #pragma mark I/O
 
-        /** Writes out the cluster list into a NetCDF-file.
+        /** 
+         * Writes out the cluster list into a NetCDF-file.
          *
          * For the format, check documentation at
          * http://git.meteo.uni-bonn.de/projects/meanie3d/wiki/Cluster_File
@@ -340,14 +334,16 @@ namespace m3D {
          */
         void save();
 
-        /** Persists only the top level attributes. Used to add 
-         * tracking information etc. without re-writing the whole 
+        /** 
+         * Persists only the top level attributes that are subject
+         * to change after tracking runs.
          * file.
          * @throws runtime_error 
          */
-        void save_top_level_attributes();
+        void save_tracking_attributes();
 
-        /** Static method for reading cluster lists back in.
+        /** 
+         * Static method for reading cluster lists back in.
          * @param path      : path to the cluster file
          * @param pointer to a pointer of coordinate system. 
          * If not null, this is initialized with an instance
@@ -357,11 +353,14 @@ namespace m3D {
         typename ClusterList<T>::ptr
         read(const string &path, CoordinateSystem<T> **cs_ptr = NULL);
 
-        /** Prints the cluster list out to console
+        /** 
+         * Prints the cluster list out to console
          * @param include point details?
          */
         void print(bool includePoints = false);
-        /** Counts the number of points in all the clusters. Must be
+        
+        /** 
+         * Counts the number of points in all the clusters. Must be
          * equal to the number of points in the feature space.
          */
 

@@ -26,7 +26,7 @@
 #define M3D_TIMESTAMP_H
 
 namespace m3D {
-    typedef unsigned long timestamp_t;
+    typedef long timestamp_t;
 }
 
 #endif
