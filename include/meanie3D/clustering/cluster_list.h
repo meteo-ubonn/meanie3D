@@ -335,14 +335,6 @@ namespace m3D {
         void save();
 
         /** 
-         * Persists only the top level attributes that are subject
-         * to change after tracking runs.
-         * file.
-         * @throws runtime_error 
-         */
-        void save_tracking_attributes();
-
-        /** 
          * Static method for reading cluster lists back in.
          * @param path      : path to the cluster file
          * @param pointer to a pointer of coordinate system. 

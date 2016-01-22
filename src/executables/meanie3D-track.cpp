@@ -263,7 +263,7 @@ int main(int argc, char** argv) {
 
     // Write results back
     if (params.verbosity >= VerbosityNormal) start_timer("-- Writing " + params.current_filename + " ... ");
-    current->save_tracking_attributes();
+    current->save();
     if (params.verbosity >= VerbosityNormal) stop_timer("done");
 
     // Clean up
