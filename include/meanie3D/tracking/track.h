@@ -32,7 +32,12 @@
 
 #include <vector>
 #include <list>
+
+#ifdef BOOST_NO_CXX11_HDR_UNORDERED_MAP
+#include <map>
+#else
 #include <unordered_map>
+#endif
 
 namespace m3D {
 
@@ -48,7 +53,12 @@ namespace m3D {
 #pragma mark Type definitions / Constants
 
         typedef Track* ptr;
+
+        #ifdef BOOST_NO_CXX11_HDR_UNORDERED_MAP
+	typedef std::map< m3D::id_t, ptr> trackmap;
+	#else
         typedef std::unordered_map< m3D::id_t, ptr> trackmap;
+	#endif
 
 #pragma mark -
 #pragma mark Constructor/Destructor

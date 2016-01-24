@@ -35,7 +35,7 @@ SET(PROJECT_AUTHOR_EMAIL "juergen.simon@uni-bonn.de")
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake_modules")
 
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/config_h.in
-    ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/config.h)
+    ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/config.h)
 
 CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/include/meanie3D/version.h.in
         ${PROJECT_SOURCE_DIR}/include/meanie3D/version.h)
@@ -148,8 +148,8 @@ IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -ggdb -g")
     SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -ggdb")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -msse3 -O2")
-    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -Os -msse3")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -msse3")
+    SET(CMAKE_CXX_FLAGS_MINSIZEREL "${CMAKE_C_FLAGS_MINSIZEREL} -msse3")
 ENDIF()
 
 # ------------------------------------- 
@@ -798,8 +798,8 @@ ENDIF(TESTS_ENABLED)
 # Installation
 # ------------------------------------------------------------- #
 
-INSTALL(DIRECTORY ${PROJECT_BINARY_DIR}/${PROJECT_NAME} 
-    DESTINATION "/usr/local/include")
+#INSTALL(DIRECTORY ${PROJECT_BINARY_DIR}/${PROJECT_NAME} 
+#    DESTINATION "/usr/local/include")
 
 INSTALL(DIRECTORY include/${PROJECT_NAME}
         DESTINATION "/usr/local/include"
