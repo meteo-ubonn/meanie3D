@@ -103,7 +103,7 @@ def locateCommandsInPaths(command_list, path_list, recurse):
 # @param list of strings containing the commands
 # @return a dictionary containing the command names mapping to the command paths
 # @throws IOError if a command can not be located or is not executable
-def locateCommands(command_list, recurse=False):
+def locateCommands(command_list, recurse=True):
     return locateCommandsInPaths(command_list, __command_search_paths(), recurse)
 
 ## Executes the given command and returns the code

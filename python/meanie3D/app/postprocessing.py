@@ -14,9 +14,7 @@ from meanie3D.app import utils
 from meanie3D.app import external
 
 # ----------------------------------------------------------------------------
-
 external.locateCommands(['meanie3D-cfm2vtk','meanie3D-trackstats','gnuplot','visit'])
-
 # ----------------------------------------------------------------------------
 
 def check_configuration(configuration):
