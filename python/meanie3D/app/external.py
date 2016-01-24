@@ -29,7 +29,7 @@ def __command_search_paths():
            '/usr/bin/',
            '/bin',
            '/sbin',
-           '/usr/local/visit',
+           '/usr/local/visit/bin',
            '/Applications/VisIt.app/Contents/Resources/bin']
     return paths
 
