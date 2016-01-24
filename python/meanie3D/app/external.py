@@ -25,7 +25,12 @@ def __get_dyld_library_path():
 # Returns the standard search path for the binaries
 # @return search path
 def __command_search_paths():
-    paths=['/usr/local/bin','/usr/bin/','/bin','/sbin','/Applications/VisIt.app/Contents/Resources/bin']
+    paths=['/usr/local/bin',
+           '/usr/bin/',
+           '/bin',
+           '/sbin',
+           '/usr/local/visit',
+           '/Applications/VisIt.app/Contents/Resources/bin']
     return paths
 
 # -------------------------------------------------------------------
