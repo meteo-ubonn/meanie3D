@@ -169,6 +169,9 @@ def run(config,time_index):
     else:
         output_dir = output_dir + "/clustering"
 
+    # --range ?
+    bandwidth = utils.getValueForKeyPath(config,'ranges')
+
     # Resume?
     if not utils.getValueForKeyPath(config,'resume'):
         # consider time index. Even if not resuming, the
@@ -237,10 +240,13 @@ def run(config,time_index):
                 logfile = output_dir+"/log/clustering_" + str(time_index)+".log"
 
             # scale?
-            scale = utils.getValueForKeyPath(config,'scale')
             if scale and scale is not 'None':
-                scale_param = " -s " + scale
+                scale_param = " --scale " + scale
                 params += scale_param
+
+            # Bandwidth?
+            if bandwidth:
+                params += (" --ranges " + bandwidth)
 
             # use previous result to enhance current?
             if ((run_count > 0) or (time_index > 0)) and detection['usePrevious']:

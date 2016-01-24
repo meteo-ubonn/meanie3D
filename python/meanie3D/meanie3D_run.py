@@ -47,11 +47,12 @@ def usage():
     print "-c : json config file specifying variables etc."
     print "-f : directory containing the files. It is assumed that"
     print "           the files are in the correct order when sorted alphabetically."
-    print "-s  : (optional) comma separated list of scale parameters. Overrides any scale values in the configuration."
+    print "--scales,-s  : comma separated list of scale parameters."
+    print "--ranges,-r  : comma separated list of bandwidths, one for each spatial and value range variable."
     print "--json-example : prints an example .json configuration and exits"
     print "--start index of time step to start with in files with time dimension"
     print "--end   index of time step to end at in files with time dimension"
-    print "--resume,-r : if this flag is present, the algorithm assumes to resume"
+    print "--resume     : if this flag is present, the algorithm assumes to resume"
     print "              operations where it last left off. If not present, previous"
     print "              results will be erased before starting"
     print "--help, -h  : print this message and exit."
@@ -91,13 +92,14 @@ def main():
     # Parse command line
     try:
         argv = sys.argv[1:]
-        long_args = ["json-example","resume","help","version","start=","end=","time-operations","skip-trackstats"]
+        long_args = ["json-example","resume","help","version","start=","end=","time-operations","skip-trackstats","ranges=","scales="]
         opts, args = getopt.getopt(argv, "c:f:s:o:r:h", long_args)
     except getopt.GetoptError as detail:
         print detail
         sys.exit(2)
 
     scales = []
+    ranges = []
     resume = False
     time_operations = False
     skip_trackstats = False
@@ -119,8 +121,11 @@ def main():
             netcdf_dir = a
             num_params = num_params + 1
 
-        elif o == "-s":
+        elif o in ["--scales","-s"]:
             scales = str(a).split(',')
+
+        elif o in ["--ranges","-r"]:
+            ranges = a
 
         elif o == "-o":
             output_dir = a
@@ -128,7 +133,7 @@ def main():
         elif o in ["--json-example"]:
             print_configuration_format()
 
-        elif o in ["--resume","-r"]:
+        elif o in ["--resume"]:
             resume = True
 
         elif o in ["--start"]:
@@ -188,6 +193,7 @@ def main():
     configuration['time_operations'] = time_operations
     configuration['skip_trackstats'] = skip_trackstats
     configuration['scales'] = scales
+    configuration['ranges'] = ranges
     configuration['uses_time'] = uses_time
     configuration['start_time_index'] = start_time_index
     configuration['end_time_index'] = end_time_index
