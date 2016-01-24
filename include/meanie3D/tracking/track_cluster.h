@@ -174,6 +174,8 @@ namespace m3D {
             this->m_spatial_rank = cluster->spatial_rank();
             this->m_size = cluster->size();
             this->m_geometrical_center = cluster->geometrical_center();
+            this->set_bounding_box_min(cluster->get_bounding_box_min());
+            this->set_bounding_box_max(cluster->get_bounding_box_max());
             std::string num_postfix = boost::lexical_cast<string>(cluster->uuid);
             // name of the external 'memory'
             m_filename = "/tmp/cluster_" + num_postfix + ".txt";

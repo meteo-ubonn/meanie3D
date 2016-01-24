@@ -185,6 +185,9 @@ def main():
         print detail
         sys.exit(2)
 
+    if len(sys.argv) < 2:
+        usage()
+
     filename = "track-dictionary.json"
     for o, a in opts:
         if o in ["--help","-h"]:

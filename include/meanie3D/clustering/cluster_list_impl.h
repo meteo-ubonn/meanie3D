@@ -633,8 +633,6 @@ namespace m3D {
                 var.getAtt("displacement").getValues(displacement_str);
                 vector<T> displacement = vectors::from_string<T>(displacement_str);
 
-                // DO THIS
-
                 std::string bounds_min_str;
                 var.getAtt("bounding_box_min").getValues(bounds_min_str);
                 vector<T> bounds_min = vectors::from_string<T>(bounds_min_str);
