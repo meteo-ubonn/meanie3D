@@ -76,7 +76,6 @@ def write_csv(json):
         for ci in range(0,len(clusters)):
             cluster = clusters[ci]
 
-
             row = []
 
             # (1)	 Time step (e.g. ranging from 1 to 1819)
@@ -98,10 +97,10 @@ def write_csv(json):
             # (7)	 X_max (maximal X location of the object)
             # (8)	 Y_min (minimal Y location of the object)
             # (9)	 Y_max (maximal Y location of the object)
-            row.append(0);
-            row.append(0);
-            row.append(0);
-            row.append(0);
+            row.append(cluster['bounding_box_min'][1]);
+            row.append(cluster['bounding_box_max'][1]);
+            row.append(cluster['bounding_box_min'][0]);
+            row.append(cluster['bounding_box_max'][0]);
 
             # (10)	 Mean LWP of the object (=average value of LWP for all grid boxes included)
             row.append(cluster['median'][0])
