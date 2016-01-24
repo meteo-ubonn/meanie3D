@@ -567,6 +567,60 @@ namespace m3D {
             }
         }
     }
+    
+    
+    template <typename T>
+    void 
+    Cluster<T>::set_bounding_box_min(const vector<T> &bounds) {
+        m_bounding_box_min = bounds;
+    };
+        
+    template <typename T>
+    const vector<T> &
+    Cluster<T>::get_bounding_box_min() {
+        if (m_bounding_box_min.empty()) {
+            vector<T> inf(spatial_rank(), std::numeric_limits<T>::max());
+            typename Point<T>::list::iterator pi;
+            for (pi = m_points.begin(); pi != m_points.end(); ++pi) {
+                typename Point<T>::ptr p = *pi;
+                for (size_t j = 0; j < spatial_rank(); j++) {
+                    if (p->coordinate[j] < inf[j]) {
+                        inf[j] = p->coordinate[j];
+                    }
+                }
+            }
+            m_bounding_box_min = inf;
+            
+        }
+        return m_bounding_box_min;
+    };
+
+    template <typename T>
+    void 
+    Cluster<T>::set_bounding_box_max(const vector<T> &bounds) {
+        m_bounding_box_max = bounds;
+    };
+
+    template <typename T>
+    const vector<T> &
+    Cluster<T>::get_bounding_box_max() {
+        if (m_bounding_box_max.empty()) {
+            vector<T> sup(spatial_rank(), -std::numeric_limits<T>::max());
+            typename Point<T>::list::iterator pi;
+            for (pi = m_points.begin(); pi != m_points.end(); ++pi) {
+                typename Point<T>::ptr p = *pi;
+                for (size_t j = 0; j < spatial_rank(); j++) {
+                    if (p->coordinate[j] > sup[j]) {
+                        sup[j] = p->coordinate[j];
+                    }
+                }
+            }
+            m_bounding_box_max = sup;
+            
+        }
+        return m_bounding_box_max;
+    };
+
 }
 
 #endif

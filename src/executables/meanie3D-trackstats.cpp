@@ -966,6 +966,8 @@ void writeTrackDictionary(const trackstats_context_t &ctx) {
             dict << "          \"median\":" << to_json(median) << "," << endl;
             dict << "          \"step\":" << c->step << "," << endl;
             dict << "          \"timestamp\":" << c->timestamp << "," << endl;
+            dict << "          \"bounding_box_min\":" << c->get_bounding_box_min() << "," << endl;
+            dict << "          \"bounding_box_max\":" << c->get_bounding_box_max() << "," << endl;
             dict << "          \"has_margin_points\":" << (c->has_margin_points() ? "true" : "false") << endl;
             dict << "        }";
 

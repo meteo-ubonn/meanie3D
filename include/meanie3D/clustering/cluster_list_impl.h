@@ -225,8 +225,14 @@ namespace m3D {
 
             bool file_existed = boost::filesystem::exists(path);
             std::string filename = file_existed ? path + "-new" : path;
+            
+            // Make sure the new file is deleted if it exists.
+            // This can happen if a previous run didn't fully complete.
+            if (boost::filesystem::exists(filename)) {
+                boost::filesystem::remove(filename);
+            }
 
-            // We need to get the size of the dimensions and other 
+            // We need to get the size of the dimensions and other
             // data from somewhere. For this we have to rely on either
             // the source being present, or a previous instance of the
             // cluster file (in case of overwriting).
@@ -411,6 +417,14 @@ namespace m3D {
                 // displacement
                 string displacement = to_string(cluster->displacement);
                 var.putAtt("displacement", displacement);
+
+                // bounding box min
+                string bound_min = to_string(cluster->get_bounding_box_min());
+                var.putAtt("bounding_box_min", bound_min);
+
+                // bounding box max
+                string bound_max = to_string(cluster->get_bounding_box_max());
+                var.putAtt("bounding_box_max", bound_max);
 
                 // Write cluster away
 
@@ -619,6 +633,16 @@ namespace m3D {
                 var.getAtt("displacement").getValues(displacement_str);
                 vector<T> displacement = vectors::from_string<T>(displacement_str);
 
+                // DO THIS
+
+                std::string bounds_min_str;
+                var.getAtt("bounding_box_min").getValues(bounds_min_str);
+                vector<T> bounds_min = vectors::from_string<T>(bounds_min_str);
+
+                std::string bounds_max_str;
+                var.getAtt("bounding_box_max").getValues(bounds_max_str);
+                vector<T> bounds_max = vectors::from_string<T>(bounds_max_str);
+                
                 // margin flag
                 std::string margin_char;
                 var.getAtt("has_margin_points").getValues(margin_char);
@@ -626,11 +650,12 @@ namespace m3D {
 
                 // Create a cluster object
                 typename Cluster<T>::ptr cluster = new Cluster<T>(mode, dimensions.size());
-
                 cluster->id = cid;
                 cluster->uuid = uuid;
                 cluster->mode = mode;
                 cluster->displacement = displacement;
+                cluster->set_bounding_box_min(bounds_min);
+                cluster->set_bounding_box_max(bounds_max);
                 cluster->set_has_margin_points(margin_flag);
 
                 // Read the cluster

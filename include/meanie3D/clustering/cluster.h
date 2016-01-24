@@ -55,6 +55,8 @@ namespace m3D {
         bool m_has_margin_points;
         histogram_map_t m_histograms;
         vector<T> m_geometrical_center;
+        vector<T> m_bounding_box_min;
+        vector<T> m_bounding_box_max;
         map<size_t, vector<T> > m_weighed_centers;
         ::units::values::m m_radius;
         PointIndex<T> *m_index;
@@ -245,7 +247,37 @@ namespace m3D {
          * @param value
          */
         void set_has_margin_points(bool value);
+        
+        /**
+         * Sets the 'lower left' corner of this cluster's extent. 
+         * @param bounds
+         */
+        void set_bounding_box_min(const vector<T> &bounds);
+        
+        /**
+         * Gets the 'lower left' corner of this cluster's spatial extent. 
+         * If the  value was not set before, it is inferred by inspecting 
+         * all of this cluster's points. 
+         * 
+         * @return 
+         */
+        const vector<T> &get_bounding_box_min();
 
+        /**
+         * Sets the 'upper right' corner of this cluster's spatial extent. 
+         * @param bounds
+         */
+        void set_bounding_box_max(const vector<T> &bounds);
+
+        /**
+         * Gets the 'upper right' corner of this cluster's spatial extent. 
+         * If the value was not set before, it is inferred by inspecting 
+         * all of this cluster's points.
+         * 
+         * @return 
+         */
+        const vector<T> &get_bounding_box_max();
+        
 #pragma mark -
 #pragma mark Operators
 
