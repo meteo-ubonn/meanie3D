@@ -47,16 +47,16 @@ namespace m3D {
                               const tracking_param_t &params) 
     {
             desc.add_options()
-            ("previous,p", program_options::value<string>(), "Previous cluster file (netCDF)")
-            ("current,c", program_options::value<string>(), "Current cluster file (netCDF)")
-            ("tracking-variable,t", program_options::value<string>()->default_value(params.tracking_variable), "Variable used for histogram correlation. Must be specified when histogram weight --wt is not zero")
+            ("previous", program_options::value<string>(), "Previous cluster file (netCDF)")
+            ("current", program_options::value<string>(), "Current cluster file (netCDF)")
+            ("tracking-variable", program_options::value<string>()->default_value(params.tracking_variable), "Variable used for histogram correlation. Must be specified when histogram weight --wt is not zero")
             ("wr", program_options::value<T>()->default_value(params.range_weight), "Weight for range correlation [0..1]")
             ("ws", program_options::value<T>()->default_value(params.size_weight), "Weight for size correlation [0..1]")
             ("wt", program_options::value<T>()->default_value(params.correlation_weight), "Weight for histogram rank correlation [0..1]")
-            ("use-displacement-vectors,v", "If present, the algorithm uses the displacement vectors from the previous tracking result (if present) to shift clusters from the previous file to improve tracking (experimental).")
+            ("use-displacement-vectors", "If present, the algorithm uses the displacement vectors from the previous tracking result (if present) to shift clusters from the previous file to improve tracking (experimental).")
             ("merge-split-threshold", program_options::value<T>()->default_value(params.mergeSplitThreshold), "Percentage of area covered between previous/new clusters for split/merge calculation")
             ("merge-split-continuation-threshold", program_options::value<T>()->default_value(params.mergeSplitContinuationThreshold), "Minimum percentage of area covered between previous/new clusters to continue ID")
-            ("discontinue-id-in-merge-and-split,d", "If present, the tracking discontinues cluster IDs when merging and splitting. Otherwise the largest candidate carries the ID on if the overlap exceeds --merge-split-continuation-threshold.")
+            ("discontinue-id-in-merge-and-split", "If present, the tracking discontinues cluster IDs when merging and splitting. Otherwise the largest candidate carries the ID on if the overlap exceeds --merge-split-continuation-threshold.")
             ("max-speed", program_options::value<T>()->default_value(params.maxVelocity.get()), "Maximum allowed object speed (m/s)")
             ("max-time", program_options::value<T>()->default_value(params.max_deltaT.get()), "Maximum allowed time difference between files (seconds)")
             ("max-size-deviation", 
@@ -105,15 +105,6 @@ namespace m3D {
         } catch (const netCDF::exceptions::NcException &e) {
             cerr << "FATAL:exception opening file " << params.current_filename << ":" << e.what() << endl;
             exit(EXIT_FAILURE);
-        }
-
-        // Verbosity
-        unsigned short vb = vm["verbosity"].as<unsigned short>();
-        if (vb > VerbosityAll) {
-            cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
-            exit(EXIT_FAILURE);
-        } else {
-            params.verbosity = (Verbosity) vb;
         }
 
         // max-speed

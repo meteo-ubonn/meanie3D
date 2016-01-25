@@ -236,7 +236,7 @@ def run(config,time_index):
             if time_index < 0:
                 logfile = output_dir+"/log/clustering_" + str(run_count)+".log"
             else:
-                params = params + " -t " + str(time_index)
+                params = params + "  --time-index " + str(time_index)
                 logfile = output_dir+"/log/clustering_" + str(time_index)+".log"
 
             # scale?
@@ -249,8 +249,8 @@ def run(config,time_index):
                 params += (" --ranges " + bandwidth)
 
             # use previous result to enhance current?
-            if ((run_count > 0) or (time_index > 0)) and detection['usePrevious']:
-                params += " -p " + last_cluster_file
+            if (((run_count > 0) or (time_index > 0)) and detection['usePrevious']):
+                params += " --previous-output " + last_cluster_file
 
             # add ci-comparison-file if applicable
             if run_count >= 3 and utils.getSafe(detection,'useCIScore'):
@@ -259,7 +259,7 @@ def run(config,time_index):
                 params += " --ci-comparison-protocluster-file " + proto_file;
 
             # Input file
-            params += " -f %s -o %s" % (netcdf_file,cluster_file)
+            params += "  --file %s --output %s" % (netcdf_file,cluster_file)
 
             # complete command with directing output to logfile
             params = params + " > " + logfile
@@ -288,7 +288,7 @@ def run(config,time_index):
                     logfile = output_dir+"/log/tracking_" + str(time_index)+".log"
 
                 print "-- Tracking --"
-                params = tracking_params + " -p  %s -c %s " % (last_cluster_file,cluster_file)
+                params = tracking_params + " --previous  %s --current %s " % (last_cluster_file,cluster_file)
                 params = params + " > " + logfile
 
                 # execute

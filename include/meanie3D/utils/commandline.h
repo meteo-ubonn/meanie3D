@@ -78,13 +78,13 @@ namespace m3D {
                 ("help,h", "produce help message")
                 ("version", "print version information and exit")
                 ("verbosity", 
-                    program_options::value<unsigned short>()->default_value(1), 
+                    program_options::value<unsigned int>()->default_value(1u), 
                     "Verbosity level [0..3]. (0=silent, 1=normal, 2=show details, 3=show all details)");
             #if WITH_VTK
                 if (with_vtk_dimensions) {
                     desc.add_options()
                         ("vtk-dimensions", 
-                            program_options::value<string>(), 
+                            program_options::value<string>(),
                             "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)");
                 }
             #endif
@@ -107,7 +107,7 @@ namespace m3D {
                              Verbosity &verbosity) 
         {
             // --version
-            if (vm.count("version") != 0) {
+            if (vm.count("version") == 1) {
                 cout << ::m3D::VERSION << endl;
                 exit(EXIT_SUCCESS);
             }

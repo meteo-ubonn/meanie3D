@@ -106,7 +106,6 @@ int main(int argc, char **argv) {
 
     add_detection_options<FS_TYPE>(desc,detection_params);
     add_tracking_options<FS_TYPE>(desc,tracking_params);
-    utils::add_standard_options(desc);
 
     // Parse the command line
     program_options::variables_map vm;
