@@ -63,6 +63,8 @@ namespace std {
 namespace m3D {
     namespace utils {
         namespace vectors {
+            
+            using std::vector;
 
             // - operator
 
@@ -377,20 +379,15 @@ namespace m3D {
             std::string
             to_string(const std::vector<T> &v)
             {
-                stringstream str(stringstream::in | stringstream::out);
-
+                std::stringstream str(std::stringstream::in | std::stringstream::out);
                 str << "(";
-
                 for (size_t i = 0; i < v.size(); i++) {
                     str << v[i];
-
                     if (i < (v.size() - 1)) {
                         str << ",";
                     }
                 };
-
                 str << ")";
-
                 return str.str();
             }
 
@@ -405,29 +402,21 @@ namespace m3D {
             from_string(const std::string &const_str)
             {
                 vector<T> result;
-
-                string str = const_str;
+                std::string str = const_str;
 
                 // Decode mode
-
                 typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
                 boost::char_separator<char> sep(",");
-
                 char chars[] = "()";
-
                 for (unsigned int i = 0; i < strlen(chars); ++i) {
                     // you need include <algorithm> to use general algorithms like std::remove()
                     str.erase(std::remove(str.begin(), str.end(), chars[i]), str.end());
                 }
 
                 tokenizer tokens(str, sep);
-
                 vector<T> mode;
-
                 for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
-                    string token = *tok_iter;
-
+                    std::string token = *tok_iter;
                     result.push_back(boost::lexical_cast<T>(token));
                 }
 
@@ -443,21 +432,14 @@ namespace m3D {
             std::string to_json(const vector<T>& v)
             {
                 std::ostringstream out;
-
                 out << "[";
-
                 size_t count = 0;
-
                 for (typename vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii) {
                     out << *ii;
-
                     if (count < (v.size() - 1)) out << ",";
-
                     count++;
                 }
-
                 out << "]";
-
                 return out.str();
             }
 

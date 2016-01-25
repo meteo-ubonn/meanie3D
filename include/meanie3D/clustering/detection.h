@@ -126,6 +126,11 @@ namespace m3D {
         // When using previous clustering results, this contains the 
         // filename of the previous cluster file. 
         std::string *previous_clusters_filename;
+
+        // If present, the --previous-output file is used to consolidate 
+        // current results. This is time consuming and has a propensity 
+        // to form larger clusters. Use with discretion.
+        bool postprocess_with_previous_output;
         
         // When convection filtering is used, this gives the index
         // of the variable to be filtered. Experimental. Ignore. 
@@ -236,7 +241,6 @@ namespace m3D {
         vector<size_t> vtk_dimension_indexes;
 
         #endif
-        
     };
     
     /**

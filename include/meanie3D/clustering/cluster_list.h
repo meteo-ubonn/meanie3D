@@ -27,9 +27,12 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+
 #include <meanie3D/clustering/id.h>
-#include <meanie3D/featurespace.h>
+#include <meanie3D/featurespace/timestamp.h>
 #include <meanie3D/utils/netcdf_utils.h>
+#include <meanie3D/weights/weight_function.h>
+#include <meanie3D/units/units.hpp>
 
 #include <vector>
 #include <map>
@@ -44,6 +47,12 @@ namespace m3D {
 
     template<typename T>
     class ArrayIndex;
+    
+    template<typename T>
+    class FeatureSpace;
+
+    template<typename T>
+    class PointIndex;
 
     /** Cluster of points in feature space. A cluster is a point in feature space,
      * where multiple trajectories of original feature space points end. This end

@@ -27,7 +27,6 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/utils.h>
 #include <meanie3D/featurespace/point.h>
 
 #include <vector>

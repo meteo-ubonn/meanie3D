@@ -26,10 +26,12 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
+
+#include <meanie3D/featurespace/coordinate_system.h>
 #include <meanie3D/clustering/histogram.h>
 #include <meanie3D/clustering/id.h>
+#include <meanie3D/index/index.h>
 #include <meanie3D/units/units.hpp>
-#include <meanie3D/featurespace/coordinate_system.h>
 #include <meanie3D/weights/weight_function.h>
 
 #include <vector>

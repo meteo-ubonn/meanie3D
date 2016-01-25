@@ -24,12 +24,16 @@
 #ifndef M3D_VISUALIZATIONUTILS_H
 #define M3D_VISUALIZATIONUTILS_H
 
-#if WITH_VTK
+// #if WITH_VTK
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/tracking.h>
-#include <meanie3D/clustering.h>
+
+#include <meanie3D/clustering/cluster.h>
+#include <meanie3D/clustering/cluster_list.h>
+#include <meanie3D/featurespace/featurespace.h>
+#include <meanie3D/featurespace/point.h>
+#include <meanie3D/tracking/track.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
@@ -351,6 +355,6 @@ namespace m3D {
     }
 }
 
-#endif
+// #endif
 
 #endif

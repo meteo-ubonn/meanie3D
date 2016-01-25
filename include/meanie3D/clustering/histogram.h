@@ -26,7 +26,7 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/featurespace.h>
+#include <meanie3D/featurespace/point.h>
 
 #include <stdlib.h>
 #include <vector>
@@ -141,15 +141,20 @@ namespace m3D {
 #pragma mark Factory Methods
 
         /** Creates a histogram from a point list. Classes are created
-         * equidistanty in intervals of size (max-min)/number_of_classes
+         * equidistantly in intervals of size (max-min)/number_of_classes
          * @param list
          * @param which variable should be indexed
          * @param lowest value in the histogram classes
          * @param highest value in the histogram classes
          * @param number of bins (default 10).
          */
-        static typename Histogram<T>::ptr
-        create(typename Point<T>::list &points, size_t variable_index, T min, T max, size_t number_of_bins = 10);
+        static 
+        typename Histogram<T>::ptr
+        create(typename Point<T>::list &points, 
+                size_t variable_index, 
+                T min, 
+                T max, 
+                size_t number_of_bins = 10);
 
 #pragma mark -
 #pragma mark Histogram Correlation

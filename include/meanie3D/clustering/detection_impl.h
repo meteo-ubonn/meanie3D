@@ -77,6 +77,7 @@ namespace m3D {
         p.wwf_upper_threshold = std::numeric_limits<T>::max();
         p.kernel_name = "uniform";
         p.previous_clusters_filename = NULL;
+        p.postprocess_with_previous_output = false;
         p.ci_comparison_file = NULL;
         p.ci_comparison_protocluster_file = NULL;
         p.ci_use_walker_mecikalski = false;
@@ -409,7 +410,9 @@ namespace m3D {
         ctx.clusters->highest_uuid = uuid;
 
         // Collate with previous clusters, if provided
-        if (params.previous_clusters_filename != NULL) {
+        if (params.previous_clusters_filename != NULL 
+                && params.postprocess_with_previous_output) 
+        {
             cout << endl << "Collating with previous results:" << endl;
             if (params.verbosity >= VerbosityDetails)
                 ctx.clusters->print();

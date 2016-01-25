@@ -26,8 +26,9 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/utils.h>
-#include <meanie3D/clustering.h>
+
+#include <meanie3D/featurespace/point.h>
+#include <meanie3D/featurespace/point_factory.h>
 
 #include <fstream>
 #include <exception>

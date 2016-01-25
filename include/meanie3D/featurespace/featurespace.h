@@ -27,11 +27,11 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/parallel.h>
-#include <meanie3D/array/multiarray.h>
 
-#include <meanie3D/featurespace/point.h>
+#include <meanie3D/array/multiarray.h>
 #include <meanie3D/featurespace/coordinate_system.h>
+#include <meanie3D/featurespace/point.h>
+#include <meanie3D/featurespace/data_store.h>
 
 #include <boost/progress.hpp>
 
@@ -40,10 +40,13 @@
 
 namespace m3D {
 
-    // Forward declaration
+    // Forward declarations
 
     template <typename T>
     class PointIndex;
+    
+    using std::map;
+    using std::vector;
 
     /** This represents a complete feature space. The template parameter is the
      * data type used (eg. float/double, etc.)
@@ -229,7 +232,7 @@ namespace m3D {
         const size_t size() const
         {
             return points.size();
-        };
+        }
 
         /** @return a pointer to the points array 
          */

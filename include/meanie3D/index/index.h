@@ -26,12 +26,16 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/featurespace.h>
+
+#include <meanie3D/featurespace/point.h>
 #include <meanie3D/index/search_parameters.h>
 
 #include <vector>
 
 namespace m3D {
+
+    template <typename T>
+    class FeatureSpace;
 
     /** Abstract base class. This interface abstracts the various implementations
      * used for indexing the points, such as kdtree.c, flann etc.

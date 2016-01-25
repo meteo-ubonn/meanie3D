@@ -27,7 +27,6 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/utils.h>
 
 #include <vector>
 #include <map>
@@ -49,9 +48,7 @@ namespace m3D {
 #pragma mark Definitions
 
         typedef vector<T*> DimensionData;
-
         typedef vector<T> Coordinate;
-
         typedef vector<int> GridPoint;
 
     private:
@@ -60,17 +57,11 @@ namespace m3D {
 #pragma mark Member variables
 
         DimensionData m_dimension_data;
-
         vector<NcDim> m_dimensions;
-
         vector<NcVar> m_dimension_variables;
-
         vector<std::string> m_dimension_units;
-
         vector<T> m_resolution;
-
         T m_resolution_norm;
-
         vector<size_t> m_dimension_sizes;
 
 #pragma mark -

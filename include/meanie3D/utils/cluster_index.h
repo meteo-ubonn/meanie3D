@@ -26,18 +26,23 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/array.h>
-#include <meanie3D/clustering.h>
+#include <meanie3D/array/multiarray.h>
+#include <meanie3D/clustering/cluster.h>
+#include <meanie3D/clustering/id.h>
+
+#include <vector>
 
 namespace m3D {
     namespace utils {
+        
+        using std::vector;
 
         template <typename T>
         struct ClusterIndex
         {
         public:
 
-            typedef MultiArray<m3D::id_t> index_t;
+            typedef MultiArray< ::m3D::id_t> index_t;
 
         private:
 

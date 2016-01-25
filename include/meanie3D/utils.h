@@ -27,6 +27,7 @@
 #include <meanie3D/utils/verbosity.h>
 #include <meanie3D/utils/array_utils.h>
 #include <meanie3D/utils/cluster_index.h>
+#include <meanie3D/utils/commandline.h>
 #include <meanie3D/utils/file_utils.h>
 #include <meanie3D/utils/gaussian_normal.h>
 #include <meanie3D/utils/map_utils.h>

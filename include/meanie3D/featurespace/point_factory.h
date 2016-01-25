@@ -28,6 +28,8 @@
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
 
+#include <meanie3D/featurespace/point_default_factory.h>
+
 #include <vector>
 
 namespace m3D {

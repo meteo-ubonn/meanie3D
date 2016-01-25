@@ -26,11 +26,13 @@
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
-#include <meanie3D/utils/vector_utils.h>
 
+#include <meanie3D/utils/vector_utils.h>
 #include <vector>
 
 namespace m3D {
+    
+    using std::vector;
 
     template <typename T>
     class MultiArray

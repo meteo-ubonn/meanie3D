@@ -30,6 +30,7 @@
 
 #include <meanie3D/clustering/cluster.h>
 #include <meanie3D/clustering/cluster_list.h>
+#include <meanie3D/featurespace/data_store.h>
 #include <meanie3D/utils/verbosity.h>
 
 namespace m3D {
