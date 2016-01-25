@@ -214,18 +214,6 @@ void parse_commmandline(program_options::variables_map vm, parameter_t &p) {
     p.write_cumulated_tracks_as_vtk = vm.count("write-cumulated-tracks-as-vtk") > 0;
     p.write_track_dictionary = vm.count("write-track-dictionary") > 0;
     p.exclude_degenerates = vm["exclude-degenerates"].as<bool>();
-    // Default is the dimensions
-    if (vm.count("vtk-dimensions") > 0) {
-        // parse dimension list
-        typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-        boost::char_separator<char> sep(",");
-        string str_value = vm["vtk-dimensions"].as<string>();
-        tokenizer dim_tokens(str_value, sep);
-        for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
-            string name = *tok_iter;
-            p.vtk_dim_names.push_back(name);
-        }
-    }
     p.create_length_stats = vm.count("create-length-statistics") > 0;
     p.length_histogram_bins = vm["length-histogram-classes"].as<bin_t>();
     p.create_speed_stats = vm.count("create-speed-statistics") > 0;

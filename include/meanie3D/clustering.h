@@ -30,6 +30,7 @@
 #include <meanie3D/clustering/cluster_op.h>
 #include <meanie3D/clustering/conrad_cluster.h>
 #include <meanie3D/clustering/detection.h>
+#include <meanie3D/clustering/detection_commandline.h>
 #include <meanie3D/clustering/histogram.h>
 #include <meanie3D/clustering/id.h>
 

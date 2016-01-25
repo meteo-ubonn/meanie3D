@@ -333,11 +333,13 @@ ADD_LIBRARY(meanie3D SHARED
     include/meanie3D/tracking/track.h
     include/meanie3D/tracking/track_cluster.h
     include/meanie3D/tracking/tracking.h
+    include/meanie3D/tracking/tracking_commandline.h
     include/meanie3D/tracking/tracking_impl.h
     include/meanie3D/tracking.h
     include/meanie3D/utils/array_utils.h
     include/meanie3D/utils/cluster_index.h
     include/meanie3D/utils/cluster_index_impl.h
+    include/meanie3D/utils/commandline.h
     include/meanie3D/utils/file_utils.h
     include/meanie3D/utils/gaussian_normal.h
     include/meanie3D/utils/map_utils.h
