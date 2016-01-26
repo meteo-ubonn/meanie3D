@@ -24,7 +24,7 @@ RUN sudo apt-get -y install libboost1.55-all-dev
 
 # Build NetCDF-CXX (always an extra bloody sausage with this package...)
 RUN sudo apt-get -y install wget
-RUN wget https://github.com/Unidata/netcdf-cxx4/archive/v4.2.1.tar.gz
+RUN wget --quiet https://github.com/Unidata/netcdf-cxx4/archive/v4.2.1.tar.gz
 RUN tar xvzf v4.2.1.tar.gz
 RUN cd netcdf-cxx4-4.2.1 && ./configure && make install && cd ..
 RUN rm -rf netcdf-cxx4-4.2.1
@@ -39,8 +39,8 @@ RUN rm -rf shapelib
 # Visualisation
 RUN sudo apt-get -y install gnuplot
 RUN sudo apt-get -y install --fix-missing vtk6 libvtk6-dev
-RUN wget http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
-RUN wget http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
+RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
+RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
 RUN chmod a+x visit-install2_10_0
 RUN echo "1" | ./visit-install2_10_0 2.10.0 linux-x86_64-rhel6-wmesa /usr/local/visit
 RUN rm -rf visit*
