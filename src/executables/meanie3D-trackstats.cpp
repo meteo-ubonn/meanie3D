@@ -263,7 +263,9 @@ void add_value_to_histogram(const vector<T> &classes,
         // add the last class with value 0 if required
         if (counts.size() == classes.size()) {
             counts.push_back(0);
-            cerr << "WARNING: value bigger than highest histogram class. Adding an 'over' bucket for values higher than " << classes[classes.size() - 1] << endl;
+            cerr << "WARNING: value bigger than highest histogram class. "
+                 << "Adding an 'over' bucket for values higher than " 
+                 << classes[classes.size() - 1] << endl;
         }
         // count up the 'over' bucket
         counts[classes.size()] = counts[classes.size()] + 1;

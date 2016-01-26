@@ -802,7 +802,7 @@ namespace m3D {
                             << "\t\t\ttrack id:" << p->id << " continues." << endl;
                         }
                         run.current->new_ids.erase(c->id);
-                        // run.current->tracked_ids.insert(p->id);
+                        run.current->tracked_ids.insert(p->id);
                         c->id = p->id;
                     }
                 }
@@ -941,6 +941,7 @@ namespace m3D {
                                  << "\t\t\ttrack id:" << p->id << " continues." << endl;
                         }
                         run.current->new_ids.erase(c->id);
+                        run.current->tracked_ids.insert(c->id);
                         c->id = p->id;
                     }
                 }
