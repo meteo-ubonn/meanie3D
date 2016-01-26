@@ -52,6 +52,6 @@ RUN cd meanie3d && cmake -DWITH_OPENMP=1 -DWITH_VTK=1 -DCMAKE_BUILD_TYPE=Release
 RUN rm -rf meanie3d
 
 # Create data mount point
-mkdir /data
+RUN mkdir /data
 
 ENTRYPOINT ["/usr/local/bin/meanie3D"]
