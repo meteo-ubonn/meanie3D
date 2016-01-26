@@ -44,6 +44,7 @@
 #include <meanie3D/weights/weight_function_factory.h>
 
 #include "detection.h"
+#include "cluster_list.h"
 
 namespace m3D {
     
@@ -91,6 +92,7 @@ namespace m3D {
         p.spatial_range_only = false;
         p.scale = Detection<T>::NO_SCALE;
         p.verbosity = VerbosityNormal;
+        p.inline_tracking = false;
         return p;
     }
 
@@ -192,6 +194,15 @@ namespace m3D {
         } else if (params.kernel_name == "epanechnikov") {
             ctx.kernel = new EpanechnikovKernel<T>(ctx.kernel_width);
         }
+        
+        if (params.inline_tracking || params.postprocess_with_previous_output) {
+            if (params.previous_clusters_filename == NULL) {
+                cerr << "inline tracking or postprocessing with previous output"
+                     << " wanted but previous output is missing" << endl;
+                exit(EXIT_FAILURE);
+            }
+            ctx.previous_clusters = ClusterList<T>::read(*params.previous_clusters_filename);
+        }
 
         ctx.initialised = true;
     };
@@ -228,12 +239,6 @@ namespace m3D {
     Detection<T>::run(const detection_params_t<T> &params, 
                       detection_context_t<T> &ctx)
     {
-        
-        // Make the mapping known to the visualization routines
-        #if WITH_VTK
-        VisitUtils<T>::VTK_DIMENSION_INDEXES = params.vtk_dimension_indexes;
-        #endif
-
         if (!ctx.initialised) {
             Detection<T>::initialiseContext(params, ctx);
         }
@@ -418,7 +423,6 @@ namespace m3D {
                 ctx.clusters->print();
 
             try {
-                ctx.previous_clusters = ClusterList<T>::read(params.previous_clusters_filename->c_str());
                 if (params.verbosity >= VerbosityNormal)
                     cout << "Comparing " << ctx.clusters->size() 
                          << " new clusters to " << ctx.previous_clusters->size() 
@@ -483,22 +487,28 @@ namespace m3D {
         }
 #endif
 
-        if (params.verbosity > VerbositySilent) {
-            std::string msg = "Writing clusters to NetCDF file " + params.output_filename + " ...";
-            start_timer(msg);
-        }
-
-        // Before writing, set the timestamp!!
+        // Set the timestamp!!
         ctx.clusters->timestamp = ctx.timestamp;
 
-        if (!params.output_filename.empty()) {
-            ctx.clusters->write(params.output_filename);
-        }
+        if (!params.inline_tracking) {
+            
+            if (params.verbosity > VerbositySilent) {
+                std::string msg = "Writing clusters to NetCDF file " + params.output_filename + " ...";
+                start_timer(msg);
+            }
 
-        if (params.include_weight_in_result) {
-            cout << "NOT IMPLEMENTED" << endl;
-            // cout << "Writing weight function to result file ... ";
-            // cout << "done." << endl;
+            if (!params.output_filename.empty()) {
+                ctx.clusters->write(params.output_filename);
+            }
+
+            if (params.include_weight_in_result) {
+                cout << "NOT IMPLEMENTED" << endl;
+                // cout << "Writing weight function to result file ... ";
+                // cout << "done." << endl;
+            }
+            if (params.verbosity > VerbositySilent) {
+                stop_timer("done");
+            }
         }
     }
 }

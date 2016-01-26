@@ -129,7 +129,7 @@ def run(config,time_index):
             tracking_params = "%s %s" % (tracking_params, tracking['meanie3D-track'])
             
         if utils.getSafe(tracking,'histogramVariable'):
-            tracking_params = "%s -t %s" % (tracking_params, tracking['histogramVariable'])
+            tracking_params = "%s --tracking-variable %s" % (tracking_params, tracking['histogramVariable'])
             
         if utils.getSafe(tracking,'histogramWeight'):
             tracking_params = "%s --wt %s" % (tracking_params, tracking['histogramWeight'])
@@ -156,7 +156,7 @@ def run(config,time_index):
             tracking_params = "%s --max-size-deviation %d" % (tracking_params, tracking['maxSizeDeviation'])
 
         if utils.getSafe(tracking,'useDisplacementVectors'):
-            tracking_params = "%s -v"  % tracking_params
+            tracking_params = "%s --use-displacement-vectors"  % tracking_params
 
     resume_at_index = 0;
 
@@ -200,6 +200,10 @@ def run(config,time_index):
     run_count = 0
     if time_index >= 0:
         run_count = time_index + 1
+
+    # Decide if the tracking is run in an individual step
+    # or inside of meanie3D-detect
+    inline_tracking = utils.getValueForKeyPath(config,'inline_tracking')
 
     for netcdf_file in netcdf_list:
 
@@ -248,21 +252,29 @@ def run(config,time_index):
             if bandwidth:
                 params += (" --ranges " + bandwidth)
 
-            # use previous result to enhance current?
-            if (((run_count > 0) or (time_index > 0)) and detection['usePrevious']):
+            # use previous result to enhance current or incorporate
+            # tracking step in detection runs?
+            have_previous = ((run_count > 0) or (time_index > 0)) and last_cluster_file
+            if (inline_tracking or detection['usePrevious']) and have_previous:
                 params += " --previous-output " + last_cluster_file
+
+            if inline_tracking and have_previous:
+                params += (" --inline-tracking %s" % tracking_params)
+
+            if utils.getValueForKeyPath(detection,"usePrevious") and have_previous:
+                params += " --postprocess-with-previous-output"
 
             # add ci-comparison-file if applicable
             if run_count >= 3 and utils.getSafe(detection,'useCIScore'):
                 params += " --ci-comparison-file " + netcdf_list[run_count-3]
                 proto_file = "protoclusters-" + os.path.splitext(os.path.basename(netcdf_list[run_count-3]))[0] + ".nc"
-                params += " --ci-comparison-protocluster-file " + proto_file;
+                params += " --ci-comparison-protocluster-file " + proto_file
 
             # Input file
-            params += "  --file %s --output %s" % (netcdf_file,cluster_file)
+            params += " --file %s --output %s" % (netcdf_file,cluster_file)
 
             # complete command with directing output to logfile
-            params = params + " > " + logfile
+            params = "%s > %s" % (params,logfile)
 
             # execute
             if config['time_operations']:
@@ -274,11 +286,13 @@ def run(config,time_index):
             if config['time_operations']:
                 print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
+
+
         # ----------------------------------------------
         # Tracking
         # ----------------------------------------------
 
-        if tracking:
+        if tracking and not inline_tracking:
             # if we have a previous scan, run the tracking command
             if (time_index <= 0 and (run_count > 0)) or (time_index > 0):
 

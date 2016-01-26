@@ -92,7 +92,17 @@ def main():
     # Parse command line
     try:
         argv = sys.argv[1:]
-        long_args = ["json-example","resume","help","version","start=","end=","time-operations","skip-trackstats","ranges=","scales="]
+        long_args = ["json-example",
+                     "resume",
+                     "help",
+                     "version",
+                     "start=",
+                     "end=",
+                     "time-operations",
+                     "skip-trackstats",
+                     "inline-tracking",
+                     "ranges=",
+                     "scales="]
         opts, args = getopt.getopt(argv, "c:f:s:o:r:h", long_args)
     except getopt.GetoptError as detail:
         print detail
@@ -103,6 +113,7 @@ def main():
     resume = False
     time_operations = False
     skip_trackstats = False
+    inline_tracking = False
     config_file = ""
     output_dir = "."
     netcdf_dir = ""
@@ -155,6 +166,9 @@ def main():
         elif o in ["--skip-trackstats"]:
             skip_trackstats = True
 
+        elif o in ["--inline-tracking"]:
+            inline_tracking = True
+
         else:
             usage()
 
@@ -197,6 +211,7 @@ def main():
     configuration['uses_time'] = uses_time
     configuration['start_time_index'] = start_time_index
     configuration['end_time_index'] = end_time_index
+    configuration['inline_tracking'] = inline_tracking
 
     # Remove previous results
     if resume == False:

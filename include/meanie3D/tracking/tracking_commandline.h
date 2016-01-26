@@ -74,37 +74,41 @@ namespace m3D {
      * 
      * @param vm
      * @param params
+     * @param inline_tracking
      */
     template <typename T>
     void 
     get_tracking_parameters(program_options::variables_map vm, 
-            tracking_param_t &params)
+                            tracking_param_t &params,
+                            bool inline_tracking = false)
     {
         if (vm.count("version") != 0) {
             cout << m3D::VERSION << endl;
             exit(EXIT_FAILURE);
         }
 
-        if (vm.count("previous") == 0) {
-            cerr << "Missing previous cluster file argument --previous" << endl;
-            exit(1);
-        }
+        if (! inline_tracking) {
+            if (vm.count("previous") == 0) {
+                cerr << "Missing previous cluster file argument --previous" << endl;
+                exit(1);
+            }
 
-        try {
-            params.previous_filename = vm["previous"].as<string>();
-            NcFile previous_cluster_file(params.previous_filename, NcFile::read);
-        } catch (const netCDF::exceptions::NcException &e) {
-            cerr << "Exception opening file " << params.previous_filename << ":" << endl;
-            cerr << "FATAL:" << e.what() << endl;
-            exit(EXIT_FAILURE);
-        }
+            try {
+                params.previous_filename = vm["previous"].as<string>();
+                NcFile previous_cluster_file(params.previous_filename, NcFile::read);
+            } catch (const netCDF::exceptions::NcException &e) {
+                cerr << "Exception opening file " << params.previous_filename << ":" << endl;
+                cerr << "FATAL:" << e.what() << endl;
+                exit(EXIT_FAILURE);
+            }
 
-        try {
-            params.current_filename = vm["current"].as<string>();
-            NcFile current_cluster_file(params.current_filename, NcFile::write);
-        } catch (const netCDF::exceptions::NcException &e) {
-            cerr << "FATAL:exception opening file " << params.current_filename << ":" << e.what() << endl;
-            exit(EXIT_FAILURE);
+            try {
+                params.current_filename = vm["current"].as<string>();
+                NcFile current_cluster_file(params.current_filename, NcFile::write);
+            } catch (const netCDF::exceptions::NcException &e) {
+                cerr << "FATAL:exception opening file " << params.current_filename << ":" << e.what() << endl;
+                exit(EXIT_FAILURE);
+            }
         }
 
         // max-speed
@@ -135,10 +139,10 @@ namespace m3D {
             params.tracking_variable = vm["tracking-variable"].as<string>();
         }
 
-    #if WITH_VTK
+        #if WITH_VTK
         // --write-vtk
         params.write_vtk = vm.count("write-vtk") > 0;
-    #endif
+        #endif
     }
 
     /**

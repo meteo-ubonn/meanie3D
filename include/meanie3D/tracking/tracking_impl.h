@@ -160,11 +160,15 @@ namespace m3D {
             cout << "\thighest used uuid is " << run.highestUuid << endl;
         }
 
+        // Get us a coordinate system
+        NcFile *infoFile = run.current->file == NULL
+            ? run.previous->file : run.current->file;
+        
         if (!skip_tracking) {
 
-            // Get us a coordinate system
-            run.cs = new CoordinateSystem<T>(run.current->file, 
-                    run.current->dimensions, run.current->dimension_variables);
+            run.cs = new CoordinateSystem<T>(infoFile,
+                                             run.current->dimensions,
+                                             run.current->dimension_variables);
 
             // Check cluster sizes
             for (size_t i = 0; i < run.M; i++) {
@@ -208,7 +212,7 @@ namespace m3D {
             }
 
             // Valid min/max of tracking variable
-            utils::netcdf::unpacked_limits(run.current->file->getVar(m_params.tracking_variable), run.valid_min, run.valid_max);
+            utils::netcdf::unpacked_limits(infoFile->getVar(m_params.tracking_variable), run.valid_min, run.valid_max);
 
             // check time difference and determine displacement restraints
             ::units::values::s p_time = ::units::values::s(run.previous->timestamp);

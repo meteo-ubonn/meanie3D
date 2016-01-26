@@ -40,6 +40,7 @@
 #include <stdlib.h>
 
 #include <meanie3D/meanie3D.h>
+#include <meanie3D/utils/time_utils.h>
 
 using namespace std;
 using namespace boost;
@@ -100,9 +101,7 @@ int main(int argc, char **argv) {
     program_options::options_description desc("Options");
     utils::add_standard_options(desc);
     
-    desc.add_options() ("track", "If present, tracking step is performed immediately "
-            "after clustering. Required --previous-output and other "
-            "clustering parameters to be set");
+    desc.add_options() ;
 
     add_detection_options<FS_TYPE>(desc,detection_params);
     add_tracking_options<FS_TYPE>(desc,tracking_params);
@@ -120,15 +119,13 @@ int main(int argc, char **argv) {
 
     // Get the command line content
     Verbosity verbosity;
-    bool perform_tracking = false;
     try {
         utils::get_standard_options(vm,desc,verbosity);
         get_detection_parameters(vm,detection_params);
         utils::set_vtk_dimensions_from_args<FS_TYPE>(vm, detection_params.dimensions);
         detection_params.verbosity = verbosity;
-        perform_tracking = vm.count("track") > 0;
-        if (perform_tracking) {
-            get_tracking_parameters<FS_TYPE>(vm,tracking_params);
+        if (detection_params.inline_tracking) {
+            get_tracking_parameters<FS_TYPE>(vm,tracking_params,true);
             tracking_params.verbosity = verbosity;
         }
     } catch (const std::exception &e) {
@@ -148,7 +145,7 @@ int main(int argc, char **argv) {
         cout << "----------------------------------------------------" << endl;
         cout << endl;
         print_detection_params(detection_params, detection_context, vm);
-        if (perform_tracking) {
+        if (detection_params.inline_tracking) {
             print_tracking_params(tracking_params,vm);
         }
         if (verbosity > VerbosityNormal) {
@@ -161,11 +158,54 @@ int main(int argc, char **argv) {
     // Off we go
     Detection<FS_TYPE>::run(detection_params, detection_context);
 
-    if (perform_tracking) {
+    if (detection_params.inline_tracking) {
         
+        if (verbosity >= VerbosityNormal) {
+            start_timer("Performing tracking step ...");
+        }
+
+        Tracking<FS_TYPE> tracking(tracking_params);
+        tracking.track(detection_context.previous_clusters, 
+                detection_context.clusters);
+
+        if (verbosity > VerbosityNormal) {
+            stop_timer("done");
+            cout << "Results after tracking:" << endl;
+            detection_context.clusters->print();
+        }
+
+        #if WITH_VTK
+        if (tracking_params.write_vtk) {
+            
+            m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(
+                    detection_context.clusters, 
+                    detection_context.coord_system, 
+                    detection_context.clusters->source_file);
+            
+            boost::filesystem::path path(detection_params.output_filename);
+            string modes_path = path.filename().stem().string() + "_modes.vtk";
+            ::m3D::utils::VisitUtils<FS_TYPE>::write_cluster_modes_vtk(
+                    modes_path, 
+                    detection_context.clusters->clusters, 
+                    true);
+            
+            string centers_path = path.filename().stem().string() + "_centers.vtk";
+            ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(
+                    centers_path, 
+                    detection_context.clusters->clusters);
+        }
+        #endif
+
+        // Write results 
+        if (verbosity >= VerbosityNormal) {
+            start_timer("-- Writing " + detection_params.output_filename + " ... ");
+        }
+        detection_context.clusters->write(detection_params.output_filename);
+        if (verbosity >= VerbosityNormal) {
+            stop_timer("done");
+        }
     }
-
+        
     Detection<FS_TYPE>::cleanup(detection_params, detection_context);
-
     return EXIT_SUCCESS;
 }

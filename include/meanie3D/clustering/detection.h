@@ -80,6 +80,10 @@ namespace m3D {
         // scale value is executed before the clustering
         double scale;
 
+        // Mean-shift bandwidth. Overrides the automatically calculated
+        // bandwidth from scale when present.
+        vector<T> ranges;
+
         // Contains a list of variables to exclude from scale-space filtering
         vector<std::string> exclude_from_scale_space_filtering;
         
@@ -119,11 +123,7 @@ namespace m3D {
         // after parsing for storing as attribute etc.
         string parameters;
         
-        // Mean-shift bandwidth. Overrides the automatically calculated 
-        // bandwidth from scale when present.
-        vector<T> ranges;
-        
-        // When using previous clustering results, this contains the 
+        // When using previous clustering results, this contains the
         // filename of the previous cluster file. 
         std::string *previous_clusters_filename;
 
@@ -145,6 +145,12 @@ namespace m3D {
         // Verbosity of the processing chain. From 0 (silent) to 3 
         // (extremely verbose).
         Verbosity verbosity;
+
+        // Flag indicating if the process was started with --inline-tracking
+        // This has a number of consequences: cluster file will not be saved
+        // after clustering (only after tracking) and the --previous-output
+        // flag will be enforced
+        bool inline_tracking;
 
         // ---------------------------------------------------------------
         // Replacement filtering.
@@ -206,7 +212,6 @@ namespace m3D {
         // written out.
         bool write_meanshift_vectors;
         
-        
         // Only present when VTK support is compiled in. 
         // When true, a vtk file containing the clusters and their weight
         // function values is written out.
@@ -232,13 +237,6 @@ namespace m3D {
         // variables in Featurespace are written out as .vtk files after
         // the processing.
         vector<std::string> vtk_variables;
-
-        // Only present when VTK support is compiled in. 
-        // Contains a list of indexes mapping to the variable index 
-        // in Featurespace. This is needed because the dimension variables 
-        // in netCDF files are often in the reverse order (z,y,x) but 
-        // the visualisation needs to be in (x,y,z).
-        vector<size_t> vtk_dimension_indexes;
 
         #endif
     };
