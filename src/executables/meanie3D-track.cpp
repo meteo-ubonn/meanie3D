@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
     // Get the command line content
     Verbosity verbosity;
     try {
-        utils::get_standard_options(vm,desc,verbosity);
+        utils::get_standard_options(argc,vm,desc,verbosity);
         params.verbosity = verbosity;
         get_tracking_parameters<FS_TYPE>(vm,params);
     } catch (const std::exception &e) {
