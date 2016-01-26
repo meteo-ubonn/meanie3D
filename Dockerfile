@@ -27,7 +27,7 @@ RUN sudo apt-get -y install wget
 RUN wget --quiet https://github.com/Unidata/netcdf-cxx4/archive/v4.2.1.tar.gz
 RUN tar xvzf v4.2.1.tar.gz
 RUN cd netcdf-cxx4-4.2.1 && ./configure && make install && cd ..
-RUN rm -rf netcdf-cxx4-4.2.1
+RUN rm -rf netcdf-cxx4-4.2.1 && rm v4.2.1.tar.gz
 
 # Shapelib
 RUN sudo apt-get -y install cvs
@@ -50,5 +50,8 @@ RUN git clone http://git.meteo.uni-bonn.de/git/meanie3d
 RUN cd meanie3d && git submodule init && git submodule update radolan && cd ..
 RUN cd meanie3d && cmake -DWITH_OPENMP=1 -DWITH_VTK=1 -DCMAKE_BUILD_TYPE=Release . && make install && cd ..
 RUN rm -rf meanie3d
+
+# Create data mount point
+mkdir /data
 
 ENTRYPOINT ["/usr/local/bin/meanie3D"]
