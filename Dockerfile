@@ -50,6 +50,7 @@ RUN git clone http://git.meteo.uni-bonn.de/git/meanie3d
 RUN cd meanie3d && git submodule init && git submodule update radolan && cd ..
 RUN cd meanie3d && cmake -DWITH_OPENMP=1 -DWITH_VTK=1 -DCMAKE_BUILD_TYPE=Release . && make install && cd ..
 RUN rm -rf meanie3d
+ENV LD_LIBRARY_PATH=/usr/local/lib
 
 # Create data mount point
 RUN mkdir /data
