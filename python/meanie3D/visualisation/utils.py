@@ -22,7 +22,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 '''
 
+import sys
+import json
+import meanie3D.app.utils
+import meanie3D.app.external
+
+# make sure external commands are available
+meanie3D.app.external.locateCommands(['convert', 'composite','python'])
+
+print "Python path before adding system search directories:"
+print(sys.path)
+
+ret_code, paths_string = meanie3D.app.external.execute_command('python','-c "import sys; print sys.path"', True)
+if ret_code == 0:
+    result = meanie3D.app.utils.find("/usr/lib","netCDF4","site-packages")
+    if not result:
+        result = meanie3D.app.utils.find("/usr/local/lib","netCDF4","site-packages")
+    if not result:
+        print "Failed to locate python module netCDF4"
+
+    print "path to netCDF4: %s" % result
+    sys.path.append(result)
+
+    print "Python path after adding system search directories:"
+    print(sys.path)
+else:
+    print "Failed to obtain system's python path"
+    exit(-1)
+
+
 import glob
+import netCDF4
 import os
 import os.path
 from os.path import basename
@@ -30,19 +60,9 @@ from os.path import dirname
 import pdb
 import string
 from subprocess import call
-import sys
 import visit
 
-# Own modules
-import meanie3D.app.utils
-import meanie3D.app.external
 
-# External modules
-meanie3D.appendSystemPythonPath()
-import netCDF4
-
-# make sure external commands are available
-meanie3D.app.external.locateCommands(['convert', 'composite'])
 
 # ---------------------------------------------------------
 #
