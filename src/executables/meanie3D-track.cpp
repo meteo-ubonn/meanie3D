@@ -79,8 +79,10 @@ int main(int argc, char** argv) {
     if (params.verbosity >= VerbosityNormal) start_timer("Reading " + params.previous_filename+ " ... ");
     ClusterList<FS_TYPE>::ptr previous = ClusterList<FS_TYPE>::read(params.previous_filename);
     if (params.verbosity >= VerbosityNormal) stop_timer("done");
-    
+
+    #if WITH_VTK
     utils::set_vtk_dimensions_from_args<FS_TYPE>(vm, previous->dimensions);
+    #endif  
 
     // Read current clusters
     CoordinateSystem<FS_TYPE> *cs;

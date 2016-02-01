@@ -142,6 +142,7 @@ namespace m3D {
         set_vtk_dimensions_from_args(const program_options::variables_map &vm,
                 const std::vector<std::string> &dimensions) 
         {
+            #if WITH_VTK
             // --vtk-dimensions
             if (vm.count("vtk-dimensions") > 0) {
                 vector<std::string> vtk_dimensions = parse_string_vector(vm,"vtk-dimensions");
@@ -163,6 +164,7 @@ namespace m3D {
                 }
                 VisitUtils<T>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
             }
+            #endif
         }
     }
 }
