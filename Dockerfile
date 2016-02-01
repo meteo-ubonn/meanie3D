@@ -17,6 +17,7 @@ RUN sudo apt-get -y install netcdf-bin libnetcdf-dev libnetcdfc++4
 RUN sudo apt-get -y install python python-pip
 RUN sudo apt-get -y install python-netcdf
 RUN pip install setuptools
+# RUN pip install netcdf
 
 RUN sudo apt-get -y install cmake
 RUN sudo apt-get -y install zlib1g zlib1g-dev
@@ -37,18 +38,18 @@ RUN cd shapelib && make install && cd ..
 RUN rm -rf shapelib
 
 # Visualisation
-RUN sudo apt-get -y install gnuplot
-RUN sudo apt-get -y install --fix-missing vtk6 libvtk6-dev
-RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
-RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
-RUN chmod a+x visit-install2_10_0
-RUN echo "1" | ./visit-install2_10_0 2.10.0 linux-x86_64-rhel6-wmesa /usr/local/visit
-RUN rm -rf visit*
+#RUN sudo apt-get -y install gnuplot
+#RUN sudo apt-get -y install --fix-missing vtk6 libvtk6-dev
+#RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
+#RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
+#RUN chmod a+x visit-install2_10_0
+#RUN echo "1" | ./visit-install2_10_0 2.10.0 linux-x86_64-rhel6-wmesa /usr/local/visit
+#RUN rm -rf visit*
 
 # Meanie3D
 RUN git clone http://git.meteo.uni-bonn.de/git/meanie3d
 RUN cd meanie3d && git submodule init && git submodule update radolan && cd ..
-RUN cd meanie3d && cmake -DWITH_OPENMP=1 -DWITH_VTK=1 -DCMAKE_BUILD_TYPE=Release . && make install && cd ..
+RUN cd meanie3d && cmake -DWITH_OPENMP=1 -DWITH_VTK=0 -DCMAKE_BUILD_TYPE=Release . && make install && cd ..
 RUN rm -rf meanie3d
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
