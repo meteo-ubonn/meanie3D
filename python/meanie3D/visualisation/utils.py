@@ -37,7 +37,7 @@ ret_code, paths_string = meanie3D.app.external.execute_command('python','-c "imp
 if ret_code == 0:
     result = meanie3D.app.utils.find_in_paths(["/usr/lib","/usr/local/lib"],"netCDF4","site-packages")
     if not result:
-        result = meanie3D.app.utils.find("/usr/local/lib","netCDF4","site-packages")
+        result = meanie3D.app.utils.find_in_paths(["/usr/lib","/usr/local/lib"],"netCDF4","dist-packages")
     if not result:
         print "Failed to locate python module netCDF4"
 
