@@ -18,6 +18,7 @@ RUN sudo apt-get -y install netcdf-bin libnetcdf-dev libnetcdfc++4
 RUN sudo apt-get -y install python python-pip
 RUN sudo apt-get -y install python-netcdf
 RUN pip install setuptools
+RUN pip install netcdf4
 
 RUN sudo apt-get -y install cmake
 RUN sudo apt-get -y install zlib1g zlib1g-dev
@@ -37,8 +38,8 @@ RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10
 RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
 RUN chmod a+x visit-install2_10_0
 RUN echo "1" | ./visit-install2_10_0 2.10.0 linux-x86_64-rhel6-wmesa /usr/local/visit
+ENV VISIT_EXECUTABLE=/usr/local/visit/bin/visit
 RUN rm -rf visit*
-RUN pip install netcdf4
 
 # Meanie3D
 RUN git clone --depth=1 http://git.meteo.uni-bonn.de/git/meanie3d
