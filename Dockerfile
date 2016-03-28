@@ -18,7 +18,6 @@ RUN sudo apt-get -y install netcdf-bin libnetcdf-dev libnetcdfc++4
 RUN sudo apt-get -y install python python-pip
 RUN sudo apt-get -y install python-netcdf
 RUN pip install setuptools
-RUN pip install netcdf4
 
 RUN sudo apt-get -y install cmake
 RUN sudo apt-get -y install zlib1g zlib1g-dev
@@ -31,7 +30,16 @@ RUN tar xvzf v4.2.1.tar.gz
 RUN cd netcdf-cxx4-4.2.1 && ./configure && make install && cd ..
 RUN rm -rf netcdf-cxx4-4.2.1 && rm v4.2.1.tar.gz
 
+# Install python-netcdf4 from source
+#RUN wget https://pypi.python.org/packages/source/n/netCDF4/netCDF4-1.2.3.1.tar.gz#md5=24fc0101c7c441709c230e76af611d53
+#RUN tar xvzf netCDF4-1.2.3.1.tar.gz
+#RUN cd netCDF4-1.2.3.1 && python setup.py build && python setup.py build && cd ..
+#RUN rm -rf netCDF4*
+
 # Visualisation
+RUN pip install Cython
+RUN pip install h5py
+RUN pip install netcdf4
 RUN sudo apt-get -y install gnuplot
 RUN sudo apt-get -y install --fix-missing vtk6 libvtk6-dev
 RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
