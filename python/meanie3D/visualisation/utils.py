@@ -35,7 +35,7 @@ print(sys.path)
 
 ret_code, paths_string = meanie3D.app.external.execute_command('python','-c "import sys; print sys.path"', True)
 if ret_code == 0:
-    result = meanie3D.app.utils.find("/usr/lib","netCDF4","site-packages")
+    result = meanie3D.app.utils.find_in_paths(["/usr/lib","/usr/local/lib"],"netCDF4","site-packages")
     if not result:
         result = meanie3D.app.utils.find("/usr/local/lib","netCDF4","site-packages")
     if not result:
