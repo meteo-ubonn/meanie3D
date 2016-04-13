@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
-#if WITH_SHAPEFILE
+#if WITH_SHAPELIB
 
 #include <meanie3D/meanie3D.h>
 
