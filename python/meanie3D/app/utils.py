@@ -251,24 +251,28 @@ def find(path,filename,requiredComponent=None):
     :param requiredComponent: must have one component in the path to the result that matches this
     :return: fully qualified path to result or None
     """
-    if os.path.exists(path) and os.path.isdir(path):
-        files = os.listdir(path)
-        for file_ in files:
-            if file_ == filename:
-                if requiredComponent:
-                    components = path.split(os.path.sep)
-                    if not requiredComponent in components:
-                        continue
-                    return os.path.abspath(path + os.sep + filename)
-                else:
-                    return os.path.abspath(path + os.sep + filename)
+    try:
+        if os.path.exists(path) and os.path.isdir(path):
+            files = os.listdir(path)
+            for file_ in files:
+                if file_ == filename:
+                    if requiredComponent:
+                        components = path.split(os.path.sep)
+                        if not requiredComponent in components:
+                            continue
+                        return os.path.abspath(path + os.sep + filename)
+                    else:
+                        return os.path.abspath(path + os.sep + filename)
 
-    for f in files:
-        full_path = os.path.abspath(path + os.sep + f)
-        if os.path.isdir(full_path):
-            result = find(full_path, filename, requiredComponent)
-            if result:
-                return result
+        for f in files:
+            full_path = os.path.abspath(path + os.sep + f)
+            if os.path.isdir(full_path):
+                result = find(full_path, filename, requiredComponent)
+                if result:
+                    return result
+    except OSError as err:
+        print err
+
     return None
 
 
