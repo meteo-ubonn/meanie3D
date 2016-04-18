@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 MAINTAINER Jürgen Simon (juergen.simon@uni-bonn.de)
 
-RUN sudo apt-get -y update 
+RUN sudo apt-get -y update --fix-missing
 RUN sudo apt-get -y upgrade
 RUN sudo apt-get -y dist-upgrade
 RUN sudo apt-get -y install software-properties-common
@@ -12,6 +12,7 @@ RUN sudo apt-get -y install gcc
 RUN sudo apt-get -y install g++
 RUN sudo apt-get -y install libflann1.8  libflann-dev
 RUN sudo apt-get -y install blitz++
+# RUN sudo apt-get -y install shapelib
 RUN sudo apt-get -y install libhdf5-7 libhdf5-dev
 RUN sudo apt-get -y install netcdf-bin libnetcdf-dev libnetcdfc++4  
 RUN sudo apt-get -y install python python-pip
@@ -24,31 +25,38 @@ RUN sudo apt-get -y install libboost1.55-all-dev
 
 # Build NetCDF-CXX (always an extra bloody sausage with this package...)
 RUN sudo apt-get -y install wget
-RUN wget https://github.com/Unidata/netcdf-cxx4/archive/v4.2.1.tar.gz
+RUN wget --quiet https://github.com/Unidata/netcdf-cxx4/archive/v4.2.1.tar.gz
 RUN tar xvzf v4.2.1.tar.gz
 RUN cd netcdf-cxx4-4.2.1 && ./configure && make install && cd ..
-RUN rm -rf netcdf-cxx4-4.2.1
+RUN rm -rf netcdf-cxx4-4.2.1 && rm v4.2.1.tar.gz
 
-# Shapelib
-RUN sudo apt-get -y install cvs
-RUN cvs -d :pserver:cvsanon@cvs.maptools.org:/cvs/maptools/cvsroot login
-RUN cvs -d :pserver:cvsanon@cvs.maptools.org:/cvs/maptools/cvsroot co shapelib 
-RUN cd shapelib && make install && cd ..
-RUN rm -rf shapelib
+# Install python-netcdf4 from source
+#RUN wget https://pypi.python.org/packages/source/n/netCDF4/netCDF4-1.2.3.1.tar.gz#md5=24fc0101c7c441709c230e76af611d53
+#RUN tar xvzf netCDF4-1.2.3.1.tar.gz
+#RUN cd netCDF4-1.2.3.1 && python setup.py build && python setup.py build && cd ..
+#RUN rm -rf netCDF4*
 
 # Visualisation
+RUN pip install Cython
+RUN pip install h5py
+RUN pip install netcdf4
 RUN sudo apt-get -y install gnuplot
 RUN sudo apt-get -y install --fix-missing vtk6 libvtk6-dev
-RUN wget http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
-RUN wget http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
+RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
+RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
 RUN chmod a+x visit-install2_10_0
 RUN echo "1" | ./visit-install2_10_0 2.10.0 linux-x86_64-rhel6-wmesa /usr/local/visit
+ENV VISIT_EXECUTABLE=/usr/local/visit/bin/visit
 RUN rm -rf visit*
 
 # Meanie3D
-RUN git clone http://git.meteo.uni-bonn.de/git/meanie3d
+RUN git clone --depth=1 http://git.meteo.uni-bonn.de/git/meanie3d
 RUN cd meanie3d && git submodule init && git submodule update radolan && cd ..
 RUN cd meanie3d && cmake -DWITH_OPENMP=1 -DWITH_VTK=1 -DCMAKE_BUILD_TYPE=Release . && make install && cd ..
 RUN rm -rf meanie3d
+ENV LD_LIBRARY_PATH=/usr/local/lib
+
+# Create data mount point
+RUN mkdir /data
 
 ENTRYPOINT ["/usr/local/bin/meanie3D"]

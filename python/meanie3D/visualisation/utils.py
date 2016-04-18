@@ -23,26 +23,40 @@ SOFTWARE.
 '''
 
 import glob
+import sys
 import os
 import os.path
-from os.path import basename
-from os.path import dirname
-import pdb
-import string
-from subprocess import call
-import sys
-import visit
-
-# Own modules
 import meanie3D.app.utils
 import meanie3D.app.external
-
-# External modules
-meanie3D.appendSystemPythonPath()
-import netCDF4
+from subprocess import call
 
 # make sure external commands are available
-meanie3D.app.external.locateCommands(['convert', 'composite'])
+meanie3D.app.external.locateCommands(['convert', 'composite','python'])
+
+ret_code, paths_string = meanie3D.app.external.execute_command('python','-c "import sys; print sys.path"', True)
+if ret_code == 0:
+    print "Attempting to locate python module netCDF4"
+    result = meanie3D.app.utils.find_in_paths(["/usr/lib","/usr/local/lib"],"netCDF4","site-packages")
+    if not result:
+        result = meanie3D.app.utils.find_in_paths(["/usr/lib","/usr/local/lib"],"netCDF4","dist-packages")
+
+    if not result:
+        print "Failed to locate python module netCDF4"
+        exit(-1)
+    else:
+        print "Found netCDF4 at %s" % result
+        sys.path.append(os.path.split(result)[0]);
+        print "Python path after adding system search directories:"
+        print(sys.path)
+
+else:
+    print "Failed to obtain system's python path"
+    exit(-1)
+
+import netCDF4
+import visit
+
+
 
 # ---------------------------------------------------------
 #
@@ -373,7 +387,7 @@ def path(filename):
     :param filename:
     :return:
     '''
-    path = dirname(filename)
+    path = os.path.dirname(filename)
     return path
 
 

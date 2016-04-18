@@ -244,6 +244,18 @@ ELSE()
     MESSAGE(FATAL_ERROR "blitz++ not found")
 ENDIF()
 
+# Shapefile
+FIND_PACKAGE(SHP)
+IF (NOT SHP_FOUND)
+    ADD_DEFINITIONS(-DWITH_SHAPELIB=0)
+    MESSAGE(WARNING "shapelib not found (http://shapelib.maptools.org/). Disabling shapelib code.")
+ELSE()
+    ADD_DEFINITIONS(-DWITH_SHAPELIB=1)
+    MESSAGE(STATUS "Shapefile found")
+    INCLUDE_DIRECTORIES(${SHP_INCLUDE_DIR})
+ENDIF()
+
+
 # ------------------------------------- 
 # Binaries
 # -------------------------------------

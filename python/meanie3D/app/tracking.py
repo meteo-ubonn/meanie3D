@@ -256,7 +256,7 @@ def run(config,time_index):
             # tracking step in detection runs?
             have_previous = ((run_count > 0) or (time_index > 0)) and last_cluster_file
             if (inline_tracking or detection['usePrevious']) and have_previous:
-                params += " --previous-output " + last_cluster_file
+                params += " --previous-output " + os.path.abspath(last_cluster_file)
 
             if inline_tracking and have_previous:
                 params += (" --inline-tracking %s" % tracking_params)
@@ -266,15 +266,15 @@ def run(config,time_index):
 
             # add ci-comparison-file if applicable
             if run_count >= 3 and utils.getSafe(detection,'useCIScore'):
-                params += " --ci-comparison-file " + netcdf_list[run_count-3]
+                params += " --ci-comparison-file " + os.path.abspath(netcdf_list[run_count-3])
                 proto_file = "protoclusters-" + os.path.splitext(os.path.basename(netcdf_list[run_count-3]))[0] + ".nc"
-                params += " --ci-comparison-protocluster-file " + proto_file
+                params += " --ci-comparison-protocluster-file " + os.path.abspath(proto_file)
 
             # Input file
-            params += " --file %s --output %s" % (netcdf_file,cluster_file)
+            params += " --file %s --output %s" % (os.path.abspath(netcdf_file),os.path.abspath(cluster_file))
 
             # complete command with directing output to logfile
-            params = "%s > %s" % (params,logfile)
+            params = "%s > %s" % (params,os.path.abspath(logfile))
 
             # execute
             if config['time_operations']:
@@ -285,7 +285,6 @@ def run(config,time_index):
 
             if config['time_operations']:
                 print "Finished. (%.2f seconds)" % (time.time()-start_time)
-
 
 
         # ----------------------------------------------
@@ -302,8 +301,9 @@ def run(config,time_index):
                     logfile = output_dir+"/log/tracking_" + str(time_index)+".log"
 
                 print "-- Tracking --"
-                params = tracking_params + " --previous  %s --current %s " % (last_cluster_file,cluster_file)
-                params = params + " > " + logfile
+                params = tracking_params + " --previous  %s --current %s " \
+                               % (os.path.abspath(last_cluster_file),os.path.abspath(cluster_file))
+                params = params + " > " + os.path.abspath(logfile)
 
                 # execute
                 if config['time_operations']:
