@@ -300,11 +300,15 @@ def findVisitPaths():
     """
     visitPath = None
     visitImportPath = None
-    cmdMap = external.locateCommands(["visit"],True)
-    if cmdMap['visit']:
-        visitPath = os.path.abspath(os.path.join(cmdMap['visit'], os.pardir + os.sep + os.pardir))
-        if visitPath:
-            visitImportPath = find(visitPath,"site-packages")
+    try:
+        cmdMap = external.locateCommands(["visit"],True)
+        if cmdMap['visit']:
+            visitPath = os.path.abspath(os.path.join(cmdMap['visit'], os.pardir + os.sep + os.pardir))
+            if visitPath:
+                visitImportPath = find(visitPath,"site-packages")
+    except:
+        return None, None
+
     return visitPath,visitImportPath
 
 

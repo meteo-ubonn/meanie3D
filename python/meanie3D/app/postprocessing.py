@@ -28,7 +28,6 @@ import shutil
 import sys
 import tempfile
 import time
-import visit
 
 # Own packages
 from . import __have_visit__
@@ -40,8 +39,10 @@ from meanie3D.app import external
 
 # ----------------------------------------------------------------------------
 
-external.locateCommands(['meanie3D-cfm2vtk', 'meanie3D-trackstats', 'gnuplot', 'visit'])
-
+external.locateCommands(['meanie3D-cfm2vtk', 'meanie3D-trackstats', 'gnuplot'])
+if __have_visit__:
+    import visit
+    external.locateCommands(['visit'])
 
 # ----------------------------------------------------------------------------
 
@@ -72,11 +73,12 @@ def check_configuration(configuration):
                 utils.setValueForKeyPath(configuration, 'postprocessing.tracks.meanie3D-trackstats.vtk_tracks', True)
 
             # Complement vtk_dimensions to make our life a little easier down the road.
-            vtkDimensions = utils.getValueForKeyPath(configuration, 'data.vtkDimensions')
-            if vtkDimensions:
-                vtkDimString = ",".join(vtkDimensions)
-                utils.setValueForKeyPath(configuration, 'postprocessing.tracks.meanie3D-trackstats.vtkDimensions',
-                                         vtkDimString)
+            if __have_visit__:
+                vtkDimensions = utils.getValueForKeyPath(configuration, 'data.vtkDimensions')
+                if vtkDimensions:
+                    vtkDimString = ",".join(vtkDimensions)
+                    utils.setValueForKeyPath(configuration, 'postprocessing.tracks.meanie3D-trackstats.vtkDimensions',
+                                             vtkDimString)
 
             # Make sure that plotStats has gnuplot files to work with
             if utils.getValueForKeyPath(tracks, 'plotStats') and not utils.getValueForKeyPath(tracks,
@@ -154,7 +156,7 @@ def run_trackstats(configuration, directory):
         params.append("--write-center-tracks-as-vtk ")
         # Can' be sure in this case, better safe than sorry
         haveFiles = False
-    if (conf['vtkDimensions']):
+    if (__have_visit__ and conf['vtkDimensions']):
         params.append("--vtk-dimensions=%s" % conf['vtkDimensions'])
     params.append("-s netcdf")
 
@@ -427,6 +429,7 @@ def visualise_tracks(configuration, directory):
     '''
     print "Visualising tracks for %s" % directory
     if not __have_visit__:
+        print "Visit not found. Skipping."
         return
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
     templatePath = home + os.path.sep + os.path.sep.join(("meanie3D", "resources", "tracks_visit.py"))
@@ -451,6 +454,7 @@ def visualise_clusters(configuration, directory):
     '''
     print "Visualising clusters for %s" % directory
     if not __have_visit__:
+        print "Visit not found. Skipping."
         return
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
     templatePath = home + os.path.sep + os.path.sep.join(("meanie3D", "resources", "clusters_visit.py"))
@@ -563,7 +567,7 @@ def run(configuration):
                 plot_trackstats(configuration, directory)
 
             # run the track visualisations
-            if utils.getValueForKeyPath(configuration, 'postprocessing.tracks.visualiseTracks'):
+            if __have_visit__ and utils.getValueForKeyPath(configuration, 'postprocessing.tracks.visualiseTracks'):
 
                 if configuration['time_operations']:
                     print "Visualising tracks ..."
@@ -574,7 +578,7 @@ def run(configuration):
                 if configuration['time_operations']:
                     print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
-        if utils.getValueForKeyPath(configuration, 'postprocessing.clusters.visualiseClusters'):
+        if __have_visit__ and utils.getValueForKeyPath(configuration, 'postprocessing.clusters.visualiseClusters'):
 
             if configuration['time_operations']:
                 print "Visualising clusters ..."

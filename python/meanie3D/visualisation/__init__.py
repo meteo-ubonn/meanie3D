@@ -13,4 +13,4 @@ if __visitImportPath__ and __visitPath__:
     sys.path.append(__visitImportPath__)
 else:
     __have_visit = False
-    sys.stderr.write("ERROR:could not find visit import path. Visualisation is switched off.")
+    sys.stderr.write("\nERROR:could not find visit import path. Visualisation is switched off.\n")
