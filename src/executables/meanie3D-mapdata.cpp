@@ -6,6 +6,8 @@
 //  Copyright (c) 2012 Jürgen Lorenz Simon. All rights reserved.
 //
 
+#if WITH_SHAPELIB
+
 #include <meanie3D/meanie3D.h>
 
 #include <boost/algorithm/string.hpp>
@@ -23,11 +25,12 @@
 #include <map>
 #include <netcdf>
 #include <set>
-#include <shapefil.h>
 #include <stdlib.h>
 #include <string>
 #include <sstream>
 #include <vector>
+#include <shapefil.h>
+
 
 /* ******************************************************** */
 /* Namespace includes                                       */
@@ -108,71 +111,48 @@ static float gTopography[NATIONAL_NY][NATIONAL_NX];
 /* ******************************************************** */
 
 void parse_commmandline(program_options::variables_map vm,
-        NcFile **filePtr,
-        string &source_filename,
-        string &root_directory,
-        vector<NcDim> &dimensions,
-        vector<NcVar> &dimension_variables)
-{
-    if (vm.count("source") == 0)
-    {
+                        NcFile **filePtr,
+                        string &source_filename,
+                        string &root_directory,
+                        vector<NcDim> &dimensions,
+                        vector<NcVar> &dimension_variables) {
+    if (vm.count("source") == 0) {
         cerr << "Missing 'source' argument" << endl;
-
         exit(1);
     }
 
     source_filename = vm["source"].as<string>();
-
-    try
-    {
+    try {
         root_directory = vm["root"].as<string>();
-    } catch (const boost::exception& e)
-    {
+    } catch (const boost::exception &e) {
         cerr << "Missing 'root' argument" << endl;
 
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     }
 
     // Open NetCDF file
-
     NcFile *file = NULL;
-
-    try
-    {
+    try {
         file = new NcFile(source_filename, NcFile::read);
-    } catch (const netCDF::exceptions::NcException &e)
-    {
+        *filePtr = file;
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << "error opening file '" << source_filename << "' : " << e.what() << endl;
-        exit(EXIT_FAILURE);
-        ;
+        exit(EXIT_FAILURE);;
     }
 
-    *filePtr = file;
-
     // Extract dimensions
-
-    if (vm.count("dimensions") == 0)
-    {
+    if (vm.count("dimensions") == 0) {
         cerr << "Missing parameter --dimensions" << endl;
-
         exit(1);
     }
 
     // parse dimension list
-
     typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
-
     boost::char_separator<char> sep(",");
-
     tokenizer dim_tokens(vm["dimensions"].as<string>(), sep);
-
-    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter)
-    {
-        const char* name = (*tok_iter).c_str();
-
+    for (tokenizer::iterator tok_iter = dim_tokens.begin(); tok_iter != dim_tokens.end(); ++tok_iter) {
+        const char *name = (*tok_iter).c_str();
         dimensions.push_back(file->getDim(name));
-
         dimension_variables.push_back(file->getVar(name));
     }
 }
@@ -184,8 +164,7 @@ void parse_commmandline(program_options::variables_map vm,
 
 template<typename T, std::size_t N, std::size_t M>
 void
-initialize_array(T(&data)[N][M], T initial_value)
-{
+initialize_array(T(&data)[N][M], T initial_value) {
     for (size_t iy = 0; iy < N; iy++)
         for (size_t ix = 0; ix < M; ix++)
             data[iy][ix] = initial_value;
@@ -193,8 +172,7 @@ initialize_array(T(&data)[N][M], T initial_value)
 
 template<typename T, std::size_t K, std::size_t N, std::size_t M>
 void
-initialize_array(T(&data)[K][N][M], T initial_value)
-{
+initialize_array(T(&data)[K][N][M], T initial_value) {
     for (size_t iz = 0; iz < K; iz++)
         for (size_t iy = 0; iy < N; iy++)
             for (size_t ix = 0; ix < M; ix++)
@@ -203,38 +181,31 @@ initialize_array(T(&data)[K][N][M], T initial_value)
 
 template<typename T, std::size_t K, std::size_t N, std::size_t M>
 void
-fill_topography_data_at(T(&data)[K][N][M], int ix, int iy, float z_in_meters)
-{
+fill_topography_data_at(T(&data)[K][N][M], int ix, int iy, float z_in_meters) {
     double z_km = z_in_meters / 1000.0f; // [m]->[km]
 
     int index_z = (int) ceil(z_km / 0.25f);
 
-    if (index_z > NZ)
-    {
+    if (index_z > NZ) {
         index_z = NZ;
-    } else if (index_z < 0)
-    {
+    } else if (index_z < 0) {
         index_z = 0;
     }
-    for (size_t iz = 0; iz < NZ; iz++)
-    {
+    for (size_t iz = 0; iz < NZ; iz++) {
         data[iz][iy][ix] = (iz <= index_z) ? z_in_meters : z_fillValue;
     }
 }
 
 template<typename T, std::size_t K, std::size_t N, std::size_t M>
 void
-mark_topography_data_at(T(&data)[K][N][M], int ix, int iy, float z_in_meters)
-{
+mark_topography_data_at(T(&data)[K][N][M], int ix, int iy, float z_in_meters) {
     double z_km = z_in_meters / 1000.0f; // [m]->[km]
 
     int index_z = (int) ceil(z_km / 0.25f);
 
-    if (index_z > NZ)
-    {
+    if (index_z > NZ) {
         index_z = NZ;
-    } else if (index_z < 0)
-    {
+    } else if (index_z < 0) {
         index_z = 0;
     }
 
@@ -247,25 +218,21 @@ mark_topography_data_at(T(&data)[K][N][M], int ix, int iy, float z_in_meters)
 
 /* ******************************************************** */
 
-bool read_topography(NcFile &topography_file)
-{
+bool read_topography(NcFile &topography_file) {
     bool result = false;
 
     initialize_array(gTopography, 0.0f);
 
-    if (topography_file.isNull())
-    {
+    if (topography_file.isNull()) {
         cerr << "ERROR: could not open topography file " << topography_file.getName() << endl;
     }
-    else
-    {
+    else {
         NcVar topo = topography_file.getVar("topography_srtm");
 
-        if (topo.isNull())
-        {
-            cerr << "ERROR: topography file " << topography_file.getName() << " has no variable 'topography_srtm'" << endl;
-        } else
-        {
+        if (topo.isNull()) {
+            cerr << "ERROR: topography file " << topography_file.getName() << " has no variable 'topography_srtm'" <<
+            endl;
+        } else {
             topo.getVar(&gTopography[0][0]);
             result = true;
         }
@@ -274,8 +241,7 @@ bool read_topography(NcFile &topography_file)
     return result;
 }
 
-void add_local_dimensions(NcFile &topography_file, NcFile &mapfile)
-{
+void add_local_dimensions(NcFile &topography_file, NcFile &mapfile) {
     nc_redef(mapfile.getId());
 
     // Local dimensions / variables
@@ -314,31 +280,26 @@ void add_local_dimensions(NcFile &topography_file, NcFile &mapfile)
 
     // dim-vars
 
-    float *x_data = (float *) malloc(sizeof (float)*LOCAL_NX);
-    for (size_t i = 0; i < LOCAL_NX; i++)
-    {
+    float *x_data = (float *) malloc(sizeof(float) * LOCAL_NX);
+    for (size_t i = 0; i < LOCAL_NX; i++) {
         x_data[i] = local_x_min + i * delta_x;
     }
 
-    float *y_data = (float *) malloc(sizeof (float)*LOCAL_NY);
-    for (size_t i = 0; i < LOCAL_NY; i++)
-    {
+    float *y_data = (float *) malloc(sizeof(float) * LOCAL_NY);
+    for (size_t i = 0; i < LOCAL_NY; i++) {
         y_data[i] = local_y_min + i * delta_y;
     }
 
-    float *z_data = (float *) malloc(sizeof (float)*NZ);
-    for (size_t i = 0; i < NZ; i++)
-    {
+    float *z_data = (float *) malloc(sizeof(float) * NZ);
+    for (size_t i = 0; i < NZ; i++) {
         z_data[i] = z_min + i * delta_z;
     }
 
-    try
-    {
+    try {
         x.putVar(&x_data[0]);
         y.putVar(&y_data[0]);
         z.putVar(&z_data[0]);
-    } catch (std::exception &e)
-    {
+    } catch (std::exception &e) {
         cerr << "ERROR:exception " << e.what() << endl;
     }
 
@@ -347,8 +308,7 @@ void add_local_dimensions(NcFile &topography_file, NcFile &mapfile)
     delete z_data;
 }
 
-void add_national_dimensions(NcFile &topography_file, NcFile &mapfile)
-{
+void add_national_dimensions(NcFile &topography_file, NcFile &mapfile) {
     nc_redef(mapfile.getId());
 
     NcDim dx = mapfile.addDim("national_x", NATIONAL_NX);
@@ -384,29 +344,26 @@ void add_national_dimensions(NcFile &topography_file, NcFile &mapfile)
     // read the x/y - data from topography file
 
     NcVar topo_y = topography_file.getVar("y");
-    float *y_data = (float *) malloc(sizeof (float) * netcdf::num_vals(topo_y));
+    float *y_data = (float *) malloc(sizeof(float) * netcdf::num_vals(topo_y));
     topo_y.getVar(y_data);
 
     NcVar topo_x = topography_file.getVar("x");
-    float *x_data = (float *) malloc(sizeof (float) * netcdf::num_vals(topo_x));
+    float *x_data = (float *) malloc(sizeof(float) * netcdf::num_vals(topo_x));
     topo_x.getVar(x_data);
 
     // Topo file has no z data, therefore z must be created
     //
     float delta_z = (z_max - z_min) / boost::numeric_cast<float>(NZ);
-    float *z_data = (float *) malloc(sizeof (float) * NZ);
-    for (size_t iz = 0; iz < NZ; iz++)
-    {
+    float *z_data = (float *) malloc(sizeof(float) * NZ);
+    for (size_t iz = 0; iz < NZ; iz++) {
         z_data[iz] = delta_z * boost::numeric_cast<float>(iz);
     }
 
-    try
-    {
+    try {
         x.putVar(&x_data[0]);
         y.putVar(&y_data[0]);
         z.putVar(&z_data[0]);
-    } catch (std::exception &e)
-    {
+    } catch (std::exception &e) {
         cerr << "ERROR:exception " << e.what() << endl;
     }
 
@@ -415,14 +372,12 @@ void add_national_dimensions(NcFile &topography_file, NcFile &mapfile)
     free(z_data);
 }
 
-void add_dimensions(NcFile &topography_file, NcFile &mapfile)
-{
+void add_dimensions(NcFile &topography_file, NcFile &mapfile) {
     add_local_dimensions(topography_file, mapfile);
     add_national_dimensions(topography_file, mapfile);
 }
 
-void add_local_topography(NcFile &mapfile)
-{
+void add_local_topography(NcFile &mapfile) {
     nc_redef(mapfile.getId());
 
     // Create 2D topo variable
@@ -465,10 +420,8 @@ void add_local_topography(NcFile &mapfile)
 
     // figure out the shift between national and local
 
-    for (size_t iy = 0; iy < LOCAL_NY; iy++)
-    {
-        for (size_t ix = 0; ix < LOCAL_NX; ix++)
-        {
+    for (size_t iy = 0; iy < LOCAL_NY; iy++) {
+        for (size_t ix = 0; ix < LOCAL_NX; ix++) {
             // Read the z value from the topography
             // national composite is offset by dy=318 and dx=157
             // and has twice the resolution
@@ -482,12 +435,10 @@ void add_local_topography(NcFile &mapfile)
             int ny = shift_y + iy / 2;
             int nx = shift_x + ix / 2;
 
-            for (int national_y = (ny - 1); national_y < (ny + 1); national_y++)
-            {
-                for (int national_x = (nx - 1); national_x < (nx + 1); national_x++)
-                {
-                    if ((national_x >= shift_x && national_x < NATIONAL_NX) && (national_y >= shift_y && national_y < NATIONAL_NY))
-                    {
+            for (int national_y = (ny - 1); national_y < (ny + 1); national_y++) {
+                for (int national_x = (nx - 1); national_x < (nx + 1); national_x++) {
+                    if ((national_x >= shift_x && national_x < NATIONAL_NX) &&
+                        (national_y >= shift_y && national_y < NATIONAL_NY)) {
                         z_m += gTopography[national_y][national_x];
                         count++;
                     }
@@ -511,8 +462,7 @@ void add_local_topography(NcFile &mapfile)
 
 }
 
-void add_national_topography(NcFile &mapfile)
-{
+void add_national_topography(NcFile &mapfile) {
     nc_redef(mapfile.getId());
 
     // Create 2D topo variable
@@ -555,10 +505,8 @@ void add_national_topography(NcFile &mapfile)
     static double topo_data_2D[NATIONAL_NY][NATIONAL_NX];
     static double topo_data_3D[NZ][NATIONAL_NY][NATIONAL_NX];
 
-    for (size_t iy = 0; iy < NATIONAL_NY; iy++)
-    {
-        for (size_t ix = 0; ix < NATIONAL_NX; ix++)
-        {
+    for (size_t iy = 0; iy < NATIONAL_NY; iy++) {
+        for (size_t ix = 0; ix < NATIONAL_NX; ix++) {
             // Read the z value from the topography
 
             double z_m = gTopography[iy][ix];
@@ -574,8 +522,7 @@ void add_national_topography(NcFile &mapfile)
             else if (index_z < 0)
                 index_z = 0;
 
-            for (size_t iz = 0; iz < NZ; iz++)
-            {
+            for (size_t iz = 0; iz < NZ; iz++) {
                 topo_data_3D[iz][iy][ix] = (iz <= index_z) ? z_m : z_fillValue;
             }
         }
@@ -593,12 +540,10 @@ void add_national_topography(NcFile &mapfile)
 /* ******************************************************** */
 
 
-std::string shape_type(int shapeTypeID)
-{
+std::string shape_type(int shapeTypeID) {
     std::string result = "UNKNOWN";
 
-    switch (shapeTypeID)
-    {
+    switch (shapeTypeID) {
         case SHPT_ARC:
             result = "SHPT_ARC";
             break;
@@ -648,16 +593,14 @@ std::string shape_type(int shapeTypeID)
 
 template<std::size_t N, std::size_t M>
 void
-draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var)
-{
+draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var) {
     using namespace m3D::utils::vectors;
 
 #if DEBUG_LINES
     cout << "\tdrawing line (" << line_points.size() << " vertices)" << endl;
 #endif
 
-    if (line_points.size() < 2)
-    {
+    if (line_points.size() < 2) {
 #if DEBUG_LINES
         cout << "\tLine consists of only one point. Skipping." << endl;
 #endif
@@ -670,14 +613,12 @@ draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var)
 
     size_t j = 0;
 
-    for (li = line_points.begin(); li != line_points.end(); li++)
-    {
+    for (li = line_points.begin(); li != line_points.end(); li++) {
         CoordinateSystem<double>::GridPoint p = *li;
 
         // cout << p << endl;
 
-        if (have_last_point)
-        {
+        if (have_last_point) {
 #if DEBUG_LINES
             cout << "\t\tdrawing segment #" << j++ << " from (" << lp[1] << "," << lp[0] << ") "
                     << "to (" << p[1] << "," << p[0] << ")" << endl;
@@ -712,8 +653,7 @@ draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var)
 
             // go
 
-            while (x != p[1] && y != p[0])
-            {
+            while (x != p[1] && y != p[0]) {
                 // propose walking x
                 vector<int> x_next(2);
                 x_next[1] = x + dx;
@@ -728,16 +668,13 @@ draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var)
                 double dist_x = vector_norm(p - x_next);
                 double dist_y = vector_norm(p - y_next);
 
-                if (dist_x < dist_y)
-                {
+                if (dist_x < dist_y) {
                     // walking x gets us closer
                     x = x + dx;
-                } else if (dist_x > dist_y)
-                {
+                } else if (dist_x > dist_y) {
                     // walking y gets us closer
                     y = y + dy;
-                } else
-                {
+                } else {
                     // same difference, so walk both
                     x = x + dx;
                     y = y + dy;
@@ -762,12 +699,10 @@ draw_line_in_grid_2D(double (&data)[N][M], gp_vec_t &line_points, NcVar &var)
  * This method expects the dimensions and dimension vars
  * to be in place
  */
-void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *variable_name)
-{
+void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *variable_name) {
     SHPHandle file = SHPOpen(shapefile, "rb");
 
-    if (!file)
-    {
+    if (!file) {
         cerr << "ERROR:can't open " << shapefile << endl;
         return;
     }
@@ -866,8 +801,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
     // Radolan coordinate system
     RDCoordinateSystem rcs(RD_RX);
 
-    for (int i = 0; i < file->nRecords; i++)
-    {
+    for (int i = 0; i < file->nRecords; i++) {
         SHPObject *obj = SHPReadObject(file, i);
 
 #if DEBUG
@@ -885,8 +819,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
         CoordinateSystem<double>::GridPoint gp = cs_2D->newGridPoint();
         CoordinateSystem<double>::GridPoint local_gp = local_cs_2D->newGridPoint();
 
-        for (int pi = 0; pi < obj->nParts; pi++)
-        {
+        for (int pi = 0; pi < obj->nParts; pi++) {
             gp_vec_t line_points;
             gp_vec_t local_line_points;
 
@@ -897,8 +830,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
             cout << "\tpart #" << pi << "vertices [" << start_vertex << " ... " << end_vertex << "]" << endl;
 #endif
 
-            for (int vi = start_vertex; vi <= end_vertex; vi++)
-            {
+            for (int vi = start_vertex; vi <= end_vertex; vi++) {
                 // Assume at this point that the original
                 // projection/coordinate system is WGS84
 
@@ -912,8 +844,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
 
                 // national coordinate system
 
-                try
-                {
+                try {
                     // look the grid point up from the file's coordinate system
                     cs_2D->reverse_lookup(coord, gp);
 
@@ -929,12 +860,10 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                     // if it's within bounds, add it
                     // line_points.insert(gp);
                     line_points.push_back(gp);
-                } catch (std::out_of_range &e)
-                {
+                } catch (std::out_of_range &e) {
                     // not within bounds.
 
-                    if (!line_points.empty())
-                    {
+                    if (!line_points.empty()) {
                         // dropped out of the grid in the middle of a segment, eh?
                         // Draw what we got and clear the line
                         draw_line_in_grid_2D(data_2D, line_points, shapevar_2D);
@@ -948,8 +877,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
 
                 // local coordinate system
 
-                try
-                {
+                try {
                     // look the grid point up from the file's coordinate system
 
                     local_cs_2D->reverse_lookup(coord, local_gp);
@@ -965,12 +893,10 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                     // if it's within bounds, add it
                     // line_points.insert(gp);
                     local_line_points.push_back(local_gp);
-                } catch (std::out_of_range &e)
-                {
+                } catch (std::out_of_range &e) {
                     // not within bounds.
 
-                    if (!local_line_points.empty())
-                    {
+                    if (!local_line_points.empty()) {
                         // dropped out of the grid in the middle of a segment, eh?
                         // Draw what we got and clear the line
                         draw_line_in_grid_2D(local_data_2D, local_line_points, local_shapevar_2D);
@@ -983,8 +909,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
                 }
             }
 
-            if (!line_points.empty())
-            {
+            if (!line_points.empty()) {
                 draw_line_in_grid_2D(data_2D, line_points, shapevar_2D);
 #if DEBUG
                 shapevar_2D.putVar(&data_2D[0][0]);
@@ -993,8 +918,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
 
             // Draw the line ...
 
-            if (!local_line_points.empty())
-            {
+            if (!local_line_points.empty()) {
                 draw_line_in_grid_2D(local_data_2D, local_line_points, local_shapevar_2D);
 #if DEBUG
                 local_shapevar_2D.putVar(&local_data_2D[0][0]);
@@ -1011,12 +935,9 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
     static double data_3D[NZ][NATIONAL_NY][NATIONAL_NX];
     initialize_array(data_3D, z_fillValue);
 
-    for (size_t iy = 0; iy < NATIONAL_NY; iy++)
-    {
-        for (size_t ix = 0; ix < NATIONAL_NY; ix++)
-        {
-            if (data_2D[iy][ix] != z_fillValue)
-            {
+    for (size_t iy = 0; iy < NATIONAL_NY; iy++) {
+        for (size_t ix = 0; ix < NATIONAL_NY; ix++) {
+            if (data_2D[iy][ix] != z_fillValue) {
                 // 3D data set
                 //fill_topography_data_at(data_3D, ix, iy, data_2D[iy][ix]);
                 mark_topography_data_at(data_3D, ix, iy, data_2D[iy][ix]);
@@ -1029,12 +950,9 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
     static double local_data_3D[NZ][LOCAL_NY][LOCAL_NX];
     initialize_array(local_data_3D, z_fillValue);
 
-    for (size_t iy = 0; iy < LOCAL_NY; iy++)
-    {
-        for (size_t ix = 0; ix < LOCAL_NY; ix++)
-        {
-            if (local_data_2D[iy][ix] != z_fillValue)
-            {
+    for (size_t iy = 0; iy < LOCAL_NY; iy++) {
+        for (size_t ix = 0; ix < LOCAL_NY; ix++) {
+            if (local_data_2D[iy][ix] != z_fillValue) {
                 // 3D data set
                 //fill_topography_data_at(local_data_3D, ix, iy, local_data_2D[iy][ix]);
                 mark_topography_data_at(local_data_3D, ix, iy, local_data_2D[iy][ix] + 500.0);
@@ -1051,8 +969,7 @@ void add_shapefile_data(NcFile &mapfile, const char *shapefile, const char *vari
     local_shapevar_3D.putVar(&local_data_3D[0][0][0]);
 }
 
-void do_it()
-{
+void do_it() {
     // home
     const char *topo_file = "/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-georef-1km-germany-2d-v01b.nc";
     const char *river_shapefile = "/Users/simon/Projects/Meteo/Ertel/data/maps/www.naturalearthdata.com/ne_10m_rivers_lake_centerlines/ne_10m_rivers_lake_centerlines.shp";
@@ -1065,8 +982,7 @@ void do_it()
 
     cout << "Reading topography data ... ";
     NcFile topography_file(topo_file, NcFile::read);
-    if (topography_file.isNull())
-    {
+    if (topography_file.isNull()) {
         cerr << "ERROR: could not read topography file " << topo_file << endl;
         return;
     }
@@ -1074,7 +990,8 @@ void do_it()
     cout << "done." << endl;
 
     cout << "Creating mapfile ...";
-    NcFile mapfile("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc", NcFile::replace, NcFile::classic);
+    NcFile mapfile("/Users/simon/Projects/Meteo/Ertel/data/maps/mapstuff/oase-mapdata.nc", NcFile::replace,
+                   NcFile::classic);
     mapfile.putAtt("conventions", "CF-1.6");
     mapfile.putAtt("authors", "Jürgen Simon, Malte Diederich");
     mapfile.putAtt("created", "Oct 5th 2013 18:25:00 CET");
@@ -1101,19 +1018,22 @@ void do_it()
     cout << ") done." << endl;
 }
 
-/**
- *
- *
- */
-int main(int argc, char** argv)
-{
-    try
-    {
+int main(int argc, char **argv) {
+    try {
         do_it();
-    } catch (std::exception &e)
-    {
+    } catch (std::exception &e) {
         cerr << "ERROR:" << e.what() << endl;
     }
 
     return 0;
 };
+
+#else
+
+#include <iostream>
+int main(int argc, char **argv) {
+    std::cerr << "Component disabled due to missing shapelib" << std::endl;
+    return 0;
+};
+
+#endif

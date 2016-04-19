@@ -120,9 +120,11 @@ int main(int argc, char **argv) {
     // Get the command line content
     Verbosity verbosity;
     try {
-        utils::get_standard_options(vm,desc,verbosity);
+        utils::get_standard_options(argc,vm,desc,verbosity);
         get_detection_parameters(vm,detection_params);
+        #if WITH_VTK
         utils::set_vtk_dimensions_from_args<FS_TYPE>(vm, detection_params.dimensions);
+        #endif
         detection_params.verbosity = verbosity;
         if (detection_params.inline_tracking) {
             get_tracking_parameters<FS_TYPE>(vm,tracking_params,true);

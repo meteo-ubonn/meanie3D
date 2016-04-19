@@ -102,20 +102,21 @@ namespace m3D {
          * @param verbosity
          */
         void
-        get_standard_options(const program_options::variables_map &vm,
+        get_standard_options(const int &argc,
+                             const program_options::variables_map &vm,
                              const program_options::options_description &desc,
                              Verbosity &verbosity) 
         {
+            // --help
+            if (vm.count("help") == 1 || argc < 2) {
+                cout << desc << "\n";
+                exit(EXIT_FAILURE);
+            }
+
             // --version
             if (vm.count("version") == 1) {
                 cout << ::m3D::VERSION << endl;
                 exit(EXIT_SUCCESS);
-            }
-
-            // --help
-            if (vm.count("help") == 1 || vm.size() < 2) {
-                cout << desc << "\n";
-                exit(EXIT_FAILURE);
             }
 
             // --verbosity
@@ -141,6 +142,7 @@ namespace m3D {
         set_vtk_dimensions_from_args(const program_options::variables_map &vm,
                 const std::vector<std::string> &dimensions) 
         {
+            #if WITH_VTK
             // --vtk-dimensions
             if (vm.count("vtk-dimensions") > 0) {
                 vector<std::string> vtk_dimensions = parse_string_vector(vm,"vtk-dimensions");
@@ -162,6 +164,7 @@ namespace m3D {
                 }
                 VisitUtils<T>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
             }
+            #endif
         }
     }
 }
