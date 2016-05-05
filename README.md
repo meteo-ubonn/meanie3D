@@ -26,7 +26,7 @@ Meanie3D comes under [[MIT license]].
 
 ## Version
 
-The current version is "v1.5.4":http://git.meteo.uni-bonn.de/versions/26
+The latest stable version is v1.6.0. Versions are tagged.  
 
 ## Build Instructions
 
