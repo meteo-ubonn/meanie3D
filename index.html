@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Meanie3d : meanie3D: mean-shift clustering in NetCDF data sets">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Meanie3d</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/meteo-ubonn/meanie3D">View on GitHub</a>
+
+          <h1 id="project_title">Meanie3d</h1>
+          <h2 id="project_tagline">meanie3D: mean-shift clustering in NetCDF data sets</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/meteo-ubonn/meanie3D/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/meteo-ubonn/meanie3D/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a id="meanie3d" class="anchor" href="#meanie3d" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>meanie3D</h1>
+
+<p>[//]: # {#mainpage}</p>
+
+<p>This project provides a very generic implementation of mean-shift clustering on NetCDF data sets. 
+The data sets need to follow the "CF-Metadata":<a href="http://cfconventions.org">http://cfconventions.org</a>. The mean-shift algorithm 
+is a robust unsupervised clustering algorithm with a wide range of applications. Meanie3D provides 
+a multivariate implementation with no limits as to the number of variables that can be used in 
+constructing the Featurespace. </p>
+
+<p>This software supports 2D as well as 3D data sets and comes with many configuration options. The code 
+was written as part of my efforts within "OASE HErZ group":<a href="http://www.herz-tb1.uni-bonn.de">http://www.herz-tb1.uni-bonn.de</a> and contains 
+some modules that are specific to this application as a result. If interest is there I might remove all 
+specific components at one point. Meanie3D is implemented largely as a C++ template library with only a 
+few object files (mostly from the numerical recipes library) for performance reason and uses OpenMP for 
+parallelisation. </p>
+
+<p>The software package comes with a single command in the form of a python script 'meanie3D' which makes 
+it very easy to use. The detection, tracking and post-processing steps (such as statistics, visualisation 
+of tracks, source data and clusters as well as the track graph (a simple, graphical representation of 
+a tracking dictionary for obtaining detailed view on the history of individual clusters and tracks) are 
+all controlled through a single configuration file. </p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>License</h2>
+
+<p>Meanie3D comes under [[MIT license]]. </p>
+
+<h2>
+<a id="version" class="anchor" href="#version" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Version</h2>
+
+<p>The latest stable version is v1.6.0. Versions are tagged.  </p>
+
+<h2>
+<a id="build-instructions" class="anchor" href="#build-instructions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Build Instructions</h2>
+
+<h3>
+<a id="dependencies" class="anchor" href="#dependencies" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Dependencies</h3>
+
+<p>Meanie3D comes with a number of dependencies that need to be installed prior to attempting installation:</p>
+
+<ul>
+<li>Boost 1.56 or better (<a href="http://www.boost.org">http://www.boost.org</a>)</li>
+<li>FLANN 1.8.0 or better (<a href="http://www.cs.ubc.ca/research/flann/">http://www.cs.ubc.ca/research/flann/</a>)</li>
+<li>Blitz++ (<a href="http://sourceforge.net/projects/blitz/">http://sourceforge.net/projects/blitz/</a>)</li>
+<li>shapelib v1.3+ (<a href="http://shapelib.maptools.org">http://shapelib.maptools.org</a>)</li>
+<li>NetCDF 4.2 or better (<a href="http://www.unidata.ucar.edu/software/netcdf/">http://www.unidata.ucar.edu/software/netcdf/</a>) <em>including</em> the netcdf4-C++ API</li>
+<li>HDF5 (<a href="http://www.hdfgroup.org/HDF5/">http://www.hdfgroup.org/HDF5/</a>)</li>
+<li>Python 2.5 or better (<a href="https://www.python.org">https://www.python.org</a>)</li>
+<li>numpy (try running <a href="https://github.com/pip" class="user-mention">@pip</a> install numpy@ or download and install from <a href="http://www.numpy.org">http://www.numpy.org</a>)</li>
+<li>NetCDF4-python (try running <a href="https://github.com/pip" class="user-mention">@pip</a> install netCDF4@ or download and install from <a href="http://unidata.github.io/netcdf4-python">http://unidata.github.io/netcdf4-python</a>)</li>
+</ul>
+
+<p>Optionally, the following libraries may be used, if they are switched on with the appropriate flags:</p>
+
+<ul>
+<li>Intel's Thread Building Blocks (-DWITH_TBB=1) version 4.3 (<a href="https://www.threadingbuildingblocks.org">https://www.threadingbuildingblocks.org</a>). This is mutually exclusive with OpenMP (-DWITH_OPENMP=1). </li>
+<li>VTK 6.0 or better (<a href="http://www.vtk.org/VTK/resources/software.html">http://www.vtk.org/VTK/resources/software.html</a>)</li>
+<li>OpenCV 2.4.x or better (<a href="http://opencv.org/downloads.html">http://opencv.org/downloads.html</a>)</li>
+</ul>
+
+<h3>
+<a id="compiler-prerequisites" class="anchor" href="#compiler-prerequisites" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Compiler Prerequisites</h3>
+
+<p>Meanie3D uses OpenMP by default (-DWITH_OPENMP=1) and requires an OpenMP enabled compiler, such as:</p>
+
+<ul>
+<li>GNU 4.3 or better (Linux, Mac)</li>
+<li>OpenMP/LLVM (Mac) - a clang implementation supporting OpenMP (<a href="http://clang-omp.github.io">http://clang-omp.github.io</a>). Install this 
+compiler for optimal results on OSX. You can disable the OpenMP implementation adding the 
+flags -DWITH_OPENMP=0 to your cmake call.</li>
+</ul>
+
+<h3>
+<a id="obtain-and-compile-meanie3d" class="anchor" href="#obtain-and-compile-meanie3d" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Obtain and compile Meanie3D</h3>
+
+<p>Meanie3D uses CMAKE to generate makefiles. You can use CMAKE's abilities to generate IDE files if you prefer. Start 
+by cloning the master branch (for an up-to date but possibly unstable version) or one of the stable releases.</p>
+
+<pre>
+git clone https://github.com/meteo-ubonn/meanie3D.git
+cd meanie3D
+git submodule init
+git submodule update radolan
+</pre>
+
+<p>If you want to download the OASE topology and mapdata file for visualisation, you can obtain this file by adding:</p>
+
+<pre>
+git clone http://git.meteo.uni-bonn.de/git/oase-mapdata
+</pre>
+
+<p>Create a build directory:</p>
+
+<pre>
+cd ..
+mkdir meanie3D-make
+cd meanie3D-make
+cmake ../meanie3D
+</pre>
+
+<p>In order to switch optimizations on, tell cmake to use the release build type:</p>
+
+<pre>
+cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
+</pre>
+
+<p>Note that there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. 
+You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected 
+problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build 
+(leave the -DCMAKE_BUILD_TYPE=Release).  Once all dependencies are successfully resolved, install the product by 
+calling the following: </p>
+
+<pre>
+make install
+</pre>
+
+<p>There are a number of flags you can use to customize your installation:</p>
+
+<h3>
+<a id="vtk-visualization-code" class="anchor" href="#vtk-visualization-code" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>VTK/ visualization code</h3>
+
+<p>Because of the heavyweight of the VTK package, the visualization code is disabled by default. If you have VTK6 
+installed, you can enable visualizations by adding the following flag to your cmake call:</p>
+
+<pre>
+-D WITH_VTK=YES
+</pre>
+
+<p>This will result in some binaries and command line options for visualization to become available to you. </p>
+
+<h3>
+<a id="add-tests" class="anchor" href="#add-tests" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Add tests</h3>
+
+<p>Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will 
+become important to you if you should decide to work on the core algorithms yourself. The tests are a good 
+method of making sure you haven't broken anything critical. In order to enable unit tests, use the flag:</p>
+
+<pre>
+-D WITH_TESTS=YES
+</pre>
+
+<p>The unit tests can then be run by calling</p>
+
+<pre>
+make test
+</pre>
+
+<h3>
+<a id="source-code-level-documentation" class="anchor" href="#source-code-level-documentation" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Source code level documentation</h3>
+
+<p>In order to start developing your own Meanie3D code, it might be useful to have API documentation of the 
+various classes in the project. If you have doxygen installed, you can call the following make command to 
+create a browsable HTML documentation in doc/html (open the file index.html). </p>
+
+<pre>
+make docs
+</pre>
+
+<h2>
+<a id="frequently-asked-quesions" class="anchor" href="#frequently-asked-quesions" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Frequently Asked Quesions</h2>
+
+<h3>
+<a id="im-having-trouble-compiling-the-code" class="anchor" href="#im-having-trouble-compiling-the-code" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>I'm having trouble compiling the code</h3>
+
+<p>The code has been tested on MacOS X and Suse Linux. Feel free to report problems using the 
+"New Issue":<a href="http://git.meteo.uni-bonn.de/projects/meanie3d/issues/new">http://git.meteo.uni-bonn.de/projects/meanie3d/issues/new</a> link above. Please 
+prepend "[BUILD PROBLEM]:" to your subject line. </p>
+
+<h3>
+<a id="netcdfhdf5-trouble" class="anchor" href="#netcdfhdf5-trouble" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>NetCDF/HDF5 trouble</h3>
+
+<p>Versions - make sure the NetCDF version is 4.2 or better. Also make certain that you have a HDF5 
+installation to match it. If you want to make sure, uninstall HDF5 and NetCDF and re-install them 
+from source (HDF5 first, then NetCDF) Commonly there is a problem with the NetCDF C++ API - NetCDF 
+has a legacy C++ API from NetCDF3, which does not work with Meanie3D. Make sure you have the correct 
+one installed (<a href="http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-cxx4-4.2.tar.gz">http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-cxx4-4.2.tar.gz</a>) </p>
+
+<h3>
+<a id="cmake-does-not-find-your-installed-packages" class="anchor" href="#cmake-does-not-find-your-installed-packages" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>CMAKE does not find your installed packages</h3>
+
+<p>If cmake has trouble locating packages you installed, check the files in the cmake_modules directory 
+and adjust the search paths there instead of hardwiring paths into the CMakeLists.txt. If your system 
+layout is not considered and you have to make adjustments to the search paths, please send a copy of 
+your Find.cmake file to <a href="mailto:juergen.simon@uni-bonn.de">juergen.simon@uni-bonn.de</a> so I can include your changes in the next release 
+and maybe save someone else the trouble.</p>
+
+<h2>
+<a id="more-information" class="anchor" href="#more-information" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>More information</h2>
+
+<p>Check out the Main Wiki Page at <a href="http://git.meteo.uni-bonn.de/projects/meanie3d/wiki">http://git.meteo.uni-bonn.de/projects/meanie3d/wiki</a> for details on how the 
+method works, file formats and what the individual binaries do. </p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Meanie3d maintained by <a href="https://github.com/meteo-ubonn">meteo-ubonn</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
