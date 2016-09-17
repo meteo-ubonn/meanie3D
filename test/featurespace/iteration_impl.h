@@ -2,13 +2,12 @@
 #define M3D_TEST_FS_ITERATION_IMPL_H
 
 template<class T>
-void FSIterationTest2D<T>::write_cloud(const NcVar &variable)
-{
+void FSIterationTest2D<T>::write_cloud(const NcVar &variable) {
     using namespace m3D;
     using m3D::utils::box_muller;
 
     // allocate a cursor
-    vector<size_t> cursor(this->coordinate_system()->rank(), 0);
+    vector <size_t> cursor(this->coordinate_system()->rank(), 0);
 
     // start generating random points (with random values between 0 and 1)
     size_t numPoints = 0;
@@ -25,7 +24,7 @@ void FSIterationTest2D<T>::write_cloud(const NcVar &variable)
                 float min, max;
                 var.getAtt("valid_min").getValues(&min);
                 var.getAtt("valid_max").getValues(&max);
-                long n = (long) round((dim.getSize() - 1)*(rand - min) / (max - min));
+                long n = (long) round((dim.getSize() - 1) * (rand - min) / (max - min));
                 if (n >= 0 && n < dim.getSize()) {
                     cursor[d] = n;
                     valid = true;
@@ -50,8 +49,7 @@ void FSIterationTest2D<T>::write_cloud(const NcVar &variable)
 }
 
 template<class T>
-void FSIterationTest2D<T>::SetUp()
-{
+void FSIterationTest2D<T>::SetUp() {
     FSTestBase<T>::SetUp();
 
     // Generate dimensions and dimension variables according to
@@ -66,8 +64,7 @@ void FSIterationTest2D<T>::SetUp()
 }
 
 template<class T>
-void FSIterationTest2D<T>::TearDown()
-{
+void FSIterationTest2D<T>::TearDown() {
     delete m_mean;
     delete m_center;
     delete m_deviation;
@@ -78,8 +75,7 @@ void FSIterationTest2D<T>::TearDown()
 #pragma mark Test parameterization
 
 template<class T>
-FSIterationTest2D<T>::FSIterationTest2D() : m_center(NULL), m_mean(NULL), m_deviation(NULL), m_cloudSize(5000)
-{
+FSIterationTest2D<T>::FSIterationTest2D() : m_center(NULL), m_mean(NULL), m_deviation(NULL), m_cloudSize(5000) {
     this->m_settings = new FSTestSettings(2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
     this->m_mean = new vector<T>(3, 0.0);
     this->m_deviation = new vector<T>(3, 0.25);
@@ -91,7 +87,7 @@ FSIterationTest2D<T>::FSIterationTest2D() : m_center(NULL), m_mean(NULL), m_devi
     for (int i = 1; i <= 5; i++) {
         T radius = 0.25 + static_cast<float> (i) * 0.1;
         // increasing bandwidth
-        vector<T> h(bw_size, radius);
+        vector <T> h(bw_size, radius);
         h[h.size() - 1] = 2 * FS_VALUE_MAX;
         this->m_bandwidths.push_back(h);
 
@@ -99,22 +95,21 @@ FSIterationTest2D<T>::FSIterationTest2D() : m_center(NULL), m_mean(NULL), m_devi
         // parameter. The further outward the less dense the points 
         // in the cloud, so I associate larger bandwidths with 
         // points lying out more
-        vector<T> origin(bw_size);
-        vector<T> coord(2);
+        vector <T> origin(bw_size);
+        vector <T> coord(2);
 
         // spiral outwards
         float alpha = static_cast<float> (i) * 2.0 * M_PI / 5.0;
         coord[0] = origin[0] = radius * cos(alpha);
         coord[1] = origin[1] = radius * sin(alpha);
         origin[2] = FS_VALUE_MAX * box_muller(0, 1);
-        Point<T> point(coord, origin);
+        Point <T> point(coord, origin);
         this->m_origins.push_back(point);
     }
 }
 
 template<class T>
-FSIterationTest3D<T>::FSIterationTest3D()
-{
+FSIterationTest3D<T>::FSIterationTest3D() {
     // The superconstructor already put some stuff
     // up, so get rid of it.
     // TODO: perhaps move this shit into SetUp() ?
@@ -134,21 +129,21 @@ FSIterationTest3D<T>::FSIterationTest3D()
     for (int i = 1; i <= 5; i++) {
         float radius = static_cast<float> (i) * 0.2;
         // increasing bandwidth
-        vector<T> h(bw_size, radius);
+        vector <T> h(bw_size, radius);
         this->m_bandwidths.push_back(h);
         // random starting points in relation to the bandwidth 
         // parameter. The further outward the less dense the points 
         // in the cloud, so I associate larger bandwidths with 
         // points lying out more
-        vector<T> origin(bw_size, 0.0);
-        vector<T> coord(2);
+        vector <T> origin(bw_size, 0.0);
+        vector <T> coord(2);
         float theta = static_cast<float> (i) * M_2_PI / 5.0;
         float phi = static_cast<float> (i) * M_PI_2 / 5.0;
         coord[0] = origin[0] = radius * cos(phi) * sin(theta);
         coord[1] = origin[1] = radius * sin(phi) * sin(theta);
         coord[2] = origin[2] = radius * cos(phi);
         origin[3] = FS_VALUE_MAX * box_muller(0, 1);
-        Point<T> point(coord, origin);
+        Point <T> point(coord, origin);
         this->m_origins.push_back(point);
     }
 }

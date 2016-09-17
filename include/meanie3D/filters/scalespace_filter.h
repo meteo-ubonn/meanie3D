@@ -34,13 +34,13 @@
 
 namespace m3D {
 
-    template <class T>
+    template<class T>
     class ArrayIndex;
 
     /** Smoothes the data with a scale-space filter. This filter does NOT create
      * new points. Only the existing points are smoothed out.
      */
-    template <typename T>
+    template<typename T>
     class ScaleSpaceFilter : public FeatureSpaceFilter<T>
     {
     private:
@@ -60,17 +60,17 @@ namespace m3D {
 
         void
         applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
-                ArrayIndex<T> *originalIndex,
-                ArrayIndex<T> *filteredPoints,
-                vector<size_t> &dimensionIndexes,
-                size_t dimensionIndex,
-                typename CoordinateSystem<T>::GridPoint& gridpoint);
+                                     ArrayIndex<T> *originalIndex,
+                                     ArrayIndex<T> *filteredPoints,
+                                     vector<size_t> &dimensionIndexes,
+                                     size_t dimensionIndex,
+                                     typename CoordinateSystem<T>::GridPoint &gridpoint);
 
         void
         applyWithArrayIndexForDimension(FeatureSpace<T> *fs,
-                ArrayIndex<T> *originalIndex,
-                ArrayIndex<T> *filteredPoints,
-                size_t fixedDimensionIndex);
+                                        ArrayIndex<T> *originalIndex,
+                                        ArrayIndex<T> *filteredPoints,
+                                        size_t fixedDimensionIndex);
 
         void
         applyWithArrayIndex(FeatureSpace<T> *fs);
@@ -80,9 +80,9 @@ namespace m3D {
 
         void
         apply_parallellized_on_dimension(FeatureSpace<T> *fs,
-                ArrayIndex<T> *originalIndex,
-                ArrayIndex<T> *filteredPoints,
-                size_t fixedDimensionIndex);
+                                         ArrayIndex<T> *originalIndex,
+                                         ArrayIndex<T> *filteredPoints,
+                                         size_t fixedDimensionIndex);
 
         void
         apply_parallellized(FeatureSpace<T> *fs);
@@ -100,10 +100,10 @@ namespace m3D {
          * @throws logic_error if scale < 0 or decay < 0 or > 1.
          */
         ScaleSpaceFilter(const T scale,
-                const vector<T> &resolution,
-                const vector<string> &exclude_from_scale_space_filtering,
-                const T decay = 0.01,
-                const bool show_progress = false);
+                         const vector<T> &resolution,
+                         const vector<string> &exclude_from_scale_space_filtering,
+                         const T decay = 0.01,
+                         const bool show_progress = false);
 
         /** Destructor
          */
@@ -158,7 +158,7 @@ namespace m3D {
          * @param decay (defaults to 1%)
          * @return the truncated filter's width.
          */
-        static T scale_to_filter_width(T scale, T decay=0.01);
+        static T scale_to_filter_width(T scale, T decay = 0.01);
 
         /**
          * Calculates the effective scale given a specific filter
@@ -167,7 +167,7 @@ namespace m3D {
          * @param decay (defaults to 1%)
          * @return the equivalent scale parameter
          */
-        static T filter_width_to_scale(T width, T decay=0.01);
+        static T filter_width_to_scale(T width, T decay = 0.01);
 
     };
 }

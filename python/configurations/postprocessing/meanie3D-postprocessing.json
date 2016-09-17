@@ -1,141 +1,153 @@
 {
-  "description":"Processing file for RADOLAN 20dBZ runs without using displacement vectors.",
-  "data":{
-    "variables":["RX"],
-    "lowerThreshold":[20],
-    "upperThreshold":[75],
-    "replacementValues" : null,
-    "dimensions":["y","x"],
-    "vtkDimensions":["x","y"]
+  "description": "Processing file for RADOLAN 20dBZ runs without using displacement vectors.",
+  "data": {
+    "variables": [
+      "RX"
+    ],
+    "lowerThreshold": [
+      20
+    ],
+    "upperThreshold": [
+      75
+    ],
+    "replacementValues": null,
+    "dimensions": [
+      "y",
+      "x"
+    ],
+    "vtkDimensions": [
+      "x",
+      "y"
+    ]
   },
-  "detection":{
-    "meanie3D-detect":"--verbosity 1 --weight-function default --wwf-lower-threshold 0 -m 15",
+  "detection": {
+    "meanie3D-detect": "--verbosity 1 --weight-function default --wwf-lower-threshold 0 -m 15",
     "useCIScore": false,
-    "usePrevious":true
+    "usePrevious": true
   },
-  "tracking":{
-    "histogramVariable" : "RX",
-    "histogramWeight" : 0,
-    "positionWeight" : 1,
-    "sizeWeight" : 0,
-    "useDisplacementVectors" : false,
-    "maxSpeed" : null,
-    "maxTime" : null,
-    "meanie3D-track":"--verbosity 3"
+  "tracking": {
+    "histogramVariable": "RX",
+    "histogramWeight": 0,
+    "positionWeight": 1,
+    "sizeWeight": 0,
+    "useDisplacementVectors": false,
+    "maxSpeed": null,
+    "maxTime": null,
+    "meanie3D-track": "--verbosity 3"
   },
-  "postprocessing":{
-    "tracks":{
-      "dictionary":true,
-      "gnuplot":true,
-      "length":true,
-      "length_classes":null,
-      "speed":true,
-      "speed_classes":null,
-      "direction":true,
-      "direction_classes":null,
-      "size":true,
-      "size_classes":null,
-      "cumulated":false,
-      "cumulated_classes":null,
-      "vtk_tracks":true,
-      "vtk_dimensions":"x,y",
-      "plot_stats":true,
-      "visualise_tracks":true,
-      "scale_comparison":true,
-      "debugVisitScript":true,
-      "visit":{
-        "view":{
-          "windowCoords":[
+  "postprocessing": {
+    "tracks": {
+      "dictionary": true,
+      "gnuplot": true,
+      "length": true,
+      "length_classes": null,
+      "speed": true,
+      "speed_classes": null,
+      "direction": true,
+      "direction_classes": null,
+      "size": true,
+      "size_classes": null,
+      "cumulated": false,
+      "cumulated_classes": null,
+      "vtk_tracks": true,
+      "vtk_dimensions": "x,y",
+      "plot_stats": true,
+      "visualise_tracks": true,
+      "scale_comparison": true,
+      "debugVisitScript": true,
+      "visit": {
+        "view": {
+          "windowCoords": [
             -523.962,
             376.038,
             -4659.15,
             -3759.15
           ],
-          "viewportCoords":[
+          "viewportCoords": [
             0.2,
             0.95,
             0.15,
             0.95
           ]
         },
-        "showBackgroundGradient":false,
-        "map":{
-          "mapDataFile":"$MEANIE3D_HOME/oase-mapdata/oase-mapdata.nc",
-          "variables":[
+        "showBackgroundGradient": false,
+        "map": {
+          "mapDataFile": "$MEANIE3D_HOME/oase-mapdata/oase-mapdata.nc",
+          "variables": [
             "as_zonal/national_boundaries_2D",
             "as_zonal/national_rivers_2D"
           ],
-          "min":[
+          "min": [
             0,
             0
           ],
-          "max":[
+          "max": [
             1,
             1
           ],
-          "colorTableName":[
+          "colorTableName": [
             "Greys",
             "hot"
           ],
-          "invertColorTable":[
+          "invertColorTable": [
             0,
             1
           ],
-          "opacity":[
+          "opacity": [
             1,
             1
           ]
         },
-        "track":{
-          "variable":"track_step",
-          "pointSizePixels":5,
-          "minFlag":1,
-          "maxFlag":1,
-          "min":0,
-          "max":50,
-          "legendFlag":1,
-          "colorTableName":"hot_desaturated",
-          "invertColorTable":0,
-          "opacity":1
+        "track": {
+          "variable": "track_step",
+          "pointSizePixels": 5,
+          "minFlag": 1,
+          "maxFlag": 1,
+          "min": 0,
+          "max": 50,
+          "legendFlag": 1,
+          "colorTableName": "hot_desaturated",
+          "invertColorTable": 0,
+          "opacity": 1
         }
       }
     },
-    "clusters":{
-      "meanie3D-cfm2vtk":"-t cluster -v RX --vtk-dimensions x,y",
-      "visit":{
-        "min":[
+    "clusters": {
+      "meanie3D-cfm2vtk": "-t cluster -v RX --vtk-dimensions x,y",
+      "visit": {
+        "min": [
           0
         ],
-        "max":[
+        "max": [
           75
         ],
-        "minFlag":[
+        "minFlag": [
           1
         ],
-        "maxFlag":[
+        "maxFlag": [
           1
         ],
-        "colorTableName":[
+        "colorTableName": [
           "hot_desaturated"
         ],
-        "invertColorTable":[
+        "invertColorTable": [
           0
         ],
-        "opacity":[
+        "opacity": [
           1.0
         ],
-        "showBackgroundGradient":false,
-        "with_source_backround":false,
-        "with_datetime":true
+        "showBackgroundGradient": false,
+        "with_source_backround": false,
+        "with_datetime": true
       },
-      "removeImagesFolder":true,
-      "create_source_movie":true,
-      "create_clusters_movie":true,
-      "movie_formats":[
+      "removeImagesFolder": true,
+      "create_source_movie": true,
+      "create_clusters_movie": true,
+      "movie_formats": [
         "gif",
         "m4v"
       ],
-      "movie_convert_params":[
+      "movie_convert_params": [
         "",
         ""
       ]

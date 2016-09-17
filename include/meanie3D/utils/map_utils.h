@@ -45,9 +45,8 @@ namespace std {
 
     // Convenience operator << for printing maps out to streams
 
-    template <typename K, typename T>
-    std::ostream& operator<<(std::ostream& os, const map<K, T>& v)
-    {
+    template<typename K, typename T>
+    std::ostream &operator<<(std::ostream &os, const map<K, T> &v) {
         //        size_t count = 0;
         //        os << "(";
         //        for (typename vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii)
@@ -71,8 +70,7 @@ namespace m3D {
         namespace maps {
 
             std::string
-            id_map_to_string(const id_map_t &m)
-            {
+            id_map_to_string(const id_map_t &m) {
                 using namespace ::m3D::utils::sets;
                 stringstream str(stringstream::in | stringstream::out);
 
@@ -93,8 +91,7 @@ namespace m3D {
             }
 
             id_map_t
-            id_map_from_string(const std::string &const_str)
-            {
+            id_map_from_string(const std::string &const_str) {
                 id_map_t result;
 
                 string str = const_str;

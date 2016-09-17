@@ -33,36 +33,29 @@
 
 namespace m3D {
 
-    template <typename T>
-    ConvectionFilter<T>::ConvectionFilter(const vector<T> &bandwidth,
-            const size_t index_of_z,
-            const bool show_progress,
-            const T z_convective,
-            const T critical_delta_z,
-            const T convective_radius_factor,
-            const bool erase_non_convective)
-    : FeatureSpaceFilter<T>(show_progress)
-    , m_bandwidth(bandwidth)
-    , m_index_of_z(index_of_z)
-    , m_convective_threshold(z_convective)
-    , m_critical_delta_z(critical_delta_z)
-    , m_convective_radius_factor(convective_radius_factor)
-    , m_erase_non_convective(erase_non_convective)
-    {
+    template<typename T>
+    ConvectionFilter<T>::ConvectionFilter(const vector <T> &bandwidth,
+                                          const size_t index_of_z,
+                                          const bool show_progress,
+                                          const T z_convective,
+                                          const T critical_delta_z,
+                                          const T convective_radius_factor,
+                                          const bool erase_non_convective)
+            : FeatureSpaceFilter<T>(show_progress), m_bandwidth(bandwidth), m_index_of_z(index_of_z),
+              m_convective_threshold(z_convective), m_critical_delta_z(critical_delta_z),
+              m_convective_radius_factor(convective_radius_factor), m_erase_non_convective(erase_non_convective) {
     }
 
-    template <typename T>
-    ConvectionFilter<T>::~ConvectionFilter()
-    {
+    template<typename T>
+    ConvectionFilter<T>::~ConvectionFilter() {
     }
 
 #pragma mark -
 #pragma mark Abstract filter method
 
-    template <typename T>
+    template<typename T>
     void
-    ConvectionFilter<T>::apply(FeatureSpace<T> *fs)
-    {
+    ConvectionFilter<T>::apply(FeatureSpace <T> *fs) {
         using namespace std;
         using namespace m3D::utils::vectors;
 
@@ -88,7 +81,7 @@ namespace m3D {
 
         // convective 'radius'
 
-        RangeSearchParams<T> convective_radius_params(m_convective_radius_factor * m_bandwidth);
+        RangeSearchParams<T> convective_radius_params(m_convective_radius_factor *m_bandwidth);
 
         // Create a field to hold the convection mask
 
@@ -178,8 +171,8 @@ namespace m3D {
         // Now iterate over the feature-space again and set
         // reflectivity to zero for all non-convective points
 
-        vector< Point<T> * > accepted;
-        vector< Point<T> * > erased;
+        vector<Point<T> *> accepted;
+        vector<Point<T> *> erased;
 
         for (size_t k = 0; k < fs->points.size(); k++) {
             if (this->show_progress()) {

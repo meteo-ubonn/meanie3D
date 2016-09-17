@@ -41,21 +41,20 @@ namespace m3D {
      *
      * TODO: consider using boost::shared_ptr for storing the instance pointer
      */
-    template <typename T>
+    template<typename T>
     class PointFactory
     {
     private:
 
         // concrete factory instance
-        static PointFactory<T> * m_instance_ptr;
+        static PointFactory<T> *m_instance_ptr;
 
     public:
 
         /** This method sets the concrete instance of PointFactory to be used.
          * @param pointer to point factory
          */
-        static void set_instance(PointFactory<T> *factory_ptr)
-        {
+        static void set_instance(PointFactory<T> *factory_ptr) {
             m_instance_ptr = factory_ptr;
         };
 
@@ -63,15 +62,14 @@ namespace m3D {
          * is set when this is called, the default is returned.
          * @returns pointer to point factory
          */
-        static PointFactory<T> * get_instance()
-        {
+        static PointFactory<T> *get_instance() {
             return m_instance_ptr;
         };
 
         /** This is an abstract method used to create new instances of Point.
          */
         virtual
-        Point<T> *
+        Point <T> *
         create() = 0;
 
         /** This is an abstract method used to create new instances of Point.
@@ -80,8 +78,8 @@ namespace m3D {
          * @param value
          */
         virtual
-        Point<T> *
-        create(vector<int> &gridpoint, vector<T> &coord, vector<T> &value) = 0;
+        Point <T> *
+        create(vector<int> &gridpoint, vector <T> &coord, vector <T> &value) = 0;
 
         /** This is an abstract method used to create new instances of Point.
          * @param coordinates
@@ -89,8 +87,8 @@ namespace m3D {
          * @deprecated
          */
         virtual
-        Point<T> *
-        create(vector<T> &coord, vector<T> &value) = 0;
+        Point <T> *
+        create(vector <T> &coord, vector <T> &value) = 0;
 
 
         /** Copy 
@@ -98,14 +96,14 @@ namespace m3D {
          * @return copy
          */
         virtual
-        Point<T> *
-        copy(const Point<T> *p) = 0;
+        Point <T> *
+        copy(const Point <T> *p) = 0;
     };
 
     // initialize with default factory
 
-    template <typename T>
-    PointFactory<T>* PointFactory<T>::m_instance_ptr = new PointDefaultFactory<T>();
+    template<typename T>
+    PointFactory<T> *PointFactory<T>::m_instance_ptr = new PointDefaultFactory<T>();
 }
 
 #endif

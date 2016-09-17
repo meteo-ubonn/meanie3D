@@ -22,7 +22,7 @@
  */
 
 #ifndef M3D_COMMANDLINE_H
-#define	M3D_COMMANDLINE_H
+#define    M3D_COMMANDLINE_H
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
@@ -49,13 +49,12 @@ namespace m3D {
          */
         std::vector<std::string>
         parse_string_vector(const program_options::variables_map &vm,
-                const std::string &name) 
-        {
+                            const std::string &name) {
             if (vm.count(name) == 0) {
                 cerr << "FATAL: could not find parameter '" << name << "'" << endl;
                 exit(EXIT_FAILURE);
             }
-            
+
             typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
             std::vector<std::string> result;
             std::string value = vm[name].as<std::string>();
@@ -66,30 +65,30 @@ namespace m3D {
             }
             return result;
         }
-        
+
         /**
          * 
          * @param desc
          */
         void
-        add_standard_options(program_options::options_description &desc, 
-                bool with_vtk_dimensions = true)  {
+        add_standard_options(program_options::options_description &desc,
+                             bool with_vtk_dimensions = true) {
             desc.add_options()
-                ("help,h", "produce help message")
-                ("version", "print version information and exit")
-                ("verbosity", 
-                    program_options::value<unsigned int>()->default_value(1u), 
-                    "Verbosity level [0..3]. (0=silent, 1=normal, 2=show details, 3=show all details)");
-            #if WITH_VTK
-                if (with_vtk_dimensions) {
-                    desc.add_options()
-                        ("vtk-dimensions", 
-                            program_options::value<string>(),
-                            "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)");
-                }
-            #endif
+                    ("help,h", "produce help message")
+                    ("version", "print version information and exit")
+                    ("verbosity",
+                     program_options::value<unsigned int>()->default_value(1u),
+                     "Verbosity level [0..3]. (0=silent, 1=normal, 2=show details, 3=show all details)");
+#if WITH_VTK
+            if (with_vtk_dimensions) {
+                desc.add_options()
+                        ("vtk-dimensions",
+                         program_options::value<string>(),
+                         "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)");
+            }
+#endif
         }
-        
+
         /**
          * Handles some common parameters, like:
          * <ul>
@@ -105,8 +104,7 @@ namespace m3D {
         get_standard_options(const int &argc,
                              const program_options::variables_map &vm,
                              const program_options::options_description &desc,
-                             Verbosity &verbosity) 
-        {
+                             Verbosity &verbosity) {
             // --help
             if (vm.count("help") == 1 || argc < 2) {
                 cout << desc << "\n";
@@ -120,7 +118,8 @@ namespace m3D {
             }
 
             // --verbosity
-            unsigned int vb = vm["verbosity"].as <unsigned int> ();
+            unsigned int vb = vm["verbosity"].as < unsigned
+            int > ();
             if (vb > VerbosityAll) {
                 cerr << "Illegal value for parameter --verbosity. Only values from 0 .. 3 are allowed" << endl;
                 exit(EXIT_FAILURE);
@@ -129,7 +128,7 @@ namespace m3D {
             }
         }
 
-       
+
         /**
          * Checks if --vtk-dimensions is present. If yes, creates and
          * sets a dimension mapping for visit utils.
@@ -137,19 +136,18 @@ namespace m3D {
          * @param vm command line
          * @param dimensions dimension names to map to
          */
-        template <typename T>
+        template<typename T>
         void
         set_vtk_dimensions_from_args(const program_options::variables_map &vm,
-                const std::vector<std::string> &dimensions) 
-        {
-            #if WITH_VTK
+                                     const std::vector<std::string> &dimensions) {
+#if WITH_VTK
             // --vtk-dimensions
             if (vm.count("vtk-dimensions") > 0) {
-                vector<std::string> vtk_dimensions = parse_string_vector(vm,"vtk-dimensions");
+                vector<std::string> vtk_dimensions = parse_string_vector(vm, "vtk-dimensions");
                 vector<size_t> vtk_dimension_indexes;
-                for (size_t i=0; i < vtk_dimensions.size(); i++) {
+                for (size_t i = 0; i < vtk_dimensions.size(); i++) {
                     bool found = false;
-                    for (size_t j=0; j < dimensions.size() && !found; j++) {
+                    for (size_t j = 0; j < dimensions.size() && !found; j++) {
                         if (vtk_dimensions[i] == dimensions[j]) {
                             found = true;
                             vtk_dimension_indexes.push_back(j);
@@ -164,7 +162,7 @@ namespace m3D {
                 }
                 VisitUtils<T>::VTK_DIMENSION_INDEXES = vtk_dimension_indexes;
             }
-            #endif
+#endif
         }
     }
 }

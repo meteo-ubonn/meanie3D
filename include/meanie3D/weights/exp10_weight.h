@@ -40,18 +40,17 @@ namespace m3D {
     using std::vector;
     using std::map;
 
-    template <class T>
+    template<class T>
     class EXP10WeightFunction : public WeightFunction<T>
     {
     private:
 
         vector<string> m_vars; // variables for weighting
-        MultiArray<T> *m_weight;
-        const CoordinateSystem<T> *m_coordinate_system;
+        MultiArray <T> *m_weight;
+        const CoordinateSystem <T> *m_coordinate_system;
 
         void
-        calculate_weight_function(FeatureSpace<T> *fs)
-        {
+        calculate_weight_function(FeatureSpace <T> *fs) {
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
 
@@ -67,17 +66,15 @@ namespace m3D {
          * for valid_min/valid_max
          * @param featurespace
          */
-        EXP10WeightFunction(const detection_params_t<T> &params, 
-                             const detection_context_t<T> &ctx)
-        : m_vars(params.variables)
-        , m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(ctx.coord_system)
-        {
+        EXP10WeightFunction(const detection_params_t <T> &params,
+                            const detection_context_t <T> &ctx)
+                : m_vars(params.variables),
+                  m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0)),
+                  m_coordinate_system(ctx.coord_system) {
             calculate_weight_function(ctx.fs);
         }
 
-        ~EXP10WeightFunction()
-        {
+        ~EXP10WeightFunction() {
             if (m_weight != NULL) {
                 delete m_weight;
                 m_weight = NULL;
@@ -86,8 +83,7 @@ namespace m3D {
 
         /** Actual weight computation happens here
          */
-        T compute_weight(Point<T> *p)
-        {
+        T compute_weight(Point <T> *p) {
             T sum = 0.0;
 
             size_t num_vars = p->values.size() - p->coordinate.size();
@@ -101,8 +97,7 @@ namespace m3D {
             return sum;
         }
 
-        T operator()(const typename Point<T>::ptr p) const
-        {
+        T operator()(const typename Point<T>::ptr p) const {
             return m_weight->get(p->gridpoint);
         }
     };

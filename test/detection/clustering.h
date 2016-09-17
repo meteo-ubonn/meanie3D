@@ -14,7 +14,7 @@
 #pragma mark -
 #pragma mark Test Fixture
 
-template <class T>
+template<class T>
 class FSClusteringTest2D : public FSTestBase<T>
 {
 protected:
@@ -25,7 +25,7 @@ protected:
 
     /** Run the clustering with a set of bandwidths
      */
-    vector< vector<T> > m_bandwidths;
+    vector<vector<T> > m_bandwidths;
 
     /** Run the clustering with a set of bandwidths
      */
@@ -43,7 +43,7 @@ protected:
 
     /** Divider increments in terms of gridpoints 
      */
-    map< NcDim, size_t > m_division_increments;
+    map<NcDim, size_t> m_division_increments;
 
     T m_smoothing_scale;
 
@@ -67,7 +67,7 @@ protected:
      */
     void create_clouds(const NcVar &var);
 
-    void create_clouds_recursive(const NcVar&, size_t, typename CoordinateSystem<T>::GridPoint&);
+    void create_clouds_recursive(const NcVar &, size_t, typename CoordinateSystem<T>::GridPoint &);
 
 public:
 
@@ -79,7 +79,7 @@ public:
 
 };
 
-template <class T>
+template<class T>
 class FSClusteringTest3D : public FSClusteringTest2D<T>
 {
 public:

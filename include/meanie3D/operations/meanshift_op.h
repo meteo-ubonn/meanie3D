@@ -34,7 +34,7 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     class MeanshiftOperation : public Operation<T>
     {
     public:
@@ -42,12 +42,10 @@ namespace m3D {
         //static const int NO_WEIGHT;
 
         MeanshiftOperation(FeatureSpace<T> *fs,
-                PointIndex<T> *index) : Operation<T>(fs, index)
-        {
+                           PointIndex<T> *index) : Operation<T>(fs, index) {
         }
 
-        virtual ~MeanshiftOperation()
-        {
+        virtual ~MeanshiftOperation() {
         }
 
 
@@ -69,10 +67,10 @@ namespace m3D {
          */
         vector<T>
         meanshift(const vector<T> &x,
-                const SearchParameters *params,
-                const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
-                const WeightFunction<T> *w = NULL,
-                const bool normalize_shift = true);
+                  const SearchParameters *params,
+                  const Kernel<T> *kernel = new GaussianNormalKernel<T>(),
+                  const WeightFunction<T> *w = NULL,
+                  const bool normalize_shift = true);
     };
 }
 

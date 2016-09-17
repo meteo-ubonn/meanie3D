@@ -188,7 +188,7 @@ namespace m3D {
 
         if (verbosity >= VerbosityNormal) {
             cout << " done. (Found " << current->clusters.size() << " clusters in " << stop_timer() << " seconds)" <<
-            endl;
+                 endl;
 
             delete progress;
         }

@@ -81,21 +81,20 @@ namespace m3D {
         using namespace std;
 
         /** Global variable maintaining the dimension mapping */
-        template <typename T>
+        template<typename T>
         vector<size_t> VisitUtils<T>::VTK_DIMENSION_INDEXES;
-        
+
         // Macro for safe access
-        #define get_vtk_index(i) VTK_DIMENSION_INDEXES.empty() ? i : VTK_DIMENSION_INDEXES[i]
+#define get_vtk_index(i) VTK_DIMENSION_INDEXES.empty() ? i : VTK_DIMENSION_INDEXES[i]
 
         /* ---------------------------------------------------------------- */
         /* General VTK data structure mapping/handling                      */
         /* ---------------------------------------------------------------- */
 
-        template <typename T>
+        template<typename T>
         void
         VisitUtils<T>::update_vtk_dimension_mapping(vector<string> dim_names,
-                vector<string> vtk_dim_names)
-        {
+                                                    vector<string> vtk_dim_names) {
             // VTK dimension mapping
 
             if (!vtk_dim_names.empty()) {
@@ -116,8 +115,8 @@ namespace m3D {
 
                     if (vi == dim_names.end()) {
                         cerr << "FATAL: --vtk-dimensions - entry "
-                                << vtk_dim_names[i]
-                                << " has no pendant in attribute \
+                             << vtk_dim_names[i]
+                             << " has no pendant in attribute \
                                 'featurespace_dimensions'" << endl;
                         exit(EXIT_FAILURE);
                     }
@@ -133,10 +132,9 @@ namespace m3D {
             }
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::get_vtk_image_dimensions(const CoordinateSystem<T> *cs, int &nx, int &ny, int &nz)
-        {
+        VisitUtils<T>::get_vtk_image_dimensions(const CoordinateSystem <T> *cs, int &nx, int &ny, int &nz) {
             assert(cs->rank() > 0 && cs->rank() <= 3);
             nx = ny = nz = 1;
             if (cs->rank() == 1) {
@@ -151,10 +149,9 @@ namespace m3D {
             }
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::get_vtk_coords(const vector<T>& coords, T &x, T &y, T &z)
-        {
+        VisitUtils<T>::get_vtk_coords(const vector<T> &coords, T &x, T &y, T &z) {
             assert(coords.size() > 0 && coords.size() <= 3);
 
             x = y = z = 0;
@@ -171,10 +168,9 @@ namespace m3D {
             }
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::get_vtk_gridpoint(const vector<int>& gp, int &gx, int &gy, int &gz)
-        {
+        VisitUtils<T>::get_vtk_gridpoint(const vector<int> &gp, int &gx, int &gy, int &gz) {
             assert(gp.size() > 0 && gp.size() <= 3);
 
             gx = gy = gz = 0;
@@ -191,25 +187,23 @@ namespace m3D {
             }
         }
 
-        template <typename T>
+        template<typename T>
         void
-        copy_vtk_coordinate_data(const CoordinateSystem<T> *cs, size_t index, vtkDoubleArray* coords)
-        {
+        copy_vtk_coordinate_data(const CoordinateSystem <T> *cs, size_t index, vtkDoubleArray *coords) {
             NcVar vx = cs->dimension_variables().at(index);
-            const T* dim_data = cs->get_dimension_data_ptr(vx);
+            const T *dim_data = cs->get_dimension_data_ptr(vx);
             NcDim dx = cs->dimensions().at(index);
             coords->SetNumberOfValues(dx.getSize());
             for (int i = 0; i < dx.getSize(); i++) {
                 double value = dim_data[i];
-                coords->SetValue(i,value);
+                coords->SetValue(i, value);
             }
         }
 
-        template <typename T>
+        template<typename T>
         vtkRectilinearGrid *
-        VisitUtils<T>::allocate_vtk_rectilinear_grid(const CoordinateSystem<T> *cs,
-                vector<vtkDoubleArray *> &coord_pointers)
-        {
+        VisitUtils<T>::allocate_vtk_rectilinear_grid(const CoordinateSystem <T> *cs,
+                                                     vector<vtkDoubleArray *> &coord_pointers) {
             assert(cs->rank() > 0 && cs->rank() <= 3);
             int nx = 0, ny = 0, nz = 0;
             get_vtk_image_dimensions(cs, nx, ny, nz);
@@ -218,7 +212,7 @@ namespace m3D {
             for (int i = 0; i < cs->rank(); i++) {
                 vtkDoubleArray *coords = vtkDoubleArray::New();
                 coords->SetNumberOfComponents(1);
-                copy_vtk_coordinate_data(cs, get_vtk_index(i) , coords);
+                copy_vtk_coordinate_data(cs, get_vtk_index(i), coords);
                 coord_pointers.push_back(coords);
                 if (i == 0) {
                     rgrid->SetXCoordinates(coords);
@@ -249,12 +243,11 @@ namespace m3D {
             return rgrid;
         }
 
-        template <typename T>
+        template<typename T>
         vtkIdType
-        VisitUtils<T>::to_single_index(const CoordinateSystem<T> *cs,
-                int nx, int ny, int nz,
-                int gx, int gy, int gz)
-        {
+        VisitUtils<T>::to_single_index(const CoordinateSystem <T> *cs,
+                                       int nx, int ny, int nz,
+                                       int gx, int gy, int gz) {
             vtkIdType index = 0;
 
             if (cs->rank() == 1) {
@@ -279,10 +272,10 @@ namespace m3D {
          * @param full path to filename, including extension '.vtk'
          * @param cluster list
          */
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_cluster_modes_vtk(const string &filename, const typename Cluster<T>::list &list, bool spatial_only)
-        {
+        VisitUtils<T>::write_cluster_modes_vtk(const string &filename, const typename Cluster<T>::list &list,
+                                               bool spatial_only) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -330,19 +323,18 @@ namespace m3D {
                 if (spatial_only) {
                     f << c->id << endl;
                 } else {
-                    f << c->mode[ dim_count - 1 ];
+                    f << c->mode[dim_count - 1];
                 }
             }
 
             f.close();
         }
 
-        template <class T>
+        template<class T>
         void
         VisitUtils<T>::write_geometrical_cluster_centers_vtk(const string &filename,
-                const typename Cluster<T>::list &list,
-                bool at_max_height)
-        {
+                                                             const typename Cluster<T>::list &list,
+                                                             bool at_max_height) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -417,10 +409,9 @@ namespace m3D {
 
         static vtkSmartPointer<vtkLookupTable> _vtk_cluster_table = NULL;
 
-        template <typename T>
+        template<typename T>
         vtkSmartPointer<vtkLookupTable>
-        VisitUtils<T>::cluster_lookup_table()
-        {
+        VisitUtils<T>::cluster_lookup_table() {
             if (_vtk_cluster_table == NULL) {
                 // Lookup table
                 _vtk_cluster_table = vtkSmartPointer<vtkLookupTable>::New();
@@ -450,16 +441,15 @@ namespace m3D {
             return _vtk_cluster_table;
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_clusters_vtu(const ClusterList<T> *list,
-                const CoordinateSystem<T> *cs,
-                const string &base_name,
-                unsigned int max_colors,
-                bool use_ids,
-                bool include_boundary,
-                bool write_xml)
-        {
+        VisitUtils<T>::write_clusters_vtu(const ClusterList <T> *list,
+                                          const CoordinateSystem <T> *cs,
+                                          const string &base_name,
+                                          unsigned int max_colors,
+                                          bool use_ids,
+                                          bool include_boundary,
+                                          bool write_xml) {
             // escape dangerous characters from basename
             string basename = boost::filesystem::path(base_name).stem().string();
             string mesh_filename = basename + "-clusters" + (write_xml ? ".vtu" : ".vtk");
@@ -662,13 +652,12 @@ namespace m3D {
             }
         }
 
-        template <class T>
+        template<class T>
         void
         VisitUtils<T>::write_center_tracks_vtk(typename Track<T>::trackmap &track_map,
-                const std::string &basename,
-                size_t spatial_dimensions,
-                bool exclude_degenerates)
-        {
+                                               const std::string &basename,
+                                               size_t spatial_dimensions,
+                                               bool exclude_degenerates) {
             typename Track<T>::trackmap::iterator tmi;
 
             for (tmi = track_map.begin(); tmi != track_map.end(); tmi++) {
@@ -692,7 +681,7 @@ namespace m3D {
 
                 // Write point coordinates out as unstructured grid
 
-                typename std::list< typename Cluster<T>::ptr >::iterator ti;
+                typename std::list<typename Cluster<T>::ptr>::iterator ti;
                 for (ti = track->clusters.begin(); ti != track->clusters.end(); ++ti) {
                     TrackCluster<T> *c = (TrackCluster<T> *) (*ti);
 
@@ -728,12 +717,12 @@ namespace m3D {
                 f.close();
             }
         }
-        template <class T>
+
+        template<class T>
         void
         VisitUtils<T>::write_center_tracks_vtk(typename ConradCluster<T>::trackmap_t &track_map,
-                const std::string &basename,
-                bool exclude_degenerates)
-        {
+                                               const std::string &basename,
+                                               bool exclude_degenerates) {
             typename ConradCluster<T>::trackmap_t::const_iterator tmi;
 
             for (tmi = track_map.begin(); tmi != track_map.end(); tmi++) {
@@ -791,13 +780,12 @@ namespace m3D {
             }
         }
 
-        template <class T>
+        template<class T>
         void
         VisitUtils<T>::write_cluster_weight_response_vtk(const string &base_name,
-                const typename Cluster<T>::list &clusters,
-                WeightFunction<T> *w,
-                bool useMode)
-        {
+                                                         const typename Cluster<T>::list &clusters,
+                                                         WeightFunction <T> *w,
+                                                         bool useMode) {
             string basename(base_name);
 
             for (size_t ci = 0; ci < clusters.size(); ci++) {
@@ -860,13 +848,12 @@ namespace m3D {
             }
         }
 
-        template <class T>
+        template<class T>
         void
         VisitUtils<T>::write_cluster_meanshift_vtk(const string &base_name,
-                const typename Cluster<T>::list &clusters,
-                bool use_ids,
-                bool spatial_only)
-        {
+                                                   const typename Cluster<T>::list &clusters,
+                                                   bool use_ids,
+                                                   bool spatial_only) {
             std::string basename(base_name);
             boost::replace_all(basename, "/", "_");
             boost::replace_all(basename, "..", "");
@@ -874,7 +861,7 @@ namespace m3D {
             for (size_t ci = 0; ci < clusters.size(); ci++) {
                 Cluster<T> *cluster = clusters[ci];
 
-                typedef vector< vector<T> > vvector_t;
+                typedef vector<vector<T> > vvector_t;
 
                 vvector_t origins;
 
@@ -909,10 +896,10 @@ namespace m3D {
          * @param number of segments in the curve (default 1000)
          * @param pointer to origin vector, defaults to NULL = (0,0)
          */
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_ellipsis_2d(const string &filename, const vector<T> &half_axis, size_t number_of_segements, const vector<T> *origin)
-        {
+        VisitUtils<T>::write_ellipsis_2d(const string &filename, const vector<T> &half_axis, size_t number_of_segements,
+                                         const vector<T> *origin) {
             ofstream fs(filename.c_str());
             // fs.imbue( locale("de_DE.UTF-8") );
             fs << "# bandwidth" /* << fixed << setprecision(0)*/ << endl;
@@ -933,10 +920,10 @@ namespace m3D {
          * @param number of segments in the curve (default 1000)
          * @param pointer to origin vector, defaults to NULL = (0,0,0)
          */
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_ellipsis_3d(const string &filename, const vector<T> &half_axis, size_t number_of_segements, const vector<T> *origin)
-        {
+        VisitUtils<T>::write_ellipsis_3d(const string &filename, const vector<T> &half_axis, size_t number_of_segements,
+                                         const vector<T> *origin) {
             ofstream fs(filename.c_str());
             // fs.imbue( locale("de_DE.UTF-8") );
             fs << "x\ty\tz\tv" << endl;
@@ -960,10 +947,9 @@ namespace m3D {
             fs.close();
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_featurespace_vtk(const string &filename, FeatureSpace<T> *fs, string variable_name)
-        {
+        VisitUtils<T>::write_featurespace_vtk(const string &filename, FeatureSpace <T> *fs, string variable_name) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(8);
 
@@ -983,7 +969,7 @@ namespace m3D {
                     if (ri < p->coordinate.size()) {
                         index = VTK_DIMENSION_INDEXES.empty() ? ri : VTK_DIMENSION_INDEXES[ri];
                     }
-                    f << c[ index ] << "\t";
+                    f << c[index] << "\t";
                 }
                 if (c.size() < 3) {
                     f << "0.0";
@@ -1005,14 +991,13 @@ namespace m3D {
             f.close();
         }
 
- template <typename T>
+        template<typename T>
         void
         VisitUtils<T>::write_featurespace_variables_vtk(const string &filename,
-                FeatureSpace<T> *fs,
-                const vector<string> &feature_variables,
-                const vector<string> &vtk_variables,
-                bool write_legacy)
-        {
+                                                        FeatureSpace <T> *fs,
+                                                        const vector<string> &feature_variables,
+                                                        const vector<string> &vtk_variables,
+                                                        bool write_legacy) {
             const CoordinateSystem<T> *cs = fs->coordinate_system;
 
             int nx, ny, nz;
@@ -1022,25 +1007,25 @@ namespace m3D {
             vtkRectilinearGrid *rgrid = allocate_vtk_rectilinear_grid(cs, coords);
             rgrid->DebugOn();
             rgrid->CheckAttributes();
-            
+
             for (size_t vi = 0; vi < vtk_variables.size(); vi++) {
                 std::string var = vtk_variables[vi];
                 size_t value_index = fs->spatial_rank() + vectors::index_of_first<string>(feature_variables, var);
                 cout << "Writing variable " << var << " (index=" << value_index << ")" << endl;
-                vtkDoubleArray* variable = vtkDoubleArray::New();
+                vtkDoubleArray *variable = vtkDoubleArray::New();
                 variable->SetName(var.c_str());
                 variable->SetNumberOfComponents(1); // scalar
                 variable->SetNumberOfValues(nx * ny * nz);
-                variable->FillComponent(0,0);
+                variable->FillComponent(0, 0);
                 for (size_t i = 0; i < fs->points.size(); ++i) {
                     typename Point<T>::ptr p = fs->points.at(i);
                     double value = (double) p->values[value_index];
                     int gx, gy, gz;
                     VisitUtils<T>::get_vtk_gridpoint(p->gridpoint, gx, gy, gz);
                     int gridIndex = to_single_index(cs, nx, ny, nz, gx, gy, gz);
-                    variable->SetValue(gridIndex,value);
+                    variable->SetValue(gridIndex, value);
                 }
-                
+
                 rgrid->GetPointData()->AddArray(variable);
             }
 
@@ -1079,13 +1064,13 @@ namespace m3D {
             }
             rgrid->Delete();
         }
-        template <typename T>
+
+        template<typename T>
         void
         VisitUtils<T>::write_vectors_vtk(const string &filename,
-                                         const vector< vector<T> > &origins,
-                                         const vector< vector<T> > &vectors,
-                                         string var_name)
-        {
+                                         const vector<vector<T> > &origins,
+                                         const vector<vector<T> > &vectors,
+                                         string var_name) {
             assert(origins.size() == vectors.size());
 
             ofstream f(filename.c_str());
@@ -1103,12 +1088,12 @@ namespace m3D {
             size_t spatial_dims = origins.front().size();
 
             for (size_t index = 0; index < origins.size(); index++) {
-                vector<T> v = origins[ index ];
+                vector<T> v = origins[index];
 
                 for (size_t ri = 0; ri < spatial_dims; ri++) {
                     size_t index = VisitUtils<T>::index_of(ri);
 
-                    f << v[ index ] << "\t";
+                    f << v[index] << "\t";
                 }
 
                 for (int i = spatial_dims; i < 3; i++) {
@@ -1122,12 +1107,12 @@ namespace m3D {
             f << "POINT_DATA " << origins.size() << endl;
             f << "VECTORS " << var_name << " FLOAT" << endl;
             for (size_t index = 0; index < vectors.size(); index++) {
-                vector<T> v = vectors[ index ];
+                vector<T> v = vectors[index];
 
                 for (size_t ri = 0; ri < spatial_dims; ri++) {
                     size_t index = VisitUtils<T>::index_of(ri);
 
-                    f << v[ index ] << "\t";
+                    f << v[index] << "\t";
                 }
 
                 for (int i = spatial_dims; i < 3; i++) {
@@ -1140,10 +1125,10 @@ namespace m3D {
 
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_matrix_vtk(const string &filename, const boost::numeric::ublas::matrix<T> &matrix, string var_name)
-        {
+        VisitUtils<T>::write_matrix_vtk(const string &filename, const boost::numeric::ublas::matrix<T> &matrix,
+                                        string var_name) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -1180,10 +1165,10 @@ namespace m3D {
             f.close();
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_ublas_matrix_vtk(const string &filename, const vector< vector<T> > &origins, const vector< vector<T> > &vectors)
-        {
+        VisitUtils<T>::write_ublas_matrix_vtk(const string &filename, const vector<vector<T> > &origins,
+                                              const vector<vector<T> > &vectors) {
             assert(origins.size() == vectors.size());
 
             ofstream f(filename.c_str());
@@ -1196,10 +1181,10 @@ namespace m3D {
             f << "DATASET UNSTRUCTURED_GRID" << endl;
             f << "POINTS " << origins.size() << " FLOAT" << endl;
             for (size_t index = 0; index < origins.size(); index++) {
-                vector<T> v = origins[ index ];
+                vector<T> v = origins[index];
 
                 for (size_t ri = 0; ri < v.size(); ri++) {
-                    f << v[ ri ] << "\t";
+                    f << v[ri] << "\t";
                 }
 
                 f << endl;
@@ -1210,10 +1195,10 @@ namespace m3D {
             f << "FIELD FieldData 1" << endl;
             f << "vectors " << vectors.front().size() << " " << origins.size() << " FLOAT" << endl;
             for (size_t index = 0; index < vectors.size(); index++) {
-                vector<T> v = vectors[ index ];
+                vector<T> v = vectors[index];
 
                 for (size_t ri = 0; ri < v.size(); ri++) {
-                    f << v[ ri ] << "\t";
+                    f << v[ri] << "\t";
                 }
 
                 f << endl;
@@ -1221,10 +1206,10 @@ namespace m3D {
             f << endl;
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_pointlist_vtk(const string &filename, typename Point<T>::list *list, size_t dim, string var_name)
-        {
+        VisitUtils<T>::write_pointlist_vtk(const string &filename, typename Point<T>::list *list, size_t dim,
+                                           string var_name) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -1261,10 +1246,10 @@ namespace m3D {
             f.close();
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_pointlist_all_vars_vtk(const string &filename, typename Point<T>::list *list, const vector<string> &var_names)
-        {
+        VisitUtils<T>::write_pointlist_all_vars_vtk(const string &filename, typename Point<T>::list *list,
+                                                    const vector<string> &var_names) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -1295,8 +1280,8 @@ namespace m3D {
 
             for (size_t k = p->coordinate.size(); k < p->values.size(); k++) {
                 std::string var_name = var_names.empty()
-                        ? "var_" + boost::lexical_cast<string>(k)
-                        : var_names[k - p->coordinate.size()];
+                                       ? "var_" + boost::lexical_cast<string>(k)
+                                       : var_names[k - p->coordinate.size()];
 
                 f << endl;
                 f << "POINT_DATA " << list->size() << endl;
@@ -1313,10 +1298,9 @@ namespace m3D {
             f.close();
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_pointlist_vtk(const string &filename, vector< vector<T> > *list, string var_name)
-        {
+        VisitUtils<T>::write_pointlist_vtk(const string &filename, vector<vector<T> > *list, string var_name) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -1360,10 +1344,10 @@ namespace m3D {
             f.close();
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_modes_vtk(const string &filename, const vector< vector<T> > &list, const vector<size_t> &trajectory_lenghts, string var_name)
-        {
+        VisitUtils<T>::write_modes_vtk(const string &filename, const vector<vector<T> > &list,
+                                       const vector<size_t> &trajectory_lenghts, string var_name) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -1406,13 +1390,13 @@ namespace m3D {
             f.close();
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_radolan_vtk(const string &filename, const string &outfile, Radolan::RDDataType* threshold)
-        {
+        VisitUtils<T>::write_radolan_vtk(const string &filename, const string &outfile,
+                                         Radolan::RDDataType *threshold) {
             using namespace Radolan;
 
-            RDScan* scan = RDAllocateScan();
+            RDScan *scan = RDAllocateScan();
 
             if (RDReadScan(filename.c_str(), scan, true) >= 0) {
                 // figure out how many valid values we have
@@ -1447,7 +1431,7 @@ namespace m3D {
 
                 for (lat = 0; lat < scan->dimLat; lat++) {
                     for (lon = 0; lon < scan->dimLon; lon++) {
-                        RDDataType value = scan->data[ lat * scan->dimLon + lon ];
+                        RDDataType value = scan->data[lat * scan->dimLon + lon];
 
                         if (threshold == NULL || (threshold != NULL && value >= *threshold)) {
                             RDCartesianPoint p = rcs.cartesianCoordinate(rdGridPoint(lon, lat));
@@ -1476,14 +1460,13 @@ namespace m3D {
             }
         }
 
-        template <typename T>
+        template<typename T>
         void
         VisitUtils<T>::write_weights(const string &filename,
-                const string &var_name,
-                typename Point<T>::list *list,
-                const vector<T> &weights,
-                bool restrict_to_2D)
-        {
+                                     const string &var_name,
+                                     typename Point<T>::list *list,
+                                     const vector<T> &weights,
+                                     bool restrict_to_2D) {
             ofstream f(filename.c_str());
             f << fixed << setprecision(4);
 
@@ -1521,13 +1504,12 @@ namespace m3D {
             }
         }
 
-        template <typename T>
+        template<typename T>
         void
         VisitUtils<T>::write_shift_vectors(const string &filename,
-                FeatureSpace<T> *fs,
-                bool spatial_only)
-        {
-            vector< vector<T> > origins, vectors;
+                                           FeatureSpace <T> *fs,
+                                           bool spatial_only) {
+            vector<vector<T> > origins, vectors;
 
             // Write point coordinates out as unstructured grid
 
@@ -1548,24 +1530,23 @@ namespace m3D {
             write_vectors_vtk(filename, origins, vectors);
         }
 
-        template <typename T>
+        template<typename T>
         void
-        VisitUtils<T>::write_weight_function_response(const string& filename,
-                FeatureSpace<T> *fs,
-                WeightFunction<T> *weight_function,
-                bool write_legacy)
-        {
+        VisitUtils<T>::write_weight_function_response(const string &filename,
+                                                      FeatureSpace <T> *fs,
+                                                      WeightFunction <T> *weight_function,
+                                                      bool write_legacy) {
             const CoordinateSystem<T> *cs = fs->coordinate_system;
             int nx, ny, nz;
             VisitUtils<T>::get_vtk_image_dimensions(cs, nx, ny, nz);
             vector<vtkDoubleArray *> coords;
             vtkRectilinearGrid *rgrid = allocate_vtk_rectilinear_grid(cs, coords);
-            
-            vtkDoubleArray* variable = vtkDoubleArray::New();
+
+            vtkDoubleArray *variable = vtkDoubleArray::New();
             variable->SetName("weight");
             variable->SetNumberOfComponents(1); // scalar
             variable->SetNumberOfValues(nx * ny * nz);
-            variable->FillComponent(0,0);
+            variable->FillComponent(0, 0);
 
             for (size_t i = 0; i < fs->points.size(); ++i) {
                 typename Point<T>::ptr p = fs->points.at(i);
@@ -1612,14 +1593,13 @@ namespace m3D {
             rgrid->Delete();
         }
 
-        template <typename T>
+        template<typename T>
         void
         VisitUtils<T>::write_multiarray_vtk(const std::string &filename,
-                const std::string &variable_name,
-                const CoordinateSystem<T> *cs,
-                MultiArray<T> *array,
-                bool write_legacy)
-        {
+                                            const std::string &variable_name,
+                                            const CoordinateSystem <T> *cs,
+                                            MultiArray <T> *array,
+                                            bool write_legacy) {
 
             class Functor : public MultiArray<T>::ForEachFunctor
             {
@@ -1631,14 +1611,12 @@ namespace m3D {
 
             public:
 
-                Functor(vtkDoubleArray *array, const CoordinateSystem<T> *cs) : m_array(array), m_cs(cs)
-                {
+                Functor(vtkDoubleArray *array, const CoordinateSystem<T> *cs) : m_array(array), m_cs(cs) {
                     VisitUtils<T>::get_vtk_image_dimensions(cs, nx, ny, nz);
                 };
 
                 void
-                operator()(const vector<int> &index, const T value)
-                {
+                operator()(const vector<int> &index, const T value) {
                     int gx, gy, gz;
                     VisitUtils<T>::get_vtk_gridpoint(index, gx, gy, gz);
                     int gridIndex = VisitUtils<T>::to_single_index(m_cs, nx, ny, nz, gx, gy, gz);
@@ -1652,7 +1630,7 @@ namespace m3D {
             vector<vtkDoubleArray *> coords;
             vtkRectilinearGrid *rgrid = allocate_vtk_rectilinear_grid(cs, coords);
 
-            vtkDoubleArray* variable = vtkDoubleArray::New();
+            vtkDoubleArray *variable = vtkDoubleArray::New();
             variable->SetName(variable_name.c_str());
             variable->SetNumberOfComponents(1); // scalar
             variable->SetNumberOfValues(array->size());
@@ -1708,13 +1686,12 @@ namespace m3D {
             rgrid->Delete();
         };
 
-        template <typename T>
+        template<typename T>
         void
         VisitUtils<T>::write_multiarray_vtk(const std::string &filename,
-                const std::string &variable_name,
-                const CoordinateSystem<T> *cs,
-                const MultiArray<bool> *array)
-        {
+                                            const std::string &variable_name,
+                                            const CoordinateSystem <T> *cs,
+                                            const MultiArray<bool> *array) {
 
             class Functor : public MultiArray<bool>::ForEachFunctor
             {
@@ -1727,13 +1704,11 @@ namespace m3D {
                 Functor(std::ofstream &stream,
                         const CoordinateSystem<T> *cs,
                         bool write_coords)
-                : m_stream(stream), m_coord_system(cs), m_write_coords(write_coords)
-                {
+                        : m_stream(stream), m_coord_system(cs), m_write_coords(write_coords) {
                 }
 
                 void
-                operator()(const vector<int> &index, const bool value)
-                {
+                operator()(const vector<int> &index, const bool value) {
                     if (m_write_coords) {
                         for (size_t ri = 0; ri < 3; ri++) {
                             if (ri < index.size()) {

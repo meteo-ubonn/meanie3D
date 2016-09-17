@@ -6,34 +6,35 @@
  */
 
 #ifndef WEIGHT_FUNCTION_FACTORY_H
-#define	WEIGHT_FUNCTION_FACTORY_H
+#define    WEIGHT_FUNCTION_FACTORY_H
 
 #include <meanie3D/weights/weight_function.h>
 #include <meanie3D/clustering/detection.h>
 
 namespace m3D {
-    
+
     /** 
      * 
      */
-    template <typename T>
-    class WeightFunctionFactory {
+    template<typename T>
+    class WeightFunctionFactory
+    {
 
-        public:
-            
-            /**
-             * Create a weight function from information in a detection
-             * parameter and context set. 
-             * 
-             * @param params
-             * @param ctx
-             * @return 
-             */
-            static 
-            WeightFunction<T> *create(const detection_params_t<T> &params, 
-                const detection_context_t<T>& ctx);
+    public:
+
+        /**
+         * Create a weight function from information in a detection
+         * parameter and context set.
+         *
+         * @param params
+         * @param ctx
+         * @return
+         */
+        static
+        WeightFunction <T> *create(const detection_params_t <T> &params,
+                                   const detection_context_t <T> &ctx);
     };
-    
+
 }
 
 #endif	/* WEIGHT_FUNCTION_FACTORY_H */

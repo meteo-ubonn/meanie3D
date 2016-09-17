@@ -39,8 +39,7 @@ namespace m3D {
          * 
          * @param message
          */
-        void start_timer(const std::string& message = "")
-        {
+        void start_timer(const std::string &message = "") {
             if (!message.empty()) {
                 cout << message << flush;
             }
@@ -52,13 +51,12 @@ namespace m3D {
          * 
          * @return 
          */
-        double stop_timer()
-        {
+        double stop_timer() {
             timeval end_time;
             gettimeofday(&end_time, NULL);
 
             return double(end_time.tv_sec - start_time_.tv_sec)
-                    + double(end_time.tv_usec - start_time_.tv_usec) / 1000000.0;
+                   + double(end_time.tv_usec - start_time_.tv_usec) / 1000000.0;
         }
 
         /** Stops the timer and returns the seconds since
@@ -66,8 +64,7 @@ namespace m3D {
          * 
          * @return 
          */
-        void stop_timer(const std::string& message)
-        {
+        void stop_timer(const std::string &message) {
             double time = stop_timer();
             cout << message << " (" << time << "s)" << endl;
         }

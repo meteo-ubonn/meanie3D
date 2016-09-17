@@ -56,7 +56,7 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     class ConradCluster;
 
     namespace utils {
@@ -65,7 +65,7 @@ namespace m3D {
         using ::m3D::Cluster;
         using ::m3D::ClusterList;
 
-        template <typename T>
+        template<typename T>
         class VisitUtils
         {
         public:
@@ -76,30 +76,29 @@ namespace m3D {
 
             static void
             get_vtk_image_dimensions(const CoordinateSystem<T> *cs,
-                    int &nx, int &ny, int &nz);
+                                     int &nx, int &ny, int &nz);
 
             static void
-            get_vtk_coords(const vector<T>& coords, T &x, T &y, T &z);
+            get_vtk_coords(const vector<T> &coords, T &x, T &y, T &z);
 
             static void
-            get_vtk_gridpoint(const vector<int>& gp, int &gx, int &gy, int &gz);
+            get_vtk_gridpoint(const vector<int> &gp, int &gx, int &gy, int &gz);
 
             static
             vtkRectilinearGrid *
             allocate_vtk_rectilinear_grid(const CoordinateSystem<T> *cs,
-                    vector<vtkDoubleArray *> &coords);
+                                          vector<vtkDoubleArray *> &coords);
 
             static
             vtkIdType
             to_single_index(const CoordinateSystem<T> *cs,
-                    int nx, int ny, int nz,
-                    int gx, int gy, int gz);
+                            int nx, int ny, int nz,
+                            int gx, int gy, int gz);
 
-            static size_t index_of(size_t dim)
-            {
+            static size_t index_of(size_t dim) {
                 return VTK_DIMENSION_INDEXES.empty() || dim > (VTK_DIMENSION_INDEXES.size() - 1)
-                        ? dim
-                        : VTK_DIMENSION_INDEXES[dim];
+                       ? dim
+                       : VTK_DIMENSION_INDEXES[dim];
             }
 
             /** Helper function for drawing an ellipse (representing bandwidth and somesuch)
@@ -112,9 +111,9 @@ namespace m3D {
             static
             void
             write_ellipsis_2d(const string &filename,
-                    const vector<T> &half_axis,
-                    size_t number_of_segements = 1000,
-                    const vector<T> *origin = NULL);
+                              const vector<T> &half_axis,
+                              size_t number_of_segements = 1000,
+                              const vector<T> *origin = NULL);
 
             /** Helper function for drawing an ellipse (representing bandwidth and somesuch)
              * in a .curve file format.
@@ -126,15 +125,15 @@ namespace m3D {
             static
             void
             write_ellipsis_3d(const string &filename,
-                    const vector<T> &half_axis,
-                    size_t number_of_segements = 250,
-                    const vector<T> *origin = NULL);
+                              const vector<T> &half_axis,
+                              size_t number_of_segements = 250,
+                              const vector<T> *origin = NULL);
 
             static
             void
             write_featurespace_vtk(const string &filename,
-                    FeatureSpace<T> *fs,
-                    string variable_name = "featurespace");
+                                   FeatureSpace<T> *fs,
+                                   string variable_name = "featurespace");
 
             /** Writes out the given variables of the featurespace individually
              * @param output filename (without extension)
@@ -146,97 +145,97 @@ namespace m3D {
             static
             void
             write_featurespace_variables_vtk(const string &filename,
-                    FeatureSpace<T> *fs,
-                    const vector<string> &feature_variables,
-                    const vector<string> &vtk_variables,
-                    bool write_legacy = false);
+                                             FeatureSpace<T> *fs,
+                                             const vector<string> &feature_variables,
+                                             const vector<string> &vtk_variables,
+                                             bool write_legacy = false);
 
             static
             void
-            write_vectors_vtk(const string& filename,
-                    const vector< vector<T> > &origins,
-                    const vector< vector<T> > &vectors,
-                    string var_name = "vectors");
+            write_vectors_vtk(const string &filename,
+                              const vector<vector<T> > &origins,
+                              const vector<vector<T> > &vectors,
+                              string var_name = "vectors");
 
             static
             void
             write_matrix_vtk(const string &filename,
-                    const boost::numeric::ublas::matrix<T> &matrix,
-                    string var_name = "matrix");
+                             const boost::numeric::ublas::matrix<T> &matrix,
+                             string var_name = "matrix");
 
             static
             void
-            write_ublas_matrix_vtk(const string& filename,
-                    const vector< vector<T> > &origins,
-                    const vector< vector<T> > &vectors);
+            write_ublas_matrix_vtk(const string &filename,
+                                   const vector<vector<T> > &origins,
+                                   const vector<vector<T> > &vectors);
 
             static
             void
             write_pointlist_vtk(const string &filename,
-                    typename Point<T>::list *list,
-                    size_t dim,
-                    string var_name = "points");
+                                typename Point<T>::list *list,
+                                size_t dim,
+                                string var_name = "points");
 
             static
             void
             write_pointlist_all_vars_vtk(const string &filename,
-                    typename Point<T>::list *list,
-                    const vector<string> &var_names);
+                                         typename Point<T>::list *list,
+                                         const vector<string> &var_names);
 
             static
             void
             write_pointlist_vtk(const string &filename,
-                    vector< vector<T> > *list,
-                    string var_name = "points");
+                                vector<vector<T> > *list,
+                                string var_name = "points");
 
             static
             void
             write_modes_vtk(const string &filename,
-                    const vector< vector<T> > &list,
-                    const vector<size_t> &trajectory_lenghts,
-                    string var_name = "mode");
+                            const vector<vector<T> > &list,
+                            const vector<size_t> &trajectory_lenghts,
+                            string var_name = "mode");
 
             static
             void
             write_radolan_vtk(const string &filename,
-                    const string &outfile,
-                    Radolan::RDDataType* threshold = NULL);
+                              const string &outfile,
+                              Radolan::RDDataType *threshold = NULL);
 
             static
             void
             write_weights(const string &filename,
-                    const string &var_name,
-                    typename Point<T>::list *list,
-                    const vector<T> &weights,
-                    bool restrict_to_2D = false);
+                          const string &var_name,
+                          typename Point<T>::list *list,
+                          const vector<T> &weights,
+                          bool restrict_to_2D = false);
 
             static
             void
             write_shift_vectors(const string &filename,
-                    FeatureSpace<T> *fs,
-                    bool spatial_only = true);
+                                FeatureSpace<T> *fs,
+                                bool spatial_only = true);
 
             static
             void
-            write_weight_function_response(const string& filename,
-                    FeatureSpace<T> *fs,
-                    WeightFunction<T> *weight_function,
-                    bool write_legacy = false);
-
-            static
-            void
-            write_multiarray_vtk(const std::string &filename,
-                    const std::string &variable_name,
-                    const CoordinateSystem<T> *cs,
-                    MultiArray<T> *array,
-                    bool write_legacy_format = false);
+            write_weight_function_response(const string &filename,
+                                           FeatureSpace<T> *fs,
+                                           WeightFunction<T> *weight_function,
+                                           bool write_legacy = false);
 
             static
             void
             write_multiarray_vtk(const std::string &filename,
-                    const std::string &variable_name,
-                    const CoordinateSystem<T> *cs,
-                    const MultiArray<bool> *array);
+                                 const std::string &variable_name,
+                                 const CoordinateSystem<T> *cs,
+                                 MultiArray<T> *array,
+                                 bool write_legacy_format = false);
+
+            static
+            void
+            write_multiarray_vtk(const std::string &filename,
+                                 const std::string &variable_name,
+                                 const CoordinateSystem<T> *cs,
+                                 const MultiArray<bool> *array);
 
             /**
              */
@@ -263,8 +262,8 @@ namespace m3D {
             static
             void
             write_cluster_modes_vtk(const string &filename,
-                    const typename Cluster<T>::list &list,
-                    bool spatial_only = false);
+                                    const typename Cluster<T>::list &list,
+                                    bool spatial_only = false);
 
             /** Writes out the geometrical centers of the clusters.
              * The resulting file can be used with Visit's "Label" 
@@ -275,8 +274,8 @@ namespace m3D {
             static
             void
             write_geometrical_cluster_centers_vtk(const string &filename,
-                    const typename Cluster<T>::list &list,
-                    bool at_max_height = true);
+                                                  const typename Cluster<T>::list &list,
+                                                  bool at_max_height = true);
 
 
             //    	/** Writes the cluster's points out as .vtk file for visit.
@@ -294,9 +293,9 @@ namespace m3D {
             static
             void
             write_cluster_meanshift_vtk(const string &basename,
-                    const typename Cluster<T>::list &list,
-                    bool use_ids = true,
-                    bool spatial_only = true);
+                                        const typename Cluster<T>::list &list,
+                                        bool use_ids = true,
+                                        bool spatial_only = true);
 
             /** Writes the cluster's points out as unstructured grid
              * of 2D quadrilaterals or 3D orthogonal parallelepiped
@@ -313,29 +312,29 @@ namespace m3D {
             static
             void
             write_clusters_vtu(const ClusterList<T> *list,
-                    const CoordinateSystem<T> *cs,
-                    const string &base_name,
-                    unsigned int max_colors = 5,
-                    bool use_ids = true,
-                    bool only_boundary = false,
-                    bool write_xml = true);
+                               const CoordinateSystem<T> *cs,
+                               const string &base_name,
+                               unsigned int max_colors = 5,
+                               bool use_ids = true,
+                               bool only_boundary = false,
+                               bool write_xml = true);
 
             /** Write out the track centers
              */
             static
             void
             write_center_tracks_vtk(typename Track<T>::trackmap &trackmap,
-                    const std::string &basename,
-                    size_t spatial_dimensions,
-                    bool exclude_degenerates = true);
+                                    const std::string &basename,
+                                    size_t spatial_dimensions,
+                                    bool exclude_degenerates = true);
 
             /** Write out track centers from CONRAD clusters
              */
             static
             void
             write_center_tracks_vtk(typename ConradCluster<T>::trackmap_t &track_map,
-                    const std::string &basename,
-                    bool exclude_degenerates);
+                                    const std::string &basename,
+                                    bool exclude_degenerates);
 
             /** Writes the clusters out with the value of the weight response
              * for the whole cluster as value. 
@@ -347,9 +346,9 @@ namespace m3D {
             static
             void
             write_cluster_weight_response_vtk(const string &base_name,
-                    const typename Cluster<T>::list &list,
-                    WeightFunction<T> *w,
-                    bool useMode = true);
+                                              const typename Cluster<T>::list &list,
+                                              WeightFunction<T> *w,
+                                              bool useMode = true);
 
         };
     }

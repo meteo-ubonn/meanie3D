@@ -37,7 +37,7 @@ namespace m3D {
 
     using utils::Verbosity;
 
-    template <typename T>
+    template<typename T>
     class ClusterUtils
     {
     private:
@@ -57,10 +57,10 @@ namespace m3D {
          */
         void
         filter_with_previous_clusters(typename ClusterList<T>::ptr previous,
-                typename ClusterList<T>::ptr current,
-                CoordinateSystem<T> *coord_system,
-                WeightFunction<T> *weight_function,
-                const Verbosity verbosity = utils::VerbosityNormal);
+                                      typename ClusterList<T>::ptr current,
+                                      CoordinateSystem<T> *coord_system,
+                                      WeightFunction<T> *weight_function,
+                                      const Verbosity verbosity = utils::VerbosityNormal);
 
         /** Iterates over all clusters in the list and replaces the 
          * points in each cluster with the value from the data store. 
@@ -76,7 +76,7 @@ namespace m3D {
         static
         void
         replace_points_from_datastore(typename ClusterList<T>::ptr list,
-                typename DataStore<T>::ptr dataStore);
+                                      typename DataStore<T>::ptr dataStore);
 
         /** Iterates over the clusters in the list and checks on each 
          * cluster's points. If a point borders the area marked as
@@ -88,7 +88,7 @@ namespace m3D {
          */
         static
         void obtain_margin_flag(typename ClusterList<T>::ptr list,
-                typename FeatureSpace<T>::ptr fs);
+                                typename FeatureSpace<T>::ptr fs);
 
         /**
          * Provides the clusters in the list with uuids.

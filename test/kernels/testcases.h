@@ -23,7 +23,7 @@ using testing::Test;
  * around the origin of the coordinate system must result in a near null sample 
  * meanshift.
  */
-template <class T>
+template<class T>
 class DoubleKernelTest : public Test
 {
 public:
@@ -33,21 +33,19 @@ public:
     // Code here will be called immediately after the constructor (right
     // before each test).
 
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         kernel = new T(1.0);
     }
 
     // Code here will be called immediately after each test (right
     // before the destructor).
 
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         delete kernel;
     }
 };
 
-template <class T>
+template<class T>
 class FloatKernelTest : public Test
 {
 public:
@@ -57,32 +55,29 @@ public:
     // Code here will be called immediately after the constructor (right
     // before each test).
 
-    virtual void SetUp()
-    {
+    virtual void SetUp() {
         kernel = new T(1.0);
     }
 
     // Code here will be called immediately after each test (right
     // before the destructor).
 
-    virtual void TearDown()
-    {
+    virtual void TearDown() {
         delete kernel;
     }
 };
 
 
-typedef Types< GaussianNormalKernel<double>,
-EpanechnikovKernel<double>,
-UniformKernel<double> > DoubleKernels;
+typedef Types<GaussianNormalKernel<double>,
+        EpanechnikovKernel<double>,
+        UniformKernel<double> > DoubleKernels;
 
 TYPED_TEST_CASE(DoubleKernelTest, DoubleKernels);
 
 // Then use TYPED_TEST(TestCaseName, TestName) to define a typed test,
 // similar to TEST_F.
 
-TYPED_TEST(DoubleKernelTest, TestDouble)
-{
+TYPED_TEST(DoubleKernelTest, TestDouble) {
     // Perform within limits
 
     // 1-D (profile)
@@ -117,17 +112,16 @@ TYPED_TEST(DoubleKernelTest, TestDouble)
     }
 }
 
-typedef Types< GaussianNormalKernel<float>,
-EpanechnikovKernel<float>,
-UniformKernel<float> > FloatKernels;
+typedef Types<GaussianNormalKernel<float>,
+        EpanechnikovKernel<float>,
+        UniformKernel<float> > FloatKernels;
 
 TYPED_TEST_CASE(FloatKernelTest, FloatKernels);
 
 // Then use TYPED_TEST(TestCaseName, TestName) to define a typed test,
 // similar to TEST_F.
 
-TYPED_TEST(FloatKernelTest, TestFloat)
-{
+TYPED_TEST(FloatKernelTest, TestFloat) {
     // Perform within limits
 
     // 1-D (profile)
@@ -161,9 +155,6 @@ TYPED_TEST(FloatKernelTest, TestFloat)
         previousValue = value;
     }
 }
-
-
-
 
 
 #endif

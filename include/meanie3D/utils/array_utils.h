@@ -35,9 +35,8 @@ namespace m3D {
 
         /** Prints the given array.
          */
-        template <typename T>
-        void print_array(T *array, size_t count)
-        {
+        template<typename T>
+        void print_array(T *array, size_t count) {
             using namespace std;
 
             cout << "(";

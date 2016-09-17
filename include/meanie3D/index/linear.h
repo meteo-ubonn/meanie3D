@@ -39,7 +39,7 @@ namespace m3D {
      * 
      * TODO: this implementation is NOT UP TO DATE
      */
-    template <typename T>
+    template<typename T>
     class LinearIndex : public PointIndex<T>
     {
         friend class PointIndex<T>;
@@ -50,36 +50,31 @@ namespace m3D {
 #pragma mark Constructor/Destructor
 
         inline
-        LinearIndex(typename Point<T>::list *points, size_t dimension) : PointIndex<T>(points, dimension)
-        {
+        LinearIndex(typename Point<T>::list *points, size_t dimension) : PointIndex<T>(points, dimension) {
         };
 
         inline
-        LinearIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : PointIndex<T>(points, indexes)
-        {
+        LinearIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : PointIndex<T>(points, indexes) {
         };
 
         inline
-        LinearIndex(FeatureSpace<T> *fs) : PointIndex<T>(fs)
-        {
+        LinearIndex(FeatureSpace<T> *fs) : PointIndex<T>(fs) {
         };
 
         inline
-        LinearIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : PointIndex<T>(fs, index_variables)
-        {
+        LinearIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : PointIndex<T>(fs,
+                                                                                                       index_variables) {
         };
 
         inline
-        LinearIndex(const LinearIndex<T> &o) : PointIndex<T>(o)
-        {
+        LinearIndex(const LinearIndex<T> &o) : PointIndex<T>(o) {
         };
 
 #pragma mark -
 #pragma mark Overwritten Protected Methods
 
         void
-        build_index(const vector<T> &ranges)
-        {
+        build_index(const vector<T> &ranges) {
             // nothing to do. Index is the feature space itself
 
             // TODO: construct feature space from index variables
@@ -88,8 +83,7 @@ namespace m3D {
     public:
 
         inline
-        ~LinearIndex()
-        {
+        ~LinearIndex() {
         }
 
 #pragma mark -
@@ -97,8 +91,7 @@ namespace m3D {
 
         /** Copy operator
          */
-        LinearIndex<T> operator=(const LinearIndex<T> &other)
-        {
+        LinearIndex<T> operator=(const LinearIndex<T> &other) {
             return LinearIndex<T>(other);
         }
 
@@ -106,8 +99,7 @@ namespace m3D {
 #pragma mark Overwritten Public Methods
 
         typename Point<T>::list *
-        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL)
-        {
+        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL) {
             using std::cerr;
             using std::endl;
 
@@ -126,7 +118,7 @@ namespace m3D {
                 exit(EXIT_FAILURE);
             }
 
-            RangeSearchParams<T> *p = (RangeSearchParams<T> *) & params;
+            RangeSearchParams<T> *p = (RangeSearchParams<T> *) &params;
 
             vector<T> coefficients(p->bandwidth);
 
@@ -162,14 +154,12 @@ namespace m3D {
         };
 
         void
-        add_point(typename Point<T>::ptr p)
-        {
+        add_point(typename Point<T>::ptr p) {
             this->m_fs->points.push_back(p);
         }
 
         void
-        remove_point(typename Point<T>::ptr p)
-        {
+        remove_point(typename Point<T>::ptr p) {
             typename Point<T>::list::iterator f = find(this->m_fs->points.begin(), this->m_fs->points.end(), p);
 
             if (f != this->m_fs->points.end()) {

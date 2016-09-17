@@ -88,7 +88,7 @@ public:
     netCDF::NcFile *file;
 
     // Stores dimension variable data
-    typename std::map< netCDF::NcVar *, float * > dimensionVars;
+    typename std::map<netCDF::NcVar *, float *> dimensionVars;
 
 };
 

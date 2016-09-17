@@ -41,14 +41,14 @@ namespace m3D {
      * valid_min to valid_max (linear). The values are summed up and 
      * divided by the number of variables. 
      */
-    template <class T>
+    template<class T>
     class DefaultWeightFunction : public WeightFunction<T>
     {
     private:
 
-        map<size_t, T> m_min;
-        map<size_t, T> m_max;
-        MultiArray<T> *m_weight;
+        map <size_t, T> m_min;
+        map <size_t, T> m_max;
+        MultiArray <T> *m_weight;
 
     public:
 
@@ -58,10 +58,9 @@ namespace m3D {
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        DefaultWeightFunction(const detection_params_t<T> &params, 
-                             const detection_context_t<T> &ctx)
-        : m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
-        {
+        DefaultWeightFunction(const detection_params_t <T> &params,
+                              const detection_context_t <T> &ctx)
+                : m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0)) {
             // If scale-space filter is present, use the filtered
             // limits. If not, use the original limits
             if (ctx.sf == NULL) {
@@ -76,9 +75,8 @@ namespace m3D {
 
             calculate_weight_function(ctx.fs);
         }
-        
-        ~DefaultWeightFunction()
-        {
+
+        ~DefaultWeightFunction() {
             if (this->m_weight != NULL) {
                 delete m_weight;
                 m_weight = NULL;
@@ -88,16 +86,15 @@ namespace m3D {
     private:
 
         void
-        calculate_weight_function(const FeatureSpace<T> *fs)
-        {
+        calculate_weight_function(const FeatureSpace <T> *fs) {
             //            #if WITH_OPENMP
             //            #pragma omp parallel for 
             //            #endif
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
 
-                T saliency = (fs->off_limits()->get(p->gridpoint)) 
-                        ? 0.0 : compute_weight(fs,p->values);
+                T saliency = (fs->off_limits()->get(p->gridpoint))
+                             ? 0.0 : compute_weight(fs, p->values);
 
                 //                #if WITH_OPENMP
                 //                #pragma omp critical 
@@ -109,9 +106,8 @@ namespace m3D {
         /** Actual weight computation happens here
          */
 
-        T compute_weight(const FeatureSpace<T> *fs,
-                const vector<T> &values) const
-        {
+        T compute_weight(const FeatureSpace <T> *fs,
+                         const vector <T> &values) const {
             T sum = 0.0;
 
             for (size_t var_index = 0; var_index < fs->value_rank(); var_index++) {
@@ -131,8 +127,7 @@ namespace m3D {
 
         /** @return pre-calculated weight
          */
-        T operator()(const typename Point<T>::ptr p) const
-        {
+        T operator()(const typename Point<T>::ptr p) const {
             return m_weight->get(p->gridpoint);
         }
     };

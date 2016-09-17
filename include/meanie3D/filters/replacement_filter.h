@@ -52,12 +52,13 @@ namespace m3D {
      * Note that the arithmetic average can be calculated by using either lowest
      * or highest and 100%.
      */
-    template <class T>
+    template<class T>
     class ReplacementFilter : public FeatureSpaceFilter<T>
     {
     public:
 
-        typedef enum {
+        typedef enum
+        {
             ReplaceWithLowest,
             ReplaceWithHighest,
             ReplaceWithMedian

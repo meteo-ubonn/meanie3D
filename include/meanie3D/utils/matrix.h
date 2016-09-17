@@ -34,11 +34,11 @@ namespace m3D {
 
         // Matrix
 
-        template <typename T>
+        template<typename T>
         struct SimpleMatrix
         {
             // A matrix is a 2D vector construct in this context
-            typedef vector< vector<T> > matrix_t;
+            typedef vector <vector<T>> matrix_t;
 
             /** Creates a new matrix of the given dimensions
              */
@@ -47,7 +47,7 @@ namespace m3D {
 
             // Flag Matrix
 
-            typedef vector< vector<int> > flag_matrix_t;
+            typedef vector <vector<int>> flag_matrix_t;
 
             /** Creates a new matrix of the given dimensions
              */
