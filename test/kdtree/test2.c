@@ -53,14 +53,14 @@ int main(int argc, char **argv) {
 
     while (!kd_res_end(presults)) {
         /* get the data and position of the current result item */
-        pch = (char*) kd_res_item(presults, pos);
+        pch = (char *) kd_res_item(presults, pos);
 
         /* compute the distance of the current result from the pt */
         dist = sqrt(dist_sq(pt, pos, 3));
 
         /* print out the retrieved data */
         printf("node at (%.3f, %.3f, %.3f) is %.3f away and has data=%c\n",
-                pos[0], pos[1], pos[2], dist, *pch);
+               pos[0], pos[1], pos[2], dist, *pch);
 
         /* go to the next entry */
         kd_res_next(presults);
@@ -78,7 +78,7 @@ static double dist_sq(double *a1, double *a2, int dims) {
     double dist_sq = 0, diff;
     while (--dims >= 0) {
         diff = (a1[dims] - a2[dims]);
-        dist_sq += diff*diff;
+        dist_sq += diff * diff;
     }
     return dist_sq;
 }

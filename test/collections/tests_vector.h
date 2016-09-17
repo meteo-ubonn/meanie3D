@@ -19,18 +19,17 @@ using namespace std;
 using namespace testing;
 using namespace m3D::utils::vectors;
 
-template <typename T>
+template<typename T>
 class VectorTest : public testing::Test
 {
 public:
 };
 
-typedef testing::Types< float, double > VectorDataTypes;
+typedef testing::Types<float, double> VectorDataTypes;
 
 TYPED_TEST_CASE(VectorTest, VectorDataTypes);
 
-TYPED_TEST(VectorTest, VectorDataTypes)
-{
+TYPED_TEST(VectorTest, VectorDataTypes) {
     // T vector_norm( vector<T> *v )
     vector<TypeParam> v1, v2, v3;
     TypeParam s1;
@@ -196,12 +195,11 @@ TYPED_TEST(VectorTest, VectorDataTypes)
     v1[1] = 2;
     v1[2] = 3;
 
-    EXPECT_EQ("(1,2,3)", to_string<TypeParam>(v1));
+    EXPECT_EQ("(1,2,3)", to_string < TypeParam > (v1));
     EXPECT_EQ(v1, from_string<TypeParam>("(1,2,3)"));
 }
 
-TEST(VectorTest, Double)
-{
+TEST(VectorTest, Double) {
     typedef double TypeParam;
 }
 

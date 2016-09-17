@@ -49,7 +49,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Defaults
 
-    template <typename T>
+    template<typename T>
     tracking_param_t
     Tracking<T>::defaultParams() {
         tracking_param_t params;
@@ -74,10 +74,9 @@ namespace m3D {
 #pragma mark -
 #pragma mark Experimental
 
-    template <typename T>
+    template<typename T>
     void
-    Tracking<T>::advectClusters(typename Tracking<T>::tracking_run_t &run)
-    {
+    Tracking<T>::advectClusters(typename Tracking<T>::tracking_run_t &run) {
         using namespace utils::vectors;
 
         for (size_t i = 0; i < run.M; i++) {
@@ -101,10 +100,9 @@ namespace m3D {
 #pragma mark -
 #pragma mark Preliminaries
 
-    template <typename T>
+    template<typename T>
     bool
-    Tracking<T>::initialise(typename Tracking<T>::tracking_run_t &run)
-    {
+    Tracking<T>::initialise(typename Tracking<T>::tracking_run_t &run) {
         bool skip_tracking = false;
         bool logDetails = m_params.verbosity >= VerbosityDetails;
         run.cs = NULL;
@@ -124,7 +122,7 @@ namespace m3D {
         if (run.previous->variables != run.current->variables) {
             cerr << "FATAL:Incompatible feature variables in the cluster files:"
                  << " previous:" << run.previous->variables
-                 << " current:" <<  run.current->variables
+                 << " current:" << run.current->variables
                  << endl;
             exit(EXIT_FAILURE);
         }
@@ -162,8 +160,8 @@ namespace m3D {
 
         // Get us a coordinate system
         NcFile *infoFile = run.current->file == NULL
-            ? run.previous->file : run.current->file;
-        
+                           ? run.previous->file : run.current->file;
+
         if (!skip_tracking) {
 
             run.cs = new CoordinateSystem<T>(infoFile,
@@ -225,8 +223,8 @@ namespace m3D {
 
             if (run.deltaT > m_params.max_deltaT) {
                 cerr << "ERROR:files too far apart in time. Time difference:"
-                        << run.deltaT << "s, longest accepted:"
-                        << m_params.max_deltaT << "s" << endl;
+                     << run.deltaT << "s, longest accepted:"
+                     << m_params.max_deltaT << "s" << endl;
                 return true;
             }
 
@@ -237,9 +235,9 @@ namespace m3D {
 
             if (logDetails) {
                 cout << "\tmax velocity constraint:" << m_params.maxVelocity
-                        << " and dT:" << run.deltaT
-                        << " results in dR_max:" << run.maxDisplacement
-                        << endl;
+                     << " and dT:" << run.deltaT
+                     << " results in dR_max:" << run.maxDisplacement
+                     << endl;
             }
 
             // TODO: mean velocity constraint
@@ -259,7 +257,7 @@ namespace m3D {
             index_dims.push_back(run.N);
             index_dims.push_back(run.M);
             run.mapping = LinearIndexMapping(index_dims);
-            
+
             // Bestow the current cluster list with fresh uuids
             ClusterUtils<T>::provideUuids(run.current, run.highestUuid);
 
@@ -277,10 +275,9 @@ namespace m3D {
 #pragma mark -
 #pragma mark Matching
 
-    template <typename T>
+    template<typename T>
     void
-    Tracking<T>::calculateCorrelationData(typename Tracking<T>::tracking_run_t &run)
-    {
+    Tracking<T>::calculateCorrelationData(typename Tracking<T>::tracking_run_t &run) {
         bool logDetails = m_params.verbosity >= VerbosityAll;
         if (logDetails) {
             cout << endl;
@@ -288,7 +285,7 @@ namespace m3D {
 
         // Allocate the correlation data
         run.rankCorrelation = SimpleMatrix<T>::create_matrix(run.N, run.M);
-        run.midDisplacement = SimpleMatrix< ::units::values::m >::create_matrix(run.N, run.M);
+        run.midDisplacement = SimpleMatrix<::units::values::m>::create_matrix(run.N, run.M);
         run.sizeDifference = SimpleMatrix<T>::create_matrix(run.N, run.M);
         run.coverOldByNew = SimpleMatrix<T>::create_matrix(run.N, run.M);
         run.coverNewByOld = SimpleMatrix<T>::create_matrix(run.N, run.M);
@@ -323,8 +320,8 @@ namespace m3D {
             typename Cluster<T>::ptr p = run.previous->clusters[m];
             if (logDetails) {
                 cout << "\tmatch uuid:" << p->uuid
-                << " id:" << p->id
-                << " with uuid:" << c->uuid << " ";
+                     << " id:" << p->id
+                     << " with uuid:" << c->uuid << " ";
             }
 
             // How many percent of old cluster's points are shared by
@@ -369,7 +366,7 @@ namespace m3D {
             // too much in size
             T maxSize = (T) max(p->size(), c->size());
             T minSize = (T) min(p->size(), c->size());
-            T sizeDiff =  (maxSize == 0) ? 1.0 : (maxSize - minSize);
+            T sizeDiff = (maxSize == 0) ? 1.0 : (maxSize - minSize);
             run.sizeDifference[n][m] = sizeDiff;
             if (m_params.size_weight != 0.0) {
                 if (run.sizeDifference[n][m] > run.maxSizeDifference) {
@@ -380,9 +377,9 @@ namespace m3D {
             if (sizeDeviation > m_params.max_size_deviation) {
                 if (logDetails) {
                     cout << "precluded: violation of size constraint"
-                    << " (dH:" << sizeDeviation << " values"
-                    << " ,dH_max:" << m_params.max_size_deviation << " values)."
-                    << endl;
+                         << " (dH:" << sizeDeviation << " values"
+                         << " ,dH_max:" << m_params.max_size_deviation << " values)."
+                         << endl;
                 }
                 continue;
             }
@@ -445,10 +442,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    Tracking<T>::calculateProbabilities(typename Tracking<T>::tracking_run_t & run)
-    {
+    Tracking<T>::calculateProbabilities(typename Tracking<T>::tracking_run_t &run) {
         bool logDetails = m_params.verbosity >= VerbosityAll;
         if (logDetails) {
             cout << endl;
@@ -491,8 +487,8 @@ namespace m3D {
                 // weighed sum of all three factors. 
                 run.likelihood[n][m]
                         = m_params.range_weight * prob_r
-                        + m_params.size_weight * prob_h
-                        + m_params.correlation_weight * prob_t;
+                          + m_params.size_weight * prob_h
+                          + m_params.correlation_weight * prob_t;
             }
         }
 
@@ -506,34 +502,33 @@ namespace m3D {
                 if (logDetails) {
                     size_t histSize = c->size();
                     cout << "\tcluster uuid:" << c->uuid << " ("
-                        << " |H|:" << histSize << ")"
-                        << " mode:" << c->mode
-                        << ")" << endl;
+                         << " |H|:" << histSize << ")"
+                         << " mode:" << c->mode
+                         << ")" << endl;
                 }
 
                 for (int m = 0; m < run.M; m++) {
                     if (run.matchPossible[n][m]) {
                         typename Cluster<T>::ptr p = run.previous->clusters[m];
                         printf("\t\tuuid:%4llu \tid:%4lu\t(|H|=%5lu)\t\tdR=%4.1f\tdH=%5.4f\ttau=%7.4f\tsum=%6.4f\t\tcovON=%3.2f\t\tcovNO=%3.2f\n",
-                                p->uuid,
-                                p->id,
-                                p->size(),
-                                run.midDisplacement[n][m].get(),
-                                run.sizeDifference[n][m],
-                                run.rankCorrelation[n][m],
-                                run.likelihood[n][m],
-                                run.coverOldByNew[n][m],
-                                run.coverNewByOld[n][m]);
+                               p->uuid,
+                               p->id,
+                               p->size(),
+                               run.midDisplacement[n][m].get(),
+                               run.sizeDifference[n][m],
+                               run.rankCorrelation[n][m],
+                               run.likelihood[n][m],
+                               run.coverOldByNew[n][m],
+                               run.coverNewByOld[n][m]);
                     }
                 }
             }
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    Tracking<T>::matchmaking(typename Tracking<T>::tracking_run_t & run)
-    {
+    Tracking<T>::matchmaking(typename Tracking<T>::tracking_run_t &run) {
         bool logAll = m_params.verbosity >= VerbosityAll;
         bool logDetails = m_params.verbosity >= VerbosityDetails;
         if (logDetails) {
@@ -558,8 +553,8 @@ namespace m3D {
 
         // sort the matches in descending order of probability
         sort(run.matches.begin(),
-                run.matches.end(),
-                boost::bind(&match_t::second, _1) > boost::bind(&match_t::second, _2));
+             run.matches.end(),
+             boost::bind(&match_t::second, _1) > boost::bind(&match_t::second, _2));
 
         // in case we're re-running the tracking, clear some properties
         run.current->tracked_ids.clear();
@@ -629,9 +624,9 @@ namespace m3D {
 
             if (logDetails) {
                 cout << "\t\tuuid:" << p->uuid << " id:" << p->id
-                << " with uuid:" << c->uuid << " ("
-                << " accepted: (velocity: " << velocity
-                << " displacement: " << c->displacement << ")." << endl;
+                     << " with uuid:" << c->uuid << " ("
+                     << " accepted: (velocity: " << velocity
+                     << " displacement: " << c->displacement << ")." << endl;
             }
         }
 
@@ -651,7 +646,7 @@ namespace m3D {
                 // Get a fresh ID
                 c->id = nextId(run.highestId);
                 if (logDetails) {
-                    cout << "\t\tuuid: " << c->uuid << " id:" << c->id << "."  << endl;
+                    cout << "\t\tuuid: " << c->uuid << " id:" << c->id << "." << endl;
                 }
                 run.current->new_ids.insert(c->id);
                 hadFreshIds = true;
@@ -685,7 +680,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Merging
 
-    template <typename T>
+    template<typename T>
     double
     Tracking<T>::getMergeCriterion(typename Tracking<T>::tracking_run_t &run, const int &n, const int &m) {
         typename Cluster<T>::ptr c = run.current->clusters[n];
@@ -693,11 +688,11 @@ namespace m3D {
         double nbo = run.coverNewByOld[n][m];
         double dR = run.midDisplacement[n][m].get();
         double dH = run.sizeDifference[n][m];
-        double s = nbo * (erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference));
+        double s = nbo * (erfc(dR / run.maxMidDisplacement.get()) + erfc(dH / run.maxSizeDifference));
         return s;
     }
 
-    template <typename T>
+    template<typename T>
     int
     Tracking<T>::findBestMergeCandidate(typename Tracking<T>::tracking_run_t &run,
                                         const int &n,
@@ -705,12 +700,12 @@ namespace m3D {
         double maxS = -1.0;
         int maxM = -1;
         bool maxIsTied = false;
-        for (size_t i=0; i < candidates.size(); i++) {
+        for (size_t i = 0; i < candidates.size(); i++) {
             int m = candidates[i];
             if (run.coverNewByOld[n][m] >= m_params.mergeSplitContinuationThreshold) {
                 double s = getMergeCriterion(run, n, m);
                 if (s >= maxS) {
-                    if (s==maxS) maxIsTied = true;
+                    if (s == maxS) maxIsTied = true;
                     maxM = m;
                     maxS = s;
                 }
@@ -719,14 +714,13 @@ namespace m3D {
         return maxIsTied ? -1 : maxM;
     }
 
-    template <typename T>
+    template<typename T>
     void
     Tracking<T>::getMergeCandidates(typename Tracking<T>::tracking_run_t &run,
-                                    const int& n,
+                                    const int &n,
                                     bool &track_flag,
                                     vector<int> &candidates,
-                                    id_set_t &candidateIds)
-    {
+                                    id_set_t &candidateIds) {
         typename Cluster<T>::ptr c = run.current->clusters.at(n);
         for (size_t m = 0; m < run.M; m++) {
             typename Cluster<T>::ptr p = run.previous->clusters.at(m);
@@ -766,10 +760,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    Tracking<T>::handleMerges(typename Tracking<T>::tracking_run_t &run)
-    {
+    Tracking<T>::handleMerges(typename Tracking<T>::tracking_run_t &run) {
         bool logDetails = m_params.verbosity >= VerbosityDetails;
         if (logDetails) {
             cout << endl << "\t-- Merges" << endl;
@@ -789,7 +782,7 @@ namespace m3D {
                 had_merges = true;
                 if (logDetails) {
                     cout << "\t\tprevious ids:" << candidateIds << " have merged into "
-                    << "uuid:" << c->uuid << " id:" << c->id << "." << endl;
+                         << "uuid:" << c->uuid << " id:" << c->id << "." << endl;
                 }
                 if (!track_flag && m_params.continueIDs) {
                     int winner = findBestMergeCandidate(run, n, candidates);
@@ -797,9 +790,9 @@ namespace m3D {
                         typename Cluster<T>::ptr p = run.previous->clusters.at(winner);
                         if (logDetails) {
                             cout << "\t\t\tuuid:" << c->uuid << " id:" << c->id
-                            << " re-tagged with id:" << p->id
-                            << endl
-                            << "\t\t\ttrack id:" << p->id << " continues." << endl;
+                                 << " re-tagged with id:" << p->id
+                                 << endl
+                                 << "\t\t\ttrack id:" << p->id << " continues." << endl;
                         }
                         run.current->new_ids.erase(c->id);
                         run.current->tracked_ids.insert(p->id);
@@ -823,7 +816,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Splitting
 
-    template <typename T>
+    template<typename T>
     double
     Tracking<T>::getSplitCriterion(typename Tracking<T>::tracking_run_t &run, const int &n, const int &m) {
         typename Cluster<T>::ptr c = run.current->clusters[n];
@@ -831,11 +824,11 @@ namespace m3D {
         double obn = run.coverOldByNew[n][m];
         double dR = run.midDisplacement[n][m].get();
         double dH = run.sizeDifference[n][m];
-        double s = obn * (erfc(dR/run.maxMidDisplacement.get()) + erfc(dH/run.maxSizeDifference));
+        double s = obn * (erfc(dR / run.maxMidDisplacement.get()) + erfc(dH / run.maxSizeDifference));
         return s;
     }
 
-    template <typename T>
+    template<typename T>
     int
     Tracking<T>::findBestSplitCandidate(typename Tracking<T>::tracking_run_t &run,
                                         const int &m,
@@ -843,12 +836,12 @@ namespace m3D {
         double maxS = -1.0;
         int maxM = -1;
         bool maxIsTied = false;
-        for (size_t i=0; i < candidates.size(); i++) {
+        for (size_t i = 0; i < candidates.size(); i++) {
             int n = candidates[i];
             if (run.coverOldByNew[n][m] >= m_params.mergeSplitContinuationThreshold) {
                 double s = getSplitCriterion(run, n, m);
                 if (s >= maxS) {
-                    if (s==maxS) maxIsTied = true;
+                    if (s == maxS) maxIsTied = true;
                     maxM = n;
                     maxS = s;
                 }
@@ -857,14 +850,13 @@ namespace m3D {
         return maxIsTied ? -1 : maxM;
     }
 
-    template <typename T>
+    template<typename T>
     void
     Tracking<T>::getSplitCandidates(typename Tracking<T>::tracking_run_t &run,
-                                    const int& m,
+                                    const int &m,
                                     bool &track_flag,
                                     vector<int> &candidates,
-                                    uuid_set_t &candidateUuids)
-    {
+                                    uuid_set_t &candidateUuids) {
         typename Cluster<T>::ptr p = run.previous->clusters.at(m);
         for (size_t n = 0; n < run.N; n++) {
             typename Cluster<T>::ptr c = run.current->clusters.at(n);
@@ -906,10 +898,9 @@ namespace m3D {
     }
 
 
-    template <typename T>
+    template<typename T>
     void
-    Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t &run)
-    {
+    Tracking<T>::handleSplits(typename Tracking<T>::tracking_run_t &run) {
         bool logDetails = m_params.verbosity >= VerbosityDetails;
         if (logDetails) {
             cout << "\t-- Splits" << endl;
@@ -928,7 +919,7 @@ namespace m3D {
                 had_splits = true;
                 if (logDetails) {
                     cout << "\t\tuuid:" << p->uuid << " id:" << p->id
-                    << " split into uuids:" << candidateUuids << "." << endl;
+                         << " split into uuids:" << candidateUuids << "." << endl;
                 }
                 if (!track_flag && m_params.continueIDs) {
                     int winner = findBestSplitCandidate(run, m, candidates);
@@ -936,7 +927,7 @@ namespace m3D {
                         typename Cluster<T>::ptr c = run.current->clusters.at(winner);
                         if (logDetails) {
                             cout << "\t\t\tuuid:" << c->uuid << " id:" << c->id
-                                 << " re-tagged with id:" <<  p->id
+                                 << " re-tagged with id:" << p->id
                                  << endl
                                  << "\t\t\ttrack id:" << p->id << " continues." << endl;
                         }
@@ -961,10 +952,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    Tracking<T>::removeScheduled(const tracking_run_t & run)
-    {
+    Tracking<T>::removeScheduled(const tracking_run_t &run) {
         id_set_t::const_iterator si;
         for (si = run.scheduled_for_removal.begin(); si != run.scheduled_for_removal.end(); ++si) {
             m3D::id_t id = *si;
@@ -975,11 +965,10 @@ namespace m3D {
 #pragma mark -
 #pragma mark Entry point
 
-    template <typename T>
+    template<typename T>
     void
     Tracking<T>::track(typename ClusterList<T>::ptr previous,
-            typename ClusterList<T>::ptr current)
-    {
+                       typename ClusterList<T>::ptr current) {
         bool logNormal = m_params.verbosity >= VerbosityNormal;
 
         if (logNormal) cout << "Tracking:" << endl;

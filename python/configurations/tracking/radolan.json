@@ -1,6 +1,6 @@
 {
-    "description" : "Tracking RADOLAN RX product, threshold 20 dBZ",
-    "meanie3D-detect" : "-v RX --lower-thresholds RX=20 --verbosity 1 -d y,x --vtk-dimensions x,y --weight-function default --wwf-lower-threshold 0 -m 15",
-    "tracking_params" : "-t RX --vtk-dimensions x,y --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
-    "use_previous" : true
+  "description": "Tracking RADOLAN RX product, threshold 20 dBZ",
+  "meanie3D-detect": "-v RX --lower-thresholds RX=20 --verbosity 1 -d y,x --vtk-dimensions x,y --weight-function default --wwf-lower-threshold 0 -m 15",
+  "tracking_params": "-t RX --vtk-dimensions x,y --verbosity 1 --wr=1.0 --ws=0.0 --wt=0.0",
+  "use_previous": true
 }

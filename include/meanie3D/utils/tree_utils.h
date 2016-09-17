@@ -6,16 +6,13 @@
  */
 
 #ifndef M3D_TREE_UTILS_H
-#define	M3D_TREE_UTILS_H
+#define    M3D_TREE_UTILS_H
 
 namespace m3D {
     namespace utils {
 
     }
 }
-
-
-
 
 
 #endif	/* M3D_TREE_UTILS_H */

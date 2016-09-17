@@ -42,9 +42,8 @@ namespace std {
 
     // Convenience operator << for printing vectors out to streams
 
-    template < class T >
-    std::ostream& operator<<(std::ostream& os, const vector<T>& v)
-    {
+    template<class T>
+    std::ostream &operator<<(std::ostream &os, const vector<T> &v) {
         size_t count = 0;
         os << "(";
         for (typename vector<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii) {
@@ -63,16 +62,15 @@ namespace std {
 namespace m3D {
     namespace utils {
         namespace vectors {
-            
+
             using std::vector;
 
             // - operator
 
-            template < class T >
+            template<class T>
             inline
             const vector<T>
-            operator-(const vector<T>& v1, const vector<T>& v2)
-            {
+            operator-(const vector<T> &v1, const vector<T> &v2) {
 #if ASSERT_VECTOR_SIZES
                 assert(v1.size() == v2.size());
 #endif
@@ -85,11 +83,10 @@ namespace m3D {
 
             // -= operator
 
-            template < class T >
+            template<class T>
             inline
             void
-            operator-=(vector<T>& v1, const vector<T>& v2)
-            {
+            operator-=(vector<T> &v1, const vector<T> &v2) {
 #if ASSERT_VECTOR_SIZES
                 assert(v1.size() == v2.size());
 #endif
@@ -100,11 +97,10 @@ namespace m3D {
 
             // + operator
 
-            template < class T >
+            template<class T>
             inline
             const vector<T>
-            operator+(const vector<T>& v1, const vector<T>& v2)
-            {
+            operator+(const vector<T> &v1, const vector<T> &v2) {
 #if ASSERT_VECTOR_SIZES
                 assert(v1.size() == v2.size());
 #endif
@@ -117,11 +113,10 @@ namespace m3D {
 
             // += operator
 
-            template < class T >
+            template<class T>
             inline
             void
-            operator+=(vector<T>& v1, const vector<T>& v2)
-            {
+            operator+=(vector<T> &v1, const vector<T> &v2) {
 #if ASSERT_VECTOR_SIZES
                 assert(v1.size() == v2.size());
 #endif
@@ -132,11 +127,10 @@ namespace m3D {
 
             // * operator (scalar multiplication)
 
-            template < class T >
+            template<class T>
             inline
             vector<T>
-            operator*(const vector<T>& v1, const T s)
-            {
+            operator*(const vector<T> &v1, const T s) {
                 vector<T> result(v1.size());
                 for (size_t i = 0; i < v1.size(); i++) {
                     result[i] = s * v1[i];
@@ -144,11 +138,10 @@ namespace m3D {
                 return result;
             }
 
-            template < class T >
+            template<class T>
             inline
             vector<T>
-            operator*(const T s, const vector<T>& v1)
-            {
+            operator*(const T s, const vector<T> &v1) {
                 vector<T> result(v1.size());
                 for (size_t i = 0; i < v1.size(); i++) {
                     result[i] = s * v1[i];
@@ -159,11 +152,10 @@ namespace m3D {
 
             // *= operator (scalar multiplication)
 
-            template < class T >
+            template<class T>
             inline
             void
-            operator*=(vector<T>& v1, const T s)
-            {
+            operator*=(vector<T> &v1, const T s) {
                 for (size_t i = 0; i < v1.size(); i++) {
                     v1[i] *= s;
                 }
@@ -171,11 +163,10 @@ namespace m3D {
 
             // /= operator (multiplication with inverse of scalar)
 
-            template < class T >
+            template<class T>
             inline
             void
-            operator/=(vector<T>& v1, const T s)
-            {
+            operator/=(vector<T> &v1, const T s) {
                 for (size_t i = 0; i < v1.size(); i++) {
                     v1[i] /= s;
                 }
@@ -183,11 +174,10 @@ namespace m3D {
 
             // / operator (multiplication with inverse of scalar)
 
-            template < class T >
+            template<class T>
             inline
             vector<T>
-            operator/(const vector<T>& v1, const T s)
-            {
+            operator/(const vector<T> &v1, const T s) {
                 vector<T> result(v1.size());
                 for (size_t i = 0; i < v1.size(); i++) {
                     result[i] = v1[i] / s;
@@ -197,11 +187,10 @@ namespace m3D {
 
             // * operator (scalar product of two vectors)
 
-            template <typename T>
+            template<typename T>
             inline
             T
-            operator*(const vector<T> v1, const vector<T> v2)
-            {
+            operator*(const vector<T> v1, const vector<T> v2) {
 #if ASSERT_VECTOR_SIZES
                 assert(v1.size() == v2.size());
 #endif
@@ -214,11 +203,10 @@ namespace m3D {
 
             // norm
 
-            template <typename T>
+            template<typename T>
             inline
             T
-            vector_norm(const vector<T> *v)
-            {
+            vector_norm(const vector<T> *v) {
                 double sum = 0;
                 typename vector<T>::const_iterator i;
                 for (i = v->begin(); i != v->end(); i++) {
@@ -228,11 +216,10 @@ namespace m3D {
                 return result;
             }
 
-            template <typename T>
+            template<typename T>
             inline
             T
-            vector_norm(const vector<T> &v)
-            {
+            vector_norm(const vector<T> &v) {
                 double sum = 0;
                 typename vector<T>::const_iterator i;
                 for (i = v.begin(); i != v.end(); i++) {
@@ -242,11 +229,10 @@ namespace m3D {
                 return result;
             }
 
-            template <typename T>
+            template<typename T>
             inline
             bool
-            vector_is_null(vector<T> *v)
-            {
+            vector_is_null(vector<T> *v) {
                 typename vector<T>::iterator it;
                 for (it = v->begin(); it != v->end(); it++) {
                     if (*it != 0) return false;
@@ -254,11 +240,10 @@ namespace m3D {
                 return true;
             }
 
-            template <typename T>
+            template<typename T>
             inline
             bool
-            vector_is_null(vector<T> &v)
-            {
+            vector_is_null(vector<T> &v) {
                 typename vector<T>::iterator it;
                 for (it = v.begin(); it != v.end(); it++) {
                     if (*it != 0) return false;
@@ -266,11 +251,10 @@ namespace m3D {
                 return true;
             }
 
-            template <typename T>
+            template<typename T>
             inline
             bool
-            within_range(const vector<T> &x, const vector<T> &y, const vector<T> &h)
-            {
+            within_range(const vector<T> &x, const vector<T> &y, const vector<T> &h) {
 #if ASSERT_VECTOR_SIZES
                 assert(x.size() == y.size());
                 assert(x.size() == h.size());
@@ -282,11 +266,10 @@ namespace m3D {
                 return within_range;
             }
 
-            template <typename T>
+            template<typename T>
             inline
             bool
-            closer_than(const vector<T> &x, const vector<T> &y, const vector<T> &h)
-            {
+            closer_than(const vector<T> &x, const vector<T> &y, const vector<T> &h) {
 #if ASSERT_VECTOR_SIZES
                 assert(x.size() == y.size());
                 assert(x.size() == h.size());
@@ -298,22 +281,20 @@ namespace m3D {
                 return closer;
             }
 
-            template <typename T>
+            template<typename T>
             inline
             T
-            vector_angle(vector<T> &v1, vector<T> &v2)
-            {
+            vector_angle(vector<T> &v1, vector<T> &v2) {
 #if ASSERT_VECTOR_SIZES
                 assert(v1.size() == v2.size());
 #endif
                 return acos((v1 * v2) / (vector_norm(v1) * vector_norm(v2)));
             }
 
-            template <typename T>
+            template<typename T>
             inline
             T
-            mahalabonis_distance_sqr(const vector<T> &x, const vector<T> &y, const vector<T> &H)
-            {
+            mahalabonis_distance_sqr(const vector<T> &x, const vector<T> &y, const vector<T> &H) {
 #if ASSERT_VECTOR_SIZES
                 assert(x.size() == y.size());
                 assert(x.size() == H.size());
@@ -328,14 +309,13 @@ namespace m3D {
                 return result;
             }
 
-            template <typename T>
+            template<typename T>
             inline
             /* @param x
              * @param y
              * @return (x1 * y1, x2 * y2, ... , xn * yn ) ( x * diag(y) )
              */
-            vector<T> vector_diagonal_product(vector<T> &x, vector<T> &y)
-            {
+            vector<T> vector_diagonal_product(vector<T> &x, vector<T> &y) {
 #if ASSERT_VECTOR_SIZES
                 assert(x.size() == y.size());
 #endif
@@ -352,11 +332,10 @@ namespace m3D {
              * @param element
              * @return index of the first element matching the given one or -1 if no matching element was found.
              */
-            template <typename T>
+            template<typename T>
             inline
             const int
-            index_of_first(const vector<T>& myvec, const T& elem)
-            {
+            index_of_first(const vector<T> &myvec, const T &elem) {
                 int pos = -1;
 
                 for (int i = 0; i < myvec.size(); i++) {
@@ -375,10 +354,9 @@ namespace m3D {
              * @param v
              * @return 
              */
-            template <typename T>
+            template<typename T>
             std::string
-            to_string(const std::vector<T> &v)
-            {
+            to_string(const std::vector<T> &v) {
                 std::stringstream str(std::stringstream::in | std::stringstream::out);
                 str << "(";
                 for (size_t i = 0; i < v.size(); i++) {
@@ -397,10 +375,9 @@ namespace m3D {
              * @param const_str
              * @return 
              */
-            template <typename T>
+            template<typename T>
             std::vector<T>
-            from_string(const std::string &const_str)
-            {
+            from_string(const std::string &const_str) {
                 vector<T> result;
                 std::string str = const_str;
 
@@ -428,9 +405,8 @@ namespace m3D {
              * @param v
              * @return 
              */
-            template < class T >
-            std::string to_json(const vector<T>& v)
-            {
+            template<class T>
+            std::string to_json(const vector<T> &v) {
                 std::ostringstream out;
                 out << "[";
                 size_t count = 0;
@@ -448,8 +424,7 @@ namespace m3D {
              * @param v
              * @return 
              */
-            std::string to_json(const std::vector<std::string>& v)
-            {
+            std::string to_json(const std::vector<std::string> &v) {
                 std::ostringstream out;
 
                 out << "[";

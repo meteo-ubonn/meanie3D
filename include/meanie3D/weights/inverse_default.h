@@ -40,7 +40,7 @@ namespace m3D {
     using std::vector;
     using std::map;
 
-    template <class T>
+    template<class T>
     class InverseDefaultWeightFunction : public WeightFunction<T>
     {
     protected:
@@ -48,12 +48,11 @@ namespace m3D {
         vector<string> m_vars; // variables for weighting
         map<size_t, T> m_min; // [index,min]
         map<size_t, T> m_max; // [index,max]
-        MultiArray<T> *m_weight;
-        const CoordinateSystem<T> *m_coordinate_system;
+        MultiArray <T> *m_weight;
+        const CoordinateSystem <T> *m_coordinate_system;
 
         void
-        calculate_weight_function(FeatureSpace<T> *fs)
-        {
+        calculate_weight_function(FeatureSpace <T> *fs) {
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
                 T saliency = compute_weight(p);
@@ -67,12 +66,11 @@ namespace m3D {
          * for valid_min/valid_max
          * @param featurespace
          */
-        InverseDefaultWeightFunction(const detection_params_t<T> &params, 
-                             const detection_context_t<T> &ctx)
-        : m_vars(params.variables)
-        , m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(ctx.coord_system)
-        {
+        InverseDefaultWeightFunction(const detection_params_t <T> &params,
+                                     const detection_context_t <T> &ctx)
+                : m_vars(params.variables),
+                  m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0)),
+                  m_coordinate_system(ctx.coord_system) {
             // If scale-space filter is present, use the filtered
             // limits. If not, use the original limits
             if (ctx.sf == NULL) {
@@ -88,8 +86,7 @@ namespace m3D {
             calculate_weight_function(ctx.fs);
         }
 
-        ~InverseDefaultWeightFunction()
-        {
+        ~InverseDefaultWeightFunction() {
             if (this->m_weight != NULL) {
                 delete m_weight;
                 m_weight = NULL;
@@ -98,8 +95,7 @@ namespace m3D {
 
         /** Actual weight computation happens here
          */
-        virtual T compute_weight(Point<T> *p)
-        {
+        virtual T compute_weight(Point <T> *p) {
             T sum = 0.0;
             size_t num_vars = p->values.size() - p->coordinate.size();
             if (p->isOriginalPoint) {
@@ -115,8 +111,7 @@ namespace m3D {
             return sum;
         }
 
-        T operator()(const typename Point<T>::ptr p) const
-        {
+        T operator()(const typename Point<T>::ptr p) const {
             return m_weight->get(p->gridpoint);
         }
     };

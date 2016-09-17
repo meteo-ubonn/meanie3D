@@ -36,7 +36,7 @@ namespace m3D {
     /** Implementation of FeatureSpace which simply searches the feature-space vector
      * brute-force style when sampling around points.
      */
-    template <typename T>
+    template<typename T>
     class KDTreeIndex : public WhiteningIndex<T>
     {
         friend class PointIndex<T>;
@@ -55,28 +55,28 @@ namespace m3D {
 #pragma mark Constructor/Destructor
 
         inline
-        KDTreeIndex(typename Point<T>::list *points, size_t dimension) : WhiteningIndex<T>(points, dimension), m_index(NULL)
-        {
+        KDTreeIndex(typename Point<T>::list *points, size_t dimension) : WhiteningIndex<T>(points, dimension),
+                                                                         m_index(NULL) {
         };
 
         inline
-        KDTreeIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : WhiteningIndex<T>(points, indexes), m_index(NULL)
-        {
+        KDTreeIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : WhiteningIndex<T>(points,
+                                                                                                        indexes),
+                                                                                      m_index(NULL) {
         };
 
         inline
-        KDTreeIndex(FeatureSpace<T> *fs) : WhiteningIndex<T>(fs), m_index(NULL)
-        {
+        KDTreeIndex(FeatureSpace<T> *fs) : WhiteningIndex<T>(fs), m_index(NULL) {
         };
 
         inline
-        KDTreeIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : WhiteningIndex<T>(fs, index_variables), m_index(NULL)
-        {
+        KDTreeIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : WhiteningIndex<T>(fs,
+                                                                                                           index_variables),
+                                                                                         m_index(NULL) {
         };
 
         inline
-        KDTreeIndex(const KDTreeIndex<T> &o) : WhiteningIndex<T>(o), m_index(dynamic_cast<KDTreeIndex> (o).kd_tree())
-        {
+        KDTreeIndex(const KDTreeIndex<T> &o) : WhiteningIndex<T>(o), m_index(dynamic_cast<KDTreeIndex> (o).kd_tree()) {
         };
 
 #pragma mark -
@@ -85,8 +85,7 @@ namespace m3D {
         /** protected accessor for copy constructor 
          * @return kdtree 
          */
-        struct kdtree * kd_tree()
-        {
+        struct kdtree *kd_tree() {
             return m_index;
         }
 
@@ -94,8 +93,7 @@ namespace m3D {
 #pragma mark Overwritten Protected Methods
 
         void
-        build_index(const vector<T> &ranges)
-        {
+        build_index(const vector<T> &ranges) {
             // TODO: build index from index variables
 
             this->transform_featurespace(ranges);
@@ -115,7 +113,7 @@ namespace m3D {
             for (size_t row = 0; row < this->white_point_matrix.size1(); row++) {
                 // re-package data for kd-tree
 
-                double query_point[ this->white_point_matrix.size2() ];
+                double query_point[this->white_point_matrix.size2()];
 
                 for (size_t col = 0; col < this->dimension(); col++) {
                     query_point[col] = this->white_point_matrix(row, col);
@@ -137,8 +135,7 @@ namespace m3D {
         /** Destructor 
          */
         inline
-        ~KDTreeIndex()
-        {
+        ~KDTreeIndex() {
             if (m_index != NULL) {
                 kd_free(m_index);
             }
@@ -149,8 +146,7 @@ namespace m3D {
 
         /** Copy operator 
          */
-        KDTreeIndex<T> operator=(const KDTreeIndex<T> &other)
-        {
+        KDTreeIndex<T> operator=(const KDTreeIndex<T> &other) {
             return KDTreeIndex<T>(other);
         }
 
@@ -158,20 +154,17 @@ namespace m3D {
 #pragma mark Overwritten Public Methods   
 
         void
-        remove_point(typename Point<T>::ptr p)
-        {
+        remove_point(typename Point<T>::ptr p) {
             throw "KDTree does not support removing individual points";
         }
 
         void
-        add_point(typename Point<T>::ptr p)
-        {
+        add_point(typename Point<T>::ptr p) {
             throw "KDTree does not support adding individual points";
         }
 
         typename Point<T>::list *
-        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL)
-        {
+        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL) {
             if (params->search_type() == SearchTypeKNN) {
                 std::cerr << "FATAL:KNN not supported by KDTree yet" << std::endl;
                 exit(EXIT_FAILURE);
@@ -180,7 +173,7 @@ namespace m3D {
             // Check if the index needs re-building
 
             if (params->search_type() == SearchTypeRange) {
-                RangeSearchParams<T> *p = (RangeSearchParams<T> *) & params;
+                RangeSearchParams<T> *p = (RangeSearchParams<T> *) &params;
 
                 if (this->white_range != p->bandwidth || m_index == NULL) {
                     build_index(p->bandwidth);

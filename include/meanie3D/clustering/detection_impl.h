@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 #ifndef M3D_DETECTION_IMPL_H
-#define	M3D_DETECTION_IMPL_H
+#define    M3D_DETECTION_IMPL_H
 
 #include <exception>
 #include <fstream>
@@ -47,7 +47,7 @@
 #include "cluster_list.h"
 
 namespace m3D {
-    
+
     using namespace ::units;
     using namespace utils;
     using namespace utils::vectors;
@@ -56,17 +56,16 @@ namespace m3D {
     using namespace netCDF;
     using namespace m3D;
 
-    template <typename T>
+    template<typename T>
     const double
-    Detection<T>::NO_SCALE = numeric_limits<double>::min();
+            Detection<T>::NO_SCALE = numeric_limits<double>::min();
 
 #pragma mark -
 #pragma mark Defaults
 
-    template <typename T>
+    template<typename T>
     detection_params_t<T>
-    Detection<T>::defaultParams()
-    {
+    Detection<T>::defaultParams() {
         detection_params_t<T> p;
         p.filename = "";
         p.output_filename = "";
@@ -96,10 +95,9 @@ namespace m3D {
         return p;
     }
 
-    template <typename T>
-    void 
-    Detection<T>::initialiseContext(detection_context_t<T> &ctx)
-    {
+    template<typename T>
+    void
+    Detection<T>::initialiseContext(detection_context_t<T> &ctx) {
         ctx.file = NULL;
         ctx.clusters = NULL;
         ctx.previous_clusters = NULL;
@@ -119,33 +117,31 @@ namespace m3D {
         ctx.weight_function = NULL;
         ctx.wwf_apply = false;
     }
-        
-    template <typename T>
+
+    template<typename T>
     void
     Detection<T>::initialiseContext(const detection_params_t<T> &params,
-            detection_context_t<T> &ctx)
-
-    {
+                                    detection_context_t<T> &ctx) {
         Detection<T>::initialiseContext(ctx);
         try {
             ctx.file = new NcFile(params.filename, NcFile::read);
         } catch (const netCDF::exceptions::NcException &e) {
-            cerr << "ERROR: could not open file '" << params.filename 
+            cerr << "ERROR: could not open file '" << params.filename
                  << "' for reading: " << e.what() << endl;
             exit(EXIT_FAILURE);
         }
-        
+
         ctx.data_store = new NetCDFDataStore<T>(params.filename,
-                params.variables,
-                params.dimensions,
-                params.dimension_variables,
-                params.time_index);
-                
+                                                params.variables,
+                                                params.dimensions,
+                                                params.dimension_variables,
+                                                params.time_index);
+
         ctx.show_progress = (params.verbosity > VerbositySilent);
 
         // Get timestamp
         ctx.timestamp = netcdf::get_time_checked<timestamp_t>(params.filename, params.time_index);
-        
+
         // Calculate mean-shift bandwidth if necessary
         if (!params.ranges.empty()) {
             // calculate kernel width as average of ranges
@@ -182,9 +178,9 @@ namespace m3D {
         // Construct a coordinate system object from the dimensions
         // and dimension variables given
         ctx.coord_system = ctx.data_store->coordinate_system();
-        
-        ctx.wwf_apply = (params.wwf_lower_threshold != 0 
-            || params.wwf_upper_threshold != std::numeric_limits<T>::max());
+
+        ctx.wwf_apply = (params.wwf_lower_threshold != 0
+                         || params.wwf_upper_threshold != std::numeric_limits<T>::max());
 
         // Construct the kernel
         if (params.kernel_name == "uniform") {
@@ -194,7 +190,7 @@ namespace m3D {
         } else if (params.kernel_name == "epanechnikov") {
             ctx.kernel = new EpanechnikovKernel<T>(ctx.kernel_width);
         }
-        
+
         if (params.inline_tracking || params.postprocess_with_previous_output) {
             if (params.previous_clusters_filename == NULL) {
                 cerr << "inline tracking or postprocessing with previous output"
@@ -207,13 +203,12 @@ namespace m3D {
         ctx.initialised = true;
     };
 
-    #define delete_and_clear(X) if (X != NULL) {delete X; X = NULL;}
-    
-    template <typename T>
-    void 
+#define delete_and_clear(X) if (X != NULL) {delete X; X = NULL;}
+
+    template<typename T>
+    void
     Detection<T>::cleanup(detection_params_t<T> &params,
-                    detection_context_t<T> &ctx) 
-    {
+                          detection_context_t<T> &ctx) {
         // context
         ctx.clusters->clear();
         ctx.fs->clear();
@@ -233,19 +228,18 @@ namespace m3D {
         delete_and_clear(params.ci_comparison_file);
         delete_and_clear(params.ci_comparison_protocluster_file);
     }
-    
-    template <typename T>
+
+    template<typename T>
     void
-    Detection<T>::run(const detection_params_t<T> &params, 
-                      detection_context_t<T> &ctx)
-    {
+    Detection<T>::run(const detection_params_t<T> &params,
+                      detection_context_t<T> &ctx) {
         if (!ctx.initialised) {
             Detection<T>::initialiseContext(params, ctx);
         }
 
         // used in writing out debug data
         boost::filesystem::path path(params.filename);
-        
+
         // Construct Featurespace from data
         ctx.fs = new FeatureSpace<T>(
                 ctx.coord_system,
@@ -254,13 +248,11 @@ namespace m3D {
                 params.upper_thresholds,
                 params.replacement_values,
                 ctx.show_progress);
-        
+
         // Run replacement filters
-        if (!params.replacementFilterVariableIndex.empty()) 
-        {
-            size_t rfvi_length = params.replacementFilterVariableIndex.size(); 
-            for (size_t i = 0; i < rfvi_length; i++) 
-            {
+        if (!params.replacementFilterVariableIndex.empty()) {
+            size_t rfvi_length = params.replacementFilterVariableIndex.size();
+            for (size_t i = 0; i < rfvi_length; i++) {
                 int rvi = params.replacementFilterVariableIndex[i];
                 typename ReplacementFilter<T>::ReplacementMode mode = params.replacementFilterModes.at(rvi);
                 float percent = params.replacementFilterPercentages.at(rvi);
@@ -275,24 +267,24 @@ namespace m3D {
             }
         }
 
-        #if WRITE_FEATURESPACE
+#if WRITE_FEATURESPACE
         static size_t fs_index = 0;
         std::string fn = path.stem().string() + "_featurespace_" + boost::lexical_cast<string>(fs_index++) + ".vtk";
         VisitUtils<T>::write_featurespace_vtk(fn, ctx.fs);
-        #endif
+#endif
 
-        #if WRITE_OFF_LIMITS_MASK
+#if WRITE_OFF_LIMITS_MASK
         std::string ol_fname = path.filename().stem().string() + "-off_limits.vtk";
         VisitUtils<T>::write_multiarray_vtk(ol_fname, "off_limits", ctx.coord_system, ctx.fs->off_limits());
-        #endif
+#endif
 
         // Convection Filter?
         if (params.convection_filter_index >= 0) {
             if (params.verbosity >= VerbosityNormal) {
                 start_timer("Applying convection filter");
             }
-            ConvectionFilter<T> convection_filter(ctx.bandwidth, 
-                params.convection_filter_index, ctx.show_progress);
+            ConvectionFilter<T> convection_filter(ctx.bandwidth,
+                                                  params.convection_filter_index, ctx.show_progress);
             convection_filter.apply(ctx.fs);
             if (params.verbosity >= VerbosityNormal) {
                 stop_timer("done.");
@@ -301,26 +293,26 @@ namespace m3D {
 
         // Scale-Space smoothing
         if (params.scale != NO_SCALE) {
-            
+
             vector<T> resolution = ctx.fs->coordinate_system->resolution();
-            ctx.sf = new ScaleSpaceFilter<T>(params.scale, 
-                    resolution, 
-                    params.exclude_from_scale_space_filtering, 
-                    ctx.decay, 
-                    ctx.show_progress);
+            ctx.sf = new ScaleSpaceFilter<T>(params.scale,
+                                             resolution,
+                                             params.exclude_from_scale_space_filtering,
+                                             ctx.decay,
+                                             ctx.show_progress);
             ctx.sf->apply(ctx.fs);
 
-            #if WRITE_FEATURESPACE
+#if WRITE_FEATURESPACE
             std::string fn = path.stem().string() + "_scale_" + boost::lexical_cast<string>(scale) + ".vtk";
             VisitUtils<T>::write_featurespace_vtk(fn, ctx.fs);
-            #endif
+#endif
         }
 
         // Construct the weight function
         if (params.verbosity > VerbositySilent) {
             start_timer("Constructing weight function: " + params.weight_function_name);
         }
-        ctx.weight_function = WeightFunctionFactory<T>::create(params,ctx);
+        ctx.weight_function = WeightFunctionFactory<T>::create(params, ctx);
         if (params.verbosity > VerbositySilent) {
             stop_timer("done");
         }
@@ -332,21 +324,21 @@ namespace m3D {
             }
 
             // Apply weight function filter
-            WeightThresholdFilter<T> wtf(ctx.weight_function, 
-                    params.wwf_lower_threshold, 
-                    params.wwf_upper_threshold, 
-                    ctx.show_progress);
+            WeightThresholdFilter<T> wtf(ctx.weight_function,
+                                         params.wwf_lower_threshold,
+                                         params.wwf_upper_threshold,
+                                         ctx.show_progress);
             wtf.apply(ctx.fs);
-            
+
             if (params.verbosity > VerbositySilent) {
                 stop_timer("done");
                 cout << "Filtered featurespace contains "
-                    << ctx.fs->count_original_points() << " original points "
-                    << endl;
+                     << ctx.fs->count_original_points() << " original points "
+                     << endl;
             }
         }
-        
-        #if WITH_VTK
+
+#if WITH_VTK
         if (params.write_weight_function) {
             std::string wfname = "weights-" + path.filename().stem().string();
             start_timer("Writing weight function");
@@ -361,29 +353,29 @@ namespace m3D {
             destination_path /= filename_only;
             destination_path.replace_extension();
             string dest_path = destination_path.generic_string();
-            
+
             if (params.verbosity > VerbositySilent) {
                 cout << "Writing featurespace-variables ...";
             }
 
-            VisitUtils<T>::write_featurespace_variables_vtk(dest_path, 
-                    ctx.fs,
-                    ctx.data_store->variables(),
-                    params.vtk_variables,
-                    false);
-            
+            VisitUtils<T>::write_featurespace_variables_vtk(dest_path,
+                                                            ctx.fs,
+                                                            ctx.data_store->variables(),
+                                                            params.vtk_variables,
+                                                            false);
+
             if (params.verbosity > VerbositySilent) {
                 cout << " done." << endl;
             }
         }
-        #endif
+#endif
 
         // Create the quick lookup index to speed up mean-shift
         // clustering. By default this is FLANN K/D-tree implementation.
         ctx.index = PointIndex<T>::create(ctx.fs->get_points(), ctx.fs->rank());
-        
+
         // Perform the actual clustering
-        ClusterOperation<T> cop(params,ctx);
+        ClusterOperation<T> cop(params, ctx);
         ctx.clusters = cop.cluster();
 
 #if WITH_VTK
@@ -415,17 +407,16 @@ namespace m3D {
         ctx.clusters->highest_uuid = uuid;
 
         // Collate with previous clusters, if provided
-        if (params.previous_clusters_filename != NULL 
-                && params.postprocess_with_previous_output) 
-        {
+        if (params.previous_clusters_filename != NULL
+            && params.postprocess_with_previous_output) {
             cout << endl << "Collating with previous results:" << endl;
             if (params.verbosity >= VerbosityDetails)
                 ctx.clusters->print();
 
             try {
                 if (params.verbosity >= VerbosityNormal)
-                    cout << "Comparing " << ctx.clusters->size() 
-                         << " new clusters to " << ctx.previous_clusters->size() 
+                    cout << "Comparing " << ctx.clusters->size()
+                         << " new clusters to " << ctx.previous_clusters->size()
                          << " old clusters" << endl;
 
                 if (params.verbosity >= VerbosityDetails) {
@@ -434,15 +425,15 @@ namespace m3D {
                     cout << endl << "List of previous clusters:" << endl;
                     ctx.previous_clusters->print();
                 }
-                
+
                 ClusterUtils<T> cluster_filter(params.cluster_coverage_threshold);
                 cluster_filter.filter_with_previous_clusters(
-                        ctx.previous_clusters, 
-                        ctx.clusters, 
-                        ctx.coord_system, 
-                        ctx.weight_function, 
+                        ctx.previous_clusters,
+                        ctx.clusters,
+                        ctx.coord_system,
+                        ctx.weight_function,
                         params.verbosity);
-                
+
             } catch (const std::exception &e) {
                 cerr << "FATAL:exception reading previous cluster file: " << e.what() << endl;
                 exit(EXIT_FAILURE);
@@ -451,7 +442,7 @@ namespace m3D {
 
             if (params.verbosity >= VerbosityDetails)
                 ctx.clusters->print();
-            
+
         } else {
             // No previous file? Provide UUIDs from scratch
         }
@@ -467,23 +458,24 @@ namespace m3D {
 
 #if WITH_VTK
         if (params.write_vtk && ctx.clusters->size() > 0) {
-            ::m3D::utils::VisitUtils<T>::write_clusters_vtu(ctx.clusters, 
-                    ctx.coord_system, path.filename().string());
+            ::m3D::utils::VisitUtils<T>::write_clusters_vtu(ctx.clusters,
+                                                            ctx.coord_system, path.filename().string());
         }
         if (params.write_cluster_modes) {
             string modes_path = "clusters_modes-" + path.filename().stem().string() + ".vtk";
-            ::m3D::utils::VisitUtils<T>::write_cluster_modes_vtk(modes_path, 
-                    ctx.clusters->clusters, true);
+            ::m3D::utils::VisitUtils<T>::write_cluster_modes_vtk(modes_path,
+                                                                 ctx.clusters->clusters, true);
         }
         if (params.write_cluster_centers) {
             string centers_path = "clusters_centers-" + path.filename().stem().string() + ".vtk";
-            ::m3D::utils::VisitUtils<T>::write_geometrical_cluster_centers_vtk(centers_path, 
-                    ctx.clusters->clusters);
+            ::m3D::utils::VisitUtils<T>::write_geometrical_cluster_centers_vtk(centers_path,
+                                                                               ctx.clusters->clusters);
         }
         if (params.write_weight_response && ctx.clusters->size() > 0) {
             string wr_path = "clusters_weight-" + path.filename().stem().string();
-            ::m3D::utils::VisitUtils<T>::write_cluster_weight_response_vtk(wr_path, 
-                    ctx.clusters->clusters, ctx.weight_function, false);
+            ::m3D::utils::VisitUtils<T>::write_cluster_weight_response_vtk(wr_path,
+                                                                           ctx.clusters->clusters, ctx.weight_function,
+                                                                           false);
         }
 #endif
 
@@ -491,7 +483,7 @@ namespace m3D {
         ctx.clusters->timestamp = ctx.timestamp;
 
         if (!params.inline_tracking) {
-            
+
             if (params.verbosity > VerbositySilent) {
                 std::string msg = "Writing clusters to NetCDF file " + params.output_filename + " ...";
                 start_timer(msg);

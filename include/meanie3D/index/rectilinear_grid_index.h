@@ -34,7 +34,7 @@ namespace m3D {
      * rather than using a KD-Tree. Condition: rectilinear and (approximately)
      * uniform grid (in each dimension)
      */
-    template <typename T>
+    template<typename T>
     class RectilinearGridIndex : public PointIndex<T>
     {
         friend class PointIndex<T>;
@@ -52,23 +52,24 @@ namespace m3D {
 #pragma mark Protected Constructor/Destructor
 
         inline
-        RectilinearGridIndex(typename Point<T>::list *points, size_t dimension) : PointIndex<T>(points, dimension), m_index(NULL)
-        {
+        RectilinearGridIndex(typename Point<T>::list *points, size_t dimension) : PointIndex<T>(points, dimension),
+                                                                                  m_index(NULL) {
         };
 
         inline
-        RectilinearGridIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : PointIndex<T>(points, indexes), m_index(NULL)
-        {
+        RectilinearGridIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : PointIndex<T>(points,
+                                                                                                             indexes),
+                                                                                               m_index(NULL) {
         };
 
         inline
-        RectilinearGridIndex(FeatureSpace<T> *fs) : PointIndex<T>(fs), m_index(NULL)
-        {
+        RectilinearGridIndex(FeatureSpace<T> *fs) : PointIndex<T>(fs), m_index(NULL) {
         };
 
         inline
-        RectilinearGridIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : PointIndex<T>(fs, index_variables), m_index(NULL)
-        {
+        RectilinearGridIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : PointIndex<T>(fs,
+                                                                                                                index_variables),
+                                                                                                  m_index(NULL) {
         };
 
 #pragma mark -
@@ -76,8 +77,7 @@ namespace m3D {
 
     public:
 
-        ~RectilinearGridIndex()
-        {
+        ~RectilinearGridIndex() {
             if (m_index != NULL) {
                 delete m_index;
 
@@ -90,18 +90,17 @@ namespace m3D {
 
         /** Copy operator
          */
-        RectilinearGridIndex<T> operator=(const RectilinearGridIndex<T> &other)
-        {
+        RectilinearGridIndex<T> operator=(const RectilinearGridIndex<T> &other) {
             return RectilinearGridIndex<T>(other);
         }
 
         void
-        build_index(const vector<T> &ranges)
-        {
+        build_index(const vector<T> &ranges) {
             // Dispose of previous indexes but inform user
 
             if (m_index != NULL) {
-                cerr << "WARNING:called RectilinearGridIndex::build_index twice. Disposing of previous array index" << endl;
+                cerr << "WARNING:called RectilinearGridIndex::build_index twice. Disposing of previous array index"
+                     << endl;
 
                 delete m_index;
 
@@ -119,20 +118,17 @@ namespace m3D {
 #pragma mark Overwritten Public Methods
 
         void
-        remove_point(typename Point<T>::ptr p)
-        {
+        remove_point(typename Point<T>::ptr p) {
             m_index->set(p->gridpoint, NULL);
         }
 
         void
-        add_point(typename Point<T>::ptr p)
-        {
+        add_point(typename Point<T>::ptr p) {
             m_index->set(p->gridpoint, p);
         }
 
         typename Point<T>::list *
-        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL)
-        {
+        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL) {
             vector<T> h;
 
             if (params->search_type() == SearchTypeRange) {
@@ -155,7 +151,7 @@ namespace m3D {
                 this->m_fs->coordinate_system->reverse_lookup(x_spatial, gp);
 
                 result = this->search(x, gp, h, distances);
-            } catch (std::out_of_range& e) {
+            } catch (std::out_of_range &e) {
                 cerr << "ERROR:reverse coordinate transformation failed for coordinate=" << x_spatial << endl;
             }
 
@@ -167,10 +163,9 @@ namespace m3D {
 
         typename Point<T>::list *
         search(const vector<T> &x,
-                const typename CoordinateSystem<T>::GridPoint &gp,
-                const vector<T> &h,
-                vector<T> *distances = NULL)
-        {
+               const typename CoordinateSystem<T>::GridPoint &gp,
+               const vector<T> &h,
+               vector<T> *distances = NULL) {
             if (m_index == NULL) {
                 this->build_index(h);
             }
@@ -193,16 +188,16 @@ namespace m3D {
                 // bound against underrun
 
                 lower_index_bounds[i] = ((gp[i] - num_gridpoints) <= 0)
-                        ? 0
-                        : lower_index_bounds[i] = gp[i] - num_gridpoints;
+                                        ? 0
+                                        : lower_index_bounds[i] = gp[i] - num_gridpoints;
 
                 // bound against overrun
 
                 size_t max_index = cs->dimensions()[i].getSize() - 1;
 
                 upper_index_bounds[i] = ((gp[i] + num_gridpoints) >= max_index)
-                        ? max_index
-                        : upper_index_bounds[i] = gp[i] + num_gridpoints;
+                                        ? max_index
+                                        : upper_index_bounds[i] = gp[i] + num_gridpoints;
             }
 
             // Start the recursion
@@ -225,19 +220,19 @@ namespace m3D {
 
         void
         search_recursive(size_t dim_index,
-                const vector<T> &x,
-                typename CoordinateSystem<T>::GridPoint &gridpoint,
-                const vector<T> &h,
-                const vector<size_t> &lower_index_bounds,
-                const vector<size_t> &upper_index_bounds,
-                typename Point<T>::list *result,
-                vector<T> *distances = NULL)
-        {
+                         const vector<T> &x,
+                         typename CoordinateSystem<T>::GridPoint &gridpoint,
+                         const vector<T> &h,
+                         const vector<size_t> &lower_index_bounds,
+                         const vector<size_t> &upper_index_bounds,
+                         typename Point<T>::list *result,
+                         vector<T> *distances = NULL) {
             if (dim_index < (gridpoint.size() - 1)) {
                 for (size_t index = lower_index_bounds[dim_index]; index <= upper_index_bounds[dim_index]; index++) {
                     gridpoint[dim_index] = index;
 
-                    search_recursive(dim_index + 1, x, gridpoint, h, lower_index_bounds, upper_index_bounds, result, distances);
+                    search_recursive(dim_index + 1, x, gridpoint, h, lower_index_bounds, upper_index_bounds, result,
+                                     distances);
                 }
             } else {
                 for (size_t index = lower_index_bounds[dim_index]; index <= upper_index_bounds[dim_index]; index++) {

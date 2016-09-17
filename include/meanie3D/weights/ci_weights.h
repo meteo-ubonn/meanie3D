@@ -84,37 +84,38 @@ namespace m3D {
      *
      */
     template<class T>
-    class OASECIWeightFunction : public WeightFunction<T> {
+    class OASECIWeightFunction : public WeightFunction<T>
+    {
     private:
 
         //
         // Members
         //
-        
-        detection_params_t<T> m_super_params;
-        detection_context_t<T> m_super_context;
-        
-        detection_params_t<T> m_params;
-        detection_context_t<T> m_ctx;
+
+        detection_params_t <T> m_super_params;
+        detection_context_t <T> m_super_context;
+
+        detection_params_t <T> m_params;
+        detection_context_t <T> m_ctx;
 
 
-        NetCDFDataStore<T> *m_data_store;
-        NetCDFDataStore<T> *m_ci_comparison_data_store;
+        NetCDFDataStore <T> *m_data_store;
+        NetCDFDataStore <T> *m_ci_comparison_data_store;
 
         // const std::string *m_ci_comparison_file;
         // const CoordinateSystem<T> *m_coordinate_system;
-        
-        MultiArray<T> *m_weight;
+
+        MultiArray <T> *m_weight;
         MultiArray<bool> *m_overlap;
-        
+
         std::vector<std::string> m_variable_names;
         // bool m_satellite_only;
         // bool m_use_walker_mecikalski_limits;
 
         std::vector<std::string> m_protocluster_variables;
-        
-        ClusterList<T> *m_previous_protoclusters;
-        
+
+        ClusterList <T> *m_previous_protoclusters;
+
         // T m_protocluster_scale;
         // int m_protocluster_min_size;
 
@@ -123,15 +124,15 @@ namespace m3D {
 
         // Attributes for calculating brightness
         // temperature from the spectral radiances
-        map<size_t, T> m_c1;
-        map<size_t, T> m_c2;
-        map<size_t, T> m_alpha;
-        map<size_t, T> m_beta;
-        map<size_t, T> m_wavenumber;
+        map <size_t, T> m_c1;
+        map <size_t, T> m_c2;
+        map <size_t, T> m_alpha;
+        map <size_t, T> m_beta;
+        map <size_t, T> m_wavenumber;
 
         // Members for range based weight calculations
-        PointIndex<T> *m_index; // index for range search
-        vector<T> m_bandwidth;  // search radius for numerous operations
+        PointIndex <T> *m_index; // index for range search
+        vector <T> m_bandwidth;  // search radius for numerous operations
         SearchParameters *m_search_params; // search params for search
 
 #if DEBUG_CI_SCORE
@@ -150,14 +151,10 @@ namespace m3D {
          * @param params
          * @param ctx
          */
-        OASECIWeightFunction(const detection_params_t<T> &params, 
-                             const detection_context_t<T> &ctx) 
-            : m_super_params(params)
-            , m_super_context(ctx)
-            , m_data_store(NULL)
-            , m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
-        
-        {
+        OASECIWeightFunction(const detection_params_t <T> &params,
+                             const detection_context_t <T> &ctx)
+                : m_super_params(params), m_super_context(ctx), m_data_store(NULL),
+                  m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0)) {
             using namespace utils;
             try {
                 NcFile file(params.filename.c_str(), NcFile::read);
@@ -166,7 +163,7 @@ namespace m3D {
                     NcVar var = file.getVar(CI_WEIGHT_VARS[i]);
                     if (var.isNull()) {
                         cerr << "FATAL: file requires variable " << CI_WEIGHT_VARS[i] << " for CI interest weight" <<
-                        endl;
+                             endl;
                         exit(EXIT_FAILURE);
                     }
 
@@ -192,10 +189,10 @@ namespace m3D {
 
             // Create the data store
             this->m_data_store = new NetCDFDataStore<T>(params.filename,
-                    m_variable_names,
-                    params.dimensions,
-                    params.dimension_variables,
-                    params.time_index);
+                                                        m_variable_names,
+                                                        params.dimensions,
+                                                        params.dimension_variables,
+                                                        params.time_index);
 
             // index for effective range search ops
             m_bandwidth = ctx.fs->spatial_component(ctx.bandwidth);
@@ -216,15 +213,15 @@ namespace m3D {
                 //                                                                    this->m_variable_names,
                 //                                                                    msevi_l15_hrv, 7.0);
 //#endif
-                
+
                 // TODO: there is a problem here. The time index should
                 // be configurable when the comparison file is the same
                 // but has time dimension. 
                 m_ci_comparison_data_store = new NetCDFDataStore<T>(params.filename,
-                            m_variable_names,
-                            params.dimensions,
-                            params.dimension_variables,
-                            params.time_index);
+                                                                    m_variable_names,
+                                                                    params.dimensions,
+                                                                    params.dimension_variables,
+                                                                    params.time_index);
 
                 if (params.ci_comparison_protocluster_file != NULL) {
                     // Load previous proto-clusters
@@ -309,7 +306,7 @@ namespace m3D {
                 delete this->m_curr_cluster_area;
                 this->m_curr_cluster_area = NULL;
             }
-            
+
             // clean up clustering mess right away to free memory
             Detection<T>::cleanup(m_params, m_ctx);
 
@@ -319,18 +316,18 @@ namespace m3D {
 
         void
         obtain_protoclusters() {
-            
+
             cout << endl << endl;
             cout << "+ ---------------------------- +" << endl;
             cout << "+ Obtaining protoclusters      +" << endl;
             cout << "+ ---------------------------- +" << endl;
-            
+
             m_params = Detection<T>::defaultParams();
-            
+
             // Dimensions stay the same
             m_params.dimensions = m_super_params.dimensions;
             m_params.dimension_variables = m_super_params.dimension_variables;
-            
+
             // Add variables
             try {
                 for (size_t i = 0; i < PROTOCLUSTER_NUM_VARS; i++) {
@@ -350,8 +347,8 @@ namespace m3D {
             m_params.scale = m_super_params.ci_protocluster_scale;
             m_params.min_cluster_size = m_super_params.ci_protocluster_min_size;
             m_params.verbosity = m_super_params.verbosity;
-            
-            Detection<T>::run(m_params,m_ctx);
+
+            Detection<T>::run(m_params, m_ctx);
 
             // Write protoclusters out
             boost::filesystem::path path(m_super_params.filename);
@@ -508,7 +505,8 @@ namespace m3D {
 
             // Collate
 
-            class OverlapFunctor : public MultiArray<bool>::ForEachFunctor {
+            class OverlapFunctor : public MultiArray<bool>::ForEachFunctor
+            {
             public:
 
                 MultiArray<bool> *m_overlap;
@@ -542,7 +540,7 @@ namespace m3D {
         // within a radius h around it
 
         void
-        replace_with_coldest_pixels(NetCDFDataStore<T> *ds, FeatureSpace<T> *fs) {
+        replace_with_coldest_pixels(NetCDFDataStore <T> *ds, FeatureSpace <T> *fs) {
             float percentage = 0.25;
 
             // calculate bandwidth in pixels
@@ -599,7 +597,7 @@ namespace m3D {
         }
 
         void
-        calculate_weight_function(FeatureSpace<T> *fs) {
+        calculate_weight_function(FeatureSpace <T> *fs) {
 
 #if DEBUG_CI_SCORE
             vector<size_t> dims = m_coordinate_system->get_dimension_sizes();
@@ -703,7 +701,7 @@ namespace m3D {
         /** Calculates the weight at the given point using the
          * the scoring scheme.
          */
-        T compute_weight(Point<T> *p) {
+        T compute_weight(Point <T> *p) {
             // Silke's suggestion: when radar is present, use max score to
             // make sure objects are tracked.
             T max_score = (m_super_params.ci_comparison_file != NULL) ? 8 : 6;

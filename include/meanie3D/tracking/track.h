@@ -34,7 +34,9 @@
 #include <list>
 
 #ifdef BOOST_NO_CXX11_HDR_UNORDERED_MAP
+
 #include <map>
+
 #else
 #include <unordered_map>
 #endif
@@ -52,21 +54,20 @@ namespace m3D {
 #pragma mark -
 #pragma mark Type definitions / Constants
 
-        typedef Track* ptr;
+        typedef Track *ptr;
 
-        #ifdef BOOST_NO_CXX11_HDR_UNORDERED_MAP
-	typedef std::map< m3D::id_t, ptr> trackmap;
-	#else
+#ifdef BOOST_NO_CXX11_HDR_UNORDERED_MAP
+        typedef std::map<m3D::id_t, ptr> trackmap;
+#else
         typedef std::unordered_map< m3D::id_t, ptr> trackmap;
-	#endif
+#endif
 
 #pragma mark -
 #pragma mark Constructor/Destructor
 
         /** Default constructor.
          */
-        Track()
-        {
+        Track() {
         };
 
 #pragma mark -
@@ -79,11 +80,11 @@ namespace m3D {
         /** A list of pointers to cluster objects constituting the
          * actual track.
          */
-        std::list< typename Cluster<T>::ptr > clusters;
+        std::list<typename Cluster<T>::ptr> clusters;
 
         /** list of source files, one per cluster in the list.
          */
-        std::vector< std::string > sourcefiles;
+        std::vector<std::string> sourcefiles;
 
         /** A list of minimum values found for each variable
          * in the cluster's value range.
@@ -102,8 +103,7 @@ namespace m3D {
          * 
          * @return number of clusters in this track.
          */
-        size_t size()
-        {
+        size_t size() {
             return clusters.size();
         };
 

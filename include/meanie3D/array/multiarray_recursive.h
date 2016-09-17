@@ -39,13 +39,13 @@ namespace m3D {
 
     using namespace std;
 
-    template <typename T>
+    template<typename T>
     class MultiArrayRecursive : public MultiArray<T>
     {
     protected:
 
-        typedef vector<void*> array_t;
-        typedef array_t* array_t_ptr;
+        typedef vector<void *> array_t;
+        typedef array_t *array_t_ptr;
 
 #pragma mark -
 #pragma mark Attributes
@@ -58,11 +58,10 @@ namespace m3D {
 
         void
         construct_recursive(size_t dim_index,
-                array_t **array,
-                vector<int> &gridpoint,
-                const T * default_value = NULL,
-                MultiArrayRecursive<T> *other = NULL)
-        {
+                            array_t **array,
+                            vector<int> &gridpoint,
+                            const T *default_value = NULL,
+                            MultiArrayRecursive<T> *other = NULL) {
             size_t dimSize = this->m_dims[dim_index];
 
             if (dim_index < (this->m_dims.size() - 1)) {
@@ -102,8 +101,8 @@ namespace m3D {
                     size_t super_index = boost::numeric_cast<size_t>(gridpoint[dim_index - 1]);
 
                     vector<T> *new_array = (default_value == NULL)
-                            ? new vector<T>(dimSize)
-                            : new vector<T>(dimSize, *default_value);
+                                           ? new vector<T>(dimSize)
+                                           : new vector<T>(dimSize, *default_value);
 
                     super_array->at(super_index) = new_array;
 
@@ -122,9 +121,8 @@ namespace m3D {
 
         void
         destroy_recursive(size_t dim_index,
-                array_t **array,
-                vector<int> &gridpoint)
-        {
+                          array_t **array,
+                          vector<int> &gridpoint) {
             size_t dimSize = this->m_dims[dim_index];
 
             if (dim_index < (this->m_dims.size() - 1)) {
@@ -173,9 +171,8 @@ namespace m3D {
 
         void
         copy_recursive(const MultiArrayRecursive<T> *otherIndex,
-                size_t dim_index,
-                vector<int> &gridpoint)
-        {
+                       size_t dim_index,
+                       vector<int> &gridpoint) {
             size_t dimSize = this->m_dims[dim_index];
 
             if (dim_index < (this->m_dims.size() - 1)) {
@@ -196,10 +193,9 @@ namespace m3D {
         }
 
         void count_recursive(T value,
-                size_t &count,
-                size_t dim_index,
-                vector<int> &gp)
-        {
+                             size_t &count,
+                             size_t dim_index,
+                             vector<int> &gp) {
             size_t dimSize = this->m_dims[dim_index];
 
             if (dim_index < (this->m_dims.size() - 1)) {
@@ -228,41 +224,35 @@ namespace m3D {
 
     public:
 
-        MultiArrayRecursive() : MultiArray<T>()
-        {
+        MultiArrayRecursive() : MultiArray<T>() {
         };
 
-        MultiArrayRecursive(const vector<size_t> &dims) : MultiArray<T>(dims)
-        {
+        MultiArrayRecursive(const vector<size_t> &dims) : MultiArray<T>(dims) {
             vector<int> gp(dims.size(), 0);
             this->construct_recursive(0, &m_data, gp, NULL, NULL);
         };
 
         MultiArrayRecursive(const vector<size_t> &dims,
-                const T &default_value)
-        : MultiArray<T>(dims, default_value)
-        {
+                            const T &default_value)
+                : MultiArray<T>(dims, default_value) {
             vector<int> gp(dims.size(), 0);
             this->construct_recursive(0, &m_data, gp, &default_value, NULL);
         }
 
-        MultiArrayRecursive(const MultiArrayRecursive<T> &other)
-        {
+        MultiArrayRecursive(const MultiArrayRecursive<T> &other) {
             this->m_dims = other.get_dimensions();
             vector<int> gp(this->m_dims.size(), 0);
             this->copy_recursive(other, 0, gp);
         }
 
         MultiArrayRecursive<T>
-                operator=(const MultiArrayRecursive<T> &other)
-        {
+        operator=(const MultiArrayRecursive<T> &other) {
             return MultiArrayRecursive(other);
         }
 
         /** Destructor
          */
-        virtual ~MultiArrayRecursive()
-        {
+        virtual ~MultiArrayRecursive() {
             vector<int> gp(this->m_dims.size(), 0);
             this->destroy_recursive(0, &m_data, gp);
         }
@@ -270,8 +260,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Accessors
 
-        T get(const vector<int> &gp) const
-        {
+        T get(const vector<int> &gp) const {
             vector<void *> *array = m_data;
 
             T result = 0;
@@ -298,8 +287,7 @@ namespace m3D {
         }
 
         void
-        set(const vector<int> &gp, const T &value)
-        {
+        set(const vector<int> &gp, const T &value) {
             vector<void *> *array = m_data;
 
             for (size_t dim_index = 0; dim_index < gp.size(); dim_index++) {
@@ -321,26 +309,22 @@ namespace m3D {
 #pragma mark Stuff
 
         size_t
-        count_value(const T &value)
-        {
+        count_value(const T &value) {
             size_t count = 0;
             vector<int> gp(this->m_dims.size(), 0);
             this->count_recursive(value, count, 0, gp);
             return count;
         }
 
-        void resize(vector<size_t> dimensions)
-        {
+        void resize(vector<size_t> dimensions) {
             throw "not implemented";
         }
 
-        void populate_array(const T& value)
-        {
+        void populate_array(const T &value) {
             throw "not implemented";
         }
 
-        void copy_from(const MultiArray<T> *other)
-        {
+        void copy_from(const MultiArray <T> *other) {
             throw "not implemented";
         }
 

@@ -36,7 +36,7 @@ namespace m3D {
      * in places, where the actual spatial density is homogenous, as is
      * often the case in scientific, gridded data sets.
      */
-    template <typename T>
+    template<typename T>
     class WeightFunction
     {
     public:
@@ -47,8 +47,7 @@ namespace m3D {
          */
         virtual T operator()(const typename Point<T>::ptr p) const = 0;
 
-        virtual ~WeightFunction()
-        {
+        virtual ~WeightFunction() {
         }
     };
 }

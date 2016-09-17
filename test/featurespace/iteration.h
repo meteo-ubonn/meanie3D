@@ -14,7 +14,7 @@
 #pragma mark -
 #pragma mark Test Fixture
 
-template <class T>
+template<class T>
 class FSIterationTest2D : public FSTestBase<T>
 {
 protected:
@@ -27,8 +27,8 @@ protected:
     vector<T> *m_mean;
     vector<T> *m_deviation;
     size_t m_cloudSize;
-    vector< vector<T> > m_bandwidths;
-    vector< Point<T> > m_origins;
+    vector<vector<T> > m_bandwidths;
+    vector<Point<T> > m_origins;
 
     //
     // Protected methods
@@ -45,7 +45,7 @@ public:
     virtual void TearDown();
 };
 
-template <class T>
+template<class T>
 class FSIterationTest3D : public FSIterationTest2D<T>
 {
 public:

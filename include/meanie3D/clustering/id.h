@@ -33,63 +33,61 @@
 #include <vector>
 
 extern "C" {
-    namespace m3D {
+namespace m3D {
 
-        /**
-         * Unique cluster id (in one tracking run)
-         */
-        typedef unsigned long long uuid_t;
+    /**
+     * Unique cluster id (in one tracking run)
+     */
+    typedef unsigned long long uuid_t;
 
-        /** Data type for object identifiers
-         */
-        typedef unsigned long id_t;
+    /** Data type for object identifiers
+     */
+    typedef unsigned long id_t;
 
-        // Various types to aid handling ids/uuids
-        typedef std::set<id_t> id_set_t;
-        typedef std::vector<id_t> id_vec_t;
-        typedef std::map<id_t, id_set_t> id_map_t;
-        typedef std::set<uuid_t> uuid_set_t;
+    // Various types to aid handling ids/uuids
+    typedef std::set<id_t> id_set_t;
+    typedef std::vector<id_t> id_vec_t;
+    typedef std::map<id_t, id_set_t> id_map_t;
+    typedef std::set<uuid_t> uuid_set_t;
 
-        // Constants
+    // Constants
 
-        static const id_t NO_ID = std::numeric_limits<id_t>::max();
-        static const id_t MIN_ID = 0;
-        static const id_t MAX_ID = std::numeric_limits<id_t>::max() - 1;
+    static const id_t NO_ID = std::numeric_limits<id_t>::max();
+    static const id_t MIN_ID = 0;
+    static const id_t MAX_ID = std::numeric_limits<id_t>::max() - 1;
 
-        static const uuid_t NO_UUID = std::numeric_limits<uuid_t>::max();
-        static const uuid_t MIN_UUID = 0;
-        static const uuid_t MAX_UUID = std::numeric_limits<uuid_t>::max() - 1;
+    static const uuid_t NO_UUID = std::numeric_limits<uuid_t>::max();
+    static const uuid_t MIN_UUID = 0;
+    static const uuid_t MAX_UUID = std::numeric_limits<uuid_t>::max() - 1;
 
-        // Methods
+    // Methods
 
-        /** Increment the ID, rotating around if necessary.
-         * @param current id, incremented after the call
-         * @return next id
-         */
-        m3D::id_t nextId(m3D::id_t &current)
-        {
-            if (current >= m3D::MAX_ID) {
-                current = m3D::MIN_ID;
-            } else {
-                current++;
-            }
-            return current;
+    /** Increment the ID, rotating around if necessary.
+     * @param current id, incremented after the call
+     * @return next id
+     */
+    m3D::id_t nextId(m3D::id_t &current) {
+        if (current >= m3D::MAX_ID) {
+            current = m3D::MIN_ID;
+        } else {
+            current++;
         }
-
-        /** Increment the UUID, rotating around if necessary.
-         * @param current uuid, incremented after the call.
-         * @return next uuid
-         */
-        m3D::id_t nextUuid(m3D::uuid_t &current)
-        {
-            if (current >= m3D::MAX_UUID) {
-                current = m3D::MIN_UUID;
-            } else {
-                current++;
-            }
-            return current;
-        }
+        return current;
     }
+
+    /** Increment the UUID, rotating around if necessary.
+     * @param current uuid, incremented after the call.
+     * @return next uuid
+     */
+    m3D::id_t nextUuid(m3D::uuid_t &current) {
+        if (current >= m3D::MAX_UUID) {
+            current = m3D::MIN_UUID;
+        } else {
+            current++;
+        }
+        return current;
+    }
+}
 }
 
 #endif

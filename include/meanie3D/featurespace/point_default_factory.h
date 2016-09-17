@@ -33,33 +33,29 @@
 namespace m3D {
 
     // Forward declaration
-    template <typename T>
+    template<typename T>
     class PointFactory;
 
     /** Default point factory
      */
-    template <typename T>
+    template<typename T>
     class PointDefaultFactory : public PointFactory<T>
     {
 
-        virtual Point<T> * create()
-        {
+        virtual Point <T> *create() {
             return new Point<T>();
         }
 
-        virtual Point<T> * create(vector<int> &gridpoint, vector<T> &coord, vector<T> &value)
-        {
+        virtual Point <T> *create(vector<int> &gridpoint, vector <T> &coord, vector <T> &value) {
             return new Point<T>(gridpoint, coord, value);
         }
 
-        virtual Point<T> * create(vector<T> &coord, vector<T> &value)
-        {
+        virtual Point <T> *create(vector <T> &coord, vector <T> &value) {
             return new Point<T>(coord, value);
         }
 
-        virtual Point<T> *
-        copy(const Point<T> *p)
-        {
+        virtual Point <T> *
+        copy(const Point <T> *p) {
             return new Point<T>(p);
         }
 

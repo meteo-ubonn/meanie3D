@@ -20,24 +20,21 @@ const T FSTestBase<T>::FILL_VALUE = std::numeric_limits<T>::min();
 
 template<class T>
 FSTestBase<T>::FSTestBase() : m_file(NULL), m_settings(NULL), m_coordinate_system(NULL),
-m_totalPointCount(0), m_featureSpace(NULL), m_featureSpaceIndex(NULL)
-{
+                              m_totalPointCount(0), m_featureSpace(NULL), m_featureSpaceIndex(NULL) {
 }
 
 template<class T>
-FSTestBase<T>::~FSTestBase()
-{
+FSTestBase<T>::~FSTestBase() {
     if (m_settings != NULL) {
         delete m_settings;
     }
 }
 
 template<class T>
-const char * FSTestBase<T>::dimensionName(size_t dimensionIndex)
-{
+const char *FSTestBase<T>::dimensionName(size_t dimensionIndex) {
     assert(dimensionIndex < 4);
 
-    const char* dimensionName = NULL;
+    const char *dimensionName = NULL;
 
     switch (dimensionIndex) {
         case 0:
@@ -64,8 +61,7 @@ const char * FSTestBase<T>::dimensionName(size_t dimensionIndex)
 }
 
 template<class T>
-void FSTestBase<T>::generate_dimensions()
-{
+void FSTestBase<T>::generate_dimensions() {
     INFO << "generating dimensions" << endl;
 
     try {
@@ -93,7 +89,7 @@ void FSTestBase<T>::generate_dimensions()
             var.putAtt("units", "m");
 
             // Write out it's axis data
-            float* values = (float *) malloc((nupoints + 1) * sizeof (float));
+            float *values = (float *) malloc((nupoints + 1) * sizeof(float));
             for (size_t gridIndex = 0; gridIndex < nupoints + 1; gridIndex++) {
                 values[gridIndex] = -max_h + gridIndex * (2 * max_h / ((float) nupoints));
             }
@@ -114,8 +110,7 @@ void FSTestBase<T>::generate_dimensions()
 
 template<class T>
 NcFile *
-FSTestBase<T>::file()
-{
+FSTestBase<T>::file() {
     if (m_file == NULL) {
         try {
             this->m_filename = m_settings->test_filename();
@@ -129,7 +124,7 @@ FSTestBase<T>::file()
             m_file = new NcFile(this->m_filename, NcFile::newFile);
         } catch (netCDF::exceptions::NcException &e) {
             cerr << "FATAL:could not create file " << m_filename
-                    << ":" << e.what() << endl;
+                 << ":" << e.what() << endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -139,10 +134,9 @@ FSTestBase<T>::file()
 
 template<class T>
 NcVar
-FSTestBase<T>::add_variable(string name, T valid_min, T valid_max)
-{
+FSTestBase<T>::add_variable(string name, T valid_min, T valid_max) {
     try {
-        std::string type_name = typeid (T).name();
+        std::string type_name = typeid(T).name();
 
         if (!(type_name == "f" || type_name == "d")) {
             cerr << "FATAL:only float and double are supported at this time." << endl;
@@ -161,15 +155,14 @@ FSTestBase<T>::add_variable(string name, T valid_min, T valid_max)
         return var;
     } catch (netCDF::exceptions::NcException &e) {
         cerr << "FATAL:could not add variable " << name << " to file "
-                << this->m_filename << ":" << e.what() << endl;
+             << this->m_filename << ":" << e.what() << endl;
         exit(EXIT_FAILURE);
     }
 }
 
 template<class T>
 void
-FSTestBase<T>::reopen_file_for_reading()
-{
+FSTestBase<T>::reopen_file_for_reading() {
     INFO << "closing file " << m_filename << endl;
     this->file()->~NcFile();
 
@@ -183,18 +176,16 @@ FSTestBase<T>::reopen_file_for_reading()
 
         delete m_coordinate_system;
         m_coordinate_system = NULL;
-    }    catch (netCDF::exceptions::NcException &e) {
+    } catch (netCDF::exceptions::NcException &e) {
         cerr << "ERROR:could not reopen file" << m_filename << " for reading:"
-                << e.what() << endl;
-        exit(EXIT_FAILURE);
-        ;
+             << e.what() << endl;
+        exit(EXIT_FAILURE);;
     }
 }
 
 template<class T>
 CoordinateSystem<T> *
-FSTestBase<T>::coordinate_system()
-{
+FSTestBase<T>::coordinate_system() {
     if (m_coordinate_system == NULL) {
         vector<string> dimensions;
 
@@ -208,13 +199,11 @@ FSTestBase<T>::coordinate_system()
 }
 
 template<class T>
-void FSTestBase<T>::SetUp()
-{
+void FSTestBase<T>::SetUp() {
 }
 
 template<class T>
-void FSTestBase<T>::TearDown()
-{
+void FSTestBase<T>::TearDown() {
     delete m_coordinate_system;
     m_coordinate_system = NULL;
 
@@ -230,7 +219,7 @@ void FSTestBase<T>::TearDown()
     delete m_file;
     m_file = NULL;
 
-#if CLEAN_TESTFILES_UP    
+#if CLEAN_TESTFILES_UP
     boost::filesystem::path path(this->m_filename);
     if (boost::filesystem::exists(path)) {
         INFO << "removing test data file " << this->m_filename << endl;
@@ -240,42 +229,40 @@ void FSTestBase<T>::TearDown()
 }
 
 template<class T>
-void FSTestBase<T>::generate_featurespace()
-{
+void FSTestBase<T>::generate_featurespace() {
     INFO << "Creating featurespace from file " << m_filename << endl;
     const map<int, double> lower_thresholds, upper_thresholds, fill_values;
     this->reopen_file_for_reading();
 
     INFO << "Creating NetCDFDataStore from variables "
-            << m_variables << endl;
+         << m_variables << endl;
 
     m_data_store = new NetCDFDataStore<T>(this->m_filename,
-            this->m_variables,
-            this->m_dimensions,
-            this->m_dimension_variables);
+                                          this->m_variables,
+                                          this->m_dimensions,
+                                          this->m_dimension_variables);
 
     INFO << "Creating featurespace from data store "
-            << m_variables << endl;
+         << m_variables << endl;
 
     this->m_featureSpace = new FeatureSpace<T>(this->coordinate_system(),
-            m_data_store,
-            lower_thresholds,
-            upper_thresholds,
-            fill_values,
-            INFO_ENABLED);
+                                               m_data_store,
+                                               lower_thresholds,
+                                               upper_thresholds,
+                                               fill_values,
+                                               INFO_ENABLED);
 
     ASSERT_GT(this->m_featureSpace->size(), 0);
 
     this->m_featureSpaceIndex = PointIndex<T>::create(this->m_featureSpace->get_points(),
-            this->m_featureSpace->rank());
+                                                      this->m_featureSpace->rank());
 
     INFO << "construction done (" << m_featureSpace->size() << " points)" << endl;
 }
 
 template<class T>
-string FSTestBase<T>::filename_from_current_testcase()
-{
-    const ::testing::TestInfo * const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+string FSTestBase<T>::filename_from_current_testcase() {
+    const ::testing::TestInfo *const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
     string filename = test_info->test_case_name() + string(".nc");
     boost::replace_all(filename, "/", "_");
     return filename;

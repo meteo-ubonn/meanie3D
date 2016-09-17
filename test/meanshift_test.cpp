@@ -11,19 +11,17 @@
 
 using namespace std;
 
-void usage()
-{
+void usage() {
     cout << "meanshift_test <netcdf-file>" << endl << "Meanshift test programme" << endl;
 }
 
-template <typename T> vector<T> * random_point(vector<NcVar *> variables, vector<NcDim *> dimensions)
-{
+template<typename T>
+vector<T> *random_point(vector<NcVar *> variables, vector<NcDim *> dimensions) {
     int size = variables.size();
 
     vector<T> *coordinate = new vector<T>(size);
 
-    for (int i = 0; i < size; i++)
-    {
+    for (int i = 0; i < size; i++) {
         NcVar *var = variables.at(i);
 
         NcDim *dim = dimensions.at(i);
@@ -36,14 +34,13 @@ template <typename T> vector<T> * random_point(vector<NcVar *> variables, vector
     return coordinate;
 }
 
-template <typename T> vector<T> *center_point(vector<NcDim *> dimensions, const NcVar* data)
-{
+template<typename T>
+vector<T> *center_point(vector<NcDim *> dimensions, const NcVar *data) {
     int size = dimensions.size();
 
     vector<T> *coordinate = new vector<T>(size);
 
-    for (int i = 0; i < dimensions.size(); i++)
-    {
+    for (int i = 0; i < dimensions.size(); i++) {
         NcDim *dim = dimensions.at(i);
 
         long value = dim->size() / 2;
@@ -60,15 +57,15 @@ template <typename T> vector<T> *center_point(vector<NcDim *> dimensions, const 
 
 // Test reading netcdf slice (one row)
 
-template <class T> void readRow(NcVar *var, long* cursor, long rowSize)
-{
-    long *counts = (long *) calloc(sizeof (long), var->num_dims());
+template<class T>
+void readRow(NcVar *var, long *cursor, long rowSize) {
+    long *counts = (long *) calloc(sizeof(long), var->num_dims());
 
     memset(counts, 0, var->num_dims());
 
-    counts[ var->num_dims() - 1 ] = rowSize;
+    counts[var->num_dims() - 1] = rowSize;
 
-    T* row = (T*) calloc(sizeof (T), rowSize);
+    T *row = (T *) calloc(sizeof(T), rowSize);
 
     var->set_cur(cursor);
 
@@ -76,16 +73,14 @@ template <class T> void readRow(NcVar *var, long* cursor, long rowSize)
 
     var->get(row, 1, 1, 1, rowSize);
 
-    for (long i = 0; i < rowSize; i++)
-    {
+    for (long i = 0; i < rowSize; i++) {
         cout << "(";
 
-        for (int k = 0; k < var->num_dims() - 1; k++)
-        {
+        for (int k = 0; k < var->num_dims() - 1; k++) {
             cout << cursor[k] << ",";
         }
 
-        cout << cursor[ var->num_dims() - 1 ] + i << ") : " << row[i] << endl;
+        cout << cursor[var->num_dims() - 1] + i << ") : " << row[i] << endl;
     }
 
     free(row);
@@ -95,27 +90,26 @@ template <class T> void readRow(NcVar *var, long* cursor, long rowSize)
 
 /** write out the trajectory to a file for visualization
  */
-template <typename T> void writeTrajectoryFile2D(const char* trajectoryFilename, NcFile& file, vector<NcDim *>& dimensions, vector<vector<T> *> *trajectory)
-{
+template<typename T>
+void writeTrajectoryFile2D(const char *trajectoryFilename, NcFile &file, vector<NcDim *> &dimensions,
+                           vector<vector<T> *> *trajectory) {
     // Read axis data for those dimensions that have it
 
-    map< NcVar*, float* > axisData;
+    map<NcVar *, float *> axisData;
 
-    for (size_t i = 0; i < dimensions.size(); i++)
-    {
+    for (size_t i = 0; i < dimensions.size(); i++) {
         NcDim *dim = dimensions.at(i);
 
         NcVar *var = file.get_var(dim->name());
 
-        if (var)
-        {
+        if (var) {
             size_t num_vals = var->num_vals();
 
-            float *data = (float *) malloc(sizeof (float) * num_vals);
+            float *data = (float *) malloc(sizeof(float) * num_vals);
 
             var->get(data, var->num_vals());
 
-            axisData[ var ] = data;
+            axisData[var] = data;
         }
     }
 
@@ -125,12 +119,10 @@ template <typename T> void writeTrajectoryFile2D(const char* trajectoryFilename,
 
     curveFile << "#trajectory" << endl;
 
-    for (size_t i = 0; i < trajectory->size(); i++)
-    {
+    for (size_t i = 0; i < trajectory->size(); i++) {
         vector<T> *p = trajectory->at(i);
 
-        for (size_t d = 0; d < dimensions.size(); d++)
-        {
+        for (size_t d = 0; d < dimensions.size(); d++) {
             int n = p->at(d);
 
             float value = (float) n;
@@ -139,12 +131,10 @@ template <typename T> void writeTrajectoryFile2D(const char* trajectoryFilename,
 
             NcVar *var = file.get_var(dim->name());
 
-            if (var)
-            {
-                map< NcVar*, float* >::iterator iter = axisData.find(var);
+            if (var) {
+                map<NcVar *, float *>::iterator iter = axisData.find(var);
 
-                if (iter != axisData.end())
-                {
+                if (iter != axisData.end()) {
                     float *axis = iter->second;
 
                     value = axis[n];
@@ -161,8 +151,7 @@ template <typename T> void writeTrajectoryFile2D(const char* trajectoryFilename,
 
     // Free axis data
 
-    for (map<NcVar*, float*>::iterator pair = axisData.begin(); pair != axisData.end(); pair++)
-    {
+    for (map<NcVar *, float *>::iterator pair = axisData.begin(); pair != axisData.end(); pair++) {
         free(pair->second);
     }
 
@@ -170,27 +159,26 @@ template <typename T> void writeTrajectoryFile2D(const char* trajectoryFilename,
 
 }
 
-template <typename T> void writeTrajectoryFile3D(const char* trajectoryFilename, NcFile& file, vector<NcDim *>& dimensions, vector<vector<T> *> *trajectory)
-{
+template<typename T>
+void writeTrajectoryFile3D(const char *trajectoryFilename, NcFile &file, vector<NcDim *> &dimensions,
+                           vector<vector<T> *> *trajectory) {
     // Read axis data for those dimensions that have it
 
-    map< NcVar*, float* > axisData;
+    map<NcVar *, float *> axisData;
 
-    for (size_t i = 0; i < dimensions.size(); i++)
-    {
+    for (size_t i = 0; i < dimensions.size(); i++) {
         NcDim *dim = dimensions.at(i);
 
         NcVar *var = file.get_var(dim->name());
 
-        if (var)
-        {
+        if (var) {
             size_t num_vals = var->num_vals();
 
-            float *data = (float *) malloc(sizeof (float) * num_vals);
+            float *data = (float *) malloc(sizeof(float) * num_vals);
 
             var->get(data, var->num_vals());
 
-            axisData[ var ] = data;
+            axisData[var] = data;
         }
     }
 
@@ -200,12 +188,10 @@ template <typename T> void writeTrajectoryFile3D(const char* trajectoryFilename,
 
     curveFile << "x y z trajectory" << endl;
 
-    for (size_t i = 0; i < trajectory->size(); i++)
-    {
+    for (size_t i = 0; i < trajectory->size(); i++) {
         vector<T> *p = trajectory->at(i);
 
-        for (size_t d = 0; d < dimensions.size(); d++)
-        {
+        for (size_t d = 0; d < dimensions.size(); d++) {
             int n = p->at(d);
 
             float value = (float) n;
@@ -214,12 +200,10 @@ template <typename T> void writeTrajectoryFile3D(const char* trajectoryFilename,
 
             NcVar *var = file.get_var(dim->name());
 
-            if (var)
-            {
-                map< NcVar*, float* >::iterator iter = axisData.find(var);
+            if (var) {
+                map<NcVar *, float *>::iterator iter = axisData.find(var);
 
-                if (iter != axisData.end())
-                {
+                if (iter != axisData.end()) {
                     float *axis = iter->second;
 
                     value = axis[n];
@@ -236,18 +220,16 @@ template <typename T> void writeTrajectoryFile3D(const char* trajectoryFilename,
 
     // Free axis data
 
-    for (map<NcVar*, float*>::iterator pair = axisData.begin(); pair != axisData.end(); pair++)
-    {
+    for (map<NcVar *, float *>::iterator pair = axisData.begin(); pair != axisData.end(); pair++) {
         free(pair->second);
     }
 
     curveFile.close();
 }
 
-template <typename T> void ms3d(const char* filename, const char* trajectoryFilename)
-{
-    try
-    {
+template<typename T>
+void ms3d(const char *filename, const char *trajectoryFilename) {
+    try {
         // read input file
 
         NcFile file(filename);
@@ -283,13 +265,14 @@ template <typename T> void ms3d(const char* filename, const char* trajectoryFile
 #define featureSpaceDimension 2
         dimensions.push_back(file.get_dim("x"));
         dimensions.push_back(file.get_dim("y"));
-        const char* variableName = "gaussian";
+        const char *variableName = "gaussian";
 
         // Assemble 
 
         variables.push_back(file.get_var(variableName));
 
-        Kernel<RDDataType, featureSpaceDimension> *kernel = new GaussianNormalKernel<RDDataType, featureSpaceDimension>(100);
+        Kernel<RDDataType, featureSpaceDimension> *kernel = new GaussianNormalKernel<RDDataType, featureSpaceDimension>(
+                100);
 
         Meanshift<RDDataType, featureSpaceDimension> ms(*kernel, dimensions, variables, 1000, 1.0 / 1000.0);
 
@@ -316,16 +299,14 @@ template <typename T> void ms3d(const char* filename, const char* trajectoryFile
         delete randomPoint;
 
         delete destination;
-    } catch (CFFileConversionException e)
-    {
+    } catch (CFFileConversionException e) {
         cerr << endl << "ERROR:exception:" << e.what() << endl;
     }
 }
 
-template <typename T> void ms2d(const char* filename, const char* trajectoryFilename)
-{
-    try
-    {
+template<typename T>
+void ms2d(const char *filename, const char *trajectoryFilename) {
+    try {
         // read input file
 
         NcFile file(filename);
@@ -367,14 +348,14 @@ template <typename T> void ms2d(const char* filename, const char* trajectoryFile
 
         // Assemble 
 
-        Kernel<RDDataType, featureSpaceDimension> *kernel = new GaussianNormalKernel<RDDataType, featureSpaceDimension>(100);
+        Kernel<RDDataType, featureSpaceDimension> *kernel = new GaussianNormalKernel<RDDataType, featureSpaceDimension>(
+                100);
 
         Meanshift<RDDataType, featureSpaceDimension> ms(*kernel, dimensions, variables, 1000, 1.0 / 1000.0);
 
         // run meanshift for random point with trajectory information
 
         vector<T> *randomPoint = random_point<T>(variables, dimensions);
-
 
 
         vector<vector<T> *> *trajectory = new vector<vector<T> *>();
@@ -394,16 +375,13 @@ template <typename T> void ms2d(const char* filename, const char* trajectoryFile
         delete randomPoint;
 
         delete destination;
-    } catch (CFFileConversionException e)
-    {
+    } catch (CFFileConversionException e) {
         cerr << endl << "ERROR:Exception:" << e.what() << endl;
     }
 }
 
-int main(int argc, char** argv)
-{
-    if (argc < 2)
-    {
+int main(int argc, char **argv) {
+    if (argc < 2) {
         usage();
 
         exit(-1);
@@ -415,8 +393,7 @@ int main(int argc, char** argv)
 
     int N = 20;
 
-    for (int i = 0; i < N; i++)
-    {
+    for (int i = 0; i < N; i++) {
         char fn[255];
 
         sprintf(&fn[0], "trajectory2d-%d.curve", i);

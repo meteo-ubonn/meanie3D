@@ -3,13 +3,12 @@
 
 #include <typeinfo>
 
-template <class T>
+template<class T>
 void
 FSUniformTest2D<T>::create_uniform_distribution_recursive(const NcVar &var,
-        size_t modulo,
-        size_t dimensionIndex,
-        typename CoordinateSystem<T>::GridPoint &gridpoint)
-{
+                                                          size_t modulo,
+                                                          size_t dimensionIndex,
+                                                          typename CoordinateSystem<T>::GridPoint &gridpoint) {
     NcDim dim = var.getDim(dimensionIndex);
 
     if (dimensionIndex < this->file()->getDimCount() - 1) {
@@ -29,7 +28,7 @@ FSUniformTest2D<T>::create_uniform_distribution_recursive(const NcVar &var,
 
                 T value = (T) FS_VALUE_MAX;
 
-                vector<size_t> gp(gridpoint.begin(), gridpoint.end());
+                vector <size_t> gp(gridpoint.begin(), gridpoint.end());
 
                 var.putVar(gp, value);
             }
@@ -40,10 +39,9 @@ FSUniformTest2D<T>::create_uniform_distribution_recursive(const NcVar &var,
 /** Creates a distribution of points every modulo grid points, 
  * where all values are 1.0
  */
-template <class T>
+template<class T>
 void
-FSUniformTest2D<T>::create_uniform_distribution(const NcVar &var, size_t modulo)
-{
+FSUniformTest2D<T>::create_uniform_distribution(const NcVar &var, size_t modulo) {
     // homogenous point distribution in N-D, every modulo grid point is used
 
     typename CoordinateSystem<T>::GridPoint gridpoint(this->file()->getDimCount(), 0);
@@ -60,11 +58,10 @@ FSUniformTest2D<T>::create_uniform_distribution(const NcVar &var, size_t modulo)
 }
 
 template<class T>
-void FSUniformTest2D<T>::SetUp()
-{
-    const ::testing::TestInfo * const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
+void FSUniformTest2D<T>::SetUp() {
+    const ::testing::TestInfo *const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
 
-    INFO << "Setting up test " << test_info->test_case_name() << " with typeid " << typeid (T).name() << endl;
+    INFO << "Setting up test " << test_info->test_case_name() << " with typeid " << typeid(T).name() << endl;
 
     this->m_settings = new FSTestSettings(2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
 
@@ -84,7 +81,7 @@ void FSUniformTest2D<T>::SetUp()
     vector<float> max_h(this->m_settings->fs_dim(), 0.0);
 
     for (size_t i = 0; i < this->m_bandwidths.size(); i++) {
-        vector<T> h = this->m_bandwidths.at(i);
+        vector <T> h = this->m_bandwidths.at(i);
 
         assert(h.size() == bw_size);
 
@@ -109,7 +106,7 @@ void FSUniformTest2D<T>::SetUp()
 
     try {
         this->generate_dimensions();
-    }    catch (const netCDF::exceptions::NcException &e) {
+    } catch (const netCDF::exceptions::NcException &e) {
         cerr << "FATAL:error while generating dimensions: " << e.what() << endl;
         exit(EXIT_FAILURE);
     }
@@ -126,8 +123,7 @@ void FSUniformTest2D<T>::SetUp()
 }
 
 template<class T>
-void FSUniformTest2D<T>::TearDown()
-{
+void FSUniformTest2D<T>::TearDown() {
     FSTestBase<T>::TearDown();
 }
 
@@ -135,13 +131,11 @@ void FSUniformTest2D<T>::TearDown()
 #pragma mark Test parameterization
 
 template<class T>
-FSUniformTest2D<T>::FSUniformTest2D() : FSTestBase<T>()
-{
+FSUniformTest2D<T>::FSUniformTest2D() : FSTestBase<T>() {
 }
 
 template<class T>
-FSUniformTest3D<T>::FSUniformTest3D() : FSUniformTest2D<T>()
-{
+FSUniformTest3D<T>::FSUniformTest3D() : FSUniformTest2D<T>() {
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
     this->m_settings = new FSTestSettings(3, 1, NUMBER_OF_GRIDPOINTS, filename);
 }

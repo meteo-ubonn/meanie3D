@@ -22,7 +22,7 @@
  */
 
 #ifndef M3D_WEIGHT_FUNCTION_FACTORY_IMPL_H
-#define	M3D_WEIGHT_FUNCTION_FACTORY_IMPL_H
+#define    M3D_WEIGHT_FUNCTION_FACTORY_IMPL_H
 
 #include "weight_function.h"
 #include "oase_weights.h"
@@ -37,37 +37,27 @@
 
 namespace m3D {
 
-    template <typename T>
-    WeightFunction<T> *
-    WeightFunctionFactory<T>::create(const detection_params_t<T> &params,
-            const detection_context_t<T>& ctx)
-    {
+    template<typename T>
+    WeightFunction <T> *
+    WeightFunctionFactory<T>::create(const detection_params_t <T> &params,
+                                     const detection_context_t <T> &ctx) {
         if (params.verbosity > VerbositySilent) {
             cout << endl << "Constructing " << params.weight_function_name << " weight function ...";
             start_timer();
         }
 
         WeightFunction<T> *weight_function = NULL;
-        
-        if (params.weight_function_name == "oase-ci") 
-        {
-            weight_function = new OASECIWeightFunction<T>(params,ctx);
-        }
-        else if (params.weight_function_name == "oase") 
-        {
-            weight_function = new OASEWeightFunction<T>(params,ctx);
-        }
-        else if (params.weight_function_name == "inverse") 
-        {
-            weight_function = new InverseDefaultWeightFunction<T>(params,ctx);
-        }
-        else if (params.weight_function_name == "pow10") 
-        {
+
+        if (params.weight_function_name == "oase-ci") {
+            weight_function = new OASECIWeightFunction<T>(params, ctx);
+        } else if (params.weight_function_name == "oase") {
+            weight_function = new OASEWeightFunction<T>(params, ctx);
+        } else if (params.weight_function_name == "inverse") {
+            weight_function = new InverseDefaultWeightFunction<T>(params, ctx);
+        } else if (params.weight_function_name == "pow10") {
             weight_function = new EXP10WeightFunction<T>(params, ctx);
-        }
-        else 
-        {
-            weight_function = new DefaultWeightFunction<T>(params,ctx);
+        } else {
+            weight_function = new DefaultWeightFunction<T>(params, ctx);
         }
 
         return weight_function;

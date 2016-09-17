@@ -32,23 +32,21 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     void
-    MeanshiftOperation<T>::prime_index(const SearchParameters *params)
-    {
+    MeanshiftOperation<T>::prime_index(const SearchParameters *params) {
         vector<T> x(this->feature_space->rank());
         typename Point<T>::list *sample = this->point_index->search(x, params, NULL);
         delete sample;
     }
 
-    template <typename T>
+    template<typename T>
     vector<T>
     MeanshiftOperation<T>::meanshift(const vector<T> &x,
-            const SearchParameters *params,
-            const Kernel<T> *kernel,
-            const WeightFunction<T> *w,
-            const bool normalize_shift)
-    {
+                                     const SearchParameters *params,
+                                     const Kernel<T> *kernel,
+                                     const WeightFunction<T> *w,
+                                     const bool normalize_shift) {
         using namespace utils::vectors;
 
         // Distances are only used in the KNN case.

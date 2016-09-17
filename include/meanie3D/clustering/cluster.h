@@ -102,20 +102,17 @@ namespace m3D {
         m3D::uuid_t uuid;
 
         size_t
-        value_rank()
-        {
+        value_rank() {
             return m_rank - m_spatial_rank;
         }
 
         size_t
-        spatial_rank()
-        {
+        spatial_rank() {
             return m_spatial_rank;
         };
 
         size_t
-        rank()
-        {
+        rank() {
             return m_rank;
         };
 
@@ -200,7 +197,7 @@ namespace m3D {
          * a potentially very large memory leak!
          */
         void set_points(const typename Point<T>::list &points,
-                bool delete_existing = false);
+                        bool delete_existing = false);
 
         /** Returns the number of points in this cluster
          * 
@@ -249,13 +246,13 @@ namespace m3D {
          * @param value
          */
         void set_has_margin_points(bool value);
-        
+
         /**
          * Sets the 'lower left' corner of this cluster's extent. 
          * @param bounds
          */
         void set_bounding_box_min(const vector<T> &bounds);
-        
+
         /**
          * Gets the 'lower left' corner of this cluster's spatial extent. 
          * If the  value was not set before, it is inferred by inspecting 
@@ -279,7 +276,7 @@ namespace m3D {
          * @return 
          */
         const vector<T> &get_bounding_box_max();
-        
+
 #pragma mark -
 #pragma mark Operators
 
@@ -307,9 +304,9 @@ namespace m3D {
          * @return handle on the histogram
          */
         const typename Histogram<T>::ptr histogram(size_t variable_index,
-                T valid_min,
-                T valid_max,
-                size_t number_of_bins = 25);
+                                                   T valid_min,
+                                                   T valid_max,
+                                                   size_t number_of_bins = 25);
 
         /** Clears the histogram caches. Subsequent calls to histogram()
          * will return freshly calculated histograms
@@ -379,8 +376,8 @@ namespace m3D {
          */
         void
         variable_ranges(std::vector<T> &min,
-                std::vector<T> &max,
-                std::vector<T> &median);
+                        std::vector<T> &max,
+                        std::vector<T> &median);
 
 #pragma mark -
 #pragma mark DRF merging
@@ -393,9 +390,9 @@ namespace m3D {
          */
         static void
         dynamic_range(const typename Point<T>::list &list,
-                const WeightFunction<T> *weight_function,
-                T &lower_bound,
-                T &upper_bound);
+                      const WeightFunction<T> *weight_function,
+                      T &lower_bound,
+                      T &upper_bound);
 
         /** Finds the lower and upper bound of weight function response in the
          * whole cluster
@@ -406,8 +403,8 @@ namespace m3D {
          */
         void
         dynamic_range(const WeightFunction<T> *weight_function,
-                T &lower_bound,
-                T &upper_bound);
+                      T &lower_bound,
+                      T &upper_bound);
 
 #pragma mark -
 #pragma mark Coalescence Merging

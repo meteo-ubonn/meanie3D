@@ -34,7 +34,7 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     class FeatureSpace;
 
     /** Abstract base class. This interface abstracts the various implementations
@@ -44,7 +44,7 @@ namespace m3D {
      *
      * @abstract
      */
-    template <typename T>
+    template<typename T>
     class PointIndex
     {
     protected:
@@ -65,9 +65,9 @@ namespace m3D {
         /** Debugging method. Writes out the search window and found points to files.
          */
         void
-        write_search(const vector<T>& x,
-                const vector<T> &ranges,
-                typename Point<T>::list *result);
+        write_search(const vector<T> &x,
+                     const vector<T> &ranges,
+                     typename Point<T>::list *result);
 
     public:
 
@@ -87,19 +87,19 @@ namespace m3D {
         {
             /** Standard linear search. Exact but very slow
              */
-            IndexTypeLinear,
+                    IndexTypeLinear,
 
             /** Indexing via kdtree.c
              */
-            IndexTypeKDTree,
+                    IndexTypeKDTree,
 
             /** Approximate KNN using FLANN. Many options available
              */
-            IndexTypeFLANN,
+                    IndexTypeFLANN,
 
             /** Special quick lookup index for rectilinear coordinate systems 
              */
-            IndexTypeRectilinearGrid
+                    IndexTypeRectilinearGrid
 
         } IndexType;
 
@@ -176,30 +176,26 @@ namespace m3D {
          * @return feature space
          */
         inline
-        const FeatureSpace<T> *feature_space()
-        {
+        const FeatureSpace<T> *feature_space() {
             return m_fs;
         };
 
         inline
-        const vector<size_t> index_variable_indexes()
-        {
+        const vector<size_t> index_variable_indexes() {
             return m_index_variable_indexes;
         }
 
         /** @return dimensionality of index
          */
         inline
-        const size_t dimension()
-        {
+        const size_t dimension() {
             return m_index_variable_indexes.size();
         }
 
         /** @return size of index (number of indexed points)
          */
         inline
-        size_t size()
-        {
+        size_t size() {
             return this->m_points->size();
         }
 
@@ -208,8 +204,7 @@ namespace m3D {
 
         /** Destructor
          */
-        virtual ~PointIndex()
-        {
+        virtual ~PointIndex() {
         };
 
         /** Factory method
@@ -226,8 +221,8 @@ namespace m3D {
          */
         static PointIndex<T> *
         create(typename Point<T>::list *points,
-                size_t dimension,
-                IndexType index_type = DefaultIndexType);
+               size_t dimension,
+               IndexType index_type = DefaultIndexType);
 
         /** Creates an index for the given points by using a subset of variables
          * as indicated by their indices in the point->values vector.
@@ -237,8 +232,8 @@ namespace m3D {
          */
         static PointIndex<T> *
         create(typename Point<T>::list *points,
-                const vector<size_t> &indexes,
-                IndexType index_type = DefaultIndexType);
+               const vector<size_t> &indexes,
+               IndexType index_type = DefaultIndexType);
 
 
 #pragma mark -
@@ -253,9 +248,7 @@ namespace m3D {
          * @param dimension of the points 
          */
         PointIndex(typename Point<T>::list *points, size_t dimension)
-        : m_points(points)
-        , m_fs(NULL)
-        {
+                : m_points(points), m_fs(NULL) {
             this->m_index_variable_indexes = vector<size_t>(dimension);
 
             for (size_t var_index = 0; var_index < dimension; var_index++) {
@@ -269,30 +262,22 @@ namespace m3D {
          * @param indices to use for building index
          */
         PointIndex(typename Point<T>::list *points,
-                const vector<size_t> &indexes)
-        : m_points(points)
-        , m_fs(NULL)
-        , m_index_variable_indexes(indexes)
-        {
+                   const vector<size_t> &indexes)
+                : m_points(points), m_fs(NULL), m_index_variable_indexes(indexes) {
         };
 
         /** Constructor
          * @param pointer to feature space
          */
         PointIndex(FeatureSpace<T> *fs)
-        : m_points(&fs->points)
-        , m_fs(fs)
-        {
+                : m_points(&fs->points), m_fs(fs) {
             this->retrieve_variables_indexes();
         };
 
         /** Copy constructor
          */
         PointIndex(const PointIndex<T> &o)
-        : m_points(o.m_points)
-        , m_fs(o.m_fs)
-        , m_index_variable_indexes(o.index_variable_indexes())
-        {
+                : m_points(o.m_points), m_fs(o.m_fs), m_index_variable_indexes(o.index_variable_indexes()) {
         };
 
         /** This method turns the given list of variables into a list of indexes to be used

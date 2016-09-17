@@ -35,13 +35,13 @@ namespace m3D {
 
     using namespace Radolan;
 
-    template <typename T>
+    template<typename T>
     class ConradCluster
     {
     public:
 
-        typedef std::vector< ConradCluster<T> > track_t;
-        typedef std::map<m3D::id_t, track_t* > trackmap_t;
+        typedef std::vector<ConradCluster<T> > track_t;
+        typedef std::map<m3D::id_t, track_t *> trackmap_t;
 
         int year, month, day, hour, minute;
         m3D::id_t id;
@@ -52,12 +52,10 @@ namespace m3D {
 
         // Constructor/Destructor
 
-        ConradCluster()
-        {
+        ConradCluster() {
         };
 
-        ~ConradCluster()
-        {
+        ~ConradCluster() {
         };
 
         // timestamp
@@ -65,8 +63,7 @@ namespace m3D {
         /** @return seconds since epoch constructed from the
          * cluster's fields
          */
-        long secondsSinceEpoch() const
-        {
+        long secondsSinceEpoch() const {
             // find out if Daylight Saving Time is on
             // by obtaining local time
 
@@ -103,8 +100,7 @@ namespace m3D {
         /** Calculates the values for center in RADOLAN cartesian
          * coordinates. (x,y)
          */
-        vector<T> center() const
-        {
+        vector <T> center() const {
             RDCoordinateSystem rcs(RD_RX);
             RDGeographicalPoint geo = rdGeographicalPoint(centerX, centerY);
             RDCartesianPoint cart = rcs.cartesianCoordinate(geo);
@@ -119,8 +115,7 @@ namespace m3D {
         /** @return lower left corner of the bounding box in 
          * cartesian coordinates
          */
-        vector<T> box_min() const
-        {
+        vector <T> box_min() const {
             RDCoordinateSystem rcs(RD_RX);
             RDGeographicalPoint geo = rdGeographicalPoint(xMin, yMin);
             RDCartesianPoint cart = rcs.cartesianCoordinate(geo);
@@ -135,8 +130,7 @@ namespace m3D {
         /** @return upper right corner of the bounding box in
          * cartesian coordinates
          */
-        vector<T> box_max() const
-        {
+        vector <T> box_max() const {
             RDCoordinateSystem rcs(RD_RX);
             RDGeographicalPoint geo = rdGeographicalPoint(xMax, yMax);
             RDCartesianPoint cart = rcs.cartesianCoordinate(geo);
@@ -151,10 +145,9 @@ namespace m3D {
         // input
 
         static
-        std::vector< ConradCluster<T> >
-        read_conrad_short(std::string filename)
-        {
-            std::vector< ConradCluster<T> > result;
+        std::vector<ConradCluster<T> >
+        read_conrad_short(std::string filename) {
+            std::vector<ConradCluster<T> > result;
 
             std::ifstream file(filename.c_str());
 
@@ -188,10 +181,10 @@ namespace m3D {
 
                     // Read the integers using the operator >>
                     linestream >> cluster.year >> cluster.month >> cluster.day >> cluster.hour >> cluster.minute
-                            >> cluster.id >> cluster.cellStatus >> cluster.centerY >> cluster.centerX
-                            >> cluster.numCorePixels >> cluster.numPixels >> cluster.directionDeg
-                            >> cluster.lifetime >> cluster.hailWarning >> cluster.pixelPerHour
-                            >> cluster.yMin >> cluster.xMin >> cluster.yMax >> cluster.xMax;
+                               >> cluster.id >> cluster.cellStatus >> cluster.centerY >> cluster.centerX
+                               >> cluster.numCorePixels >> cluster.numPixels >> cluster.directionDeg
+                               >> cluster.lifetime >> cluster.hailWarning >> cluster.pixelPerHour
+                               >> cluster.yMin >> cluster.xMin >> cluster.yMax >> cluster.xMax;
 
                     result.push_back(cluster);
                 }
@@ -203,23 +196,22 @@ namespace m3D {
         }
 
         static void
-        print(const std::vector< ConradCluster<T> > &list)
-        {
+        print(const std::vector<ConradCluster<T> > &list) {
             cout << "date"
-                    << "\t\tid"
-                    << "\tcellStatus"
-                    << "\tage"
-                    << "\tnumPixel"
-                    << "\tspeed [pixels/h]"
-                    << "\tdirection [deg]"
-                    << "\thail_warning"
-                    << "\tnumCorePixel"
-                    << "\t\tcenter"
-                    << "\t\tmin"
-                    << "\t\tmax"
-                    << endl;
+                 << "\t\tid"
+                 << "\tcellStatus"
+                 << "\tage"
+                 << "\tnumPixel"
+                 << "\tspeed [pixels/h]"
+                 << "\tdirection [deg]"
+                 << "\thail_warning"
+                 << "\tnumCorePixel"
+                 << "\t\tcenter"
+                 << "\t\tmin"
+                 << "\t\tmax"
+                 << endl;
 
-            typename std::vector< ConradCluster<T> >::const_iterator ci;
+            typename std::vector<ConradCluster<T> >::const_iterator ci;
             for (ci = list.begin(); ci != list.end(); ++ci) {
                 ConradCluster<T> c = *ci;
 
@@ -231,18 +223,18 @@ namespace m3D {
                 c.box(min, max);
 
                 cout << date.str()
-                        << "\t\t" << c.id
-                        << "\t" << c.cellStatus
-                        << "\t" << c.lifetime
-                        << "\t" << c.numPixels
-                        << "\t" << c.pixelPerHour
-                        << "\t" << c.directionDeg
-                        << "\t" << c.hailWarning
-                        << "\t" << c.numCorePixels
-                        << "\t\t" << c.center()
-                        << "\t\t" << c.box_min()
-                        << "\t\t" << c.box_max()
-                        << endl;
+                     << "\t\t" << c.id
+                     << "\t" << c.cellStatus
+                     << "\t" << c.lifetime
+                     << "\t" << c.numPixels
+                     << "\t" << c.pixelPerHour
+                     << "\t" << c.directionDeg
+                     << "\t" << c.hailWarning
+                     << "\t" << c.numCorePixels
+                     << "\t\t" << c.center()
+                     << "\t\t" << c.box_min()
+                     << "\t\t" << c.box_max()
+                     << endl;
             }
         }
     };

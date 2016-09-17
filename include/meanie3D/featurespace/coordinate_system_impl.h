@@ -37,9 +37,8 @@
 
 namespace m3D {
 
-    template <typename T>
-    CoordinateSystem<T>::CoordinateSystem(NcFile *file, const vector<string> &dimensions)
-    {
+    template<typename T>
+    CoordinateSystem<T>::CoordinateSystem(NcFile *file, const vector <string> &dimensions) {
         using namespace netCDF;
         try {
             m_dimensions.clear();
@@ -53,54 +52,48 @@ namespace m3D {
             this->construct();
         } catch (const exceptions::NcException &e) {
             cerr << "FATAL:could not create coordinate system from file "
-                    << file->getName() << " :" << e.what() << endl;
+                 << file->getName() << " :" << e.what() << endl;
             exit(EXIT_FAILURE);
         }
     }
 
-    template <typename T>
+    template<typename T>
     CoordinateSystem<T>::CoordinateSystem(NcFile *file,
-            const vector<string> &dimensions,
-            const vector<string> &dimensionVariables)
-     {
+                                          const vector <string> &dimensions,
+                                          const vector <string> &dimensionVariables) {
         using namespace netCDF;
         try {
-            
+
             m_dimensions.clear();
             for (size_t i = 0; i < dimensions.size(); i++) {
                 m_dimensions.push_back(file->getDim(dimensions[i]));
             }
-            
+
             m_dimension_variables.clear();
-            for (size_t i=0; i<dimensionVariables.size(); i++) {
+            for (size_t i = 0; i < dimensionVariables.size(); i++) {
                 m_dimension_variables.push_back(file->getVar(dimensionVariables[i]));
             }
 
             this->construct();
-            
+
         } catch (const exceptions::NcException &e) {
             cerr << "FATAL:could not create coordinate system from file "
-                    << file->getName() << " :" << e.what() << endl;
+                 << file->getName() << " :" << e.what() << endl;
             exit(EXIT_FAILURE);
         }
     }
 
-    template <typename T>
-    CoordinateSystem<T>::CoordinateSystem(const vector<NcDim> &dimensions,
-            const vector<NcVar> &dimension_variables)
-    : m_dimensions(dimensions)
-    , m_dimension_variables(dimension_variables)
-    {
+    template<typename T>
+    CoordinateSystem<T>::CoordinateSystem(const vector <NcDim> &dimensions,
+                                          const vector <NcVar> &dimension_variables)
+            : m_dimensions(dimensions), m_dimension_variables(dimension_variables) {
         this->construct();
     }
 
-    template <typename T>
-    CoordinateSystem<T>::CoordinateSystem(const CoordinateSystem& other)
-    : m_dimensions(other.dimensions())
-    , m_dimension_variables(other.dimension_variables())
-    , m_resolution(other.m_resolution)
-    , m_resolution_norm(other.m_resolution_norm)
-    {
+    template<typename T>
+    CoordinateSystem<T>::CoordinateSystem(const CoordinateSystem &other)
+            : m_dimensions(other.dimensions()), m_dimension_variables(other.dimension_variables()),
+              m_resolution(other.m_resolution), m_resolution_norm(other.m_resolution_norm) {
         // TODO: make a copy of the dimension data map, which is cheaper than reading it new
 
         read_dimension_data_map(m_dimension_data, m_dimensions, m_dimension_variables);
@@ -108,30 +101,27 @@ namespace m3D {
         // resolution, calculated from the dimension variables
     }
 
-    template <typename T>
-    CoordinateSystem<T>
-    CoordinateSystem<T>::operator=(const CoordinateSystem<T> &other)
-    {
+    template<typename T>
+    CoordinateSystem <T>
+    CoordinateSystem<T>::operator=(const CoordinateSystem <T> &other) {
         CoordinateSystem<T> copy(other);
         return copy;
     }
 
-    template <typename T>
-    CoordinateSystem<T>::~CoordinateSystem()
-    {
+    template<typename T>
+    CoordinateSystem<T>::~CoordinateSystem() {
         clear_dimension_data_map(m_dimension_data);
     }
 
-    template <typename T>
+    template<typename T>
     void
-    CoordinateSystem<T>::construct()
-    {
+    CoordinateSystem<T>::construct() {
         try {
             // get dimension sizes
 
             m_dimension_sizes.resize(this->rank());
 
-            for (size_t i = 0; i<this->rank(); i++)
+            for (size_t i = 0; i < this->rank(); i++)
                 m_dimension_sizes[i] = this->m_dimensions[i].getSize();
 
             // Read the data for the dimensions from the dimension variables
@@ -162,11 +152,13 @@ namespace m3D {
                     } else if (strcmp(unit_string.c_str(), "km") == 0) {
                         m_dimension_units.push_back("km");
                     } else {
-                        cerr << "WARNING:variable " << var.getName() << " has units'" << unit_string << "' which is currently not handled. It will be assumed to be in meters [m]" << endl;
+                        cerr << "WARNING:variable " << var.getName() << " has units'" << unit_string
+                             << "' which is currently not handled. It will be assumed to be in meters [m]" << endl;
                         m_dimension_units.push_back("m");
                     }
                 } catch (netCDF::exceptions::NcException &e) {
-                    cerr << "WARNING:variable " << var.getName() << " has no 'units' attribute. It will be assumed to be in meters [m]" << endl;
+                    cerr << "WARNING:variable " << var.getName()
+                         << " has no 'units' attribute. It will be assumed to be in meters [m]" << endl;
                     m_dimension_units.push_back("m");
                 }
 
@@ -176,8 +168,8 @@ namespace m3D {
                     netcdf::get_valid_range(var, min, max);
                 } catch (std::exception &e) {
                     cerr << "WARNING:variable " << var.getName()
-                            << " is missing valid_min+valid_max or valid_range attribute"
-                            << ", falling back on the variable values." << endl;
+                         << " is missing valid_min+valid_max or valid_range attribute"
+                         << ", falling back on the variable values." << endl;
 
                     min = std::numeric_limits<T>::max();
                     max = std::numeric_limits<T>::min();
@@ -203,29 +195,27 @@ namespace m3D {
             m_resolution_norm = utils::vectors::vector_norm<T>(m_resolution);
         } catch (const exceptions::NcException &e) {
             cerr << "FATAL:could not construct coordinate system:"
-                    << e.what() << endl;
+                 << e.what() << endl;
             exit(EXIT_FAILURE);
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
     CoordinateSystem<T>::read_dimension_data_map(DimensionData &dimData,
-            const vector<NcDim> &dimensions,
-            const vector<NcVar> &dimVars)
-    {
+                                                 const vector <NcDim> &dimensions,
+                                                 const vector <NcVar> &dimVars) {
         dimData.resize(dimensions.size());
 
         for (size_t i = 0; i < dimVars.size(); i++) {
             NcVar var = dimVars[i];
-            T* data = utils::netcdf::readNetCDFVariable<T>(var);
+            T *data = utils::netcdf::readNetCDFVariable<T>(var);
             dimData[i] = data;
         }
     }
 
-    template <typename T>
-    void CoordinateSystem<T>::clear_dimension_data_map(DimensionData &data)
-    {
+    template<typename T>
+    void CoordinateSystem<T>::clear_dimension_data_map(DimensionData &data) {
         while (!data.empty()) {
             T *dataPtr = data.back();
             free(dataPtr);
@@ -233,10 +223,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     typename CoordinateSystem<T>::Coordinate *
-    CoordinateSystem<T>::coordinate(GridPoint &gridpoint)
-    {
+    CoordinateSystem<T>::coordinate(GridPoint &gridpoint) {
         Coordinate coordinate(gridpoint.size(), 0);
 
         lookup(gridpoint, coordinate);
@@ -244,33 +233,30 @@ namespace m3D {
         return new Coordinate(coordinate);
     }
 
-    template <typename T>
+    template<typename T>
     typename CoordinateSystem<T>::GridPoint *
-    CoordinateSystem<T>::gridpoint(Coordinate &coordinate)
-    {
+    CoordinateSystem<T>::gridpoint(Coordinate &coordinate) {
         GridPoint gridpoint(coordinate.size(), 0);
 
         try {
             reverse_lookup(coordinate, gridpoint);
-        } catch (std::out_of_range& e) {
+        } catch (std::out_of_range &e) {
             cerr << "ERROR:reverse coordinate transformation failed for coordinate=" << coordinate << endl;
         }
 
         return new GridPoint(gridpoint);
     }
 
-    template <typename T>
-    void CoordinateSystem<T>::lookup(const GridPoint &gridpoint, Coordinate &coordinate) const
-    {
+    template<typename T>
+    void CoordinateSystem<T>::lookup(const GridPoint &gridpoint, Coordinate &coordinate) const {
         assert(gridpoint.size() == coordinate.size());
 
         for (size_t index = 0; index < gridpoint.size(); index++)
             coordinate[index] = m_dimension_data[index][gridpoint[index]];
     }
 
-    template <typename T>
-    void CoordinateSystem<T>::reverse_lookup(const Coordinate &coordinate, GridPoint &gridpoint) const
-    {
+    template<typename T>
+    void CoordinateSystem<T>::reverse_lookup(const Coordinate &coordinate, GridPoint &gridpoint) const {
         vector<int> result = this->rounded_gridpoint(coordinate);
 
         for (size_t index = 0; index < coordinate.size(); index++) {
@@ -282,10 +268,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
-    vector<T>
-    CoordinateSystem<T>::round_to_grid(const vector<T> &v) const
-    {
+    template<typename T>
+    vector <T>
+    CoordinateSystem<T>::round_to_grid(const vector <T> &v) const {
         assert(v.size() >= this->rank());
 
         vector<T> result = v;
@@ -312,10 +297,9 @@ namespace m3D {
         return result;
     }
 
-    template <typename T>
+    template<typename T>
     vector<int>
-    CoordinateSystem<T>::rounded_gridpoint(const vector<T> &v) const
-    {
+    CoordinateSystem<T>::rounded_gridpoint(const vector <T> &v) const {
         assert(v.size() >= this->rank());
 
         vector<int> result(this->rank(), 0);
@@ -344,10 +328,9 @@ namespace m3D {
         return result;
     }
 
-    template <typename T>
+    template<typename T>
     vector<int>
-    CoordinateSystem<T>::to_gridpoints(const vector<T> &v) const
-    {
+    CoordinateSystem<T>::to_gridpoints(const vector <T> &v) const {
         vector<int> result(v.size());
         for (size_t ci = 0; ci < this->rank(); ci++) {
             T value = v.at(ci);
@@ -371,78 +354,68 @@ namespace m3D {
         return result;
     }
 
-    template <typename T>
-    size_t CoordinateSystem<T>::rank() const
-    {
+    template<typename T>
+    size_t CoordinateSystem<T>::rank() const {
         return m_dimensions.size();
     }
 
-    template <typename T>
-    const vector<NcDim> & CoordinateSystem<T>::dimensions() const
-    {
+    template<typename T>
+    const vector <NcDim> &CoordinateSystem<T>::dimensions() const {
         return m_dimensions;
     }
 
-    template <typename T>
-    const vector<NcVar> &
-    CoordinateSystem<T>::dimension_variables() const
-    {
+    template<typename T>
+    const vector <NcVar> &
+    CoordinateSystem<T>::dimension_variables() const {
         return m_dimension_variables;
     }
 
-    template <typename T>
+    template<typename T>
     NcVar
-    CoordinateSystem<T>::dimension_variable(const NcDim &dim) const
-    {
+    CoordinateSystem<T>::dimension_variable(const NcDim &dim) const {
         vector<NcDim>::const_iterator it = find(m_dimensions.begin(), m_dimensions.end(), dim);
 
         assert(it != m_dimensions.end());
 
         size_t index = it - m_dimensions.begin();
 
-        return m_dimension_variables[ index ];
+        return m_dimension_variables[index];
     }
 
-    template <typename T>
-    const vector<T> &
-    CoordinateSystem<T>::resolution() const
-    {
+    template<typename T>
+    const vector <T> &
+    CoordinateSystem<T>::resolution() const {
         return m_resolution;
     }
 
-    template <typename T>
+    template<typename T>
     T
-    CoordinateSystem<T>::resolution_norm() const
-    {
+    CoordinateSystem<T>::resolution_norm() const {
         return m_resolution_norm;
     }
 
-    template <typename T>
+    template<typename T>
     typename CoordinateSystem<T>::GridPoint
-    CoordinateSystem<T>::newGridPoint() const
-    {
+    CoordinateSystem<T>::newGridPoint() const {
         return GridPoint(this->rank(), 0);
     }
 
-    template <typename T>
+    template<typename T>
     typename CoordinateSystem<T>::Coordinate
-    CoordinateSystem<T>::newCoordinate() const
-    {
+    CoordinateSystem<T>::newCoordinate() const {
         return Coordinate(this->rank(), 0);
     }
 
-    template <typename T>
-    const vector<size_t>
-    CoordinateSystem<T>::get_dimension_sizes() const
-    {
+    template<typename T>
+    const vector <size_t>
+    CoordinateSystem<T>::get_dimension_sizes() const {
         return m_dimension_sizes;
     }
 
-    template <typename T>
-    const T*
-    CoordinateSystem<T>::get_dimension_data_ptr(NcVar var) const
-    {
-        T* result = NULL;
+    template<typename T>
+    const T *
+    CoordinateSystem<T>::get_dimension_data_ptr(NcVar var) const {
+        T *result = NULL;
 
         for (size_t i = 0; i < this->rank(); i++) {
             if (m_dimension_variables[i].getName() == var.getName()) {
@@ -454,17 +427,15 @@ namespace m3D {
         return result;
     }
 
-    template <typename T>
-    const T*
-    CoordinateSystem<T>::get_dimension_data_ptr(int index) const
-    {
+    template<typename T>
+    const T *
+    CoordinateSystem<T>::get_dimension_data_ptr(int index) const {
         return m_dimension_data[index];
     }
 
-    template <typename T>
+    template<typename T>
     typename CoordinateSystem<T>::Coordinate
-    CoordinateSystem<T>::to_meters(const typename CoordinateSystem<T>::Coordinate &coord) const
-    {
+    CoordinateSystem<T>::to_meters(const typename CoordinateSystem<T>::Coordinate &coord) const {
         typename CoordinateSystem<T>::Coordinate transformed(this->rank(), 0);
 
         for (size_t i = 0; i < this->rank(); i++) {

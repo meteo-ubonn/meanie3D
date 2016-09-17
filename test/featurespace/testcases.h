@@ -29,34 +29,42 @@
 using namespace testing;
 using namespace std;
 
-typedef Types< float, double > DataTypes;
+typedef Types<float, double> DataTypes;
 
 #pragma mark -
 #pragma mark Circular Pattern Tests
 
 #if RUN_CIRCULAR_PATTERN
+
 #include "circular_pattern.h"
+
 #endif
 
 #pragma mark -
 #pragma mark Unweighed uniform distribution sample (no weight function)
 
 #if RUN_UNWEIGHED_SAMPLE
+
 #include "uniform.h"
+
 #endif
 
 #pragma mark -
 #pragma mark Weighed uniform distribution sample
 
 #if RUN_WEIGHED_SAMPLE
+
 #include "weighed.h"
+
 #endif
 
 #pragma mark -
 #pragma mark Mean-Shift Iterations
 
 #if RUN_ITERATION
+
 #include "iteration.h"
+
 #endif
 
 #endif

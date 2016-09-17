@@ -33,10 +33,9 @@
 namespace m3D {
     namespace utils {
 
-        template <typename T>
+        template<typename T>
         ClusterIndex<T>::ClusterIndex(typename Cluster<T>::list &list,
-                const vector<size_t> &dimensions)
-        {
+                                      const vector <size_t> &dimensions) {
             // Figure out the rank of the multiarray needed
             // from the first cluster's mode
 
@@ -53,28 +52,25 @@ namespace m3D {
             }
         }
 
-        template <typename T>
-        ClusterIndex<T>::~ClusterIndex()
-        {
+        template<typename T>
+        ClusterIndex<T>::~ClusterIndex() {
             if (m_index != NULL) {
                 delete m_index;
                 m_index = NULL;
             }
         }
 
-        template <typename T>
+        template<typename T>
         typename ClusterIndex<T>::index_t *
-        ClusterIndex<T>::data()
-        {
+        ClusterIndex<T>::data() {
             return this->m_index;
         }
 
-        template <typename T>
+        template<typename T>
         size_t
-        ClusterIndex<T>::count_common_points(const ClusterIndex<T> *a,
-                const ClusterIndex<T> *b,
-                ::m3D::id_t id)
-        {
+        ClusterIndex<T>::count_common_points(const ClusterIndex <T> *a,
+                                             const ClusterIndex <T> *b,
+                                             ::m3D::id_t id) {
             assert(a->data()->rank() == b->data()->rank());
             size_t common_points;
             size_t dim = a->data().rank();
@@ -97,11 +93,10 @@ namespace m3D {
             return common_points;
         }
 
-        template <typename T>
+        template<typename T>
         double
-        ClusterIndex<T>::occupation_ratio(const Cluster<T> *cluster_a,
-                const Cluster<T> *cluster_b) const
-        {
+        ClusterIndex<T>::occupation_ratio(const Cluster <T> *cluster_a,
+                                          const Cluster <T> *cluster_b) const {
             int common_points = 0;
             for (int i = 0; i < cluster_a->size(); i++) {
                 typename Point<T>::ptr p = cluster_a->at(i);
