@@ -207,6 +207,7 @@ namespace m3D {
             // Iterate over the variables
 
             bool isPointValid = true;
+            bool isPointInRange = true;
 
             // start the entry by copying the dimension variables
 
@@ -220,7 +221,7 @@ namespace m3D {
 
                 // is this contribution valid?
 
-                T value = data_store()->get(var_index, gridpoint, isPointValid);
+                T value = data_store()->get(var_index, gridpoint, isPointInRange, isPointValid);
 
                 if (!isPointValid) {
                     // Reading routine marked this point 'off limits'
@@ -229,7 +230,8 @@ namespace m3D {
 #endif
                     this->m_off_limits->set(gridpoint, true);
                 }
-                if (isPointValid) {
+
+                if (isPointValid && isPointInRange) {
                     values.push_back(value);
 
                     // apply upper/lower thresholding to the value, if asked

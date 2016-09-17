@@ -204,8 +204,9 @@ namespace m3D {
             for (pi = c->get_points().begin(); pi != c->get_points().end(); ++pi) {
                 typename Point<T>::ptr p = *pi;
                 for (int vi = 0; vi < dataStore->rank(); vi++) {
-                    bool isValid;
-                    T value = dataStore->get(vi, p->gridpoint, isValid);
+                    bool isInRange = false;
+                    bool isValid = false;
+                    T value = dataStore->get(vi, p->gridpoint, isInRange, isValid);
                     p->values[c->spatial_rank() + vi] = value;
                 }
             }

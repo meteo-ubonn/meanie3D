@@ -709,7 +709,7 @@ namespace m3D {
          *        is valid by cf-metadata standards
          * @return (unpacked) value
          */
-        T get(size_t variable_index, const vector<int> &gridpoint, bool &is_valid) const {
+        T get(size_t variable_index, const vector<int> &gridpoint, bool &is_in_range, bool &is_valid) const {
             T value = 0.0;
             T unpacked_value = 0.0;
             typename multiarray_map_t::const_iterator i;
@@ -726,8 +726,12 @@ namespace m3D {
 
             if (m_fill_value[variable_index] != NO_VALUE) {
                 is_valid = (value != m_fill_value[variable_index]);
+                // If it's invalid, it's automatically out of range
+                is_in_range = is_valid;
             } else {
-                is_valid = (value >= m_valid_min[variable_index])
+                // It's a valid value (not in failed/fill values)
+                is_valid = true;
+                is_in_range = (value >= m_valid_min[variable_index])
                            && (value <= m_valid_max[variable_index]);
             }
 
@@ -745,7 +749,9 @@ namespace m3D {
         virtual
         T get(size_t variable_index,
               size_t index,
+              bool &is_in_range,
               bool &is_valid) const {
+
             return 0;
         }
 
@@ -857,7 +863,6 @@ namespace m3D {
             if (dim_index < (this->get_dimension_sizes().size() - 1)) {
                 for (size_t index = 0; index < dimSize; index++) {
                     gridpoint[dim_index] = index;
-
                     for_each_recursive(variable_index, callback, dim_index + 1, gridpoint);
                 }
             } else {
@@ -865,8 +870,9 @@ namespace m3D {
                 for (size_t i = 0; i < dimSize; i++) {
                     gIter[dim_index] = i;
                     bool is_valid = false;
-                    T value = this->get(variable_index, gIter, is_valid);
-                    callback->operator()(this, variable_index, gIter, value, is_valid);
+                    bool is_in_range = false;
+                    T value = this->get(variable_index, gIter, is_in_range, is_valid);
+                    callback->operator()(this, variable_index, gIter, value, is_in_range, is_valid);
                 }
             }
         }

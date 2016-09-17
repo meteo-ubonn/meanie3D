@@ -39,21 +39,21 @@ namespace m3D {
 
     /** The DataStore represents a set of input data for the method.
      */
-    template <typename T>
+    template<typename T>
     class DataStore
     {
     protected:
 
-        std::vector<std::string> m_variables;
-        std::vector<std::string> m_dimensions;
-        std::vector<std::string> m_dimension_variables;
+        std::vector <std::string> m_variables;
+        std::vector <std::string> m_dimensions;
+        std::vector <std::string> m_dimension_variables;
 
     public:
 
 #pragma mark -
 #pragma mark Typedefs
 
-        typedef DataStore<T> * ptr;
+        typedef DataStore<T> *ptr;
 
 #pragma mark -
 #pragma mark for_each functor
@@ -64,10 +64,11 @@ namespace m3D {
             virtual
             void
             operator()(DataStore<T> *store,
-                    const size_t variable_index,
-                    vector<int> &gridpoint,
-                    T& value,
-                    bool &is_valid) = 0;
+                       const size_t variable_index,
+                       vector<int> &gridpoint,
+                       T &value,
+                       bool &is_in_range,
+                       bool &is_valid) = 0;
         };
 
 #pragma mark -
@@ -81,12 +82,10 @@ namespace m3D {
          * @param dimensions
          * @param dimension_variables
          */
-        DataStore(const std::vector<std::string> &variables,
-                const std::vector<std::string> &dimensions,
-                const std::vector<std::string> &dimension_variables)
-        : m_variables(variables)
-        , m_dimensions(dimensions)
-        , m_dimension_variables(dimension_variables) {};
+        DataStore(const std::vector <std::string> &variables,
+                  const std::vector <std::string> &dimensions,
+                  const std::vector <std::string> &dimension_variables)
+                : m_variables(variables), m_dimensions(dimensions), m_dimension_variables(dimension_variables) {};
 
         /** Destructor
          */
@@ -95,8 +94,8 @@ namespace m3D {
 #pragma mark -
 #pragma mark Public methods
 
-        virtual 
-        const std::vector<std::string> &variables() const = 0;
+        virtual
+        const std::vector <std::string> &variables() const = 0;
 
         /**
          * Implementing classes should know how to construct a 
@@ -108,30 +107,44 @@ namespace m3D {
          * @param is_valid
          * @return 
          */
-        virtual 
-        CoordinateSystem<T> *coordinate_system() const = 0;
+        virtual
+        CoordinateSystem <T> *coordinate_system() const = 0;
 
-        /** Retrieves a value.
+        /**
+         * Retrieves a value.
          *
          * @param index of the variable
          * @param grid point
          * @param reference to bool variable, which will indicate if the
          *        value is within valid range or not after the call
+         * @param reference to bool variable, which will indicate if the
+         *        value is otherwise valid (aka: fill_value, error_value etc.)
          * @return (<b>unpacked</b>) variable value
          */
         virtual
         T get(size_t variable_index,
-                const vector<int> &gridpoint,
-                bool &is_valid) const = 0;
+              const vector<int> &gridpoint,
+              bool &is_in_range,
+              bool &is_valid) const = 0;
 
-        /** Gets a point by it's linear index. The index may run
+        /**
+         * Gets a point by it's linear index. The index may run
          * from 0 ... (N-1) where N is the total number of points
          * in the grid.
+         *
+         * @param index of the variable
+         * @param running index of the grid point
+         * @param reference to bool variable, which will indicate if the
+         *        value is within valid range or not after the call
+         * @param reference to bool variable, which will indicate if the
+         *        value is otherwise valid (aka: fill_value, error_value etc.)
+         * @return (<b>unpacked</b>) variable value
          */
         virtual
         T get(size_t variable_index,
-                size_t index,
-                bool &is_valid) const = 0;
+              size_t index,
+              bool &is_in_range,
+              bool &is_valid) const = 0;
 
         /** 
          * @return number of variables in the data store
