@@ -432,10 +432,13 @@ namespace m3D {
                                     m_ctx.coord_system->reverse_lookup(x, dest_gridpoint);
                                     for (size_t var_index = 0;
                                          var_index < m_ci_comparison_data_store->rank(); var_index++) {
+                                        bool is_in_range = false;
                                         bool is_valid = false;
-                                        T value = m_ci_comparison_data_store->get(var_index, source_gridpoint,
+                                        T value = m_ci_comparison_data_store->get(var_index,
+                                                                                  source_gridpoint,
+                                                                                  is_in_range,
                                                                                   is_valid);
-                                        if (is_valid) {
+                                        if (is_valid && is_in_range) {
                                             // we are manipulating raw data in the NetCDFDataStore, which
                                             // keeps the values in 'packed' format internally. When calling
                                             // the get method above, the value is unpacked for convencience.
@@ -711,20 +714,21 @@ namespace m3D {
                 max_score -= 2;
 
             vector<int> g = p->gridpoint;
+            bool isInRange = false;
             bool isValid = false;
 
             // TODO: validity checks
-            T ir_108_radiance = this->m_data_store->get(msevi_l15_ir_108, g, isValid);
+            T ir_108_radiance = this->m_data_store->get(msevi_l15_ir_108, g, isInRange, isValid);
             T ir_108_temp = brightness_temperature(msevi_l15_ir_108, ir_108_radiance);
 
 #if DEBUG_CI_SCORE
             m_score_108->set(g, ir_108_temp);
 #endif
 
-            T wv_062_rad = this->m_data_store->get(msevi_l15_wv_062, g, isValid);
+            T wv_062_rad = this->m_data_store->get(msevi_l15_wv_062, g, isInRange, isValid);
             T wv_062_temp = brightness_temperature(msevi_l15_wv_062, wv_062_rad);
 
-            T ir_134_rad = this->m_data_store->get(msevi_l15_ir_134, g, isValid);
+            T ir_134_rad = this->m_data_store->get(msevi_l15_ir_134, g, isInRange, isValid);
             T ir_134_temp = brightness_temperature(msevi_l15_ir_134, ir_134_rad);
 
             // Calculate score
@@ -769,13 +773,13 @@ namespace m3D {
                 // WARNING: this assumes the dime difference is 15 mins!!
                 // TODO: adapt the calculation for different intervals?
 
-                T ir_108_radiance_prev = this->m_ci_comparison_data_store->get(msevi_l15_ir_108, g, isValid);
+                T ir_108_radiance_prev = this->m_ci_comparison_data_store->get(msevi_l15_ir_108, g, isInRange, isValid);
                 T ir_108_temp_prev = brightness_temperature(msevi_l15_ir_108, ir_108_radiance_prev);
 
-                T wv_062_rad_prev = this->m_ci_comparison_data_store->get(msevi_l15_wv_062, g, isValid);
+                T wv_062_rad_prev = this->m_ci_comparison_data_store->get(msevi_l15_wv_062, g, isInRange, isValid);
                 T wv_062_temp_prev = brightness_temperature(msevi_l15_wv_062, wv_062_rad_prev);
 
-                T ir_134_rad_prev = this->m_ci_comparison_data_store->get(msevi_l15_ir_134, g, isValid);
+                T ir_134_rad_prev = this->m_ci_comparison_data_store->get(msevi_l15_ir_134, g, isInRange, isValid);
                 T ir_134_temp_prev = brightness_temperature(msevi_l15_ir_134, ir_134_rad_prev);
 
                 T dT1 = ir_108_temp - ir_108_temp_prev;
@@ -822,11 +826,13 @@ namespace m3D {
                 for (size_t pi = 0; pi < neighbors->size() && !(has_lightning || has_radar); pi++) {
                     typename Point<T>::ptr n = neighbors->at(pi);
 
+                    bool neighbour_is_in_range = false;
                     bool neighbour_is_valid = false;
 
                     if (!has_radar) {
                         cband_rx = this->m_data_store->get(cband_radolan_rx,
                                                            n->gridpoint,
+                                                           neighbour_is_in_range,
                                                            neighbour_is_valid);
 
                         // Start using radar at light rain (>= 25dBZ)
@@ -835,9 +841,11 @@ namespace m3D {
 
                     if (!has_radar) {
                         neighbour_is_valid = false;
+                        neighbour_is_in_range = false;
 
                         linet_count = this->m_data_store->get(linet_oase_tl,
                                                               n->gridpoint,
+                                                              neighbour_is_in_range,
                                                               neighbour_is_valid);
 
                         has_lightning = (neighbour_is_valid && linet_count > 0.0);
