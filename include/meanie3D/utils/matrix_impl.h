@@ -32,10 +32,9 @@
 namespace m3D {
     namespace utils {
 
-        template <typename T>
+        template<typename T>
         typename SimpleMatrix<T>::matrix_t
-        SimpleMatrix<T>::create_matrix(size_t width, size_t height)
-        {
+        SimpleMatrix<T>::create_matrix(size_t width, size_t height) {
             matrix_t matrix;
 
             matrix.resize(width);
@@ -47,10 +46,9 @@ namespace m3D {
             return matrix;
         }
 
-        template <typename T>
+        template<typename T>
         typename SimpleMatrix<T>::flag_matrix_t
-        SimpleMatrix<T>::create_flag_matrix(size_t width, size_t height, int defaultValue)
-        {
+        SimpleMatrix<T>::create_flag_matrix(size_t width, size_t height, int defaultValue) {
             flag_matrix_t matrix;
 
             matrix.resize(width);

@@ -63,12 +63,11 @@ namespace m3D {
 #pragma mark -
 #pragma mark Clustering Code
 
-    template <typename T>
+    template<typename T>
     ClusterList<T> *
-    ClusterOperation<T>::cluster()
-    {
+    ClusterOperation<T>::cluster() {
         using namespace m3D::utils::vectors;
-        
+
         const CoordinateSystem<T> *cs = m_context.coord_system;
         vector<T> resolution;
         if (m_context.search_params->search_type() == SearchTypeRange) {
@@ -100,14 +99,14 @@ namespace m3D {
                 m_params.dimensions,
                 m_params.dimension_variables,
                 m_params.time_index);
-        
+
         // Guard against empty feature-space
         if (this->feature_space->points.size() == 0) {
             cout << "Feature space is empty" << endl;
             return cluster_list;
         }
 
-        MeanshiftOperation<T> meanshiftOperator(this->feature_space, this->point_index);
+        MeanshiftOperation <T> meanshiftOperator(this->feature_space, this->point_index);
         meanshiftOperator.prime_index(m_context.search_params);
 
 #if WITH_OPENMP
@@ -120,14 +119,14 @@ namespace m3D {
 #endif
                 m_progress_bar->operator++();
             }
-            
+
             // Get the meanshift vector for this point
-            typename Point<T>::ptr x = this->feature_space->points[ index ];
-            x->shift = meanshiftOperator.meanshift(x->values, 
-                    m_context.search_params, 
-                    m_context.kernel, 
-                    m_context.weight_function);
-            
+            typename Point<T>::ptr x = this->feature_space->points[index];
+            x->shift = meanshiftOperator.meanshift(x->values,
+                                                   m_context.search_params,
+                                                   m_context.kernel,
+                                                   m_context.weight_function);
+
             // Extract the spatial component and obtain the grid
             vector<T> spatial_shift = this->feature_space->spatial_component(x->shift);
             x->gridded_shift = this->feature_space->coordinate_system->to_gridpoints(spatial_shift);
@@ -141,16 +140,16 @@ namespace m3D {
 
         // Analyse the graph and create clusters
         cluster_list->aggregate_cluster_graph(
-                this->feature_space, 
-                m_context.weight_function, 
-                m_params.coalesceWithStrongestNeighbour, 
+                this->feature_space,
+                m_context.weight_function,
+                m_params.coalesceWithStrongestNeighbour,
                 m_context.show_progress);
 
         // Provide fresh ids right away
         m3D::uuid_t uuid = 0;
-        ClusterUtils<T>::provideUuids(cluster_list,uuid);
+        ClusterUtils<T>::provideUuids(cluster_list, uuid);
         m3D::id_t id = 0;
-        ClusterUtils<T>::provideIds(cluster_list,id);
+        ClusterUtils<T>::provideIds(cluster_list, id);
 
 //        cout << "Cluster list after aggregation:" << endl;
 //        cluster_list.print();

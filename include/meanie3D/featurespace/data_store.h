@@ -44,9 +44,9 @@ namespace m3D {
     {
     protected:
 
-        std::vector <std::string> m_variables;
-        std::vector <std::string> m_dimensions;
-        std::vector <std::string> m_dimension_variables;
+        std::vector<std::string> m_variables;
+        std::vector<std::string> m_dimensions;
+        std::vector<std::string> m_dimension_variables;
 
     public:
 
@@ -82,9 +82,9 @@ namespace m3D {
          * @param dimensions
          * @param dimension_variables
          */
-        DataStore(const std::vector <std::string> &variables,
-                  const std::vector <std::string> &dimensions,
-                  const std::vector <std::string> &dimension_variables)
+        DataStore(const std::vector<std::string> &variables,
+                  const std::vector<std::string> &dimensions,
+                  const std::vector<std::string> &dimension_variables)
                 : m_variables(variables), m_dimensions(dimensions), m_dimension_variables(dimension_variables) {};
 
         /** Destructor
@@ -95,7 +95,7 @@ namespace m3D {
 #pragma mark Public methods
 
         virtual
-        const std::vector <std::string> &variables() const = 0;
+        const std::vector<std::string> &variables() const = 0;
 
         /**
          * Implementing classes should know how to construct a 

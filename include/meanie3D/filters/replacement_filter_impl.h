@@ -34,7 +34,7 @@ namespace m3D {
 
     using namespace std;
 
-    template <typename T>
+    template<typename T>
     ReplacementFilter<T>::ReplacementFilter(const ReplacementMode mode,
                                             const size_t variable_index,
                                             const std::vector<T> &bandwidth,
@@ -46,8 +46,8 @@ namespace m3D {
               m_bandwidth(bandwidth),
               m_percentage(percentage) {};
 
-    template <typename T>
-    void ReplacementFilter<T>::apply(FeatureSpace<T> *fs) {
+    template<typename T>
+    void ReplacementFilter<T>::apply(FeatureSpace <T> *fs) {
 
         // Create a spatial index for the copied feature space
         PointIndex<T> *index = PointIndex<T>::create(fs->get_points(), fs->rank());
@@ -70,17 +70,17 @@ namespace m3D {
             typename Point<T>::list *neighbours = NULL;
 
 #if WITH_OPENMP
-#pragma omp critical 
+#pragma omp critical
             {
 #endif
-            neighbours = index->search(fs->points[i]->coordinate,params);
+            neighbours = index->search(fs->points[i]->coordinate, params);
 #if WITH_OPENMP
             }
-#endif          
-            if (!(neighbours == NULL || neighbours->size()==0)) {
+#endif
+            if (!(neighbours == NULL || neighbours->size() == 0)) {
 
                 vector<T> values;
-                for (size_t n=0; n < neighbours->size(); n++) {
+                for (size_t n = 0; n < neighbours->size(); n++) {
                     values.push_back(neighbours->at(n)->values[value_index]);
                 }
 
@@ -116,7 +116,7 @@ namespace m3D {
         }
 
         // Replace the values in the featurespace's points
-        for (size_t i=0; i < fs->size(); i++) {
+        for (size_t i = 0; i < fs->size(); i++) {
             fs->points[i]->values[value_index] = filteredValues[i];
         }
 

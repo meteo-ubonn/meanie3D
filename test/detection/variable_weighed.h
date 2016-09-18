@@ -12,7 +12,7 @@ namespace m3D {
      * the value of a variable at each point. 
      * @deprecated to be removed shortly
      */
-    template <class T>
+    template<class T>
     class VariableWeighed : public WeightFunction<T>
     {
     private:
@@ -25,9 +25,9 @@ namespace m3D {
 
         void *m_data;
 
-        vector<size_t> m_cursor;
+        vector <size_t> m_cursor;
 
-        CoordinateSystem<T> *m_coordinate_system;
+        CoordinateSystem <T> *m_coordinate_system;
 
     public:
 
@@ -39,9 +39,9 @@ namespace m3D {
          * @param coordinate system
          * @param variable NetCDF variable to use as weight
          */
-        VariableWeighed(NcFile* file,
-                CoordinateSystem<T> *coord_system,
-                const NcVar &variable);
+        VariableWeighed(NcFile *file,
+                        CoordinateSystem <T> *coord_system,
+                        const NcVar &variable);
 
         /** Destructor */
         ~VariableWeighed();
@@ -49,7 +49,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Weight Function
 
-        T operator()(const vector<T> &values) const;
+        T operator()(const vector <T> &values) const;
 
         T operator()(const typename Point<T>::ptr p) const;
 

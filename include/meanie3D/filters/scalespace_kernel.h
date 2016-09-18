@@ -36,7 +36,7 @@ namespace m3D {
     /** Kernel profile g for scale-space filtering. Allows for 
      * pre-rendering at a number of points for speed-up.
      */
-    template <class T>
+    template<class T>
     class ScaleSpaceKernel
     {
     private:
@@ -75,7 +75,7 @@ namespace m3D {
         /** Copy operator 
          */
         ScaleSpaceKernel<T>
-                operator=(const ScaleSpaceKernel<T>& other);
+        operator=(const ScaleSpaceKernel<T> &other);
 
 
 #pragma mark -
@@ -89,8 +89,7 @@ namespace m3D {
          */
         bool isPreSampled();
 
-        const T scale()
-        {
+        const T scale() {
             return m_t;
         };
 

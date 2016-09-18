@@ -40,13 +40,12 @@ namespace m3D {
     using utils::VisitUtils;
 #endif
 
-    template <typename T>
+    template<typename T>
     bool PointIndex<T>::write_index_searches = false;
 
-    template <typename T>
+    template<typename T>
     PointIndex<T> *
-    PointIndex<T>::create(typename Point<T>::list *points, size_t dimension, IndexType index_type)
-    {
+    PointIndex<T>::create(typename Point<T>::list *points, size_t dimension, IndexType index_type) {
         PointIndex<T> *instance = NULL;
 
         switch (index_type) {
@@ -70,12 +69,11 @@ namespace m3D {
         return instance;
     }
 
-    template <typename T>
+    template<typename T>
     PointIndex<T> *
     PointIndex<T>::create(typename Point<T>::list *points,
-            const vector<size_t> &indexes,
-            IndexType index_type)
-    {
+                          const vector<size_t> &indexes,
+                          IndexType index_type) {
         PointIndex<T> *instance = NULL;
 
         switch (index_type) {
@@ -99,10 +97,9 @@ namespace m3D {
         return instance;
     }
 
-    template <typename T>
+    template<typename T>
     void
-    PointIndex<T>::write_search(const vector<T>& x, const vector<T> &ranges, typename Point<T>::list *result)
-    {
+    PointIndex<T>::write_search(const vector<T> &x, const vector<T> &ranges, typename Point<T>::list *result) {
         static size_t search_count = 0;
 
         size_t dim = x.size();
@@ -132,10 +129,9 @@ namespace m3D {
         search_count++;
     }
 
-    template <typename T>
+    template<typename T>
     void
-    PointIndex<T>::retrieve_variables_indexes()
-    {
+    PointIndex<T>::retrieve_variables_indexes() {
         // Default behaviour: if no indexes are set expressively,
         // use the whole range in order
 
@@ -146,23 +142,21 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     vector<T>
-    PointIndex<T>::indexed_components(typename Point<T>::ptr p)
-    {
+    PointIndex<T>::indexed_components(typename Point<T>::ptr p) {
         vector<T> result(m_index_variable_indexes.size());
 
         for (size_t i = 0; i < m_index_variable_indexes.size(); i++) {
-            result[i] = p->values[ m_index_variable_indexes[i] ];
+            result[i] = p->values[m_index_variable_indexes[i]];
         }
 
         return result;
     }
 
-    template <typename T>
+    template<typename T>
     bool
-    PointIndex<T>::has_point(typename Point<T>::ptr p) const
-    {
+    PointIndex<T>::has_point(typename Point<T>::ptr p) const {
         bool have_point = false;
 
         KNNSearchParams<T> knn(1);
@@ -178,10 +172,9 @@ namespace m3D {
         return have_point;
     }
 
-    template <typename T>
+    template<typename T>
     bool
-    PointIndex<T>::has_value(vector<T> &x)
-    {
+    PointIndex<T>::has_value(vector<T> &x) {
         bool have_point = false;
 
         KNNSearchParams<T> knn(1);

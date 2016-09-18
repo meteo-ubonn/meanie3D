@@ -22,7 +22,7 @@
  */
 
 #ifndef M3D_TRACK_CLUSTER_H
-#define	M3D_TRACK_CLUSTER_H
+#define    M3D_TRACK_CLUSTER_H
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
@@ -54,7 +54,7 @@ namespace m3D {
 #pragma mark Public properties
 
     public:
-        
+
         unsigned int step;
         unsigned long timestamp;
 
@@ -94,8 +94,7 @@ namespace m3D {
          * 
          * @param points
          */
-        void write_points(typename Point<T>::list points)
-        {
+        void write_points(typename Point<T>::list points) {
             std::ofstream f(m_filename.c_str(), ios::out);
             if (!f.is_open()) {
                 cerr << "FATAL:failed to open file " << m_filename << " for writing." << endl;
@@ -118,8 +117,7 @@ namespace m3D {
          * 
          * @param list
          */
-        void read_points()
-        {
+        void read_points() {
             using m3D::utils::vectors::from_string;
 
             ifstream f(m_filename.c_str(), ios::in);
@@ -143,7 +141,7 @@ namespace m3D {
 
                 // reconstruct coordinate from spatial range
                 p->coordinate = std::vector<T>(p->values.begin(),
-                        p->values.begin() + p->gridpoint.size());
+                                               p->values.begin() + p->gridpoint.size());
 
                 this->add_point(p);
             }
@@ -163,10 +161,8 @@ namespace m3D {
         TrackCluster(typename Cluster<T>::ptr cluster,
                      int timeDifference,
                      bool write_points_to_disk = false)
-        : m_writes_points_to_disk(write_points_to_disk)
-        , m_needs_reading(true)
-        , m_tracking_time_difference(timeDifference)
-        {
+                : m_writes_points_to_disk(write_points_to_disk), m_needs_reading(true),
+                  m_tracking_time_difference(timeDifference) {
             this->id = cluster->id;
             this->uuid = cluster->uuid;
             this->mode = cluster->mode;
@@ -189,7 +185,7 @@ namespace m3D {
         ~TrackCluster() {
             this->clear(true);
         }
-        
+
 #pragma mark -
 #pragma mark Public member functions
 
@@ -206,7 +202,7 @@ namespace m3D {
             return Cluster<T>::get_points();
         }
 
-        vector<T> geometrical_center() {
+        vector <T> geometrical_center() {
             return this->m_geometrical_center;
         }
 

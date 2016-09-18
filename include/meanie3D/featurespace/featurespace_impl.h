@@ -39,30 +39,25 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     map<int, double> *FeatureSpace<T>::NO_THRESHOLDS = NULL;
 
-    template <typename T>
+    template<typename T>
     class MeanshiftOperation;
 
 #pragma mark -
 #pragma mark Constructors
 
-    template <typename T>
-    FeatureSpace<T>::FeatureSpace(const CoordinateSystem<T> *coordinate_system,
-            const DataStore<T> *data_store,
-            const map<int, double> &lower_thresholds,
-            const map<int, double> &upper_thresholds,
-            const map<int, double> &replacement_values,
-            const bool& show_progress)
-    : m_data_store(data_store)
-    , m_progress_bar(NULL)
-    , m_lower_thresholds(lower_thresholds)
-    , m_upper_thresholds(upper_thresholds)
-    , m_replacement_values(replacement_values)
-    , m_off_limits(NULL)
-    , coordinate_system(coordinate_system)
-    {
+    template<typename T>
+    FeatureSpace<T>::FeatureSpace(const CoordinateSystem <T> *coordinate_system,
+                                  const DataStore <T> *data_store,
+                                  const map<int, double> &lower_thresholds,
+                                  const map<int, double> &upper_thresholds,
+                                  const map<int, double> &replacement_values,
+                                  const bool &show_progress)
+            : m_data_store(data_store), m_progress_bar(NULL), m_lower_thresholds(lower_thresholds),
+              m_upper_thresholds(upper_thresholds), m_replacement_values(replacement_values), m_off_limits(NULL),
+              coordinate_system(coordinate_system) {
         dimension = coordinate_system->rank() + data_store->rank();
 
         // construct feature space
@@ -71,9 +66,8 @@ namespace m3D {
 
     /** Destructor
      */
-    template <typename T>
-    FeatureSpace<T>::~FeatureSpace()
-    {
+    template<typename T>
+    FeatureSpace<T>::~FeatureSpace() {
         if (m_off_limits != NULL) {
             delete m_off_limits;
         }
@@ -82,15 +76,11 @@ namespace m3D {
 #pragma mark -
 #pragma mark Copy code
 
-    template <typename T>
-    FeatureSpace<T>::FeatureSpace(const FeatureSpace<T>& other, bool with_points)
-    : m_progress_bar(NULL)
-    , m_data_store(other.data_store())
-    , coordinate_system(other.coordinate_system)
-    , m_lower_thresholds(other.m_lower_thresholds)
-    , m_upper_thresholds(other.m_upper_thresholds)
-    , m_off_limits(other.m_off_limits)
-    {
+    template<typename T>
+    FeatureSpace<T>::FeatureSpace(const FeatureSpace <T> &other, bool with_points)
+            : m_progress_bar(NULL), m_data_store(other.data_store()), coordinate_system(other.coordinate_system),
+              m_lower_thresholds(other.m_lower_thresholds), m_upper_thresholds(other.m_upper_thresholds),
+              m_off_limits(other.m_off_limits) {
         if (with_points) {
             // Copy points
 
@@ -104,16 +94,12 @@ namespace m3D {
         }
     }
 
-    template <typename T>
-    FeatureSpace<T>::FeatureSpace(const FeatureSpace<T>* other,
-            bool with_points)
-    : m_progress_bar(NULL)
-    , m_data_store(other->data_store())
-    , coordinate_system(other->coordinate_system)
-    , m_lower_thresholds(other->m_lower_thresholds)
-    , m_upper_thresholds(other->m_upper_thresholds)
-    , m_off_limits(other->m_off_limits)
-    {
+    template<typename T>
+    FeatureSpace<T>::FeatureSpace(const FeatureSpace <T> *other,
+                                  bool with_points)
+            : m_progress_bar(NULL), m_data_store(other->data_store()), coordinate_system(other->coordinate_system),
+              m_lower_thresholds(other->m_lower_thresholds), m_upper_thresholds(other->m_upper_thresholds),
+              m_off_limits(other->m_off_limits) {
         if (with_points) {
             typename Point<T>::list::const_iterator pi;
 
@@ -127,19 +113,17 @@ namespace m3D {
 
     // Assignment Operator =
 
-    template <typename T>
-    FeatureSpace<T>
-    FeatureSpace<T>::operator=(const FeatureSpace<T>& other)
-    {
+    template<typename T>
+    FeatureSpace <T>
+    FeatureSpace<T>::operator=(const FeatureSpace <T> &other) {
         return FeatureSpace<T>(other);
     }
 
 #pragma mark -
 #pragma mark Building feature space maps
 
-    template <typename T>
-    void FeatureSpace<T>::construct_featurespace(bool show_progress)
-    {
+    template<typename T>
+    void FeatureSpace<T>::construct_featurespace(bool show_progress) {
         if (show_progress) {
             cout << endl << "Constructing feature space ... ";
         }
@@ -177,9 +161,8 @@ namespace m3D {
         }
     }
 
-    template <typename T>
-    void FeatureSpace<T>::build()
-    {
+    template<typename T>
+    void FeatureSpace<T>::build() {
         m_off_limits = new MultiArrayBlitz<bool>(this->coordinate_system->get_dimension_sizes(), false);
 
         size_t size = this->m_data_store->size();
@@ -302,37 +285,33 @@ namespace m3D {
 #pragma mark -
 #pragma mark Other
 
-    template <typename T>
+    template<typename T>
     typename CoordinateSystem<T>::Coordinate
-    FeatureSpace<T>::spatial_component(const vector<T> &value) const
-    {
+    FeatureSpace<T>::spatial_component(const vector <T> &value) const {
         assert(value.size() >= this->coordinate_system->rank());
 
-        typename CoordinateSystem<T>::Coordinate coordinate(&value[0], &value[ this->coordinate_system->rank() ]);
+        typename CoordinateSystem<T>::Coordinate coordinate(&value[0], &value[this->coordinate_system->rank()]);
 
         return coordinate;
     }
 
-    template <typename T>
+    template<typename T>
     T
-    FeatureSpace<T>::get_spatial_component_at(typename Point<T>::ptr p, size_t index) const
-    {
+    FeatureSpace<T>::get_spatial_component_at(typename Point<T>::ptr p, size_t index) const {
         assert(index < this->coordinate_system->rank());
     }
 
-    template <typename T>
+    template<typename T>
     T
-    FeatureSpace<T>::get_value_component_at(typename Point<T>::ptr p, size_t index) const
-    {
+    FeatureSpace<T>::get_value_component_at(typename Point<T>::ptr p, size_t index) const {
         assert(index < this->data_store()->rank());
 
     }
 
-    template <typename T>
+    template<typename T>
     void
-    FeatureSpace<T>::round_to_resolution(vector<T> &point,
-            const vector<T> &resolution) const
-    {
+    FeatureSpace<T>::round_to_resolution(vector <T> &point,
+                                         const vector <T> &resolution) const {
         assert(point.size() <= resolution.size());
 
         for (size_t i = 0; i < point.size(); i++) {
@@ -353,10 +332,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    FeatureSpace<T>::print() const
-    {
+    FeatureSpace<T>::print() const {
         using namespace std;
 
         cout << "\t#points = " << size() << endl;
@@ -368,10 +346,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    FeatureSpace<T>::clear()
-    {
+    FeatureSpace<T>::clear() {
         for (size_t i = 0; i < points.size(); i++) {
             typename Point<T>::ptr p = points[i];
             points[i] = NULL;
@@ -380,10 +357,9 @@ namespace m3D {
         points.clear();
     }
 
-    template <typename T>
+    template<typename T>
     size_t
-    FeatureSpace<T>::count_original_points() const
-    {
+    FeatureSpace<T>::count_original_points() const {
         size_t originalPoints = 0;
         for (size_t i = 0; i < this->points.size(); i++) {
             if (this->points[i]->isOriginalPoint) originalPoints++;
@@ -391,22 +367,21 @@ namespace m3D {
         return originalPoints;
     }
 
-    template <typename T>
+    template<typename T>
     void
-    FeatureSpace<T>::sanity_check()
-    {
+    FeatureSpace<T>::sanity_check() {
         size_t originalPoints = 0;
         for (size_t i = 0; i < this->points.size(); i++) {
             typename Point<T>::ptr p = this->points[i];
 
             if (p->gridpoint.size() != this->spatial_rank()
-                    || p->coordinate.size() != this->spatial_rank()
-                    || p->values.size() != this->rank()) {
+                || p->coordinate.size() != this->spatial_rank()
+                || p->values.size() != this->rank()) {
                 cerr << "Point #" << i << " is insane:"
-                        << " gridpoint.size()=" << p->gridpoint.size()
-                        << " coordinate.size()=" << p->coordinate.size()
-                        << " values.size()=" << p->values.size()
-                        << endl;
+                     << " gridpoint.size()=" << p->gridpoint.size()
+                     << " coordinate.size()=" << p->coordinate.size()
+                     << " values.size()=" << p->values.size()
+                     << endl;
 
                 throw std::range_error("insane point");
             }

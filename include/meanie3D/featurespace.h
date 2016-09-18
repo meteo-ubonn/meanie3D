@@ -22,7 +22,7 @@
  */
 
 #ifndef M3D_FEATURESPACE_INCLUDES_H
-#define	M3D_FEATURESPACE_INCLUDES_H
+#define    M3D_FEATURESPACE_INCLUDES_H
 
 #include <meanie3D/featurespace/coordinate_system.h>
 #include <meanie3D/featurespace/data_store.h>

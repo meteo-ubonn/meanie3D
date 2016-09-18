@@ -31,7 +31,7 @@ namespace m3D {
 
     /** Abstract base class for feature-space filters.
      */
-    template <class T>
+    template<class T>
     class FeatureSpaceFilter
     {
     private:
@@ -45,21 +45,18 @@ namespace m3D {
 
         /** Default constructor
          */
-        FeatureSpaceFilter(bool show_progress) : m_show_progress(show_progress)
-        {
+        FeatureSpaceFilter(bool show_progress) : m_show_progress(show_progress) {
         };
 
         /** Destructor 
          */
-        virtual ~FeatureSpaceFilter()
-        {
+        virtual ~FeatureSpaceFilter() {
         };
 
 #pragma mark -
 #pragma mark Accessors
 
-        bool show_progress()
-        {
+        bool show_progress() {
             return m_show_progress;
         };
 
@@ -71,7 +68,7 @@ namespace m3D {
          * make a copy.
          * @param feature space
          */
-        virtual void apply(FeatureSpace<T> *fs) = 0;
+        virtual void apply(FeatureSpace <T> *fs) = 0;
     };
 }
 

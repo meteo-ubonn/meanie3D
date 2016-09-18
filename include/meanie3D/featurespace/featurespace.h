@@ -42,9 +42,9 @@ namespace m3D {
 
     // Forward declarations
 
-    template <typename T>
+    template<typename T>
     class PointIndex;
-    
+
     using std::map;
     using std::vector;
 
@@ -55,7 +55,7 @@ namespace m3D {
      * each point is ascertained by evaluating dimension variables and other variables,
      * but the actual feature space can be chosen from a subset of those again.
      */
-    template <typename T>
+    template<typename T>
     class FeatureSpace
     {
     public:
@@ -68,14 +68,13 @@ namespace m3D {
 #pragma mark -
 #pragma mark General Typedefs
 
-        typedef FeatureSpace<T> * ptr;
-        typedef map< typename CoordinateSystem<T>::Coordinate, bool> ValidityMap;
-        typedef map< typename CoordinateSystem<T>::Coordinate, typename Point<T>::ptr > FeatureSpaceMap;
+        typedef FeatureSpace<T> *ptr;
+        typedef map<typename CoordinateSystem<T>::Coordinate, bool> ValidityMap;
+        typedef map<typename CoordinateSystem<T>::Coordinate, typename Point<T>::ptr> FeatureSpaceMap;
         typedef typename FeatureSpaceMap::iterator FSMapIterator;
-        typedef vector< vector<T> > Trajectory;
+        typedef vector<vector<T> > Trajectory;
         typedef typename Trajectory::iterator TrajectoryIterator;
-        typedef MultiArray<T> multi_array_t;
-
+        typedef MultiArray <T> multi_array_t;
 
 
 #pragma mark -
@@ -105,7 +104,7 @@ namespace m3D {
         /** The data store contains the data used to populate
          * the value range of the feature space 
          */
-        const DataStore<T> *m_data_store;
+        const DataStore <T> *m_data_store;
 
         /** Progress indicator for construction 
          */
@@ -148,7 +147,7 @@ namespace m3D {
 
         typename Point<T>::list points;
         size_t dimension;
-        const CoordinateSystem<T> *coordinate_system;
+        const CoordinateSystem <T> *coordinate_system;
 
 #if WRITE_MEANSHIFT_WEIGHTS
         vector< vector<T> > weight_sample_points;
@@ -184,12 +183,12 @@ namespace m3D {
          * @param replacement_values
          * @param show_progress
          */
-        FeatureSpace(const CoordinateSystem<T> *coordinate_system,
-                const DataStore<T> *dataStore,
-                const map<int, double> &lower_thresholds,
-                const map<int, double> &upper_thresholds,
-                const map<int, double> &replacement_values,
-                const bool& show_progress = true);
+        FeatureSpace(const CoordinateSystem <T> *coordinate_system,
+                     const DataStore <T> *dataStore,
+                     const map<int, double> &lower_thresholds,
+                     const map<int, double> &upper_thresholds,
+                     const map<int, double> &replacement_values,
+                     const bool &show_progress = true);
 
         // Making copies
 
@@ -197,21 +196,21 @@ namespace m3D {
          * @param other
          * @param without_points if true, the points are not copied
          */
-        FeatureSpace<T>(const FeatureSpace<T>& other,
-                bool with_points = true);
+        FeatureSpace<T>(const FeatureSpace<T> &other,
+                        bool with_points = true);
 
         /** Copy constructor
          * @param pointer to other 
          * @param without_points if true, the points are not copied
          */
-        FeatureSpace<T>(const FeatureSpace<T>* other,
-                bool with_points = true);
+        FeatureSpace<T>(const FeatureSpace<T> *other,
+                        bool with_points = true);
 
         /** Copy operator
          * @param other
          * @return pointer to a copy
          */
-        FeatureSpace<T> operator=(const FeatureSpace<T>& other);
+        FeatureSpace<T> operator=(const FeatureSpace<T> &other);
 
         /** Destructor
          */
@@ -222,38 +221,33 @@ namespace m3D {
 
         /** @return the data store used to construct this featurespace
          */
-        const DataStore<T> *data_store() const
-        {
+        const DataStore <T> *data_store() const {
             return m_data_store;
         }
 
         /** @return number of points in featurespace
          */
-        const size_t size() const
-        {
+        const size_t size() const {
             return points.size();
         }
 
         /** @return a pointer to the points array 
          */
-        typename Point<T>::list *get_points()
-        {
+        typename Point<T>::list *get_points() {
             return &(this->points);
         }
 
         /** @return rank of featurespace, which is rank of the
          * spatial range plus rank of the value range.
          */
-        const size_t rank() const
-        {
+        const size_t rank() const {
             return coordinate_system->rank() + data_store()->rank();
         }
 
         /** @return the number of components in the spatial
          * range of the featurespace
          */
-        inline const size_t spatial_rank() const
-        {
+        inline const size_t spatial_rank() const {
             return coordinate_system->rank();
         }
 
@@ -261,24 +255,21 @@ namespace m3D {
          * range of the featurespace. Note: when value range 
          * is omitted, this is always 0.
          */
-        inline const size_t value_rank() const
-        {
+        inline const size_t value_rank() const {
             return m_data_store->rank();
         }
 
         /** Lower thresholds used in the construction of the featurespace. 
          * Only variables from the value range are used.
          */
-        const map <int, double> &lower_thresholds() const
-        {
+        const map<int, double> &lower_thresholds() const {
             return m_lower_thresholds;
         }
 
         /** Upper thresholds used in the construction of the featurespace.
          * Only variables from the value range are used.
          */
-        const map <int, double> &upper_thresholds() const
-        {
+        const map<int, double> &upper_thresholds() const {
             return m_upper_thresholds;
         }
 
@@ -286,22 +277,19 @@ namespace m3D {
          * points were encountered, that are 'off limits' in the sense of 
          * not valid.
          */
-        const MultiArray<bool> *off_limits() const
-        {
+        const MultiArray<bool> *off_limits() const {
             return m_off_limits;
         }
 
         /** Contains the inf of all points in the featurespace.
          */
-        const map<size_t, T> &min() const
-        {
+        const map<size_t, T> &min() const {
             return m_min;
         }
 
         /** Contains the sup of all points in the featurespace
          */
-        const map<size_t, T> &max() const
-        {
+        const map<size_t, T> &max() const {
             return m_max;
         }
 
@@ -320,10 +308,9 @@ namespace m3D {
         /** @return vector containing the indexes of the
          * spatial range component
          */
-        vector<size_t> spatial_range_indexes()
-        {
+        vector<size_t> spatial_range_indexes() {
             vector<size_t> result(this->coordinate_system->rank());
-            for (size_t i = 0; i<this->coordinate_system->rank(); ++i)
+            for (size_t i = 0; i < this->coordinate_system->rank(); ++i)
                 result[i] = i;
             return result;
         }
@@ -332,13 +319,12 @@ namespace m3D {
          * value range component. If omit_value_range is set, 
          * the resulting vector is empty
          */
-        vector<size_t> range_indexes()
-        {
+        vector<size_t> range_indexes() {
             vector<size_t> result;
 
             if (this->m_omit_value_range) {
                 result = vector<size_t>(this->data_store()->rank());
-                for (size_t i = 0; i<this->data_store()->rank(); ++i)
+                for (size_t i = 0; i < this->data_store()->rank(); ++i)
                     result[i] = this->coordinate_system->rank() + i;
             }
 
@@ -378,7 +364,7 @@ namespace m3D {
          */
         void
         round_to_resolution(vector<T> &point,
-                const vector<T> &resolution) const;
+                            const vector<T> &resolution) const;
 
         /** Count the number of points in the featurespace
          * that were part of the original make up (and not

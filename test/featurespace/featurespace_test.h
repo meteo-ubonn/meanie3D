@@ -88,7 +88,7 @@ public:
     NcFile *file;
 
     // Stores dimension variable data
-    typename map< NcVar *, float * > dimensionVars;
+    typename map<NcVar *, float *> dimensionVars;
 
 };
 

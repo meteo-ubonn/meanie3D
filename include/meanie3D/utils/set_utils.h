@@ -41,9 +41,8 @@ namespace std {
 
     // Convenience operator << for printing vectors out to streams
 
-    template < class T >
-    std::ostream& operator<<(std::ostream& os, const set<T>& v)
-    {
+    template<class T>
+    std::ostream &operator<<(std::ostream &os, const set<T> &v) {
         size_t count = 0;
         os << "{";
         for (typename set<T>::const_iterator ii = v.begin(); ii != v.end(); ++ii) {
@@ -63,10 +62,9 @@ namespace m3D {
     namespace utils {
         namespace sets {
 
-            template <typename T>
+            template<typename T>
             std::string
-            to_string(const std::set<T> &v)
-            {
+            to_string(const std::set<T> &v) {
                 stringstream str(stringstream::in | stringstream::out);
 
                 str << "{";
@@ -90,10 +88,9 @@ namespace m3D {
                 return str.str();
             }
 
-            template <typename T>
+            template<typename T>
             std::set<T>
-            from_string(const std::string &const_str)
-            {
+            from_string(const std::string &const_str) {
                 std::set<T> result;
 
                 string str = const_str;
@@ -113,7 +110,7 @@ namespace m3D {
 
                 tokenizer tokens(str, sep);
 
-                vector<T> mode;
+                vector <T> mode;
 
                 for (tokenizer::iterator tok_iter = tokens.begin(); tok_iter != tokens.end(); ++tok_iter) {
                     string token = *tok_iter;

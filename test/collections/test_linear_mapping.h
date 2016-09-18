@@ -6,7 +6,7 @@
  */
 
 #ifndef M3D_TEST_LINEAR_MAPPING_H
-#define	M3D_TEST_LINEAR_MAPPING_H
+#define    M3D_TEST_LINEAR_MAPPING_H
 
 #include <meanie3D/array/linear_index_mapping.h>
 
@@ -22,8 +22,7 @@ class LinearMappingTest : public testing::Test
 public:
 };
 
-TEST(LinearMappingTest, LinearMappingTest)
-{
+TEST(LinearMappingTest, LinearMappingTest) {
     // 1D .. 5D
 
     for (size_t N = 1; N < 5; N++) {
@@ -38,7 +37,7 @@ TEST(LinearMappingTest, LinearMappingTest)
 
         size_t size = mapping.size();
 
-        std::set< std::vector<int> > points;
+        std::set<std::vector<int> > points;
 
         for (size_t i = 0; i < size; i++) {
             vector<int> p = mapping.linear_to_grid(i);
@@ -61,7 +60,8 @@ TEST(LinearMappingTest, LinearMappingTest)
         for (size_t linear_index = 0; linear_index < mapping.size(); linear_index++) {
             vector<int> point = mapping.linear_to_grid(linear_index);
 
-            std::set< vector<int> >::iterator fi;
+            std::set<vector < int> > ::iterator
+            fi;
 
             fi = points.find(point);
 

@@ -6,7 +6,7 @@
  */
 
 #ifndef M3D_DETECTION_COMMANDLINE_H
-#define	M3D_DETECTION_COMMANDLINE_H
+#define    M3D_DETECTION_COMMANDLINE_H
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
@@ -27,148 +27,148 @@
 #include "detection.h"
 
 namespace m3D {
-    
-   
+
+
     /**
      * Add the command line description for the detection related paramaters.
      * 
      * @param desc
      * @param params
      */
-    template <typename T>
-    void 
+    template<typename T>
+    void
     add_detection_options(program_options::options_description &desc,
-                          const detection_params_t<T> &params) 
-    {
+                          const detection_params_t<T> &params) {
         desc.add_options()
-        ("file,f", 
-            program_options::value<string>(), 
-            "CF-Metadata compliant NetCDF-file")
-        ("output,o", 
-            program_options::value<string>(), 
-            "Name of output file for clustering results")
-        ("previous-output,p", 
-            program_options::value<string>(),
-            "Previous cluster result file. Used for tracking or to keep the "
-            "clustering more stable over time (--postprocess-with-previous-output)")
-        ("dimensions,d", 
-            program_options::value<string>(),
-            "Comma-separated list of the dimensions to be used. The program "
-            "expects dimension variables with identical names.")
-        ("variables,v", 
-            program_options::value<string>(),
-            "Comma-separated variables used to construct feature space. "
-            "Do not include dimension variables")
-        ("time-index,t", 
-            program_options::value<int>()->default_value(params.time_index),
-            "Index of the point in time you wish to use in files with a "
-            "time dimension. -1 means no time dimension in the variables.")
-        ("lower-thresholds", 
-            program_options::value<string>(),
-            "Comma-separated list var1=val,var2=val,... of lower thresholds. "
-            "Values below this are ignored when constructing feature space")
-        ("upper-thresholds", 
-            program_options::value<string>(),
-            "Comma-separated list var1=val,var2=val,... of lower thresholds. "
-            "Values above this are ignored when constructing feature space")
-        ("replacement-values", 
-            program_options::value<string>(),
-            "Comma-separated list var1=val,var2=val,... of values to replace "
-            "missing values with in feature space construction. If no replacement "
-            "value is specified while even one variable is out of valid range at "
-            "one point, the whole point is discarded")
-        ("kernel-name,k", 
-            program_options::value<string>()->default_value(params.kernel_name),
-            "uniform,gauss,epanechnikov or none")
-        ("weight-function-name,w", 
-            program_options::value<string>()->default_value(params.weight_function_name),
-            "default,inverse,pow10 or oase")
-        ("wwf-lower-threshold", 
-            program_options::value<T>()->default_value(params.wwf_lower_threshold),
-            "Lower threshold for weight function filter.")
-        ("wwf-upper-threshold",
-            program_options::value<T>()->default_value(params.wwf_upper_threshold),
-            "Upper threshold for weight function filter.")
-        ("inline-tracking", 
-            "If present, tracking step is performed immediately after "
-            "clustering. Required --previous-output and other "
-            "clustering parameters to be set (check meanie3D-track)")
-        ("replacement-filter", 
-            program_options::value<string>(),
-            "Comma-separated list varname-<lowest|highest|median>-[percentage],"
-            "... to replace values with average of lowest/highest percent or "
-            "median of neighbours")
-        ("ci-comparison-file", 
-            program_options::value<string>(),
-            "File for calculating time trends for CI-score according to "
-            "Walker et al. 2012.")
-        ("ci-comparison-protocluster-file", 
-            program_options::value<string>(),
-            "Protoclusters from the comparison file")
-        ("ci-satellite-only", 
-            "If present, only satellite values are used (original score), otherwise ")
-        ("ci-use-walker-mecikalski", 
-            "If present, the original limits by Walker and Mecicalski are "
-            "used for CI score. If absent, the modified version is used")
-        ("ci-protocluster-scale", 
-            program_options::value<T>()->default_value(params.ci_protocluster_scale), 
-            "Scale parameter for protocluster detection")
-        ("ci-protocluster-min-size", 
-            program_options::value<int>()->default_value(params.ci_protocluster_min_size), 
-            "Minimum size of protoclusters")
-        ("coalesce-with-strongest-neighbour",
-            "If present, clusters are post-processed, coalescing each cluster "
-            "with their strongest neighbour")
-        ("postprocess-with-previous-output",
-            "If present, the --previous-output file is used to consolidate "
-            "current results. This is time consuming and has a propensity to "
-            "form larger clusters. Use with discretion.")
-        ("scale,s", 
-            program_options::value<double>()->default_value(params.scale),
-            "Scale parameter to pre-smooth the data with. Filter size is "
-            "calculated from this automatically.")
-        ("filter-size,l", 
-            program_options::value<double>()->default_value(0.0),
-            "Scale parameter to pre-smooth the data with. Scale parameter "
-            "is calculated from this automatically.")
-        ("ranges,r", 
-            program_options::value<string>(),
-            "Override the automatic bandwidth calculation with a set of given "
-            "bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
-        ("min-cluster-size,m", 
-            program_options::value<unsigned int>()->default_value(params.min_cluster_size),
-            "Discard clusters smaller than this number of points.")
-        ("previous-cluster-coverage-threshold", 
-            program_options::value<double>()->default_value(params.cluster_coverage_threshold),
-            "Minimum overlap in percent between current and previous clusters "
-            "to be taken into consideration.")
-        ("include-weight-function-in-results,i",
-            "Add a netcdf variable 'weight' to the result file, containing the "
-            "weight function response at each point in the feature-space")
-        #if WITH_VTK
-        ("write-variables-as-vtk", 
-            program_options::value<string>(),
-            "Comma separated list of variables that should be written out "
-            "as VTK files (after applying scale/threshold)")
-        ("write-weight-function", 
-            "write weight function out as .vtk file")
-        ("write-meanshift-vectors", 
-            "write out .vtk files containing the meanshift vectors")
-        ("write-clusters-as-vtk",
-            "write clusters out as .vtk files")
-        ("write-cluster-modes", 
-            "write the final meanshift modes in .vtk file format")
-        ("write-cluster-centers", 
-            "write cluster centers out in .vtk file format")
-        ("write-cluster-weight-response", 
-            "write out the clusters with weight responses as value")
-        #endif
-        ;
+                ("file,f",
+                 program_options::value<string>(),
+                 "CF-Metadata compliant NetCDF-file")
+                ("output,o",
+                 program_options::value<string>(),
+                 "Name of output file for clustering results")
+                ("previous-output,p",
+                 program_options::value<string>(),
+                 "Previous cluster result file. Used for tracking or to keep the "
+                         "clustering more stable over time (--postprocess-with-previous-output)")
+                ("dimensions,d",
+                 program_options::value<string>(),
+                 "Comma-separated list of the dimensions to be used. The program "
+                         "expects dimension variables with identical names.")
+                ("variables,v",
+                 program_options::value<string>(),
+                 "Comma-separated variables used to construct feature space. "
+                         "Do not include dimension variables")
+                ("time-index,t",
+                 program_options::value<int>()->default_value(params.time_index),
+                 "Index of the point in time you wish to use in files with a "
+                         "time dimension. -1 means no time dimension in the variables.")
+                ("lower-thresholds",
+                 program_options::value<string>(),
+                 "Comma-separated list var1=val,var2=val,... of lower thresholds. "
+                         "Values below this are ignored when constructing feature space")
+                ("upper-thresholds",
+                 program_options::value<string>(),
+                 "Comma-separated list var1=val,var2=val,... of lower thresholds. "
+                         "Values above this are ignored when constructing feature space")
+                ("replacement-values",
+                 program_options::value<string>(),
+                 "Comma-separated list var1=val,var2=val,... of values to replace "
+                         "missing values with in feature space construction. If no replacement "
+                         "value is specified while even one variable is out of valid range at "
+                         "one point, the whole point is discarded")
+                ("kernel-name,k",
+                 program_options::value<string>()->default_value(params.kernel_name),
+                 "uniform,gauss,epanechnikov or none")
+                ("weight-function-name,w",
+                 program_options::value<string>()->default_value(params.weight_function_name),
+                 "default,inverse,pow10 or oase")
+                ("wwf-lower-threshold",
+                 program_options::value<T>()->default_value(params.wwf_lower_threshold),
+                 "Lower threshold for weight function filter.")
+                ("wwf-upper-threshold",
+                 program_options::value<T>()->default_value(params.wwf_upper_threshold),
+                 "Upper threshold for weight function filter.")
+                ("inline-tracking",
+                 "If present, tracking step is performed immediately after "
+                         "clustering. Required --previous-output and other "
+                         "clustering parameters to be set (check meanie3D-track)")
+                ("replacement-filter",
+                 program_options::value<string>(),
+                 "Comma-separated list varname-<lowest|highest|median>-[percentage],"
+                         "... to replace values with average of lowest/highest percent or "
+                         "median of neighbours")
+                ("ci-comparison-file",
+                 program_options::value<string>(),
+                 "File for calculating time trends for CI-score according to "
+                         "Walker et al. 2012.")
+                ("ci-comparison-protocluster-file",
+                 program_options::value<string>(),
+                 "Protoclusters from the comparison file")
+                ("ci-satellite-only",
+                 "If present, only satellite values are used (original score), otherwise ")
+                ("ci-use-walker-mecikalski",
+                 "If present, the original limits by Walker and Mecicalski are "
+                         "used for CI score. If absent, the modified version is used")
+                ("ci-protocluster-scale",
+                 program_options::value<T>()->default_value(params.ci_protocluster_scale),
+                 "Scale parameter for protocluster detection")
+                ("ci-protocluster-min-size",
+                 program_options::value<int>()->default_value(params.ci_protocluster_min_size),
+                 "Minimum size of protoclusters")
+                ("coalesce-with-strongest-neighbour",
+                 "If present, clusters are post-processed, coalescing each cluster "
+                         "with their strongest neighbour")
+                ("postprocess-with-previous-output",
+                 "If present, the --previous-output file is used to consolidate "
+                         "current results. This is time consuming and has a propensity to "
+                         "form larger clusters. Use with discretion.")
+                ("scale,s",
+                 program_options::value<double>()->default_value(params.scale),
+                 "Scale parameter to pre-smooth the data with. Filter size is "
+                         "calculated from this automatically.")
+                ("filter-size,l",
+                 program_options::value<double>()->default_value(0.0),
+                 "Scale parameter to pre-smooth the data with. Scale parameter "
+                         "is calculated from this automatically.")
+                ("ranges,r",
+                 program_options::value<string>(),
+                 "Override the automatic bandwidth calculation with a set of given "
+                         "bandwidths. Use in the order of (dim1,...dimN,var1,...,varN).")
+                ("min-cluster-size,m",
+                 program_options::value < unsigned
+        int > ()->default_value(params.min_cluster_size),
+                "Discard clusters smaller than this number of points.")
+        ("previous-cluster-coverage-threshold",
+                program_options::value<double>()->default_value(params.cluster_coverage_threshold),
+                "Minimum overlap in percent between current and previous clusters "
+                        "to be taken into consideration.")
+                ("include-weight-function-in-results,i",
+                 "Add a netcdf variable 'weight' to the result file, containing the "
+                         "weight function response at each point in the feature-space")
+#if WITH_VTK
+                ("write-variables-as-vtk",
+                 program_options::value<string>(),
+                 "Comma separated list of variables that should be written out "
+                         "as VTK files (after applying scale/threshold)")
+                ("write-weight-function",
+                 "write weight function out as .vtk file")
+                ("write-meanshift-vectors",
+                 "write out .vtk files containing the meanshift vectors")
+                ("write-clusters-as-vtk",
+                 "write clusters out as .vtk files")
+                ("write-cluster-modes",
+                 "write the final meanshift modes in .vtk file format")
+                ("write-cluster-centers",
+                 "write cluster centers out in .vtk file format")
+                ("write-cluster-weight-response",
+                 "write out the clusters with weight responses as value")
+#endif
+                ;
     }
 
-    template <typename T>
+    template<typename T>
     void get_detection_parameters(program_options::variables_map vm,
-            detection_params_t<T> &params) {
+                                  detection_params_t<T> &params) {
         if (vm.count("file") == 0) {
             cerr << "Missing input file argument" << endl;
             exit(EXIT_FAILURE);
@@ -206,19 +206,17 @@ namespace m3D {
             NcVar dimVar = file->getVar(name);
             if (dimVar.isNull()) {
                 cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
-                exit(EXIT_FAILURE);
-                ;
+                exit(EXIT_FAILURE);;
             }
             params.dimension_variables.push_back(name);
         }
         params.parameters = params.parameters
-                + "dimensions=" + vm["dimensions"].as<string>() + " ";
+                            + "dimensions=" + vm["dimensions"].as<string>() + " ";
 
         // parse variables
         if (vm.count("variables") == 0) {
             cerr << "Missing mandatory parameter --variables" << endl;
-            exit(EXIT_FAILURE);
-            ;
+            exit(EXIT_FAILURE);;
         }
         tokenizer var_tokens(vm["variables"].as<string>(), sep);
         for (tokenizer::iterator tok_iter = var_tokens.begin(); tok_iter != var_tokens.end(); ++tok_iter) {
@@ -226,13 +224,12 @@ namespace m3D {
             NcVar var = file->getVar(name);
             if (var.isNull()) {
                 cerr << "No variable '" << std::string(*tok_iter) << "' exists!" << endl;
-                exit(EXIT_FAILURE);
-                ;
+                exit(EXIT_FAILURE);;
             }
             params.variables.push_back(name);
         }
         params.parameters += params.parameters
-                + "variables=" + vm["variables"].as<string>() + " ";
+                             + "variables=" + vm["variables"].as<string>() + " ";
 
         // time
         params.time_index = vm["time-index"].as<int>();
@@ -252,8 +249,8 @@ namespace m3D {
 
             if (params.convection_filter_index < 0) {
                 cerr << "Bad value for convection-filter-variable. Variable '"
-                        << cf_var_name << "' is not a feature space variable"
-                        << endl;
+                     << cf_var_name << "' is not a feature space variable"
+                     << endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -284,8 +281,7 @@ namespace m3D {
                         }
                         if (variable_index < 0) {
                             cerr << "Illegal variable name for --replacement-filter" << endl;
-                            exit(EXIT_FAILURE);
-                            ;
+                            exit(EXIT_FAILURE);;
                         }
                     } else if (i == 1) {
                         std::string modeName = *fi;
@@ -297,8 +293,7 @@ namespace m3D {
                             mode = ReplacementFilter<T>::ReplaceWithHighest;
                         } else {
                             cerr << "Illegal mode name for --replacement-filter" << endl;
-                            exit(EXIT_FAILURE);
-                            ;
+                            exit(EXIT_FAILURE);;
                         }
                     } else if (i == 2) {
                         std::string perc = *fi;
@@ -309,11 +304,10 @@ namespace m3D {
                 }
 
                 if ((mode == ReplacementFilter<T>::ReplaceWithHighest
-                        || mode == ReplacementFilter<T>::ReplaceWithLowest)
-                        && percentage < 0) {
+                     || mode == ReplacementFilter<T>::ReplaceWithLowest)
+                    && percentage < 0) {
                     cerr << "Missing percentage in --replacement-filter" << endl;
-                    exit(EXIT_FAILURE);
-                    ;
+                    exit(EXIT_FAILURE);;
                 }
 
                 params.replacementFilterVariableIndex.push_back(variable_index);
@@ -331,11 +325,11 @@ namespace m3D {
             }
             if (params.ranges.size() != params.dimension_variables.size() + params.variables.size()) {
                 cerr << "Please provide " << params.dimension_variables.size()
-                        + params.variables.size() << " bandwidth values" << endl;
+                                             + params.variables.size() << " bandwidth values" << endl;
                 exit(EXIT_FAILURE);
             }
             params.parameters = params.parameters
-                    + "ranges=" + vm["ranges"].as<string>();
+                                + "ranges=" + vm["ranges"].as<string>();
         }
 
         // Lower Thresholds
@@ -365,7 +359,8 @@ namespace m3D {
                 }
 
                 if (!have_var) {
-                    cerr << "No variable named " << variableName << " found. Check --lower-thresholds parameter" << endl;
+                    cerr << "No variable named " << variableName << " found. Check --lower-thresholds parameter"
+                         << endl;
                     exit(EXIT_FAILURE);
                 }
             }
@@ -394,7 +389,8 @@ namespace m3D {
                     }
                 }
                 if (!have_var) {
-                    cerr << "No variable named " << variableName << " found. Check --upper-thresholds parameter" << endl;
+                    cerr << "No variable named " << variableName << " found. Check --upper-thresholds parameter"
+                         << endl;
                     exit(EXIT_FAILURE);
                 }
             }
@@ -420,7 +416,8 @@ namespace m3D {
                     }
                 }
                 if (variable.isNull()) {
-                    cerr << "No variable named " << variableName << " found. Check --replacement-values parameter" << endl;
+                    cerr << "No variable named " << variableName << " found. Check --replacement-values parameter"
+                         << endl;
                     exit(EXIT_FAILURE);
                 }
                 subtoken_iter++;
@@ -442,23 +439,23 @@ namespace m3D {
         params.kernel_name = vm["kernel-name"].as<string>();
 
         if (!(params.kernel_name == "uniform"
-                || params.kernel_name == "epanechnikov"
-                || params.kernel_name == "gauss"
-                || params.kernel_name == "none")) {
+              || params.kernel_name == "epanechnikov"
+              || params.kernel_name == "gauss"
+              || params.kernel_name == "none")) {
             cerr << "Illegal kernel name " << params.kernel_name <<
-                    ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
+                 ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
             exit(EXIT_FAILURE);
         }
 
         // Weight Function
         params.weight_function_name = vm["weight-function-name"].as<string>();
         if (!(params.weight_function_name == "default"
-                || params.weight_function_name == "inverse"
-                || params.weight_function_name == "pow10"
-                || params.weight_function_name == "oase"
-                || params.weight_function_name == "oase-ci")) {
+              || params.weight_function_name == "inverse"
+              || params.weight_function_name == "pow10"
+              || params.weight_function_name == "oase"
+              || params.weight_function_name == "oase-ci")) {
             cerr << "Illegal weight function name " << params.weight_function_name <<
-                    ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
+                 ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
             exit(EXIT_FAILURE);
         }
         params.wwf_lower_threshold = vm["wwf-lower-threshold"].as<T>();
@@ -470,7 +467,7 @@ namespace m3D {
         // only spatial range?
         params.spatial_range_only = vm.count("spatial-range-only") > 0;
 
-    #if WITH_VTK
+#if WITH_VTK
         // VTK output?
         params.write_vtk = vm.count("write-clusters-as-vtk") > 0;
         params.write_cluster_modes = vm.count("write-cluster-modes") > 0;
@@ -478,7 +475,7 @@ namespace m3D {
         params.write_weight_response = vm.count("write-cluster-weight-response") > 0;
         params.write_weight_function = vm.count("write-weight-function") > 0;
         params.write_meanshift_vectors = vm.count("write-meanshift-vectors") > 0;
-    #endif
+#endif
 
         // include weight function output in result?
         params.include_weight_in_result = vm.count("include-weight-function-in-results") > 0;
@@ -487,12 +484,12 @@ namespace m3D {
         if (vm.count("previous-output") > 0) {
             std::string previous = vm["previous-output"].as<string>();
             boost::filesystem::path previous_path(previous);
-            if (boost::filesystem::exists(previous_path) 
-                    && boost::filesystem::is_regular_file(previous_path)) {
+            if (boost::filesystem::exists(previous_path)
+                && boost::filesystem::is_regular_file(previous_path)) {
                 params.previous_clusters_filename = new std::string(previous);
             } else {
                 cerr << "Illegal value for parameter --previous-output:"
-                        << "does not exist or is no regular file" << endl;
+                     << "does not exist or is no regular file" << endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -541,11 +538,12 @@ namespace m3D {
         params.cluster_coverage_threshold = vm["previous-cluster-coverage-threshold"].as<T>();
 
         // min cluster size
-        params.min_cluster_size = vm["min-cluster-size"].as < unsigned int > ();
-        
+        params.min_cluster_size = vm["min-cluster-size"].as < unsigned
+        int > ();
+
         // Inline tracking?
         params.inline_tracking = vm.count("inline-tracking") > 0;
-        
+
         if (params.inline_tracking && params.previous_clusters_filename == NULL) {
             cerr << "FATAL:when --inline-tracking is set you must give "
                  << "--previous-output as well" << endl;
@@ -553,7 +551,7 @@ namespace m3D {
         }
 
         // vtk-variables
-        #if WITH_VTK
+#if WITH_VTK
         if (vm.count("write-variables-as-vtk") > 0) {
             tokenizer bw_tokens(vm["write-variables-as-vtk"].as<string>(), sep);
             for (tokenizer::iterator tok_iter = bw_tokens.begin(); tok_iter != bw_tokens.end(); ++tok_iter) {
@@ -562,20 +560,20 @@ namespace m3D {
                     NcVar var = file->getVar(name);
                     if (var.isNull()) {
                         cerr << "Can't open variable " << name
-                                << " from NetCDF file. Check --write-variables-as-vtk"
-                                << endl;
+                             << " from NetCDF file. Check --write-variables-as-vtk"
+                             << endl;
                         exit(EXIT_FAILURE);
                     }
                     params.vtk_variables.push_back(name);
                 } catch (const netCDF::exceptions::NcException &e) {
                     cerr << "Can't find variable " << name
-                            << " from NetCDF file. Check --write-variables-as-vtk"
-                            << endl;
+                         << " from NetCDF file. Check --write-variables-as-vtk"
+                         << endl;
                     exit(EXIT_FAILURE);
                 }
             }
         }
-        #endif
+#endif
     }
 
     /**
@@ -585,18 +583,17 @@ namespace m3D {
      * @param ctx pre-initialised detection context
      * @param vm
      */
-    template <typename T>
+    template<typename T>
     void print_detection_params(const detection_params_t<T> &params,
-            const detection_context_t<T> &ctx,
-            const program_options::variables_map &vm) 
-    {
+                                const detection_context_t<T> &ctx,
+                                const program_options::variables_map &vm) {
         cout << "\tinput file = " << params.filename << endl;
         if (params.time_index >= 0) {
             cout << "\tusing point in time at index " << params.time_index
-                    << " (timestamp=" << ctx.timestamp << ")" << endl;
+                 << " (timestamp=" << ctx.timestamp << ")" << endl;
         } else {
             cout << "\ttime is not a variable dimension. Using timestamp "
-                    << ctx.timestamp << endl;
+                 << ctx.timestamp << endl;
         }
         cout << "\tdimensions = " << vm["dimensions"].as<string>() << endl;
         cout << "\tvariables = " << vm["variables"].as<string>() << endl;
@@ -617,8 +614,8 @@ namespace m3D {
 
         if (params.scale != Detection<T>::NO_SCALE) {
             cout << "\tpre-smoothing data with scale parameter "
-                    << params.scale << " (kernel width = "
-                    << ctx.kernel_width << ")" << endl;
+                 << params.scale << " (kernel width = "
+                 << ctx.kernel_width << ")" << endl;
         } else {
             cout << "\tno scale-space smoothing" << endl;
         }
@@ -626,13 +623,13 @@ namespace m3D {
         cout << "\tkernel:" << params.kernel_name << endl;
         cout << "\tweight-function:" << params.weight_function_name << endl;
         cout << "\t\tlower weight-function threshold: "
-                << params.wwf_lower_threshold << endl;
+             << params.wwf_lower_threshold << endl;
         cout << "\t\tupper weight-function threshold: "
-                << params.wwf_upper_threshold << endl;
+             << params.wwf_upper_threshold << endl;
 
         if (params.ci_comparison_file != NULL) {
             cout << "\tCI comparison file for time trends:"
-                    << *params.ci_comparison_file << endl;
+                 << *params.ci_comparison_file << endl;
         }
 
         if (params.previous_clusters_filename != NULL) {
@@ -642,13 +639,13 @@ namespace m3D {
         if (params.postprocess_with_previous_output) {
             if (vm.count("previous-cluster-coverage-threshold") > 0) {
                 cout << "\tprevious file coverage threshold:"
-                        << params.cluster_coverage_threshold << endl;
+                     << params.cluster_coverage_threshold << endl;
             }
         }
 
         if (params.min_cluster_size > 1) {
             cout << "\tminimum cluster size = "
-                    << params.min_cluster_size << endl;
+                 << params.min_cluster_size << endl;
         }
 
         if (!params.replacementFilterVariableIndex.empty()) {
@@ -658,8 +655,7 @@ namespace m3D {
                 cout << "\t\t" << params.variables[rvi] << " replace with ";
                 typename ReplacementFilter<T>::ReplacementMode mode = params.replacementFilterModes.at(rvi);
                 float percent = params.replacementFilterPercentages.at(rvi) * 100.0;
-                switch (mode)
-                {
+                switch (mode) {
                     case ReplacementFilter<T>::ReplaceWithHighest:
                         cout << "highest " << percent << "%";
                         break;
@@ -675,25 +671,25 @@ namespace m3D {
         }
 
         cout << "\tmean-shift is limited to spatial range: "
-                << (params.spatial_range_only ? "yes" : "no") << endl;
+             << (params.spatial_range_only ? "yes" : "no") << endl;
 
         cout << "\tcoalesce results with strongest neighbor: "
-                << (params.coalesceWithStrongestNeighbour ? "yes" : "no") <<
-                endl;
+             << (params.coalesceWithStrongestNeighbour ? "yes" : "no") <<
+             endl;
 
         cout << "\toutput written to file: " << params.output_filename << endl;
 
-    #if WITH_VTK
+#if WITH_VTK
         if (!params.vtk_variables.empty()) {
             cout << "\twriting out these variables as vtk after processing:" <<
-                    vm["write-variables-as-vtk"].as<string>() << endl;
+                 vm["write-variables-as-vtk"].as<string>() << endl;
         }
         cout << "\twriting weight function to vtk:" << (params.write_weight_function ? "yes" : "no") << endl;
         cout << "\twriting mean-shift vectors to vtk:" << (params.write_meanshift_vectors ? "yes" : "no") << endl;
         cout << "\tclusters written as vtk: " << (params.write_vtk ? "yes" : "no") << endl;
         cout << "\twrite cluster centers as vtk: " << (params.write_cluster_centers ? "yes" : "no") << endl;
         cout << "\twriting cluster weights as vtk: " << (params.write_weight_response ? "yes" : "no") << endl;
-    #endif
+#endif
     }
 }
 

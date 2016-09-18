@@ -31,17 +31,15 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     class IterationOperation : public Operation<T>
     {
     public:
 
-        IterationOperation(FeatureSpace<T> *fs, PointIndex<T> *index) : Operation<T>(fs, index)
-        {
+        IterationOperation(FeatureSpace<T> *fs, PointIndex<T> *index) : Operation<T>(fs, index) {
         };
 
-        virtual ~IterationOperation()
-        {
+        virtual ~IterationOperation() {
         }
 
         /** Performs a mean-shift iteration from the given starting
@@ -57,8 +55,8 @@ namespace m3D {
         void
         iterate(Point<T> *origin,
                 const SearchParameters *params,
-                const Kernel<T> *kernel,
-                const WeightFunction<T> *weight,
+                const Kernel <T> *kernel,
+                const WeightFunction <T> *weight,
                 const T termcrit_epsilon,
                 const size_t termcrit_iterations);
 
@@ -76,12 +74,11 @@ namespace m3D {
          */
         typename FeatureSpace<T>::Trajectory *
         get_trajectory(Point<T> *origin,
-                const SearchParameters *params,
-                const Kernel<T> *kernel,
-                const WeightFunction<T> *weight,
-                const T termcrit_epsilon,
-                const size_t termcrit_iterations);
-
+                       const SearchParameters *params,
+                       const Kernel <T> *kernel,
+                       const WeightFunction <T> *weight,
+                       const T termcrit_epsilon,
+                       const size_t termcrit_iterations);
 
 
     };

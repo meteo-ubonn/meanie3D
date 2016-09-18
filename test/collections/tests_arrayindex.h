@@ -13,19 +13,18 @@ using namespace testing;
 #pragma mark -
 #pragma mark Blitz Multi-Array
 
-typedef testing::Types< float, double > VectorDataTypes;
+typedef testing::Types<float, double> VectorDataTypes;
 
 // ONE DEE
 
-template <typename T>
+template<typename T>
 class ArrayIndexTest1D : public testing::Test
 {
 };
 
 TYPED_TEST_CASE(ArrayIndexTest1D, VectorDataTypes);
 
-TYPED_TEST(ArrayIndexTest1D, VectorDataTypes)
-{
+TYPED_TEST(ArrayIndexTest1D, VectorDataTypes) {
     PointFactory<TypeParam>::set_instance(new PointDefaultFactory<TypeParam>());
 
     typename Point<TypeParam>::list points;
@@ -73,15 +72,14 @@ TYPED_TEST(ArrayIndexTest1D, VectorDataTypes)
 
 // TWO DEE
 
-template <typename T>
+template<typename T>
 class ArrayIndexTest2D : public testing::Test
 {
 };
 
 TYPED_TEST_CASE(ArrayIndexTest2D, VectorDataTypes);
 
-TYPED_TEST(ArrayIndexTest2D, VectorDataTypes)
-{
+TYPED_TEST(ArrayIndexTest2D, VectorDataTypes) {
     PointFactory<TypeParam>::set_instance(new PointDefaultFactory<TypeParam>());
 
     typename Point<TypeParam>::list points;
@@ -135,15 +133,14 @@ TYPED_TEST(ArrayIndexTest2D, VectorDataTypes)
 
 // THREE DEE
 
-template <typename T>
+template<typename T>
 class ArrayIndexTest3D : public testing::Test
 {
 };
 
 TYPED_TEST_CASE(ArrayIndexTest3D, VectorDataTypes);
 
-TYPED_TEST(ArrayIndexTest3D, VectorDataTypes)
-{
+TYPED_TEST(ArrayIndexTest3D, VectorDataTypes) {
     PointFactory<TypeParam>::set_instance(new PointDefaultFactory<TypeParam>());
 
     typename Point<TypeParam>::list points;

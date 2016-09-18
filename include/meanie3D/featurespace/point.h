@@ -35,11 +35,12 @@ namespace m3D {
     using namespace std;
 
     // Forward Declaration
-    template <typename T> class Cluster;
+    template<typename T>
+    class Cluster;
 
     /** This represents one point f in feature space F.
      */
-    template <class T>
+    template<class T>
     struct Point
     {
     private:
@@ -49,9 +50,9 @@ namespace m3D {
 #pragma mark -
 #pragma mark Definitions
 
-        typedef Point<T> * ptr;
-        typedef vector< ptr > list;
-        typedef vector< ptr > set;
+        typedef Point<T> *ptr;
+        typedef vector<ptr> list;
+        typedef vector<ptr> set;
 
 #pragma mark -
 #pragma mark public properties
@@ -102,7 +103,7 @@ namespace m3D {
         /** Copy operator */
 
         Point<T>
-                operator=(const Point& o);
+        operator=(const Point &o);
 
         /** Default constructor
          */
@@ -114,8 +115,8 @@ namespace m3D {
          * @param values
          */
         Point(vector<int> &gridpoint,
-                vector<T> &coordinate,
-                vector<T>& values);
+              vector<T> &coordinate,
+              vector<T> &values);
 
         /** Constructor.
          * @param coordinate
@@ -123,12 +124,11 @@ namespace m3D {
          * @deprecated
          */
         Point(vector<T> &coordinate,
-                vector<T>& values);
+              vector<T> &values);
 
         /** Destructor 
          */
-        virtual ~Point()
-        {
+        virtual ~Point() {
         }
 
 #pragma mark -

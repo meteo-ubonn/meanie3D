@@ -48,15 +48,17 @@ namespace m3D {
      * TODO: handle the concept of time better!
      */
     template<typename T>
-    class NetCDFDataStore : public DataStore<T> {
+    class NetCDFDataStore : public DataStore<T>
+    {
     private:
 
         static const T NO_VALUE;
 
-        typedef std::map<size_t, MultiArray<T> *> multiarray_map_t;
+        typedef std::map<size_t, MultiArray < T> *>
+        multiarray_map_t;
 
-        std::string     m_filename;
-        netCDF::NcFile  *m_file;
+        std::string m_filename;
+        netCDF::NcFile *m_file;
 
         /** Parameter used for construction. Points in feature-space,
          * where one variable's value is less than the given threshold,
@@ -80,7 +82,7 @@ namespace m3D {
 
         /** Not sure this needs holding on to, but hey
          */
-        CoordinateSystem<T> *m_coordinate_system;
+        CoordinateSystem <T> *m_coordinate_system;
 
         /** Index of the time(time) variable to use. If -1, it is assumed
          * that there is no time variable and it is omitted.
@@ -107,7 +109,7 @@ namespace m3D {
 
 #pragma mark -
 #pragma mark Constructor/Destructor
-        
+
         /**
          * Constructs a DataStore instance based on NetCDF files.
          * 
@@ -118,26 +120,24 @@ namespace m3D {
          * @param time_index
          */
         NetCDFDataStore(const std::string filename,
-                const std::vector<std::string> &variables,
-                const std::vector<std::string> &dimensions,
-                const std::vector<std::string> &dimension_variables,
-                const int time_index = -1)
-        : DataStore<T>(variables, dimensions, dimension_variables)
-        , m_filename(filename)
-        , m_time_index(time_index)
-        {
+                        const std::vector<std::string> &variables,
+                        const std::vector<std::string> &dimensions,
+                        const std::vector<std::string> &dimension_variables,
+                        const int time_index = -1)
+                : DataStore<T>(variables, dimensions, dimension_variables), m_filename(filename),
+                  m_time_index(time_index) {
             m_file = NULL;
             try {
                 m_file = new NcFile(filename.c_str(), NcFile::read);
             } catch (const netCDF::exceptions::NcException &e) {
-                cerr << "FATAL:could not open file '" << m_filename 
+                cerr << "FATAL:could not open file '" << m_filename
                      << "' for reading" << endl;
                 exit(EXIT_FAILURE);
             }
-            
+
             m_coordinate_system = new CoordinateSystem<T>(m_file,
-                    dimensions,dimension_variables);
-            
+                                                          dimensions, dimension_variables);
+
             m_scale_factor = new T[variables.size()];
             m_offset = new T[variables.size()];
             m_valid_min = new T[variables.size()];
@@ -151,14 +151,14 @@ namespace m3D {
                 try {
                     NcVar var = m_file->getVar(variables[i]);
                     if (var.isNull()) {
-                        cerr << "FATAL: no variable " << variables[i] 
-                                << " found in file " << m_filename << endl;
+                        cerr << "FATAL: no variable " << variables[i]
+                             << " found in file " << m_filename << endl;
                         exit(EXIT_FAILURE);
                     }
                 } catch (netCDF::exceptions::NcException &e) {
-                    cerr << "FATAL: can't access variable " 
-                         << variables[i] << " in file " 
-                         << m_filename  << endl;
+                    cerr << "FATAL: can't access variable "
+                         << variables[i] << " in file "
+                         << m_filename << endl;
                     exit(EXIT_FAILURE);
                 }
 
@@ -194,7 +194,7 @@ namespace m3D {
 #pragma mark Accessors
 
         /** @return coordinate system */
-        CoordinateSystem<T> *coordinate_system() const {
+        CoordinateSystem <T> *coordinate_system() const {
             return m_coordinate_system;
         }
 
@@ -406,7 +406,7 @@ namespace m3D {
 
             } else {
                 cerr << "FATAL: Variables with " << spatial_dims << " spatial dimensions are not currently handled" <<
-                endl;
+                     endl;
                 exit(EXIT_FAILURE);
             }
 
@@ -580,7 +580,7 @@ namespace m3D {
 
             } else {
                 cerr << "FATAL: Variables with " << spatial_dims << " spatial dimensions are not currently handled" <<
-                endl;
+                     endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -732,7 +732,7 @@ namespace m3D {
                 // It's a valid value (not in failed/fill values)
                 is_valid = true;
                 is_in_range = (value >= m_valid_min[variable_index])
-                           && (value <= m_valid_max[variable_index]);
+                              && (value <= m_valid_max[variable_index]);
             }
 
             // scale first, then offset
@@ -803,7 +803,7 @@ namespace m3D {
             return N;
         }
 
-        const vector<size_t> get_dimension_sizes() const {
+        const vector <size_t> get_dimension_sizes() const {
             return this->m_coordinate_system->get_dimension_sizes();
         }
 
@@ -822,7 +822,7 @@ namespace m3D {
         /** @return reference to the multiarray used to store
          * the data in
          */
-        MultiArray<T> *get_data(size_t index) {
+        MultiArray <T> *get_data(size_t index) {
             typename multiarray_map_t::const_iterator i = m_buffered_data.find(index);
             if (i != m_buffered_data.end()) {
                 return i->second;
@@ -835,7 +835,7 @@ namespace m3D {
         /** Replaces the multiarray for the given variable index.
          * The existing data set is discarded
          */
-        void set_data(size_t index, MultiArray<T> *data) {
+        void set_data(size_t index, MultiArray <T> *data) {
             typename multiarray_map_t::iterator i = m_buffered_data.find(index);
             if (i != m_buffered_data.end()) {
                 MultiArray<T> *ptr = i->second;
