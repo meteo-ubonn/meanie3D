@@ -121,7 +121,7 @@ namespace m3D {
 
             // Correlation data
             typename SimpleMatrix<T>::matrix_t rankCorrelation;
-            typename SimpleMatrix<::units::values::m>::matrix_t midDisplacement;
+            typename SimpleMatrix< ::units::values::m >::matrix_t midDisplacement;
             typename SimpleMatrix<T>::matrix_t sizeDifference;
             typename SimpleMatrix<T>::matrix_t likelihood;
             typename SimpleMatrix<T>::matrix_t coverOldByNew;

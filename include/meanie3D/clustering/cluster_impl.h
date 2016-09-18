@@ -463,7 +463,7 @@ Cluster<T>::variable_ranges(std::vector<T> &min,
     median.resize(var_rank, 0);
 
     // For median calculation
-    vector <vector<T>> median_values;
+    vector < vector<T> > median_values;
     median_values.resize(var_rank, vector<T>());
 
     typename Point<T>::list::const_iterator pi;

@@ -285,7 +285,7 @@ namespace m3D {
 
         // Allocate the correlation data
         run.rankCorrelation = SimpleMatrix<T>::create_matrix(run.N, run.M);
-        run.midDisplacement = SimpleMatrix<::units::values::m>::create_matrix(run.N, run.M);
+        run.midDisplacement = SimpleMatrix< ::units::values::m >::create_matrix(run.N, run.M);
         run.sizeDifference = SimpleMatrix<T>::create_matrix(run.N, run.M);
         run.coverOldByNew = SimpleMatrix<T>::create_matrix(run.N, run.M);
         run.coverNewByOld = SimpleMatrix<T>::create_matrix(run.N, run.M);

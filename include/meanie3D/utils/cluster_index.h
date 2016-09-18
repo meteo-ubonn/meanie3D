@@ -42,7 +42,7 @@ namespace m3D {
         {
         public:
 
-            typedef MultiArray<::m3D::id_t> index_t;
+            typedef MultiArray< ::m3D::id_t > index_t;
 
         private:
 
