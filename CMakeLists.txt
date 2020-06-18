@@ -26,7 +26,7 @@ SET(PACKAGE_VERSION "1.6.0")
 SET(PROJECT_URL "http://git.meteo.uni-bonn.de/projects/meanie3d")
 SET(PROJECT_LICENSE "MIT License")
 SET(PROJECT_AUTHOR "Juergen Simon")
-SET(PROJECT_AUTHOR_EMAIL "juergen.simon@uni-bonn.de")
+SET(PROJECT_AUTHOR_EMAIL "tachyonimpulse@gmail.com")
 
 # ------------------------------------- 
 # Paths and build configuration
@@ -54,7 +54,7 @@ INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
 # ------------------------------------- 
 # Options
 # -------------------------------------
-
+OPTION(FOR_DOCKER "Build for dockerized version" OFF)
 OPTION(WITH_OPENMP "Enable/Disable OpenMP" ON)
 OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
 OPTION(WITH_VTK "Enable/Disable visualisation code (requires VTK)" OFF)
@@ -69,53 +69,63 @@ ADD_SUBDIRECTORY(radolan)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/radolan/include)
 
 # ------------------------------------- 
-# Multithreading / Parallelism Choices
+# PRESETS
 # -------------------------------------
 
-SET(OPENMP_ENABLED ${WITH_OPENMP})
-IF (OPENMP_ENABLED)
-    MESSAGE(STATUS "OpenMP is enabled")
-    ADD_DEFINITIONS(-DWITH_OPENMP=1)
-ELSE ()
-    MESSAGE(STATUS "OpenMP is disabled")
-ENDIF ()
+if (FOR_DOCKER) 
+        MESSAGE("Setting preset options for building docker container")
+        SET(CMAKE_BUILD_TYPE "Release")
+        ADD_DEFINITIONS(-DWITH_OPENMP=1)
+ELSE()
+        # ------------------------------------- 
+        # Multithreading / Parallelism Choices
+        # -------------------------------------
 
-# -------------------------------------
-# Visualization on/off
-# -------------------------------------
+        SET(OPENMP_ENABLED ${WITH_OPENMP})
+        IF (OPENMP_ENABLED)
+                MESSAGE(STATUS "OpenMP is enabled")
+                ADD_DEFINITIONS(-DWITH_OPENMP=1)
+        ELSE ()
+                MESSAGE(STATUS "OpenMP is disabled")
+        ENDIF ()
 
-SET(VTK_ENABLED ${WITH_VTK})
-IF (VTK_ENABLED)
-    MESSAGE(STATUS "VTK is enabled")
-    ADD_DEFINITIONS(-DWITH_VTK=1)
-ELSE ()
-    MESSAGE(STATUS "VTK is disabled")
-ENDIF ()
+        # -------------------------------------
+        # Visualization on/off
+        # -------------------------------------
 
-# -------------------------------------
-# Automated tests yes/no
-# -------------------------------------
+        SET(VTK_ENABLED ${WITH_VTK})
+        IF (VTK_ENABLED)
+                MESSAGE(STATUS "VTK is enabled")
+                ADD_DEFINITIONS(-DWITH_VTK=1)
+        ELSE ()
+                MESSAGE(STATUS "VTK is disabled")
+        ENDIF ()
 
-SET(TESTS_ENABLED ${WITH_TESTS})
-IF (TESTS_ENABLED)
-    MESSAGE(STATUS "Tests are enabled.")
-    ENABLE_TESTING()
-    ADD_SUBDIRECTORY(gtest-1.7.0)
-    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
-    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
-ELSE ()
-    MESSAGE(STATUS "Tests are disabled. Use -DWITH_TESTS=ON/OFF to switch tests on or off.")
-ENDIF ()
+        # -------------------------------------
+        # Automated tests yes/no
+        # -------------------------------------
 
-# -------------------------------------
-# OpenCV
-# -------------------------------------
+        SET(TESTS_ENABLED ${WITH_TESTS})
+        IF (TESTS_ENABLED)
+                MESSAGE(STATUS "Tests are enabled.")
+                ENABLE_TESTING()
+                ADD_SUBDIRECTORY(gtest-1.7.0)
+                INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
+                INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
+        ELSE ()
+                MESSAGE(STATUS "Tests are disabled. Use -DWITH_TESTS=ON/OFF to switch tests on or off.")
+        ENDIF ()
 
-SET(OPENCV_ENABLED ${WITH_OPENCV})
-IF (OPENCV_ENABLED)
-    MESSAGE(STATUS "OpenCV is enabled.")
-    ADD_DEFINITIONS(-DWITH_OPENMP=1)
-ENDIF ()
+        # -------------------------------------
+        # OpenCV
+        # -------------------------------------
+
+        SET(OPENCV_ENABLED ${WITH_OPENCV})
+        IF (OPENCV_ENABLED)
+                MESSAGE(STATUS "OpenCV is enabled.")
+                ADD_DEFINITIONS(-DWITH_OPENCV=1)
+        ENDIF ()
+ENDIF()
 
 # -------------------------------------
 # Compiler Flags

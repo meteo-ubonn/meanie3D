@@ -13,7 +13,7 @@ python3 python3-pip \
 cmake \
 doxygen \
 libflann1.9 libflann-dev \
-libboost-all-dev\ 
+libboost-all-dev \ 
 blitz++ \
 shapelib \
 libhdf5-dev \
@@ -36,19 +36,19 @@ RUN rm -rf netcdf-cxx4-4.2.1 && rm v4.2.1.tar.gz
 #RUN rm -rf netCDF4*
 
 # Visualisation
-RUN pip3 install Cython h5py netcdf4
-RUN apt-get -y --fix-missing  install gnuplot vtk6 libvtk6-dev
-RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
-RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
-RUN chmod a+x visit-install2_10_0
-RUN echo "1" | ./visit-install2_10_0 2.10.0 linux-x86_64-rhel6-wmesa /usr/local/visit
-ENV VISIT_EXECUTABLE=/usr/local/visit/bin/visit
-RUN rm -rf visit*
+# RUN pip3 install Cython h5py netcdf4
+# RUN apt-get -y --fix-missing  install gnuplot vtk6 libvtk6-dev
+# RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
+# RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0
+# RUN chmod a+x visit-install2_10_0
+# RUN echo "1" | ./visit-install2_10_0 2.10.0 linux-x86_64-rhel6-wmesa /usr/local/visit
+# ENV VISIT_EXECUTABLE=/usr/local/visit/bin/visit
+# RUN rm -rf visit*
 
 # Meanie3D
-RUN git clone --recurse-submodules --depth=1 https://github.com/meteo-ubonn/meanie3D.git
+RUN git clone --recurse-submodules --depth=1 https://github.com/meteo-ubonn/meanie3D.git#dockerize
 WORKDIR /meanie3D
-RUN cmake -DWITH_OPENMP=1 -DWITH_VTK=1 -DCMAKE_BUILD_TYPE=Release . 
+RUN cmake -DFOR_DOCKER=1 .
 RUN make install 
 
 # Cleanup
