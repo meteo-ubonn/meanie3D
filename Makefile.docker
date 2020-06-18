@@ -1,0 +1,21 @@
+# Docker repository
+repository=iontichy
+image=meanie3d
+version=0.1.0
+work_dir=.
+build_args=
+
+all: image push
+.PHONY : all
+
+image:
+	docker build $(build_args) --tag ${repository}/${image}:${version} -f Dockerfile ${work_dir}
+	docker tag ${repository}/${image}:${version} ${repository}/${image}:latest
+
+image-nocache:
+	docker build --no-cache $(build_args) --tag ${repository}/${image}:${version} -f Dockerfile ${work_dir}
+	docker tag ${repository}/${image}:${version} ${repository}/${image}:latest
+
+push:
+	docker push ${repository}/${image}:${version}
+	docker push ${repository}/${image}:latest
