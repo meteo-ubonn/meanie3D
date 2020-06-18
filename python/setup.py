@@ -7,7 +7,7 @@ setup(
     url='http://git.meteo.uni-bonn.de/projects/meanie3d',
     license='MIT License',
     author='Juergen Simon',
-    author_email='juergen.simon@uni-bonn.de',
+    author_email='tachyonimpulse@gmail.com',
     zip_safe = False,
     description='A python script for running the meanie3D clustering and tracking algorithms as well as processing and visualising the results.',
     entry_points = {

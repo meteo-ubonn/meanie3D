@@ -1,28 +1,23 @@
-# CMAKE module for locating HDF5. 
-# Options: -DWITH_HDF5=<path to include root>
-# Example: -DWITH_HDF5=/usr/local 
-
-MESSAGE(STATUS "WITH_HDF5=${WITH_HDF5}")
+# CMAKE module for locating HDF5.                                                                                                                                                                                     
+# Options: -DWITH_HDF5=<path to include root>                                                                                                                                                                         
+# Example: -DWITH_HDF5=/usr/local                                                                                                                                                                                     
 
 SET(HDF5_ROOT ${WITH_HDF5})
 IF (FOR_DOCKER)
     MESSAGE(STATUS "Looking for HDF5 in Debian locations")
-    FIND_PATH(HDF5_INCLUDE_DIR hdf5.h PATHS /usr/include/hdf5/serial NO_DEFAULT_PATH)
-    FIND_LIBRARY(HDF5 NAMES hdf5 PATHS /usr/lib/x86_64-linux-gnu/hdf5/serial NO_DEFAULT_PATH)
-    FIND_LIBRARY(HDF5_HL NAMES hdf5_hl PATHS /usr/lib/x86_64-linux-gnu/hdf5/serial NO_DEFAULT_PATH)
+    FIND_PATH(HDF5_INCLUDE_DIR hdf5.h PATHS /usr/include/hdf5/serial)
+    FIND_LIBRARY(HDF5 NAMES hdf5 PATHS /usr/lib/x86_64-linux-gnu/hdf5/serial)
+    FIND_LIBRARY(HDF5_HL NAMES hdf5_hl PATHS /usr/lib/x86_64-linux-gnu/hdf5/serial)
 ELSEIF (HDF5_ROOT)
     MESSAGE(STATUS "Looking for HDF5 in specified location: ${HDF5_ROOT}")
-    SET(HDF5_INC_ROOT "${HDF5_ROOT}/include")
-    SET(HDF5_LIB_ROOT "${HDF5_ROOT}/lib")
-    FIND_PATH(HDF5_INCLUDE_DIR H5FDcore.h PATHS ${HDF5_INC_ROOT} NO_DEFAULT_PATH)
-    FIND_LIBRARY(HDF5 NAMES hdf5 PATHS ${HDF5_LIB_ROOT} NO_DEFAULT_PATH)
-    FIND_LIBRARY(HDF5_HL NAMES hdf5_hl PATHS ${HDF5_LIB_ROOT} NO_DEFAULT_PATH)
+    FIND_PATH(HDF5_INCLUDE_DIR hdf5.h PATHS ${HDF5_ROOT})
+    FIND_LIBRARY(HDF5 NAMES hdf5 PATHS ${HDF5_ROOT})
+    FIND_LIBRARY(HDF5_HL NAMES hdf5_hl PATHS ${HDF5_ROOT})
 ELSE()
-    SET(HDF5_INC_ROOT "/usr/local/include /opt/local/include /usr/include")
-    SET(HDF5_LIB_ROOT "/usr/local/lib /opt/local/lib /usr/lib")
-    FIND_PATH(HDF5_INCLUDE_DIR H5FDcore.h PATHS ${HDF5_INC_ROOT})
-    FIND_LIBRARY(HDF5 NAMES hdf5 PATHS ${HDF5_LIB_ROOT})
-    FIND_LIBRARY(HDF5_HL NAMES hdf5_hl PATHS ${HDF5_LIB_ROOT})
+    MESSAGE(STATUS "Looking for HDF5 in standard locations")
+    FIND_PATH(HDF5_INCLUDE_DIR hdf5.h PATHS /usr/include /usr/local/include)
+    FIND_LIBRARY(HDF5 NAMES hdf5 PATHS /usr/lib /usr/local/lib)
+    FIND_LIBRARY(HDF5_HL NAMES hdf5_hl /usr/lib /usr/local/lib)
 ENDIF()
 
 IF (HDF5 AND HDF5_HL)
