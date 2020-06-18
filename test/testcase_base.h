@@ -29,25 +29,25 @@
 
 
 #define INFO_ENABLED false
-#define INFO if (INFO_ENABLED) cout << "INFO:" 
+#define INFO if (INFO_ENABLED) cout << "INFO:"
 
 using namespace std;
 using namespace testing;
 using namespace netCDF;
 using namespace m3D;
 
-template <class T>
+template<class T>
 class FSTestBase : public Test
 {
 protected:
 
     NcFile *m_file;
     std::string m_filename;
-    
+
     vector<string> m_variables;
     vector<string> m_dimensions;
     vector<string> m_dimension_variables;
-  
+
     DataStore<T> *m_data_store;
     CoordinateSystem<T> *m_coordinate_system;
     FeatureSpace<T> *m_featureSpace;

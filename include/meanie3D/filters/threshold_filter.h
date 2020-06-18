@@ -36,12 +36,12 @@ namespace m3D {
      * thresholds, one for each feature-space dimension. Points that
      * are smaller than the theshold are dropped from the feature-space.
      */
-    template <class T>
+    template<class T>
     class ThresholdFilter : public FeatureSpaceFilter<T>
     {
     private:
 
-        vector<T> m_thresholds;
+        vector <T> m_thresholds;
 
     public:
 
@@ -53,25 +53,25 @@ namespace m3D {
          * @param show progress indicator while filtering (default no)
          * @throws logic_error if |thresholds| = 0
          */
-        ThresholdFilter(const vector<T> &thresholds);
+        ThresholdFilter(const vector <T> &thresholds);
 
         virtual ~ThresholdFilter();
 
 #pragma mark - 
 #pragma mark Accessors
 
-        vector<T> thresholds();
+        vector <T> thresholds();
 
         /** Sets new threshold values
          * @param thresholds
          * @throws logic_error if |thresholds| = 0
          */
-        void set_thresholds(const vector<T> &);
+        void set_thresholds(const vector <T> &);
 
 #pragma mark -
 #pragma mark Abstract filter method
 
-        virtual void apply(FeatureSpace<T> *fs);
+        virtual void apply(FeatureSpace <T> *fs);
     };
 
 }

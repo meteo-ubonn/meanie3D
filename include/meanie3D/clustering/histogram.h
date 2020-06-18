@@ -35,50 +35,45 @@ namespace m3D {
 
     /** This represents one point f in feature space F.
      */
-    template <class T>
+    template<class T>
     struct Histogram
     {
     private:
 
-        vector<size_t> m_bins;
+        vector <size_t> m_bins;
 
     public:
 
-        typedef Histogram<T>* ptr;
+        typedef Histogram<T> *ptr;
 
 #pragma mark -
 #pragma mark Constructor/Destructor
 
         /** Default @constructor is private
          */
-        Histogram()
-        {
+        Histogram() {
         };
 
         /** @constructor
          * @param number of bins
          */
-        Histogram(const size_t &size) : m_bins(vector<size_t>(size, 0))
-        {
+        Histogram(const size_t &size) : m_bins(vector<size_t>(size, 0)) {
         };
 
         /** Constructor.
          * @param initial bins
          */
-        Histogram(vector<size_t> &bins) : m_bins(bins)
-        {
+        Histogram(vector <size_t> &bins) : m_bins(bins) {
         };
 
         /** Copy constructor
          */
-        Histogram(const Histogram<T> &o) : m_bins(o.bins())
-        {
+        Histogram(const Histogram<T> &o) : m_bins(o.bins()) {
         };
 
         /** Destructor 
          */
-        ~Histogram()
-        {
+        ~Histogram() {
         };
 
 #pragma mark -
@@ -87,16 +82,14 @@ namespace m3D {
         /** equals operator == */
 
         bool
-        operator==(const Histogram<T> &o)
-        {
+        operator==(const Histogram<T> &o) {
             return this->m_bins = o.bins();
         };
 
         /** assignment operator = */
 
         Histogram<T>
-                operator=(const Histogram& o)
-        {
+        operator=(const Histogram &o) {
             return Histogram<T>(o);
         };
 
@@ -106,8 +99,7 @@ namespace m3D {
         /** Get the number of bins
          * @return size
          */
-        const size_t size() const
-        {
+        const size_t size() const {
             return this->m_bins.size();
         };
 
@@ -117,25 +109,24 @@ namespace m3D {
 
         /** Access all bins at once
          */
-        const vector<size_t> &bins() const
-        {
+        const vector <size_t> &bins() const {
             return m_bins;
         };
 
         /** Access a bin directly
          * @param index
          */
-        T& operator[](const size_t index);
+        T &operator[](const size_t index);
 
         /** Allocates an int array and fills it with the bins. 
          * @return int array of size this->size()
          */
-        int* bins_as_int_array() const;
+        int *bins_as_int_array() const;
 
         /** Allocates a float array and fills it with the bins.
          * @return float array of size this->size()
          */
-        float* bins_as_float_array() const;
+        float *bins_as_float_array() const;
 
 #pragma mark -
 #pragma mark Factory Methods
@@ -148,13 +139,13 @@ namespace m3D {
          * @param highest value in the histogram classes
          * @param number of bins (default 10).
          */
-        static 
+        static
         typename Histogram<T>::ptr
-        create(typename Point<T>::list &points, 
-                size_t variable_index, 
-                T min, 
-                T max, 
-                size_t number_of_bins = 10);
+        create(typename Point<T>::list &points,
+               size_t variable_index,
+               T min,
+               T max,
+               size_t number_of_bins = 10);
 
 #pragma mark -
 #pragma mark Histogram Correlation

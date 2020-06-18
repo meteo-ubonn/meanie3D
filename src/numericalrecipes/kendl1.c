@@ -1,5 +1,4 @@
 #include <math.h>
-#include <meanie3D/numericalrecipes/nrutil.h>
 
 #if defined(__cplusplus)
 extern "C" {

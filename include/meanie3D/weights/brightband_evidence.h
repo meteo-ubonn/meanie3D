@@ -39,21 +39,20 @@ namespace m3D {
     /** Draft of a weight function designed to facilitate 
      * bright band detection
      */
-    template <class T>
+    template<class T>
     class BrightBandWeight : public WeightFunction<T>
     {
     private:
 
-        vector<NcVar> m_vars; // variables for weighting
-        map<size_t, T> m_min; // [index,min]
-        map<size_t, T> m_max; // [index,max]
+        vector <NcVar> m_vars; // variables for weighting
+        map <size_t, T> m_min; // [index,min]
+        map <size_t, T> m_max; // [index,max]
 
-        MultiArray<T> *m_weight;
-        CoordinateSystem<T> *m_coordinate_system;
+        MultiArray <T> *m_weight;
+        CoordinateSystem <T> *m_coordinate_system;
 
         void
-        calculate_weight_function(FeatureSpace<T> *fs)
-        {
+        calculate_weight_function(FeatureSpace <T> *fs) {
             for (size_t i = 0; i < fs->points.size(); i++) {
                 Point<T> *p = fs->points[i];
 
@@ -69,11 +68,10 @@ namespace m3D {
          * for valid_min/valid_max
          * @param featurespace
          */
-        BrightBandWeight(FeatureSpace<T> *fs, const NetCDFDataStore<T> *data_store)
-        : m_vars(data_store->variables())
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(fs->coordinate_system)
-        {
+        BrightBandWeight(FeatureSpace <T> *fs, const NetCDFDataStore <T> *data_store)
+                : m_vars(data_store->variables()),
+                  m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0)),
+                  m_coordinate_system(fs->coordinate_system) {
             // Get original limits
 
             for (size_t index = 0; index < m_vars.size(); index++) {
@@ -92,21 +90,17 @@ namespace m3D {
          * @param map of lower bounds
          * @param map of upper bounds
          */
-        BrightBandWeight(FeatureSpace<T> *fs,
-                const NetCDFDataStore<T> *data_store,
-                const map<size_t, T> &min,
-                const map<size_t, T> &max)
-        : m_vars(data_store->variables())
-        , m_min(min)
-        , m_max(max)
-        , m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(fs->coordinate_system)
-        {
+        BrightBandWeight(FeatureSpace <T> *fs,
+                         const NetCDFDataStore <T> *data_store,
+                         const map <size_t, T> &min,
+                         const map <size_t, T> &max)
+                : m_vars(data_store->variables()), m_min(min), m_max(max),
+                  m_weight(new MultiArrayBlitz<T>(fs->coordinate_system->get_dimension_sizes(), 0.0)),
+                  m_coordinate_system(fs->coordinate_system) {
             calculate_weight_function(fs);
         }
 
-        ~BrightBandWeight()
-        {
+        ~BrightBandWeight() {
             if (this->m_weight != NULL) {
                 delete m_weight;
                 m_weight = NULL;
@@ -115,8 +109,7 @@ namespace m3D {
 
         /** Actual weight computation happens here
          */
-        T compute_weight(Point<T> *p)
-        {
+        T compute_weight(Point <T> *p) {
             T sum = 0.0;
 
             size_t num_vars = p->values.size() - p->coordinate.size();
@@ -135,8 +128,7 @@ namespace m3D {
             return sum;
         }
 
-        T operator()(const typename Point<T>::ptr p) const
-        {
+        T operator()(const typename Point<T>::ptr p) const {
             return m_weight->get(p->gridpoint);
         }
     };

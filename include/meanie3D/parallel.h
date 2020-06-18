@@ -22,7 +22,7 @@
  */
 
 #ifndef M3D_PARALL_H
-#define	M3D_PARALL_H
+#define    M3D_PARALL_H
 
 #if WITH_OPENMP
 #include <omp.h>

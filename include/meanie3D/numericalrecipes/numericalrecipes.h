@@ -6,7 +6,7 @@
  */
 
 #ifndef NUMERICALRECIPES_H
-#define	NUMERICALRECIPES_H
+#define    NUMERICALRECIPES_H
 
 #include <math.h>
 
@@ -14,24 +14,24 @@
 extern "C" {
 #endif
 
-    float betai(float a, float b, float x);
+float betai(float a, float b, float x);
 
-    float betacf(float a, float b, float x);
+float betacf(float a, float b, float x);
 
-    void crank(unsigned long n, float w[], float *s);
+void crank(unsigned long n, float w[], float *s);
 
-    float erfcc(float x);
+float erfcc(float x);
 
-    float gammln(float xx);
+float gammln(float xx);
 
-    void kendl1(float data1[], float data2[],
+void kendl1(float data1[], float data2[],
             unsigned long n, float *tau,
             float *z, float *prob);
 
-    void sort2(unsigned long n, float arr[], float brr[]);
+void sort2(unsigned long n, float arr[], float brr[]);
 
-    void spear(float data1[], float data2[], unsigned long n,
-            float*d, float*zd, float*probd, float*rs, float*probrs);
+void spear(float data1[], float data2[], unsigned long n,
+           float *d, float *zd, float *probd, float *rs, float *probrs);
 
 #if defined(__cplusplus)
 }

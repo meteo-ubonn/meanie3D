@@ -38,8 +38,7 @@ namespace m3D {
          * @param extension to filter files by (defaults to '*')
          */
         std::string common_component(const std::string &directory,
-                const std::string extension = "*")
-        {
+                                     const std::string extension = "*") {
             namespace fs = boost::filesystem;
 
             std::string ext = extension;
@@ -67,14 +66,12 @@ namespace m3D {
 
                     dir_iter++;
                 }
-                
+
                 if (!files.empty()) {
-                    
+
                     if (files.size() == 1) {
                         common = files.at(0);
-                    } 
-                    else 
-                    {
+                    } else {
                         size_t token_len = 1;
                         bool have_common = true;
                         while (have_common) {

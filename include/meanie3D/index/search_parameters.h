@@ -45,29 +45,25 @@ namespace m3D {
 
         /** Private default constructor 
          */
-        SearchParameters()
-        {
+        SearchParameters() {
         };
 
     protected:
 
         /** Constructor is protected to prevent direct construction 
          */
-        SearchParameters(SearchType type) : m_searchType(type)
-        {
+        SearchParameters(SearchType type) : m_searchType(type) {
         };
 
     public:
 
         /** Destructor */
-        virtual ~SearchParameters()
-        {
+        virtual ~SearchParameters() {
         };
 
         /** @returns type
          */
-        const SearchType search_type() const
-        {
+        const SearchType search_type() const {
             return m_searchType;
         };
 
@@ -75,70 +71,61 @@ namespace m3D {
 
     /** K nearest neighbours search.
      */
-    template <typename T>
+    template<typename T>
     class KNNSearchParams : public SearchParameters
     {
     public:
         size_t k;
-        vector<T> resolution;
+        vector <T> resolution;
 
         KNNSearchParams(const size_t _k)
-        : SearchParameters(SearchTypeKNN), k(_k)
-        {
+                : SearchParameters(SearchTypeKNN), k(_k) {
         };
 
-        KNNSearchParams(const size_t _k, const vector<T> &_resolution)
-        : SearchParameters(SearchTypeKNN), k(_k), resolution(_resolution)
-        {
+        KNNSearchParams(const size_t _k, const vector <T> &_resolution)
+                : SearchParameters(SearchTypeKNN), k(_k), resolution(_resolution) {
         };
 
-        KNNSearchParams(const KNNSearchParams& other)
-        : SearchParameters(other.search_type())
-        {
+        KNNSearchParams(const KNNSearchParams &other)
+                : SearchParameters(other.search_type()) {
             k = other.k;
 
             resolution = other.resolution;
         }
 
-        KNNSearchParams operator=(const KNNSearchParams& other)
-        {
+        KNNSearchParams operator=(const KNNSearchParams &other) {
             KNNSearchParams copy(other);
 
             return copy;
         }
 
-        ~KNNSearchParams()
-        {
+        ~KNNSearchParams() {
         };
     };
 
     /** Range search
      */
-    template <typename T>
+    template<typename T>
     class RangeSearchParams : public SearchParameters
     {
     public:
-        vector<T> bandwidth;
+        vector <T> bandwidth;
 
-        RangeSearchParams(const vector<T>& bandwidth) : SearchParameters(SearchTypeRange)
-        {
+        RangeSearchParams(const vector <T> &bandwidth) : SearchParameters(SearchTypeRange) {
             this->bandwidth = bandwidth;
         };
 
-        RangeSearchParams(const RangeSearchParams& other) : SearchParameters(other.search_type())
-        {
+        RangeSearchParams(const RangeSearchParams &other) : SearchParameters(other.search_type()) {
             bandwidth = other.bandwidth;
         }
 
-        RangeSearchParams operator=(const RangeSearchParams& other)
-        {
+        RangeSearchParams operator=(const RangeSearchParams &other) {
             RangeSearchParams copy(other);
 
             return copy;
         }
 
-        ~RangeSearchParams()
-        {
+        ~RangeSearchParams() {
         };
     };
 }

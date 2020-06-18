@@ -23,7 +23,7 @@
 
 
 #ifndef M3D_LINEAR_INDEX_MAPPING_H
-#define	M3D_LINEAR_INDEX_MAPPING_H
+#define    M3D_LINEAR_INDEX_MAPPING_H
 
 #include <meanie3D/defines.h>
 #include <meanie3D/namespaces.h>
@@ -47,17 +47,14 @@ namespace m3D {
 
     public:
 
-        LinearIndexMapping()
-        {
+        LinearIndexMapping() {
         }
 
         /** Constructs a mapping object 
          */
         LinearIndexMapping(const std::vector<size_t> &dimension_sizes)
-        : m_dimension_sizes(dimension_sizes)
-        , m_slice_sizes(std::vector<size_t>(dimension_sizes.size(), 1))
-        , m_size(1)
-        {
+                : m_dimension_sizes(dimension_sizes), m_slice_sizes(std::vector<size_t>(dimension_sizes.size(), 1)),
+                  m_size(1) {
             size_t N = m_dimension_sizes.size();
 
             for (size_t i = 0; i < N; i++)
@@ -78,8 +75,7 @@ namespace m3D {
 
         /** @return number of possible points in this mapping. 
          */
-        size_t size()
-        {
+        size_t size() {
             return m_size;
         }
 
@@ -88,8 +84,7 @@ namespace m3D {
          * @return grid index
          */
         vector<int>
-        linear_to_grid(size_t linear_index)
-        {
+        linear_to_grid(size_t linear_index) {
             size_t N = m_dimension_sizes.size();
 
             vector<int> g(N, 0);
@@ -110,8 +105,7 @@ namespace m3D {
         }
 
         size_t
-        grid_to_index(const vector<int> &g)
-        {
+        grid_to_index(const vector<int> &g) {
             size_t linear_index = 0;
 
             size_t N = m_dimension_sizes.size();

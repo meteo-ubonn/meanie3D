@@ -43,11 +43,11 @@ namespace m3D {
 
     public:
 
-        CFFileConversionException(const char* message);
+        CFFileConversionException(const char *message);
 
-        ~CFFileConversionException() throw ();
+        ~CFFileConversionException() throw();
 
-        virtual const char* what() const throw ();
+        virtual const char *what() const throw();
     };
 }
 

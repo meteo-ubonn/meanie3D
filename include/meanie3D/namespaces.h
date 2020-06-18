@@ -35,16 +35,16 @@
 // actually seeing all namespaces and dependencies.
 
 extern "C" {
-    namespace m3D {
-        namespace utils {
-            namespace netcdf {
-            }
-            namespace sets {
-            }
-            namespace vectors {
-            }
+namespace m3D {
+    namespace utils {
+        namespace netcdf {
+        }
+        namespace sets {
+        }
+        namespace vectors {
         }
     }
+}
 }
 
 #endif

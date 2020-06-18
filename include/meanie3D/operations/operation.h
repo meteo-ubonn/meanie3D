@@ -34,7 +34,7 @@ namespace m3D {
 
     /** Abstract base class for Operations on FeatureSpace
      */
-    template <typename T>
+    template<typename T>
     class Operation
     {
     protected:
@@ -44,12 +44,10 @@ namespace m3D {
 
     public:
 
-        Operation(FeatureSpace<T> *fs, PointIndex<T> *index) : feature_space(fs), point_index(index)
-        {
+        Operation(FeatureSpace<T> *fs, PointIndex<T> *index) : feature_space(fs), point_index(index) {
         }
 
-        virtual ~Operation()
-        {
+        virtual ~Operation() {
         };
     };
 }

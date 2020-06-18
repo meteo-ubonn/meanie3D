@@ -46,8 +46,7 @@ namespace m3D {
              * @param variable
              * @return number of values
              */
-            size_t num_vals(const NcVar &var) 
-            {
+            size_t num_vals(const NcVar &var) {
                 size_t count = 1;
                 for (int dim_index = 0; dim_index < var.getDimCount(); dim_index++) {
                     count = count * var.getDim(dim_index).getSize();
@@ -55,13 +54,12 @@ namespace m3D {
                 return count;
             }
 
-            template <typename T>
-            T*
-            readNcByte(const NcVar &variable, const T &scale_factor, const T &add_offset)
-            {
-                unsigned short *values = (unsigned short *) calloc(num_vals(variable), sizeof ( unsigned short));
+            template<typename T>
+            T *
+            readNcByte(const NcVar &variable, const T &scale_factor, const T &add_offset) {
+                unsigned short *values = (unsigned short *) calloc(num_vals(variable), sizeof(unsigned short));
                 variable.getVar(values);
-                T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
+                T *returnValue = (T *) calloc(num_vals(variable), sizeof(T));
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
@@ -69,11 +67,11 @@ namespace m3D {
                 return returnValue;
             }
 
-            template <typename T> T* readNcChar(const NcVar &variable, const T &scale_factor, const T &add_offset)
-            {
-                char *values = (char *) calloc(num_vals(variable), sizeof (char));
+            template<typename T>
+            T *readNcChar(const NcVar &variable, const T &scale_factor, const T &add_offset) {
+                char *values = (char *) calloc(num_vals(variable), sizeof(char));
                 variable.getVar(values);
-                T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
+                T *returnValue = (T *) calloc(num_vals(variable), sizeof(T));
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
@@ -81,11 +79,11 @@ namespace m3D {
                 return returnValue;
             }
 
-            template <typename T> T* readNcDouble(const NcVar &variable, const T &scale_factor, const T &add_offset)
-            {
-                double *values = (double *) calloc(num_vals(variable), sizeof (double));
+            template<typename T>
+            T *readNcDouble(const NcVar &variable, const T &scale_factor, const T &add_offset) {
+                double *values = (double *) calloc(num_vals(variable), sizeof(double));
                 variable.getVar(values);
-                T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
+                T *returnValue = (T *) calloc(num_vals(variable), sizeof(T));
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
@@ -93,11 +91,11 @@ namespace m3D {
                 return returnValue;
             }
 
-            template <typename T> T* readNcFloat(const NcVar &variable, const T &scale_factor, const T &add_offset)
-            {
-                float *values = (float *) calloc(num_vals(variable), sizeof (float));
+            template<typename T>
+            T *readNcFloat(const NcVar &variable, const T &scale_factor, const T &add_offset) {
+                float *values = (float *) calloc(num_vals(variable), sizeof(float));
                 variable.getVar(values);
-                T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
+                T *returnValue = (T *) calloc(num_vals(variable), sizeof(T));
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
@@ -105,11 +103,11 @@ namespace m3D {
                 return returnValue;
             }
 
-            template <typename T> T* readNcInt(const NcVar &variable, const T &scale_factor, const T &add_offset)
-            {
-                long *values = (long *) calloc(num_vals(variable), sizeof (long));
+            template<typename T>
+            T *readNcInt(const NcVar &variable, const T &scale_factor, const T &add_offset) {
+                long *values = (long *) calloc(num_vals(variable), sizeof(long));
                 variable.getVar(values);
-                T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
+                T *returnValue = (T *) calloc(num_vals(variable), sizeof(T));
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
@@ -117,11 +115,11 @@ namespace m3D {
                 return returnValue;
             }
 
-            template <typename T> T* readNcShort(const NcVar &variable, const T &scale_factor, const T &add_offset)
-            {
-                short *values = (short *) calloc(num_vals(variable), sizeof (short));
+            template<typename T>
+            T *readNcShort(const NcVar &variable, const T &scale_factor, const T &add_offset) {
+                short *values = (short *) calloc(num_vals(variable), sizeof(short));
                 variable.getVar(values);
-                T * returnValue = (T *) calloc(num_vals(variable), sizeof (T));
+                T *returnValue = (T *) calloc(num_vals(variable), sizeof(T));
                 for (int index = 0; index < num_vals(variable); index++) {
                     returnValue[index] = (T) values[index] * scale_factor + add_offset;
                 }
@@ -133,18 +131,17 @@ namespace m3D {
              * @param variable
              * @param allocated memory buffer with content
              */
-            template <typename T>
-            T*
-            readNetCDFVariable(const NcVar &variable)
-            {
+            template<typename T>
+            T *
+            readNetCDFVariable(const NcVar &variable) {
                 using namespace netCDF;
                 using namespace std;
 
-                T * returnValue = NULL;
+                T *returnValue = NULL;
                 T scale_factor = 1.0;
                 try {
-                    map< std::string, NcVarAtt > attributes = variable.getAtts();
-                    map< std::string, NcVarAtt >::iterator fi;
+                    map<std::string, NcVarAtt> attributes = variable.getAtts();
+                    map<std::string, NcVarAtt>::iterator fi;
                     fi = attributes.find("scale_factor");
                     if (fi != attributes.end()) {
                         fi->second.getValues(&scale_factor);
@@ -178,9 +175,9 @@ namespace m3D {
                         case netCDF::NcType::nc_SHORT:
                             returnValue = readNcShort<T>(variable, scale_factor, offset);
 
-                        default:
-                        {
-                            std::cerr << "ERROR:variable " << variable.getName() << " has unsupported type " << variable.getType().getTypeClassName() << std::endl;
+                        default: {
+                            std::cerr << "ERROR:variable " << variable.getName() << " has unsupported type "
+                                      << variable.getType().getTypeClassName() << std::endl;
                             returnValue = NULL;
                         }
                     }
@@ -204,67 +201,66 @@ namespace m3D {
              * @param valid_min (defaults to the min value for the template parameter)
              * @param valid_max (defaults to the max value for the template parameter)
              */
-            template <typename T>
+            template<typename T>
             inline
             T retrieveValueAt(const NcVar &var,
-                    const vector<int> &gridpoint,
-                    int time_index,
-                    bool &is_valid,
-                    const T scale_factor = 1.0,
-                    const T offset = 0.0,
-                    const T *fill_value = NULL,
-                    const T valid_min = std::numeric_limits<T>::min(),
-                    const T valid_max = std::numeric_limits<T>::max()) {
+                              const vector<int> &gridpoint,
+                              int time_index,
+                              bool &is_valid,
+                              const T scale_factor = 1.0,
+                              const T offset = 0.0,
+                              const T *fill_value = NULL,
+                              const T valid_min = std::numeric_limits<T>::min(),
+                              const T valid_max = std::numeric_limits<T>::max()) {
                 T value = 0.0;
                 vector<size_t> index(gridpoint.begin(), gridpoint.end());
                 if (time_index >= 0) {
                     index.insert(index.begin(), boost::numeric_cast<size_t>(time_index));
                 }
                 switch (var.getType().getTypeClass()) {
-                    case netCDF::NcType::nc_BYTE:
-                    {
+                    case netCDF::NcType::nc_BYTE: {
                         unsigned char val;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    } break;
+                    }
+                        break;
 
-                    case netCDF::NcType::nc_CHAR:
-                    {
+                    case netCDF::NcType::nc_CHAR: {
                         char val;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    } break;
+                    }
+                        break;
 
-                    case netCDF::NcType::nc_DOUBLE:
-                    {
+                    case netCDF::NcType::nc_DOUBLE: {
                         double val = 0.0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    } break;
+                    }
+                        break;
 
-                    case netCDF::NcType::nc_FLOAT:
-                    {
+                    case netCDF::NcType::nc_FLOAT: {
                         float val = 0.0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    } break;
+                    }
+                        break;
 
-                    case netCDF::NcType::nc_INT:
-                    {
+                    case netCDF::NcType::nc_INT: {
                         int val = 0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    } break;
+                    }
+                        break;
 
-                    case netCDF::NcType::nc_SHORT:
-                    {
+                    case netCDF::NcType::nc_SHORT: {
                         short val = 0;
                         var.getVar(index, &val);
                         value = boost::numeric_cast<T>(val);
-                    } break;
+                    }
+                        break;
 
-                    default:
-                    {
+                    default: {
                         var.getVar(index, &value);
                     }
                 }
@@ -296,7 +292,7 @@ namespace m3D {
              * @param valid_min
              * @throw std::runtime_error if neither valid_min+valid_max nor valid_range existed
              */
-            template <typename T>
+            template<typename T>
             void
             get_valid_range(const NcVar &var, T &valid_min, T &valid_max) {
                 bool have_valid_range = false;
@@ -345,10 +341,9 @@ namespace m3D {
              * @param valid_max
              * @throw std::exception if neither valid_min+valid_max nor valid_range existed
              */
-            template <typename T>
+            template<typename T>
             void
-            unpacked_limits(const NcVar &var, T &valid_min, T &valid_max)
-            {
+            unpacked_limits(const NcVar &var, T &valid_min, T &valid_max) {
                 NcVarAtt att;
 
                 T scale_factor = 1.0;
@@ -377,9 +372,8 @@ namespace m3D {
              * @param attribute name
              * @return value
              */
-            template <typename T>
-            T get_attribute_value(NcVar variable, const char *attributeName)
-            {
+            template<typename T>
+            T get_attribute_value(NcVar variable, const char *attributeName) {
                 T result;
 
                 if (variable.isNull()) {
@@ -390,19 +384,21 @@ namespace m3D {
                 try {
                     NcVarAtt att = variable.getAtt(attributeName);
                     if (att.isNull()) {
-                        std::string msg = "Can't access attribute '" + std::string(attributeName) + "' in variable '" + variable.getName() + "'";
+                        std::string msg = "Can't access attribute '" + std::string(attributeName) + "' in variable '" +
+                                          variable.getName() + "'";
                         throw new invalid_argument(msg);
                     }
 
                     att.getValues(&result);
                 } catch (netCDF::exceptions::NcException &e) {
-                    std::string msg = "Can't access attribute '" + std::string(attributeName) + "' in variable '" + variable.getName() + "'";
+                    std::string msg = "Can't access attribute '" + std::string(attributeName) + "' in variable '" +
+                                      variable.getName() + "'";
                     throw new invalid_argument(msg);
                 }
 
                 return result;
             }
-            
+
             /**
              * Evaluates the presence of time(time). It does this by
              * evaluating the time variable's attributes. If the attribute
@@ -417,8 +413,8 @@ namespace m3D {
              * @return <code>true</code> if file has time(time). 
              */
             bool
-            have_time(const std::string &filename, 
-                      const std::string &time_var_name = "time" ) {
+            have_time(const std::string &filename,
+                      const std::string &time_var_name = "time") {
                 bool result = false;
                 NcFile *file = NULL;
                 try {
@@ -426,7 +422,7 @@ namespace m3D {
                     if (!file->isNull()) {
                         NcVar timeVar = file->getVar(time_var_name);
                         if (!timeVar.isNull()) {
-                            
+
                             // check if the time dimension is explicity denoted
                             // 'time' by long name
                             try {
@@ -436,11 +432,11 @@ namespace m3D {
                                 result = (long_name == "time");
                             } catch (netCDF::exceptions::NcException &e) {
                             }
-                            
+
                             // If that was not the case, we can check if
                             // the time dimension is called t or time
                             if (!result) {
-                                if (timeVar.getDimCount()==1) {
+                                if (timeVar.getDimCount() == 1) {
                                     NcDim t = timeVar.getDim(0);
                                     result = t.getName() == "t" || t.getName() == "time";
                                 }
@@ -448,7 +444,7 @@ namespace m3D {
                         }
                     }
                 } catch (netCDF::exceptions::NcException &e) {
-                } 
+                }
                 if (file != NULL) delete file;
                 return result;
             }
@@ -457,10 +453,9 @@ namespace m3D {
              * Adds a dimension and variable time eg. time(time).
              * Time is a 1-D array with the given value
              */
-            bool 
-            add_time(NcFile *file, unsigned long timestamp, 
-                    bool toggle_defmode = true)
-            {
+            bool
+            add_time(NcFile *file, unsigned long timestamp,
+                     bool toggle_defmode = true) {
                 try {
                     if (toggle_defmode)
                         nc_redef(file->getId());
@@ -479,10 +474,12 @@ namespace m3D {
                     unsigned long values[1] = {timestamp};
                     vTime.putVar(&values[0]);
                 } catch (const netCDF::exceptions::NcException &e) {
-                    cerr << "ERROR:could not add variable 'time(time)' to file '" << file->getName() << "' : " << e.what() << endl;
+                    cerr << "ERROR:could not add variable 'time(time)' to file '" << file->getName() << "' : "
+                         << e.what() << endl;
                     return false;
                 } catch (const std::exception &e) {
-                    cerr << "ERROR:could not add variable 'time(time)' to file '" << file->getName() << "' : " << e.what() << endl;
+                    cerr << "ERROR:could not add variable 'time(time)' to file '" << file->getName() << "' : "
+                         << e.what() << endl;
                     return false;
                 }
 
@@ -492,8 +489,7 @@ namespace m3D {
             /** Adds a dimension and variable time eg. time(time).
              * Time is a 1-D array with the given value
              */
-            bool add_time(std::string fn, unsigned long timestamp, bool toggle_defmode = true)
-            {
+            bool add_time(std::string fn, unsigned long timestamp, bool toggle_defmode = true) {
                 NcFile *file = new NcFile(fn, NcFile::write);
                 bool result = add_time(file, timestamp, toggle_defmode);
                 delete file;
@@ -508,9 +504,8 @@ namespace m3D {
              * @throws std::runtime_exception if time can not be defined
              */
             void get_time_dim_and_var(NcFile &file,
-                    NcDim &time_dim, NcVar &time_var) 
-            throw (std::runtime_error) 
-            {
+                                      NcDim &time_dim, NcVar &time_var)
+            throw(std::runtime_error) {
                 // find time dimension 'time' or 't'
                 time_dim = file.getDim("time");
                 if (time_dim.isNull()) {
@@ -521,8 +516,8 @@ namespace m3D {
                 }
 
                 // Find variable time(time)
-                std::multimap< std::string, NcVar >::iterator vi;
-                std::multimap< std::string, NcVar > vars = file.getVars();
+                std::multimap<std::string, NcVar>::iterator vi;
+                std::multimap<std::string, NcVar> vars = file.getVars();
                 for (vi = vars.begin(); vi != vars.end(); ++vi) {
                     try {
                         // check if the variable depends on dimension time_dim alone
@@ -560,7 +555,7 @@ namespace m3D {
                 if (time_var.isNull())
                     throw runtime_error("ERROR:can't read time variable");
             }
-            
+
             /** 
              * Get the time value for the given index. This assumes
              * that there is a time(time) constellation in the file.
@@ -573,13 +568,12 @@ namespace m3D {
              *
              * @return actual value for time at time_index
              */
-            template <typename T>
-            T 
-            get_time(const std::string &filename, 
-                    const int &time_index,
-                    const std::string &time_var_name = "time") 
-            throw (std::runtime_error)
-            {
+            template<typename T>
+            T
+            get_time(const std::string &filename,
+                     const int &time_index,
+                     const std::string &time_var_name = "time")
+            throw(std::runtime_error) {
                 try {
                     NcFile file(filename, NcFile::read);
                     if (file.isNull()) {
@@ -591,7 +585,7 @@ namespace m3D {
                         get_time_dim_and_var(file, time_dim, time_var);
                     } catch (std::exception &) {
                     }
-                    
+
                     if (time_var.isNull() || time_dim.isNull()) {
                         // No time(time)
                         return 0;
@@ -618,7 +612,7 @@ namespace m3D {
                 }
             }
 
-            
+
             /**
              * Performs a checked method of retrieving time information
              * from a given file. This is a little complicated, as there
@@ -634,16 +628,15 @@ namespace m3D {
              * @param time_var_name (defaults to 'time')
              * @return 
              */
-            template <typename T>
+            template<typename T>
             T
-            get_time_checked(const std::string &filename, 
-                    const int &time_index,
-                    const std::string &time_var_name = "time") 
-            {
+            get_time_checked(const std::string &filename,
+                             const int &time_index,
+                             const std::string &time_var_name = "time") {
                 T timestamp = -1;
-                
+
                 bool have_t = have_time(filename, time_var_name);
-                
+
                 if (boost::contains(filename, "rico.out.xy.")) {
 
                     // TODO: this block was put in for a specific tracking
@@ -651,17 +644,17 @@ namespace m3D {
                     // time for this is days since simulation start
 
                     // Days in simulation -> seconds
-                    double time_in_days = get_time<double>(filename,time_index);
+                    double time_in_days = get_time<double>(filename, time_index);
                     // a day has 24 * 60 * 60 seconds
                     timestamp = (T) round(time_in_days * 24.0 * 60.0 * 60.0);
                 } else if (time_index == NO_TIME && !have_t) {
                     timestamp = 0l;
                 } else if (time_index == NO_TIME && have_t) {
-                    timestamp = get_time<T>(filename,0);
+                    timestamp = get_time<T>(filename, 0);
                 } else if (time_index != NO_TIME && have_t) {
-                    timestamp = get_time<T>(filename,time_index);
+                    timestamp = get_time<T>(filename, time_index);
                 }
-                
+
                 return timestamp;
             }
 
@@ -672,8 +665,7 @@ namespace m3D {
              * @return vector of strings
              */
             std::vector<std::string>
-            to_names(const std::vector<netCDF::NcVar> &variables)
-            {
+            to_names(const std::vector<netCDF::NcVar> &variables) {
                 std::vector<std::string> result;
                 for (size_t i = 0; i < variables.size(); i++) {
                     result.push_back(variables[i].getName());
@@ -688,8 +680,7 @@ namespace m3D {
              * @return vector of netcdf variables
              */
             std::vector<netCDF::NcVar>
-            to_variables(const NcFile* file, const std::vector<std::string> &names)
-            {
+            to_variables(const NcFile *file, const std::vector<std::string> &names) {
                 std::vector<netCDF::NcVar> variables;
                 for (size_t i = 0; i < names.size(); i++) {
                     variables.push_back(file->getVar(names[i]));
@@ -704,12 +695,11 @@ namespace m3D {
              * @param fn
              * @return 
              */
-            template <typename T>
-            NcFile*
+            template<typename T>
+            NcFile *
             create_file_by_copying_dimensions(const std::string &source_path,
-                    const std::string &dest_path,
-                    const std::vector<std::string> &dimensionNames)
-            {
+                                              const std::string &dest_path,
+                                              const std::vector<std::string> &dimensionNames) {
                 NcFile *source = NULL;
 
                 // open the original
@@ -750,7 +740,7 @@ namespace m3D {
 
                     // copy dimension data
 
-                    T* data = source_cs->get_dimension_data_ptr(di);
+                    T *data = source_cs->get_dimension_data_ptr(di);
                     source_var.putVar(data);
                 }
 
@@ -771,10 +761,9 @@ namespace m3D {
              * @param dest
              * @return 
              */
-            vector<NcDim>
-            copy_dimensions(const vector<string> &dimensions,
-                    const NcFile *source, NcFile *dest)
-            {
+            vector <NcDim>
+            copy_dimensions(const vector <string> &dimensions,
+                            const NcFile *source, NcFile *dest) {
                 vector<NcDim> ncDimensions;
                 for (size_t di = 0; di < dimensions.size(); di++) {
                     string dimension = dimensions[di];
@@ -798,9 +787,9 @@ namespace m3D {
              * @return <code>true</code> if operation was success.
              * @throws netCDF::exceptions::NcException
              */
-            template <typename T>
+            template<typename T>
             bool copy_variable(const std::string &variable,
-                    const NcFile *source, NcFile *dest, bool with_data) {
+                               const NcFile *source, NcFile *dest, bool with_data) {
                 // This should no longer be required with netCDF C++ 4 API
                 // nc_redef(file->getId());                
 
@@ -816,7 +805,7 @@ namespace m3D {
                     NcDim destDim = dest->getDim(sourceDim.getName());
                     if (destDim.isNull()) {
                         cerr << "ERROR:could not find dimension '"
-                                << sourceDim.getName() << "'" << endl;
+                             << sourceDim.getName() << "'" << endl;
                         return false;
                     }
                     copyDims.push_back(destDim);
@@ -827,14 +816,14 @@ namespace m3D {
                 copy = dest->addVar(variable, sourceVar.getType(), copyDims);
                 if (copy.isNull()) {
                     cerr << "ERROR:could not create variable '"
-                            << variable << "'" << endl;
+                         << variable << "'" << endl;
                     return false;
                 }
                 copy.setCompression(false, true, 3);
 
                 // Copy attributes
-                map< string, NcVarAtt > attributes = sourceVar.getAtts();
-                map< string, NcVarAtt >::iterator at;
+                map<string, NcVarAtt> attributes = sourceVar.getAtts();
+                map<string, NcVarAtt>::iterator at;
                 for (at = attributes.begin(); at != attributes.end(); at++) {
                     NcVarAtt a = at->second;
                     size_t size = a.getAttLength();
@@ -842,7 +831,7 @@ namespace m3D {
                     a.getValues(data);
                     NcVarAtt att_copy = copy.putAtt(a.getName(), a.getType(), size, data);
                     free(data);
-    
+
                     if (att_copy.isNull()) {
                         cerr << "ERROR: could not write attribute " << a.getName() << endl;
                         return false;
@@ -852,7 +841,7 @@ namespace m3D {
                 // Copy data is necessary
                 if (with_data) {
                     size_t number_of_values = num_vals(sourceVar);
-                    T *data = (T*) malloc(sizeof (T) * number_of_values);
+                    T *data = (T *) malloc(sizeof(T) * number_of_values);
                     if (data == NULL) {
                         cerr << "ERROR:out of memory" << endl;
                         return false;
@@ -861,7 +850,7 @@ namespace m3D {
                     copy.putVar(data);
                     free(data);
                 }
-                
+
                 return true;
             }
         }

@@ -32,13 +32,15 @@
 using ::testing::Types;
 using namespace std;
 
-typedef Types< float, double > DataTypes;
+typedef Types<float, double> DataTypes;
 
 #pragma mark -
 #pragma mark Clustering 
 
 #if RUN_CLUSTERING
+
 #include "clustering.h"
+
 #endif
 
 #endif

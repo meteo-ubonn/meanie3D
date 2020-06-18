@@ -38,66 +38,53 @@
 
 namespace m3D {
 
-    template <typename T>
+    template<typename T>
     const size_t
-    ArrayIndex<T>::rank()
-    {
+    ArrayIndex<T>::rank() {
         return m_dimensions.size();
     };
 
-    template <typename T>
+    template<typename T>
     const vector<size_t> &
-    ArrayIndex<T>::dimensions()
-    {
+    ArrayIndex<T>::dimensions() {
         return m_dimensions;
     };
 
-    template <typename T>
+    template<typename T>
     ArrayIndex<T>::ArrayIndex(const vector<size_t> &dimensions,
-            bool make_copies)
-    : m_dimensions(dimensions)
-    , m_data(NULL)
-    , m_make_copies(make_copies)
-    {
+                              bool make_copies)
+            : m_dimensions(dimensions), m_data(NULL), m_make_copies(make_copies) {
         vector<int> gp = vector<int>(dimensions.size(), 0);
         this->construct_array_recursive(0, &m_data, gp);
     }
 
-    template <typename T>
+    template<typename T>
     ArrayIndex<T>::ArrayIndex(const vector<size_t> &dimensions,
-            const typename Point<T>::list &points,
-            bool make_copies)
-    : m_dimensions(dimensions)
-    , m_data(NULL)
-    , m_make_copies(make_copies)
-    {
+                              const typename Point<T>::list &points,
+                              bool make_copies)
+            : m_dimensions(dimensions), m_data(NULL), m_make_copies(make_copies) {
         vector<int> gp = vector<int>(dimensions.size(), 0);
         this->construct_array_recursive(0, &m_data, gp);
         this->index(points);
     }
 
-    template <typename T>
+    template<typename T>
     ArrayIndex<T>::ArrayIndex(ArrayIndex<T> *o)
-    : m_dimensions(o->m_dimensions)
-    , m_data(NULL)
-    , m_make_copies(o->m_make_copies)
-    {
+            : m_dimensions(o->m_dimensions), m_data(NULL), m_make_copies(o->m_make_copies) {
         vector<int> gp = vector<int>(o->m_dimensions.size(), 0);
         this->copy_points_recursive(o, 0, gp);
     }
 
-    template <typename T>
-    ArrayIndex<T>::~ArrayIndex()
-    {
+    template<typename T>
+    ArrayIndex<T>::~ArrayIndex() {
         vector<int> gp = vector<int>(m_dimensions.size(), 0);
         this->destroy_array_recursive(0, &m_data, gp);
     }
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::add_points_to_list(typename Point<T>::list &points,
-            vector<int> &gridpoint)
-    {
+                                      vector<int> &gridpoint) {
         // obtain the size of the last dimension
 
         size_t dimSize = m_dimensions[gridpoint.size() - 1];
@@ -120,11 +107,10 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::get_points_from_index(ArrayIndex<T> *otherIndex,
-            vector<int> &gridpoint)
-    {
+                                         vector<int> &gridpoint) {
         // obtain the size of the last dimension
 
         size_t dimSize = m_dimensions[gridpoint.size() - 1];
@@ -149,12 +135,11 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::replace_points_recursive(typename Point<T>::list &points,
-            size_t dim_index,
-            vector<int> &gridpoint)
-    {
+                                            size_t dim_index,
+                                            vector<int> &gridpoint) {
         size_t dimSize = m_dimensions[dim_index];
 
         if (m_dimensions.size() == 1) {
@@ -170,12 +155,11 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::copy_points_recursive(ArrayIndex<T> *otherIndex,
-            size_t dim_index,
-            vector<int> &gridpoint)
-    {
+                                         size_t dim_index,
+                                         vector<int> &gridpoint) {
         size_t dimSize = m_dimensions[dim_index];
 
         if (m_dimensions.size() == 1) {
@@ -191,10 +175,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ArrayIndex<T>::replace_points(typename Point<T>::list &points)
-    {
+    ArrayIndex<T>::replace_points(typename Point<T>::list &points) {
         // clean the original list out and
         // release all the points
 
@@ -215,17 +198,16 @@ namespace m3D {
         this->replace_points_recursive(points, 0, gp);
     }
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::construct_array_recursive(size_t dim_index,
-            array_t **array,
-            vector<int> &gridpoint,
-            ArrayIndex<T> *other)
-    {
+                                             array_t **array,
+                                             vector<int> &gridpoint,
+                                             ArrayIndex<T> *other) {
         size_t dimSize = m_dimensions[dim_index];
 
         if (m_dimensions.size() == 1) {
-            *array = (array_t *) new vector<typename Point<T>::ptr > (dimSize, NULL);
+            *array = (array_t *) new vector<typename Point<T>::ptr>(dimSize, NULL);
 
             if (other != NULL) {
                 this->get_points_from_index(other, gridpoint);
@@ -263,7 +245,7 @@ namespace m3D {
 
             size_t super_index = gridpoint[dim_index - 1];
 
-            vector<typename Point<T>::ptr> *new_array = new vector<typename Point<T>::ptr > (dimSize, NULL);
+            vector<typename Point<T>::ptr> *new_array = new vector<typename Point<T>::ptr>(dimSize, NULL);
 
             super_array->at(super_index) = new_array;
 
@@ -273,10 +255,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ArrayIndex<T>::destroy_array_recursive(size_t dim_index, array_t **array, vector<int> &gridpoint)
-    {
+    ArrayIndex<T>::destroy_array_recursive(size_t dim_index, array_t **array, vector<int> &gridpoint) {
         size_t dimSize = m_dimensions[dim_index];
 
         if (m_dimensions.size() == 1) {
@@ -333,10 +314,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ArrayIndex<T>::index(const typename Point<T>::list &list)
-    {
+    ArrayIndex<T>::index(const typename Point<T>::list &list) {
         for (size_t i = 0; i < list.size(); i++) {
             typename Point<T>::ptr p = list[i];
 
@@ -347,10 +327,9 @@ namespace m3D {
 #pragma mark -
 #pragma mark Accessors
 
-    template <typename T>
+    template<typename T>
     typename Point<T>::ptr
-    ArrayIndex<T>::get(const vector<int> &gp)
-    {
+    ArrayIndex<T>::get(const vector<int> &gp) {
         vector<void *> *array = m_data;
 
         typename Point<T>::ptr result = NULL;
@@ -378,10 +357,9 @@ namespace m3D {
         return result;
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ArrayIndex<T>::set(const vector<int> &gp, typename Point<T>::ptr p, bool copy)
-    {
+    ArrayIndex<T>::set(const vector<int> &gp, typename Point<T>::ptr p, bool copy) {
         vector<void *> *array = m_data;
 
         for (size_t dim_index = 0; dim_index < gp.size(); dim_index++) {
@@ -423,13 +401,12 @@ namespace m3D {
 #pragma mark -
 #pragma mark Clear Index
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::clear_recursive(size_t dim_index,
-            array_t *array,
-            vector<int> &gridpoint,
-            bool delete_points)
-    {
+                                   array_t *array,
+                                   vector<int> &gridpoint,
+                                   bool delete_points) {
         size_t dimSize = m_dimensions[dim_index];
 
         if (dim_index < (m_dimensions.size() - 1)) {
@@ -455,10 +432,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ArrayIndex<T>::clear(bool delete_points)
-    {
+    ArrayIndex<T>::clear(bool delete_points) {
         vector<int> gp = vector<int>(m_dimensions.size(), 0);
 
         clear_recursive(0, m_data, gp, delete_points);
@@ -467,14 +443,13 @@ namespace m3D {
 #pragma mark -
 #pragma mark Counting
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::count_recursive(size_t dim_index,
-            array_t *array,
-            vector<int> &gridpoint,
-            size_t &count,
-            bool originalPointsOnly)
-    {
+                                   array_t *array,
+                                   vector<int> &gridpoint,
+                                   size_t &count,
+                                   bool originalPointsOnly) {
         size_t dimSize = m_dimensions[dim_index];
 
         if (dim_index < (m_dimensions.size() - 1)) {
@@ -500,10 +475,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     size_t
-    ArrayIndex<T>::count(bool originalPointsOnly)
-    {
+    ArrayIndex<T>::count(bool originalPointsOnly) {
         size_t count = 0;
 
         vector<int> gp = vector<int>(m_dimensions.size(), 0);
@@ -513,13 +487,12 @@ namespace m3D {
         return count;
     }
 
-    template <typename T>
+    template<typename T>
     void
     ArrayIndex<T>::find_neighbours_recursive(vector<int> &gridpoint,
-            size_t dimensionIndex,
-            typename Point<T>::list &list,
-            size_t reach)
-    {
+                                             size_t dimensionIndex,
+                                             typename Point<T>::list &list,
+                                             size_t reach) {
         size_t dimSize = this->dimensions()[dimensionIndex];
 
         // iterate over dimensions
@@ -556,10 +529,9 @@ namespace m3D {
         gridpoint[dimensionIndex] = start + reach;
     }
 
-    template <typename T>
+    template<typename T>
     typename Point<T>::list
-    ArrayIndex<T>::find_neighbours(const vector<int> &gridpoint, size_t reach)
-    {
+    ArrayIndex<T>::find_neighbours(const vector<int> &gridpoint, size_t reach) {
         typename Point<T>::list neighbours;
 
         typename CoordinateSystem<T>::GridPoint gp = gridpoint;

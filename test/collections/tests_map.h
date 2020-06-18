@@ -23,8 +23,7 @@ class IDMapTest : public testing::Test
 public:
 };
 
-TEST(IDMapTest, IDMapTest)
-{
+TEST(IDMapTest, IDMapTest) {
     m3D::id_map_t m;
 
     m3D::id_set_t s1;
@@ -35,8 +34,8 @@ TEST(IDMapTest, IDMapTest)
     s2.insert(3);
     s2.insert(4);
 
-    m[(m3D::id_t)0] = s1;
-    m[(m3D::id_t)1] = s2;
+    m[(m3D::id_t) 0] = s1;
+    m[(m3D::id_t) 1] = s2;
 
     const char *expected_str = "[0:{1,2};1:{3,4};]";
 

@@ -39,12 +39,12 @@ namespace m3D {
      * DOI 10.1175/1520-0450(1995)034<1978:CCOTDS>2.0.CO;2
      *
      */
-    template <class T>
+    template<class T>
     class ConvectionFilter : public FeatureSpaceFilter<T>
     {
     private:
 
-        vector<T> m_bandwidth;
+        vector <T> m_bandwidth;
         size_t m_index_of_z;
         T m_convective_threshold;
         T m_critical_delta_z;
@@ -69,20 +69,20 @@ namespace m3D {
          * @param erase_non_convective  if true, points are deleted instead being set to zero
          * @param show_progress if true, progress bar and status messages are displayed
          */
-        ConvectionFilter(const vector<T> &bandwidth,
-                const size_t index_of_z,
-                const bool show_progress = false,
-                const T z_convective = 40.0,
-                const T critical_delta_z = 4.5,
-                const T convective_radius_factor = 0.2,
-                const bool erase_non_convective = false);
+        ConvectionFilter(const vector <T> &bandwidth,
+                         const size_t index_of_z,
+                         const bool show_progress = false,
+                         const T z_convective = 40.0,
+                         const T critical_delta_z = 4.5,
+                         const T convective_radius_factor = 0.2,
+                         const bool erase_non_convective = false);
 
         virtual ~ConvectionFilter();
 
 #pragma mark -
 #pragma mark Abstract filter method
 
-        virtual void apply(FeatureSpace<T> *fs);
+        virtual void apply(FeatureSpace <T> *fs);
     };
 }
 

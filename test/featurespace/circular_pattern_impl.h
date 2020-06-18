@@ -16,22 +16,20 @@ using namespace m3D::utils::vectors;
  * @return yes or no
  */
 template<class T>
-bool FSCircularPatternTest2D<T>::isPointOnEllipse(vector<T> coordinate, vector<T> axis)
-{
+bool FSCircularPatternTest2D<T>::isPointOnEllipse(vector<T> coordinate, vector<T> axis) {
     assert(axis.size() >= coordinate.size());
     float value = 0;
     for (size_t index = 0; index < coordinate.size(); index++) {
         value += ((coordinate[index] * coordinate[index]) / (axis[index] * axis[index]));
     }
-    return ( fabs(value - 1.0) <= ELLIPSE_FUZZINESS);
+    return (fabs(value - 1.0) <= ELLIPSE_FUZZINESS);
 }
 
 template<class T>
 void FSCircularPatternTest2D<T>::create_ellipsoid_recursive(NcVar &var,
-        vector<T> &h,
-        size_t dimensionIndex,
-        vector<int> &gridpoint)
-{
+                                                            vector<T> &h,
+                                                            size_t dimensionIndex,
+                                                            vector<int> &gridpoint) {
     NcDim dim = var.getDim(dimensionIndex);
     if (dimensionIndex < (this->coordinate_system()->rank() - 1)) {
         for (int index = 0; index < dim.getSize(); index++) {
@@ -57,8 +55,7 @@ void FSCircularPatternTest2D<T>::create_ellipsoid_recursive(NcVar &var,
 }
 
 template<class T>
-void FSCircularPatternTest2D<T>::create_ellipsoid(NcVar &var, vector<T> h)
-{
+void FSCircularPatternTest2D<T>::create_ellipsoid(NcVar &var, vector<T> h) {
     vector<int> gridpoint(this->coordinate_system()->rank(), 0);
     this->m_pointCount = 0;
     create_ellipsoid_recursive(var, h, 0, gridpoint);
@@ -66,8 +63,7 @@ void FSCircularPatternTest2D<T>::create_ellipsoid(NcVar &var, vector<T> h)
 }
 
 template<class T>
-void FSCircularPatternTest2D<T>::SetUp()
-{
+void FSCircularPatternTest2D<T>::SetUp() {
     FSTestBase<T>::SetUp();
 
     // Set the bandwidths
@@ -104,7 +100,7 @@ void FSCircularPatternTest2D<T>::SetUp()
     NcVar var = this->add_variable("circular_pattern_test", 0.0, FS_VALUE_MAX);
 
     // Create an ellipse with each bandwidth set in the new variable
-    typename vector< vector<T> > ::iterator it;
+    typename vector<vector<T> >::iterator it;
     for (it = m_bandwidths.begin(); it != m_bandwidths.end(); it++) {
         INFO << "Creating ellipsoid at origin with ranges " << (*it) << " ... ";
         create_ellipsoid(var, *it);
@@ -121,8 +117,7 @@ void FSCircularPatternTest2D<T>::SetUp()
 }
 
 template<class T>
-void FSCircularPatternTest2D<T>::TearDown()
-{
+void FSCircularPatternTest2D<T>::TearDown() {
     FSTestBase<T>::TearDown();
 }
 
@@ -130,18 +125,16 @@ void FSCircularPatternTest2D<T>::TearDown()
 #pragma mark Test parameterization
 
 template<class T>
-FSCircularPatternTest2D<T>::FSCircularPatternTest2D() : FSTestBase<T>()
-{
-    INFO << "Setting up 2D test with typeid " << typeid (T).name() << endl;
+FSCircularPatternTest2D<T>::FSCircularPatternTest2D() : FSTestBase<T>() {
+    INFO << "Setting up 2D test with typeid " << typeid(T).name() << endl;
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
     INFO << "Test filename = " << filename << endl;
     this->m_settings = new FSTestSettings(2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
 }
 
 template<class T>
-FSCircularPatternTest3D<T>::FSCircularPatternTest3D() : FSCircularPatternTest2D<T>()
-{
-    INFO << "Setting up 3D test with typeid " << typeid (T).name() << endl;
+FSCircularPatternTest3D<T>::FSCircularPatternTest3D() : FSCircularPatternTest2D<T>() {
+    INFO << "Setting up 3D test with typeid " << typeid(T).name() << endl;
     std::string filename = FSTestBase<T>::filename_from_current_testcase();
     INFO << "Test filename = " << filename << endl;
     this->m_settings = new FSTestSettings(3, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());

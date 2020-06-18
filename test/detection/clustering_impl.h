@@ -6,8 +6,7 @@
 #include "variable_weighed_impl.h"
 
 template<class T>
-void FSClusteringTest2D<T>::write_cloud(const NcVar &var, vector<T> mean, vector<T> deviation)
-{
+void FSClusteringTest2D<T>::write_cloud(const NcVar &var, vector <T> mean, vector <T> deviation) {
     using namespace netCDF;
     using namespace m3D;
     using namespace m3D::utils::vectors;
@@ -59,8 +58,8 @@ void FSClusteringTest2D<T>::write_cloud(const NcVar &var, vector<T> mean, vector
 }
 
 template<class T>
-void FSClusteringTest2D<T>::create_clouds_recursive(const NcVar &var, size_t dimensionIndex, typename CoordinateSystem<T>::GridPoint &gridpoint)
-{
+void FSClusteringTest2D<T>::create_clouds_recursive(const NcVar &var, size_t dimensionIndex,
+                                                    typename CoordinateSystem<T>::GridPoint &gridpoint) {
     using namespace netCDF;
 
     NcDim dim = var.getDim(dimensionIndex);
@@ -75,17 +74,17 @@ void FSClusteringTest2D<T>::create_clouds_recursive(const NcVar &var, size_t dim
             gridpoint[dimensionIndex] = index * increment;
             // get the variables together and construct the cartesian coordinate
             // of the current point. If it's on the ellipse, put it in the variable
-            vector<T> coordinate(var.getDimCount());
+            vector <T> coordinate(var.getDimCount());
             this->coordinate_system()->lookup(gridpoint, coordinate);
-            cout << "\tWriting cloud at gridpoint=" << gridpoint << " coordinate=" << coordinate << " deviation=" << m_deviation << endl;
+            cout << "\tWriting cloud at gridpoint=" << gridpoint << " coordinate=" << coordinate << " deviation="
+                 << m_deviation << endl;
             write_cloud(var, coordinate, m_deviation);
         }
     }
 }
 
 template<class T>
-void FSClusteringTest2D<T>::create_clouds(const NcVar &var)
-{
+void FSClusteringTest2D<T>::create_clouds(const NcVar &var) {
     // calculate the divisions in terms of grid points
     // calculate the deviations
     vector<NcDim *>::iterator dim_iter;
@@ -93,7 +92,7 @@ void FSClusteringTest2D<T>::create_clouds(const NcVar &var)
         NcDim dim = this->coordinate_system()->dimensions()[index];
         NcVar dim_var = this->coordinate_system()->dimension_variable(dim);
         size_t number_gridpoints = utils::netcdf::num_vals(dim_var) / m_divisions;
-        m_division_increments[ dim ] = number_gridpoints;
+        m_division_increments[dim] = number_gridpoints;
         m_deviation.push_back(0.4 / m_divisions);
     }
     typename CoordinateSystem<T>::GridPoint gridpoint = this->coordinate_system()->newGridPoint();
@@ -105,8 +104,7 @@ void FSClusteringTest2D<T>::create_clouds(const NcVar &var)
 }
 
 template<class T>
-void FSClusteringTest2D<T>::SetUp()
-{
+void FSClusteringTest2D<T>::SetUp() {
     FSTestBase<T>::SetUp();
     m_smoothing_scale = 0.01;
     // Set the bandwidths
@@ -128,8 +126,7 @@ void FSClusteringTest2D<T>::SetUp()
 }
 
 template<class T>
-void FSClusteringTest2D<T>::TearDown()
-{
+void FSClusteringTest2D<T>::TearDown() {
     FSTestBase<T>::TearDown();
 }
 
@@ -137,8 +134,7 @@ void FSClusteringTest2D<T>::TearDown()
 #pragma mark Test parameterization
 
 template<class T>
-FSClusteringTest2D<T>::FSClusteringTest2D() : FSTestBase<T>()
-{
+FSClusteringTest2D<T>::FSClusteringTest2D() : FSTestBase<T>() {
     this->m_settings = new FSTestSettings(2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
     this->m_divisions = 3;
     this->m_cloudSize = 50 * NUMBER_OF_GRIDPOINTS / m_divisions;
@@ -146,8 +142,7 @@ FSClusteringTest2D<T>::FSClusteringTest2D() : FSTestBase<T>()
 }
 
 template<class T>
-FSClusteringTest3D<T>::FSClusteringTest3D() : FSClusteringTest2D<T>()
-{
+FSClusteringTest3D<T>::FSClusteringTest3D() : FSClusteringTest2D<T>() {
     this->m_settings = new FSTestSettings(3, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
     this->m_divisions = 4;
     this->m_cloudSize = 50 * NUMBER_OF_GRIDPOINTS / this->m_divisions;

@@ -41,7 +41,8 @@ namespace m3D {
     /**
      * Parameters to the tracking algorithm.
      */
-    typedef struct {
+    typedef struct
+    {
         std::string previous_filename; // Path to previous cluster file
         std::string current_filename; // Path to current cluster file
 
@@ -74,8 +75,9 @@ namespace m3D {
 
     /** This class contains the tracking code.
      */
-    template <typename T>
-    class Tracking {
+    template<typename T>
+    class Tracking
+    {
 
     protected:
 
@@ -87,11 +89,12 @@ namespace m3D {
          * things derived at the beginning, such as bounds, derived parameters
          * or similar. Also the correlation data between clusters.
          */
-        typedef struct {
+        typedef struct
+        {
             // Properties
             typename ClusterList<T>::ptr current; // previous cluster list
             typename ClusterList<T>::ptr previous; // current cluster list
-            size_t N,M;                     // Shortcuts for lenghts of previous and current lists.
+            size_t N, M;                     // Shortcuts for lenghts of previous and current lists.
             const CoordinateSystem<T> *cs;  // Coordinate system (for transformations)
             LinearIndexMapping mapping;     // maps i <-> (n,m)
 
@@ -228,9 +231,9 @@ namespace m3D {
          * @returns split criterion value
          */
         double
-                getSplitCriterion(typename Tracking<T>::tracking_run_t &run,
-                                  const int &m,
-                                  const int &n);
+        getSplitCriterion(typename Tracking<T>::tracking_run_t &run,
+                          const int &m,
+                          const int &n);
 
 
         /**
@@ -253,7 +256,7 @@ namespace m3D {
          *
          */
         void getSplitCandidates(typename Tracking<T>::tracking_run_t &run,
-                                const int& m,
+                                const int &m,
                                 bool &track_flag,
                                 vector<int> &candidates,
                                 uuid_set_t &candidateUuids);
@@ -305,7 +308,7 @@ namespace m3D {
          * @param contains ids of candidates after the call.
          */
         void getMergeCandidates(typename Tracking<T>::tracking_run_t &run,
-                                const int& n,
+                                const int &n,
                                 bool &track_flag,
                                 vector<int> &candidateIndexes,
                                 id_set_t &candidateIds);

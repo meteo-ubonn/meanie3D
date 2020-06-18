@@ -39,7 +39,7 @@ namespace m3D {
 
     /** This represents one point f in feature space F.
      */
-    template <class T>
+    template<class T>
     class CoordinateSystem
     {
     public:
@@ -47,7 +47,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Definitions
 
-        typedef vector<T*> DimensionData;
+        typedef vector<T *> DimensionData;
         typedef vector<T> Coordinate;
         typedef vector<int> GridPoint;
 
@@ -84,8 +84,8 @@ namespace m3D {
          * @return map with variables as key and T* as data.
          */
         static void read_dimension_data_map(DimensionData &dim_data_map,
-                const vector<NcDim> &dimensions,
-                const vector<NcVar> &dimVars);
+                                            const vector<NcDim> &dimensions,
+                                            const vector<NcVar> &dimVars);
 
         /** Iterates over the given map and frees up the allocated T* memory blocks.
          * Afterwards, the map will be empty.
@@ -105,7 +105,7 @@ namespace m3D {
          * @param dimensions
          */
         CoordinateSystem(NcFile *file,
-                const vector<string> &dimensions);
+                         const vector<string> &dimensions);
 
         /** Construct a coordinate system from the coordinate
          * variables in a NetCDF file.
@@ -114,8 +114,8 @@ namespace m3D {
          * @param list of variables containing the axis data
          */
         CoordinateSystem(const vector<NcDim> &dimensions,
-                const vector<NcVar> &dimension_variables);
-        
+                         const vector<NcVar> &dimension_variables);
+
         /**
          * Constructor.
          * TODO: migrate away from NetCDF as sole source of building
@@ -126,14 +126,14 @@ namespace m3D {
          * @param dimensionVariables
          */
         CoordinateSystem(NcFile *file,
-            const vector<string> &dimensions,
-            const vector<string> &dimensionVariables);
+                         const vector<string> &dimensions,
+                         const vector<string> &dimensionVariables);
 
         // big three
 
         /** Copy constructor
          */
-        CoordinateSystem(const CoordinateSystem& other);
+        CoordinateSystem(const CoordinateSystem &other);
 
         /** Copy operator
          */
@@ -239,7 +239,7 @@ namespace m3D {
         /** @return vector containing the size of the grid's pixels in
          * each dimension.
          */
-        const vector<T>& resolution() const;
+        const vector<T> &resolution() const;
 
         /** The grid resolution vector is somewhat unwieldy in some estimates. This
          * method provides an easy way of getting a crude average grid resolution.
@@ -251,13 +251,13 @@ namespace m3D {
          * if the variable does not match any dimension variables.
          * @param dimension variable
          */
-        const T*
+        const T *
         get_dimension_data_ptr(NcVar var) const;
 
         /** @return const pointer to dimension data.
          * @param dimension index
          */
-        const T*
+        const T *
         get_dimension_data_ptr(int index) const;
 
         /** Transforms the given coordinate such, that all entries are in meters.

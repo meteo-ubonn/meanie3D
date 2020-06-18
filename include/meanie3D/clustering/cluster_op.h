@@ -51,15 +51,15 @@ namespace m3D {
      *
      * TODO: decouple from NetCDF specific code.
      */
-    template <typename T>
+    template<typename T>
     class ClusterOperation : public Operation<T>
     {
     private:
 
-        size_t                          m_cluster_threadcount;
-        boost::progress_display         *m_progress_bar;
-        const detection_params_t<T>     m_params;
-        const detection_context_t<T>    m_context;
+        size_t m_cluster_threadcount;
+        boost::progress_display *m_progress_bar;
+        const detection_params_t<T> m_params;
+        const detection_context_t<T> m_context;
 
     public:
 
@@ -75,12 +75,9 @@ namespace m3D {
         void report_done();
 
         ClusterOperation(const detection_params_t<T> &params,
-                         const detection_context_t<T> &ctx) 
-        : Operation<T>(ctx.fs, ctx.index)
-        , m_cluster_threadcount(0)
-        , m_progress_bar(NULL)
-        , m_params(params)
-        , m_context(ctx) {};
+                         const detection_context_t<T> &ctx)
+                : Operation<T>(ctx.fs, ctx.index), m_cluster_threadcount(0), m_progress_bar(NULL), m_params(params),
+                  m_context(ctx) {};
 
         virtual ~ClusterOperation() {};
 

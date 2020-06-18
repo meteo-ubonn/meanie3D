@@ -29,7 +29,8 @@ namespace units {
     namespace internal // Boost would call this "detail"
     {
         // Forward
-        template<typename T1, typename T2> struct convert;
+        template<typename T1, typename T2>
+        struct convert;
 
         // Allows construction of no units
         struct none;
@@ -46,17 +47,17 @@ namespace units {
 
 
     // Constructs a unit equivalent to Unit*Num/Den
-    template<typename Unit, int Num, int Den = 1 >
+    template<typename Unit, int Num, int Den = 1>
     struct scale;
 
 
     // Constructs a unit equivalent to Unit+Num/Den
-    template<typename Unit, int Num, int Den = 1 >
+    template<typename Unit, int Num, int Den = 1>
     struct translate;
 
 
     // Constructs a unit equivalent to Unit^(Num/Den)
-    template<typename Unit, int Num, int Den = 1 >
+    template<typename Unit, int Num, int Den = 1>
     struct pow;
 
 
@@ -75,156 +76,130 @@ namespace units {
         typedef Value value_type;
         typedef Units unit;
 
-        value() : m_rep()
-        {
+        value() : m_rep() {
         }
 
-        explicit value(const value_type & v) : m_rep(v)
-        {
+        explicit value(const value_type &v) : m_rep(v) {
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value(const value<OtherValue, OtherUnits> & v) :
-        m_rep(internal::convert<OtherUnits, Units>::fn(v.get()))
-        {
+        value(const value<OtherValue, OtherUnits> &v) :
+                m_rep(internal::convert<OtherUnits, Units>::fn(v.get())) {
         }
 
-        const value_type & get() const
-        {
+        const value_type &get() const {
             return m_rep;
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value & operator=(const value<OtherValue, OtherUnits> & other)
-        {
+        value &operator=(const value<OtherValue, OtherUnits> &other) {
             m_rep = value(other).get();
             return *this;
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value operator+(const value<OtherValue, OtherUnits> & other) const
-        {
+        value operator+(const value<OtherValue, OtherUnits> &other) const {
             return value(get() + value(other).get());
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value &operator+=(const value<OtherValue, OtherUnits> & other)
-        {
+        value &operator+=(const value<OtherValue, OtherUnits> &other) {
             m_rep += value(other).get();
             return *this;
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value &operator-=(const value<OtherValue, OtherUnits> & other)
-        {
+        value &operator-=(const value<OtherValue, OtherUnits> &other) {
             m_rep -= value(other).get();
             return *this;
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value operator-(const value<OtherValue, OtherUnits> & other) const
-        {
+        value operator-(const value<OtherValue, OtherUnits> &other) const {
             return value(get() - value(other).get());
         }
 
-        value operator-() const
-        {
+        value operator-() const {
             return value(-get());
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value< Value, compose<Units, OtherUnits> >
-        operator*(const value<OtherValue, OtherUnits> & other) const
-        {
+        value<Value, compose<Units, OtherUnits> >
+        operator*(const value<OtherValue, OtherUnits> &other) const {
             return value<Value, compose<Units, OtherUnits> >(get() * other.get());
         }
 
-        value operator*(const value_type & v) const
-        {
+        value operator*(const value_type &v) const {
             return value(get() * v);
         }
 
-        value & operator*=(const value_type & v)
-        {
+        value &operator*=(const value_type &v) {
             m_rep *= v;
             return *this;
         }
 
         template<typename OtherValue, typename OtherUnits>
-        value< Value, compose<Units, pow<OtherUnits, -1 > > >
-        operator/(const value<OtherValue, OtherUnits> & other) const
-        {
-            return value<Value, compose<Units, pow<OtherUnits, -1 > > >(get() / other.get());
+        value<Value, compose<Units, pow<OtherUnits, -1> > >
+        operator/(const value<OtherValue, OtherUnits> &other) const {
+            return value<Value, compose<Units, pow<OtherUnits, -1> > >(get() / other.get());
         }
 
-        value operator/(const value_type & v) const
-        {
+        value operator/(const value_type &v) const {
             return value(get() / v);
         }
 
-        value & operator/=(const value_type & v)
-        {
+        value &operator/=(const value_type &v) {
             m_rep /= v;
             return *this;
         }
 
         template<typename OtherValue, typename OtherUnits>
-        bool operator==(const value<OtherValue, OtherUnits> & other) const
-        {
+        bool operator==(const value<OtherValue, OtherUnits> &other) const {
             return get() == value(other).get();
         }
 
         template<typename OtherValue, typename OtherUnits>
-        bool operator!=(const value<OtherValue, OtherUnits> & other) const
-        {
+        bool operator!=(const value<OtherValue, OtherUnits> &other) const {
             return get() != value(other).get();
         }
 
         template<typename OtherValue, typename OtherUnits>
-        bool operator<(const value<OtherValue, OtherUnits> & other) const
-        {
+        bool operator<(const value<OtherValue, OtherUnits> &other) const {
             return get() < value(other).get();
         }
 
         template<typename OtherValue, typename OtherUnits>
-        bool operator<=(const value<OtherValue, OtherUnits> & other) const
-        {
+        bool operator<=(const value<OtherValue, OtherUnits> &other) const {
             return get() <= value(other).get();
         }
 
         template<typename OtherValue, typename OtherUnits>
-        bool operator>(const value<OtherValue, OtherUnits> & other) const
-        {
+        bool operator>(const value<OtherValue, OtherUnits> &other) const {
             return get() > value(other).get();
         }
 
         template<typename OtherValue, typename OtherUnits>
-        bool operator>=(const value<OtherValue, OtherUnits> & other) const
-        {
+        bool operator>=(const value<OtherValue, OtherUnits> &other) const {
             return get() >= value(other).get();
         }
 
-        value & operator++()
-        {
+        value &operator++() {
             ++m_rep;
             return *this;
         }
 
-        value operator++(int)
-        {
+        value operator++(int) {
             value v = *this;
             ++m_rep;
             return v;
         }
 
-        value & operator--()
-        {
+        value &operator--() {
             --m_rep;
             return *this;
         }
 
-        value operator--(int)
-        {
+        value operator--(int) {
             value v = *this;
             --m_rep;
             return v;
@@ -235,26 +210,22 @@ namespace units {
     };
 
     template<typename Value, typename Unit>
-    value<Value, pow<Unit, -1 > > operator/(const Value & a, const value<Value, Unit> & b)
-    {
-        return value<Value, pow<Unit, -1 > >(a / b.get());
+    value<Value, pow<Unit, -1> > operator/(const Value &a, const value<Value, Unit> &b) {
+        return value<Value, pow<Unit, -1> >(a / b.get());
     }
 
     template<typename Value, typename Unit>
-    value<Value, Unit > operator*(const Value & a, const value<Value, Unit> & b)
-    {
+    value<Value, Unit> operator*(const Value &a, const value<Value, Unit> &b) {
         return value<Value, Unit>(a * b.get());
     }
 
     template<typename Value, typename Unit>
-    value<Value, pow<Unit, 1, 2> > sqrt(const value<Value, Unit> & a)
-    {
+    value<Value, pow<Unit, 1, 2> > sqrt(const value<Value, Unit> &a) {
         return value<Value, pow<Unit, 1, 2> >(std::sqrt(a.get()));
     }
 
     template<int Num, int Den, typename Value, typename Unit>
-    value<Value, pow<Unit, Num, Den> > raise(const value<Value, Unit> & a)
-    {
+    value<Value, pow<Unit, Num, Den> > raise(const value<Value, Unit> &a) {
         return value<Value, pow<Unit, Num, Den> >(internal::fixed_power<Num, Den>::pow(a.get()));
     }
 
@@ -269,429 +240,415 @@ namespace units {
         // Ensures (at compile-time) that the template argument is true.
         template<bool> struct static_assert;
 
-        template<> struct static_assert<true>
-        {
-        };
+        template<> struct static_assert<true> {
+    };
 
 
-        // Forward
-        template<typename T1, typename T2>
-        struct convertible;
+    // Forward
+    template<typename T1, typename T2>
+    struct convertible;
 
 
-        // Forward
-        template<typename U>
-        struct scaling_factor;
+    // Forward
+    template<typename U>
+    struct scaling_factor;
 
 
-        // Converts T1 to T2.
-        // Stage 3 - performed after Stage 1 and Stage 2.
-        // The reason we perform convert in stages is so that the compiler
-        // can resolve templates in the order we want it to.
+    // Converts T1 to T2.
+    // Stage 3 - performed after Stage 1 and Stage 2.
+    // The reason we perform convert in stages is so that the compiler
+    // can resolve templates in the order we want it to.
 
-        template<typename T1, typename T2>
-        struct convert3
-        {
-            // The default implementation assumes that the two quantities are in compatible
-            // units up to some scaling factor.  Find the scaling factor and apply it.
+    template<typename T1, typename T2>
+    struct convert3
+    {
+        // The default implementation assumes that the two quantities are in compatible
+        // units up to some scaling factor.  Find the scaling factor and apply it.
 
-            template<typename V>
-            static V fn(const V & v)
-            {
-                return v * scaling_factor<T2>::template fn<V>() / scaling_factor<T1>::template fn<V>();
-            }
-        };
+        template<typename V>
+        static V fn(const V &v) {
+            return v * scaling_factor<T2>::template fn<V>() / scaling_factor<T1>::template fn<V>();
+        }
+    };
 
 
-        // Converts T1 to T2.
-        // Template matches the first argument (T1),
-        // this is the fall-through to convert3.
+    // Converts T1 to T2.
+    // Template matches the first argument (T1),
+    // this is the fall-through to convert3.
 
-        template<typename T1, typename T2>
-        struct convert2
-        {
+    template<typename T1, typename T2>
+    struct convert2
+    {
 
-            template<typename V>
-            static V fn(const V & v)
-            {
-                return convert3<T1, T2>::fn(v);
-            }
-        };
+        template<typename V>
+        static V fn(const V &v) {
+            return convert3<T1, T2>::fn(v);
+        }
+    };
 
 
-        // Converts T1 to T2.
-        // If you really want to implement your own conversion routine,
-        // specialise this template.
-        // The default implementation falls through to convert2.
+    // Converts T1 to T2.
+    // If you really want to implement your own conversion routine,
+    // specialise this template.
+    // The default implementation falls through to convert2.
 
-        template<typename T1, typename T2>
-        struct convert
-        {
-            // If this fails, then T1 is not convertible to T2:
-            static_assert< convertible<T1, T2>::value > check_convertible;
+    template<typename T1, typename T2>
+    struct convert
+    {
+        // If this fails, then T1 is not convertible to T2:
+        static_assert
+        <convertible<T1, T2>::value> check_convertible;
 
-            template<typename V>
-            static V fn(const V & v)
-            {
-                return convert2<T1, T2>::fn(v);
-            }
-        };
+        template<typename V>
+        static V fn(const V &v) {
+            return convert2<T1, T2>::fn(v);
+        }
+    };
 
 
-        // If we convert to the same type, the conversion function
-        // is trivial.
+    // If we convert to the same type, the conversion function
+    // is trivial.
 
-        template<typename T>
-        struct convert<T, T>
-        {
-
-            template<typename U>
-            static const U & fn(const U & u)
-            {
-                return u;
-            }
-        };
-
-
-        // Convert to same type.
-
-        template<typename T>
-        struct convert3<T, T>
-        {
-
-            template<typename U>
-            static const U & fn(const U & u)
-            {
-                return u;
-            }
-        };
-
-
-        // Convert from a scaled unit
-
-        template<typename T, typename U, int Num, int Den>
-        struct convert2<scale<T, Num, Den>, U>
-        {
-
-            template<typename V>
-            static V fn(const V & v)
-            {
-                return convert<T, U>::fn((v * Den) / Num);
-            }
-        };
-
-
-        // Convert to a scaled unit
-
-        template<typename T, typename U, int Num, int Den>
-        struct convert3<T, scale<U, Num, Den> >
-        {
-
-            template<typename V>
-            static V fn(const V & v)
-            {
-                return (convert<T, U>::fn(v) * Num) / Den;
-            }
-        };
-
-
-        // Convert from a translated unit
-
-        template<typename T, typename U, int Num, int Den>
-        struct convert2<translate<T, Num, Den>, U>
-        {
-
-            template<typename V>
-            static V fn(const V & v)
-            {
-                return convert<T, U>::fn(v - static_cast<V> (Num) / static_cast<V> (Den));
-            }
-        };
-
-
-        // Convert to a translated unit
-
-        template<typename T, typename U, int Num, int Den>
-        struct convert3<T, translate<U, Num, Den> >
-        {
-
-            template<typename V>
-            static V fn(const V & v)
-            {
-                return convert<T, U>::fn(v) + static_cast<V> (Num) / static_cast<V> (Den);
-            }
-        };
-
-
-        // Count the power to which unit Term is raised in the unit List.
-        // Returns a rational num/den of the power of term Term in List.
-        // The default assumes that Term is not found (num/den=0)
-
-        template<typename Term, typename List>
-        struct count_terms
-        {
-            static const int num = 0;
-            static const int den = 1;
-        };
-
-        template<typename Term>
-        struct count_terms<Term, Term>
-        {
-            static const int num = 1;
-            static const int den = 1;
-        };
-
-
-        // count_terms ignores scaling factors - that is taken care of by scaling_factor.
-
-        template<typename Term, typename Unit, int N, int D>
-        struct count_terms<Term, scale<Unit, N, D> >
-        {
-            typedef count_terms<Term, Unit> result;
-            static const int num = result::num;
-            static const int den = result::den;
-        };
-
-
-        // count_terms ignores translation.
-
-        template<typename Term, typename Unit, int N, int D>
-        struct count_terms<Term, translate<Unit, N, D> >
-        {
-            typedef count_terms<Term, Unit> result;
-            static const int num = result::num;
-            static const int den = result::den;
-        };
-
-
-        // Addition of fractions.
-
-        template<typename Term, typename T1, typename T2>
-        struct count_terms<Term, compose<T1, T2> >
-        {
-            typedef count_terms<Term, T1> result1;
-            typedef count_terms<Term, T2> result2;
-            static const int num =
-                    result1::num * result2::den + result1::den * result2::num;
-            static const int den =
-                    result1::den * result2::den;
-        };
-
-
-        // Multiplication of fractions.
-
-        template<typename Term, typename Unit, int N, int D>
-        struct count_terms<Term, pow<Unit, N, D> >
-        {
-            typedef count_terms<Term, Unit> result;
-            static const int num = N * result::num;
-            static const int den = D * result::den;
-        };
-
-
-        // Counts the power of the unit Term in units T1 and T2.
-        // Reports if they are equal, using equality of fractions.
-        // Does a depth-first search of the unit "Term",
-        // or counts the terms in the default case.
-
-        template<typename Term, typename T1, typename T2>
-        struct check_terms_equal
-        {
-            typedef count_terms<Term, T1> count1;
-            typedef count_terms<Term, T2> count2;
-
-            static const bool value =
-                    count1::num * count2::den ==
-                    count1::den * count2::num;
-        };
-
-        template<typename Unit, int N, int D, typename T1, typename T2>
-        struct check_terms_equal<pow<Unit, N, D>, T1, T2 >
-        {
-            static const bool value = check_terms_equal<Unit, T1, T2>::value;
-        };
-
-        template<typename Unit, int N, int D, typename T1, typename T2>
-        struct check_terms_equal<scale<Unit, N, D>, T1, T2 >
-        {
-            static const bool value = check_terms_equal<Unit, T1, T2>::value;
-        };
-
-        template<typename Unit, int N, int D, typename T1, typename T2>
-        struct check_terms_equal<translate<Unit, N, D>, T1, T2 >
-        {
-            static const bool value = check_terms_equal<Unit, T1, T2>::value;
-        };
-
-        template<typename T1, typename T2, typename T3, typename T4>
-        struct check_terms_equal<compose<T1, T2>, T3, T4>
-        {
-            static const bool value =
-                    check_terms_equal<T1, T3, T4>::value &&
-                    check_terms_equal<T2, T3, T4>::value;
-        };
-
-
-        // Determines whether two types are convertible
-        // Counts the powers in the LHS and RHS and ensures they are equal.
-
-        template<typename T1, typename T2>
-        struct convertible
-        {
-            static const bool value =
-                    check_terms_equal<T1, T1, T2>::value &&
-                    check_terms_equal<T2, T1, T2>::value;
-        };
-
-
-        // A functor that raises a value to the power Num/Den.
-        // The template is specialised for efficiency
-        // so that we don't always have to call the std::pow function.
-
-        template<int Num, int Den, int Div, int Mod>
-        struct fixed_power
-        {
-
-            template<typename T> static T pow(const T & t)
-            {
-                return std::pow(t, static_cast<T> (Num) / static_cast<T> (Den));
-            }
-        };
-
-        template<int N, int D>
-        struct fixed_power<N, D, 1, 0>
-        {
-
-            template<typename T> static const T & pow(const T & t)
-            {
-                return t;
-            }
-        };
-
-        template<int N, int D>
-        struct fixed_power<N, D, 2, 0>
-        {
-
-            template<typename T> static T pow(const T & t)
-            {
-                return t*t;
-            }
-        };
-
-        template<int N, int D>
-        struct fixed_power<N, D, 3, 0>
-        {
-
-            template<typename T> static T pow(const T & t)
-            {
-                return t * t*t;
-            }
-        };
-
-        template<int N, int D>
-        struct fixed_power<N, D, 4, 0>
-        {
-
-            template<typename T> static const T & pow(const T & t)
-            {
-                T u = t*t;
-                return u*u;
-            }
-        };
-
-        template<int N, int D>
-        struct fixed_power<N, D, -1, 0 >
-        {
-
-            template<typename T> static T pow(const T & t)
-            {
-                return 1 / t;
-            }
-        };
-
-        template<int N, int D>
-        struct fixed_power<N, D, -2, 0 >
-        {
-
-            template<typename T> static T pow(const T & t)
-            {
-                return 1 / (t * t);
-            }
-        };
-
-        template<int N, int D>
-        struct fixed_power<N, D, 0, 0>
-        {
-
-            template<typename T> static T pow(const T & t)
-            {
-                return 1;
-            }
-        };
-
-
-        // Determine the scaling factor of a unit in relation to its "base" units.
-        // Default is that U is a primitive unit and is not scaled.
+    template<typename T>
+    struct convert<T, T>
+    {
 
         template<typename U>
-        struct scaling_factor
-        {
+        static const U &fn(const U &u) {
+            return u;
+        }
+    };
 
-            template<typename T>
-            static T fn()
-            {
-                return 1;
-            }
-        };
 
-        template<typename U1, typename U2>
-        struct scaling_factor< compose<U1, U2> >
-        {
+    // Convert to same type.
 
-            template<typename T>
-            static T fn()
-            {
-                return
-                scaling_factor<U1>::template fn<T>() *
-                        scaling_factor<U2>::template fn<T>();
-            }
-        };
+    template<typename T>
+    struct convert3<T, T>
+    {
 
-        template<typename U, int N, int D>
-        struct scaling_factor< scale<U, N, D> >
-        {
+        template<typename U>
+        static const U &fn(const U &u) {
+            return u;
+        }
+    };
 
-            template<typename T>
-            static T fn()
-            {
-                return
-                scaling_factor<U>::template fn<T>() *
-                        static_cast<T> (N) / static_cast<T> (D);
-            }
-        };
 
-        template<typename U, int N, int D>
-        struct scaling_factor< pow<U, N, D> >
-        {
+    // Convert from a scaled unit
 
-            template<typename T>
-            static T fn()
-            {
-                return fixed_power<N, D>::pow(scaling_factor<U>::template fn<T>());
-            }
-        };
+    template<typename T, typename U, int Num, int Den>
+    struct convert2<scale<T, Num, Den>, U>
+    {
 
-        template<typename U, int N, int D>
-        struct scaling_factor< translate<U, N, D> >
-        {
+        template<typename V>
+        static V fn(const V &v) {
+            return convert<T, U>::fn((v * Den) / Num);
+        }
+    };
 
-            template<typename T>
-            static T fn()
-            {
-                return scaling_factor<U>::template fn<T>();
-            }
-        };
-    }
+
+    // Convert to a scaled unit
+
+    template<typename T, typename U, int Num, int Den>
+    struct convert3<T, scale<U, Num, Den> >
+    {
+
+        template<typename V>
+        static V fn(const V &v) {
+            return (convert<T, U>::fn(v) * Num) / Den;
+        }
+    };
+
+
+    // Convert from a translated unit
+
+    template<typename T, typename U, int Num, int Den>
+    struct convert2<translate<T, Num, Den>, U>
+    {
+
+        template<typename V>
+        static V fn(const V &v) {
+            return convert<T, U>::fn(v - static_cast<V> (Num) / static_cast<V> (Den));
+        }
+    };
+
+
+    // Convert to a translated unit
+
+    template<typename T, typename U, int Num, int Den>
+    struct convert3<T, translate<U, Num, Den> >
+    {
+
+        template<typename V>
+        static V fn(const V &v) {
+            return convert<T, U>::fn(v) + static_cast<V> (Num) / static_cast<V> (Den);
+        }
+    };
+
+
+    // Count the power to which unit Term is raised in the unit List.
+    // Returns a rational num/den of the power of term Term in List.
+    // The default assumes that Term is not found (num/den=0)
+
+    template<typename Term, typename List>
+    struct count_terms
+    {
+        static const int num = 0;
+        static const int den = 1;
+    };
+
+    template<typename Term>
+    struct count_terms<Term, Term>
+    {
+        static const int num = 1;
+        static const int den = 1;
+    };
+
+
+    // count_terms ignores scaling factors - that is taken care of by scaling_factor.
+
+    template<typename Term, typename Unit, int N, int D>
+    struct count_terms<Term, scale<Unit, N, D> >
+    {
+        typedef count_terms<Term, Unit> result;
+        static const int num = result::num;
+        static const int den = result::den;
+    };
+
+
+    // count_terms ignores translation.
+
+    template<typename Term, typename Unit, int N, int D>
+    struct count_terms<Term, translate<Unit, N, D> >
+    {
+        typedef count_terms<Term, Unit> result;
+        static const int num = result::num;
+        static const int den = result::den;
+    };
+
+
+    // Addition of fractions.
+
+    template<typename Term, typename T1, typename T2>
+    struct count_terms<Term, compose<T1, T2> >
+    {
+        typedef count_terms<Term, T1> result1;
+        typedef count_terms<Term, T2> result2;
+        static const int num =
+                result1::num * result2::den + result1::den * result2::num;
+        static const int den =
+                result1::den * result2::den;
+    };
+
+
+    // Multiplication of fractions.
+
+    template<typename Term, typename Unit, int N, int D>
+    struct count_terms<Term, pow<Unit, N, D> >
+    {
+        typedef count_terms<Term, Unit> result;
+        static const int num = N * result::num;
+        static const int den = D * result::den;
+    };
+
+
+    // Counts the power of the unit Term in units T1 and T2.
+    // Reports if they are equal, using equality of fractions.
+    // Does a depth-first search of the unit "Term",
+    // or counts the terms in the default case.
+
+    template<typename Term, typename T1, typename T2>
+    struct check_terms_equal
+    {
+        typedef count_terms<Term, T1> count1;
+        typedef count_terms<Term, T2> count2;
+
+        static const bool value =
+                count1::num * count2::den ==
+                count1::den * count2::num;
+    };
+
+    template<typename Unit, int N, int D, typename T1, typename T2>
+    struct check_terms_equal<pow<Unit, N, D>, T1, T2>
+    {
+        static const bool value = check_terms_equal<Unit, T1, T2>::value;
+    };
+
+    template<typename Unit, int N, int D, typename T1, typename T2>
+    struct check_terms_equal<scale<Unit, N, D>, T1, T2>
+    {
+        static const bool value = check_terms_equal<Unit, T1, T2>::value;
+    };
+
+    template<typename Unit, int N, int D, typename T1, typename T2>
+    struct check_terms_equal<translate<Unit, N, D>, T1, T2>
+    {
+        static const bool value = check_terms_equal<Unit, T1, T2>::value;
+    };
+
+    template<typename T1, typename T2, typename T3, typename T4>
+    struct check_terms_equal<compose<T1, T2>, T3, T4>
+    {
+        static const bool value =
+                check_terms_equal<T1, T3, T4>::value &&
+                check_terms_equal<T2, T3, T4>::value;
+    };
+
+
+    // Determines whether two types are convertible
+    // Counts the powers in the LHS and RHS and ensures they are equal.
+
+    template<typename T1, typename T2>
+    struct convertible
+    {
+        static const bool value =
+                check_terms_equal<T1, T1, T2>::value &&
+                check_terms_equal<T2, T1, T2>::value;
+    };
+
+
+    // A functor that raises a value to the power Num/Den.
+    // The template is specialised for efficiency
+    // so that we don't always have to call the std::pow function.
+
+    template<int Num, int Den, int Div, int Mod>
+    struct fixed_power
+    {
+
+        template<typename T>
+        static T pow(const T &t) {
+            return std::pow(t, static_cast<T> (Num) / static_cast<T> (Den));
+        }
+    };
+
+    template<int N, int D>
+    struct fixed_power<N, D, 1, 0>
+    {
+
+        template<typename T>
+        static const T &pow(const T &t) {
+            return t;
+        }
+    };
+
+    template<int N, int D>
+    struct fixed_power<N, D, 2, 0>
+    {
+
+        template<typename T>
+        static T pow(const T &t) {
+            return t * t;
+        }
+    };
+
+    template<int N, int D>
+    struct fixed_power<N, D, 3, 0>
+    {
+
+        template<typename T>
+        static T pow(const T &t) {
+            return t * t * t;
+        }
+    };
+
+    template<int N, int D>
+    struct fixed_power<N, D, 4, 0>
+    {
+
+        template<typename T>
+        static const T &pow(const T &t) {
+            T u = t * t;
+            return u * u;
+        }
+    };
+
+    template<int N, int D>
+    struct fixed_power<N, D, -1, 0>
+    {
+
+        template<typename T>
+        static T pow(const T &t) {
+            return 1 / t;
+        }
+    };
+
+    template<int N, int D>
+    struct fixed_power<N, D, -2, 0>
+    {
+
+        template<typename T>
+        static T pow(const T &t) {
+            return 1 / (t * t);
+        }
+    };
+
+    template<int N, int D>
+    struct fixed_power<N, D, 0, 0>
+    {
+
+        template<typename T>
+        static T pow(const T &t) {
+            return 1;
+        }
+    };
+
+
+    // Determine the scaling factor of a unit in relation to its "base" units.
+    // Default is that U is a primitive unit and is not scaled.
+
+    template<typename U>
+    struct scaling_factor
+    {
+
+        template<typename T>
+        static T fn() {
+            return 1;
+        }
+    };
+
+    template<typename U1, typename U2>
+    struct scaling_factor<compose<U1, U2> >
+    {
+
+        template<typename T>
+        static T fn() {
+            return
+                    scaling_factor<U1>::template fn<T>() *
+                    scaling_factor<U2>::template fn<T>();
+        }
+    };
+
+    template<typename U, int N, int D>
+    struct scaling_factor<scale<U, N, D> >
+    {
+
+        template<typename T>
+        static T fn() {
+            return
+                    scaling_factor<U>::template fn<T>() *
+                    static_cast<T> (N) / static_cast<T> (D);
+        }
+    };
+
+    template<typename U, int N, int D>
+    struct scaling_factor<pow<U, N, D> >
+    {
+
+        template<typename T>
+        static T fn() {
+            return fixed_power<N, D>::pow(scaling_factor<U>::template fn<T>());
+        }
+    };
+
+    template<typename U, int N, int D>
+    struct scaling_factor<translate<U, N, D> >
+    {
+
+        template<typename T>
+        static T fn() {
+            return scaling_factor<U>::template fn<T>();
+        }
+    };
+}
 }
 
 
@@ -699,13 +656,13 @@ namespace units {
 // Display
 
 
-#define UNIT_DISPLAY_NAME( unit, string ) \
+#define UNIT_DISPLAY_NAME(unit, string) \
 template<> struct output_unit<unit> { \
-	template<typename Stream> static void fn(Stream&os) { os << string; } \
+    template<typename Stream> static void fn(Stream&os) { os << string; } \
 };
 
 
-#define UNITS_DISPLAY_NAME( unit, string ) \
+#define UNITS_DISPLAY_NAME(unit, string) \
 namespace units { UNIT_DISPLAY_NAME( unit, string ) }
 
 
@@ -718,8 +675,7 @@ namespace units {
         {
 
             template<typename Stream>
-            static void fn(Stream &os)
-            {
+            static void fn(Stream &os) {
                 os << "units";
             }
         };
@@ -733,8 +689,7 @@ namespace units {
     {
 
         template<typename Stream>
-        static void fn(Stream &os)
-        {
+        static void fn(Stream &os) {
             internal::output_unit2<Unit>::fn(os);
         }
     };
@@ -746,12 +701,11 @@ namespace units {
     namespace internal {
 
         template<typename U1, typename U2>
-        struct output_unit2< compose<U1, U2> >
+        struct output_unit2<compose<U1, U2> >
         {
 
             template<typename Stream>
-            static void fn(Stream &os)
-            {
+            static void fn(Stream &os) {
                 output_unit<U1>::fn(os);
                 os << '.';
                 output_unit<U2>::fn(os);
@@ -759,12 +713,11 @@ namespace units {
         };
 
         template<typename Unit, int Num, int Den>
-        struct output_unit2< pow<Unit, Num, Den > >
+        struct output_unit2<pow<Unit, Num, Den> >
         {
 
             template<typename Stream>
-            static void fn(Stream &os)
-            {
+            static void fn(Stream &os) {
                 if (Num != Den) os << '(';
                 output_unit<Unit>::fn(os);
                 if (Num != Den) {
@@ -778,12 +731,11 @@ namespace units {
         };
 
         template<typename Unit, int Num, int Den>
-        struct output_unit2< translate<Unit, Num, Den > >
+        struct output_unit2<translate<Unit, Num, Den> >
         {
 
             template<typename Stream>
-            static void fn(Stream &os)
-            {
+            static void fn(Stream &os) {
                 os << '(';
                 output_unit<Unit>::fn(os);
                 os << '+' << Num;
@@ -793,12 +745,11 @@ namespace units {
         };
 
         template<typename Unit, int Num, int Den>
-        struct output_unit2< scale<Unit, Num, Den > >
+        struct output_unit2<scale<Unit, Num, Den> >
         {
 
             template<typename Stream>
-            static void fn(Stream &os)
-            {
+            static void fn(Stream &os) {
                 os << Den;
                 if (Num != 1)
                     os << '/' << Num;
@@ -809,8 +760,7 @@ namespace units {
     }
 
     template<typename Str, typename Value, typename Unit>
-    Str & operator<<(Str & os, const value<Value, Unit> & value)
-    {
+    Str &operator<<(Str &os, const value<Value, Unit> &value) {
         os << value.get() << ' ';
         output_unit<Unit>::fn(os);
         return os;
@@ -837,158 +787,199 @@ namespace units {
     }
 
     UNIT_DISPLAY_NAME(units::m, "m");
+
     UNIT_DISPLAY_NAME(units::kg, "kg");
+
     UNIT_DISPLAY_NAME(units::s, "s");
+
     UNIT_DISPLAY_NAME(units::K, "K");
+
     UNIT_DISPLAY_NAME(units::A, "A");
+
     UNIT_DISPLAY_NAME(units::mol, "mol");
+
     UNIT_DISPLAY_NAME(units::cd, "cd");
 
     namespace units {
         // SI derived units:
-        typedef compose<m, pow<m, -1 > > rad;
-        typedef compose<pow<m, 2>, pow<m, -2 > > sr;
-        typedef pow<s, -1 > Hz;
-        typedef compose<m, compose<kg, pow<s, -2 > > > N;
-        typedef compose<N, pow<m, -2 > > Pa;
+        typedef compose<m, pow<m, -1> > rad;
+        typedef compose<pow<m, 2>, pow<m, -2> > sr;
+        typedef pow<s, -1> Hz;
+        typedef compose<m, compose<kg, pow<s, -2> > > N;
+        typedef compose<N, pow<m, -2> > Pa;
         typedef compose<N, m> J;
-        typedef compose<J, pow<s, -1 > > W;
+        typedef compose<J, pow<s, -1> > W;
         typedef compose<s, A> C;
-        typedef compose<W, pow<A, -1 > > V;
-        typedef compose<C, pow<V, -1 > > F;
-        typedef compose<V, pow<A, -1 > > Ohm;
-        typedef compose<A, pow<V, -1 > > S;
+        typedef compose<W, pow<A, -1> > V;
+        typedef compose<C, pow<V, -1> > F;
+        typedef compose<V, pow<A, -1> > Ohm;
+        typedef compose<A, pow<V, -1> > S;
         typedef compose<V, s> Wb;
-        typedef compose<Wb, pow<m, -2 > > T;
-        typedef compose<Wb, pow<A, -1 > > H;
+        typedef compose<Wb, pow<m, -2> > T;
+        typedef compose<Wb, pow<A, -1> > H;
         typedef cd lm;
-        typedef compose<lm, pow<m, -2 > > lx;
-        typedef pow<s, -1 > Bq;
-        typedef compose<J, pow<kg, -1 > > Gy;
+        typedef compose<lm, pow<m, -2> > lx;
+        typedef pow<s, -1> Bq;
+        typedef compose<J, pow<kg, -1> > Gy;
         typedef Gy Sv;
-        typedef compose<pow<s, -1 >, mol> kat;
+        typedef compose<pow<s, -1>, mol> kat;
     }
 
     UNIT_DISPLAY_NAME(units::rad, "rad");
+
     UNIT_DISPLAY_NAME(units::sr, "sr");
     // UNIT_DISPLAY_NAME( units::Hz, "Hz" );	// Too problematic
     UNIT_DISPLAY_NAME(units::N, "N");
+
     UNIT_DISPLAY_NAME(units::Pa, "Pa");
+
     UNIT_DISPLAY_NAME(units::J, "J");
+
     UNIT_DISPLAY_NAME(units::W, "W");
+
     UNIT_DISPLAY_NAME(units::C, "C");
+
     UNIT_DISPLAY_NAME(units::V, "V");
+
     UNIT_DISPLAY_NAME(units::F, "F");
+
     UNIT_DISPLAY_NAME(units::Ohm, "Ohm");
+
     UNIT_DISPLAY_NAME(units::S, "S");
+
     UNIT_DISPLAY_NAME(units::Wb, "Wb");
+
     UNIT_DISPLAY_NAME(units::T, "T");
+
     UNIT_DISPLAY_NAME(units::H, "H");
+
     UNIT_DISPLAY_NAME(units::lx, "lx");
+
     UNIT_DISPLAY_NAME(units::Gy, "Gy");
+
     UNIT_DISPLAY_NAME(units::kat, "kat");
 
     namespace units {
         // SI prefixes:
 
-        template<typename Unit> struct deca
+        template<typename Unit>
+        struct deca
         {
             typedef scale<Unit, 1, 10> type;
         };
 
-        template<typename Unit> struct hecto
+        template<typename Unit>
+        struct hecto
         {
             typedef scale<Unit, 1, 100> type;
         };
 
-        template<typename Unit> struct kilo
+        template<typename Unit>
+        struct kilo
         {
             typedef scale<Unit, 1, 1000> type;
         };
 
-        template<typename Unit> struct mega
+        template<typename Unit>
+        struct mega
         {
-            typedef scale<typename kilo<Unit>::type, 1, 1000 > type;
+            typedef scale<typename kilo<Unit>::type, 1, 1000> type;
         };
 
-        template<typename Unit> struct giga
+        template<typename Unit>
+        struct giga
         {
-            typedef scale<typename mega<Unit>::type, 1, 1000 > type;
+            typedef scale<typename mega<Unit>::type, 1, 1000> type;
         };
 
-        template<typename Unit> struct tera
+        template<typename Unit>
+        struct tera
         {
-            typedef scale<typename giga<Unit>::type, 1, 1000 > type;
+            typedef scale<typename giga<Unit>::type, 1, 1000> type;
         };
 
-        template<typename Unit> struct peta
+        template<typename Unit>
+        struct peta
         {
-            typedef scale<typename tera<Unit>::type, 1, 1000 > type;
+            typedef scale<typename tera<Unit>::type, 1, 1000> type;
         };
 
-        template<typename Unit> struct exa
+        template<typename Unit>
+        struct exa
         {
-            typedef scale<typename peta<Unit>::type, 1, 1000 > type;
+            typedef scale<typename peta<Unit>::type, 1, 1000> type;
         };
 
-        template<typename Unit> struct zetta
+        template<typename Unit>
+        struct zetta
         {
-            typedef scale<typename exa<Unit>::type, 1, 1000 > type;
+            typedef scale<typename exa<Unit>::type, 1, 1000> type;
         };
 
-        template<typename Unit> struct yotta
+        template<typename Unit>
+        struct yotta
         {
-            typedef scale<typename zetta<Unit>::type, 1, 1000 > type;
+            typedef scale<typename zetta<Unit>::type, 1, 1000> type;
         };
 
-        template<typename Unit> struct deci
+        template<typename Unit>
+        struct deci
         {
             typedef scale<Unit, 10> type;
         };
 
-        template<typename Unit> struct centi
+        template<typename Unit>
+        struct centi
         {
             typedef scale<Unit, 100> type;
         };
 
-        template<typename Unit> struct milli
+        template<typename Unit>
+        struct milli
         {
             typedef scale<Unit, 1000> type;
         };
 
-        template<typename Unit> struct micro
+        template<typename Unit>
+        struct micro
         {
-            typedef scale<typename milli<Unit>::type, 1000 > type;
+            typedef scale<typename milli<Unit>::type, 1000> type;
         };
 
-        template<typename Unit> struct nano
+        template<typename Unit>
+        struct nano
         {
-            typedef scale<typename micro<Unit>::type, 1000 > type;
+            typedef scale<typename micro<Unit>::type, 1000> type;
         };
 
-        template<typename Unit> struct pico
+        template<typename Unit>
+        struct pico
         {
-            typedef scale<typename nano<Unit>::type, 1000 > type;
+            typedef scale<typename nano<Unit>::type, 1000> type;
         };
 
-        template<typename Unit> struct femto
+        template<typename Unit>
+        struct femto
         {
-            typedef scale<typename pico<Unit>::type, 1000 > type;
+            typedef scale<typename pico<Unit>::type, 1000> type;
         };
 
-        template<typename Unit> struct atto
+        template<typename Unit>
+        struct atto
         {
-            typedef scale<typename femto<Unit>::type, 1000 > type;
+            typedef scale<typename femto<Unit>::type, 1000> type;
         };
 
-        template<typename Unit> struct zepto
+        template<typename Unit>
+        struct zepto
         {
-            typedef scale<typename atto<Unit>::type, 1000 > type;
+            typedef scale<typename atto<Unit>::type, 1000> type;
         };
 
-        template<typename Unit> struct yocto
+        template<typename Unit>
+        struct yocto
         {
-            typedef scale<typename zepto<Unit>::type, 1000 > type;
+            typedef scale<typename zepto<Unit>::type, 1000> type;
         };
 
 
@@ -1002,10 +993,15 @@ namespace units {
     }
 
     UNIT_DISPLAY_NAME(units::cm, "cm");
+
     UNIT_DISPLAY_NAME(units::mm, "mm");
+
     UNIT_DISPLAY_NAME(units::km, "km");
+
     UNIT_DISPLAY_NAME(units::g, "g");
+
     UNIT_DISPLAY_NAME(units::mg, "mg");
+
     UNIT_DISPLAY_NAME(units::ms, "ms");
 
     namespace units {
@@ -1015,7 +1011,7 @@ namespace units {
         typedef scale<kg, 1, 1000> tonne;
 
         // Non-SI temperature
-        typedef translate<K, -27315, 100 > Celsius;
+        typedef translate<K, -27315, 100> Celsius;
         typedef translate<scale<Celsius, 9, 5>, 32> Fahrenheit;
 
         // Non-SI time
@@ -1051,17 +1047,17 @@ namespace units {
         typedef pow<m, 3> m3;
 
         // Non-SI velocity
-        typedef compose<mile, pow<hour, -1 > > mph;
-        typedef compose<km, pow<hour, -1 > > kph;
-        typedef compose<m, pow<s, -1 > > meters_per_second;
-        typedef compose<nautical_mile, pow<hour, -1 > > knot;
+        typedef compose<mile, pow<hour, -1> > mph;
+        typedef compose<km, pow<hour, -1> > kph;
+        typedef compose<m, pow<s, -1> > meters_per_second;
+        typedef compose<nautical_mile, pow<hour, -1> > knot;
         typedef scale<meters_per_second, 100, 34029> mach;
 
         // Angles
         typedef scale<rad, 180000000, 3141593> degree;
         typedef scale<rad, 200000000, 3141593> grad;
-        typedef scale< degree, 60 > degree_minute;
-        typedef scale< degree_minute, 60 > degree_second;
+        typedef scale<degree, 60> degree_minute;
+        typedef scale<degree_minute, 60> degree_second;
 
         // Pressure
         typedef scale<Pa, 1, 1000> kPa;
@@ -1076,44 +1072,83 @@ namespace units {
     }
 
     UNIT_DISPLAY_NAME(units::lb, "lb");
+
     UNIT_DISPLAY_NAME(units::oz, "oz");
+
     UNIT_DISPLAY_NAME(units::tonne, "tonnes");
+
     UNIT_DISPLAY_NAME(units::Celsius, "'C");
+
     UNIT_DISPLAY_NAME(units::Fahrenheit, "'F");
+
     UNIT_DISPLAY_NAME(units::minute, "minutes");
+
     UNIT_DISPLAY_NAME(units::hour, "hours");
+
     UNIT_DISPLAY_NAME(units::day, "days");
+
     UNIT_DISPLAY_NAME(units::week, "weeks");
+
     UNIT_DISPLAY_NAME(units::month, "months");
+
     UNIT_DISPLAY_NAME(units::year, "years");
+
     UNIT_DISPLAY_NAME(units::century, "centuries");
+
     UNIT_DISPLAY_NAME(units::millennium, "millennia");
+
     UNIT_DISPLAY_NAME(units::inch, "inches");
+
     UNIT_DISPLAY_NAME(units::foot, "foot");
+
     UNIT_DISPLAY_NAME(units::yard, "yards");
+
     UNIT_DISPLAY_NAME(units::mile, "miles");
+
     UNIT_DISPLAY_NAME(units::nautical_mile, "nautical miles");
+
     UNIT_DISPLAY_NAME(units::hectare, "ha");
+
     UNIT_DISPLAY_NAME(units::are, "are");
+
     UNIT_DISPLAY_NAME(units::acre, "acres");
+
     UNIT_DISPLAY_NAME(units::ml, "ml");
+
     UNIT_DISPLAY_NAME(units::liter, "l");
+
     UNIT_DISPLAY_NAME(units::dl, "dl");
+
     UNIT_DISPLAY_NAME(units::cl, "cl");
+
     UNIT_DISPLAY_NAME(units::mph, "mph");
+
     UNIT_DISPLAY_NAME(units::kph, "km/h");
+
     UNIT_DISPLAY_NAME(units::knot, "knots");
+
     UNIT_DISPLAY_NAME(units::mach, "mach");
+
     UNIT_DISPLAY_NAME(units::degree, "deg");
+
     UNIT_DISPLAY_NAME(units::grad, "grad");
+
     UNIT_DISPLAY_NAME(units::degree_minute, "'");
+
     UNIT_DISPLAY_NAME(units::degree_second, "\"");
+
     UNIT_DISPLAY_NAME(units::kPa, "kPa");
+
     UNIT_DISPLAY_NAME(units::psi, "PSI");
+
     UNIT_DISPLAY_NAME(units::millibar, "millibars");
+
     UNIT_DISPLAY_NAME(units::percent, "%");
+
     UNIT_DISPLAY_NAME(units::rpm, "rpm");
+
     UNIT_DISPLAY_NAME(units::dozen, "dozen");
+
     UNIT_DISPLAY_NAME(units::bakers_dozen, "bakers dozen");
 
     namespace values {
@@ -1219,53 +1254,51 @@ namespace units {
 
     namespace constants {
         // Physical constants:
-        const value<double, compose<units::J, pow<units::K, -1 > > > k(1.3806504e-23);
+        const value<double, compose<units::J, pow<units::K, -1> > > k(1.3806504e-23);
         const value<double, units::kg> mu(1.660538782e-27);
-        const value<double, pow<units::mol, -1 > > NA(6.02214179e23);
+        const value<double, pow<units::mol, -1> > NA(6.02214179e23);
         const value<double, units::s> G0(7.7480917004e-5);
-        const value<double, compose<units::F, pow<units::m, -1 > > > e0(8.854187817e-12);
+        const value<double, compose<units::F, pow<units::m, -1> > > e0(8.854187817e-12);
         const value<double, units::kg> me(9.10938215e-31);
         const value<double, units::J> eV(1.602176487e-19);
         const value<double, units::C> e(1.602176487e-19);
         const value<double, units::F> F(96485.3399);
         const value<double, units::unit> alpha(7.2973525376e-3);
         const value<double, units::unit> inv_alpha(137.035999679);
-        const value<double, compose<units::N, pow<units::A, -2 > > > u0(12.566370614);
+        const value<double, compose<units::N, pow<units::A, -2> > > u0(12.566370614);
         const value<double, units::Wb> phi0(2.067833667e-15); // ??
-        const value<double, compose<units::J, compose<pow<units::mol, -1 >, pow<units::kg, -1 > > > > R(8.314472);
-        const value<double, compose< pow<units::m, 3>, compose<pow<units::kg, -1 >, pow<units::s, -2 > > > > G(6.67428e-11);
-        const value<double, compose< units::J, units::s > > h(6.62606896e-34);
-        const value<double, compose< units::J, units::s > > h_bar(1.054571628e-34);
+        const value<double, compose<units::J, compose<pow<units::mol, -1>, pow<units::kg, -1> > > > R(8.314472);
+        const value<double, compose<pow<units::m, 3>, compose<pow<units::kg, -1>, pow<units::s, -2> > > > G(
+                6.67428e-11);
+        const value<double, compose<units::J, units::s> > h(6.62606896e-34);
+        const value<double, compose<units::J, units::s> > h_bar(1.054571628e-34);
         const value<double, units::kg> mp(1.672621637e-27);
         const value<double, unit> mpme(1836.15267247);
-        const value<double, pow<units::m, -1 > > Rinf(10973731.568527);
-        const value<double, compose<units::m, pow<units::s, -1 > > > c(299792458);
-        const value<double, compose<units::W, compose< pow<units::m, -1 >, pow<units::K, -4 > > > > rho(5.6704e-8);
+        const value<double, pow<units::m, -1> > Rinf(10973731.568527);
+        const value<double, compose<units::m, pow<units::s, -1> > > c(299792458);
+        const value<double, compose<units::W, compose<pow<units::m, -1>, pow<units::K, -4> > > > rho(5.6704e-8);
 
         // Other constants:
         const value<double, units::rad> pi(3.141592653589793);
         const value<double, units::m> lightyear(9.4605284e15);
-        const value<double, compose<units::m, pow<units::s, -2 > > > g(9.80665);
+        const value<double, compose<units::m, pow<units::s, -2> > > g(9.80665);
     }
 
 
     // Trigonometry
 
     template<typename Value, typename Unit>
-    Value sin(const value<Value, Unit> & angle)
-    {
+    Value sin(const value<Value, Unit> &angle) {
         return std::sin(value<Value, units::rad>(angle).get());
     }
 
     template<typename Value, typename Unit>
-    Value cos(const value<Value, Unit> & angle)
-    {
+    Value cos(const value<Value, Unit> &angle) {
         return std::cos(value<Value, units::rad>(angle).get());
     }
 
     template<typename Value, typename Unit>
-    Value tan(const value<Value, Unit> & angle)
-    {
+    Value tan(const value<Value, Unit> &angle) {
         return std::tan(value<Value, units::rad>(angle).get());
     }
 }

@@ -37,12 +37,12 @@ namespace m3D {
      * thresholds, one for each feature-space dimension. Points that
      * are smaller than the theshold are dropped from the feature-space.
      */
-    template <class T>
+    template<class T>
     class WeightThresholdFilter : public FeatureSpaceFilter<T>
     {
     private:
 
-        WeightFunction<T> *m_weight_function;
+        WeightFunction <T> *m_weight_function;
         T m_lower_threshold;
         T m_upper_threshold;
 
@@ -58,17 +58,17 @@ namespace m3D {
          * @param show progress indicator while filtering (default no)
          * @throws logic_error if |thresholds| = 0
          */
-        WeightThresholdFilter(WeightFunction<T> *weight_function,
-                T lower_threshold = numeric_limits<T>::min(),
-                T upper_threshold = numeric_limits<T>::max(),
-                bool show_progress = false);
+        WeightThresholdFilter(WeightFunction <T> *weight_function,
+                              T lower_threshold = numeric_limits<T>::min(),
+                              T upper_threshold = numeric_limits<T>::max(),
+                              bool show_progress = false);
 
         virtual ~WeightThresholdFilter();
 
 #pragma mark -
 #pragma mark Abstract filter method
 
-        virtual void apply(FeatureSpace<T> *fs);
+        virtual void apply(FeatureSpace <T> *fs);
     };
 }
 

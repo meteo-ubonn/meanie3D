@@ -41,7 +41,7 @@ namespace m3D {
     /** Implementation of FeatureSpace which simply searches the feature-space vector
      * brute-force style when sampling around points.
      */
-    template <typename T>
+    template<typename T>
     class FLANNIndex : public WhiteningIndex<T>
     {
         friend class PointIndex<T>;
@@ -51,7 +51,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Member variables
 
-        Index< L2<T> > *m_index;
+        Index<L2<T> > *m_index;
         Matrix<T> m_dataset;
 
     protected:
@@ -60,28 +60,27 @@ namespace m3D {
 #pragma mark Protected Constructor/Destructor
 
         inline
-        FLANNIndex(typename Point<T>::list *points, size_t dimension) : WhiteningIndex<T>(points, dimension), m_index(NULL)
-        {
+        FLANNIndex(typename Point<T>::list *points, size_t dimension) : WhiteningIndex<T>(points, dimension),
+                                                                        m_index(NULL) {
         };
 
         inline
-        FLANNIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : WhiteningIndex<T>(points, indexes), m_index(NULL)
-        {
+        FLANNIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : WhiteningIndex<T>(points, indexes),
+                                                                                     m_index(NULL) {
         };
 
         inline
-        FLANNIndex(FeatureSpace<T> *fs) : WhiteningIndex<T>(fs), m_index(NULL)
-        {
+        FLANNIndex(FeatureSpace<T> *fs) : WhiteningIndex<T>(fs), m_index(NULL) {
         };
 
         inline
-        FLANNIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : WhiteningIndex<T>(fs, index_variables), m_index(NULL)
-        {
+        FLANNIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : WhiteningIndex<T>(fs,
+                                                                                                          index_variables),
+                                                                                        m_index(NULL) {
         };
 
         inline
-        FLANNIndex(const FLANNIndex<T> &o) : WhiteningIndex<T>(o), m_dataset(dynamic_cast<FLANNIndex> (o).dataset())
-        {
+        FLANNIndex(const FLANNIndex<T> &o) : WhiteningIndex<T>(o), m_dataset(dynamic_cast<FLANNIndex> (o).dataset()) {
             build_index_from_dataset();
         };
 
@@ -90,8 +89,7 @@ namespace m3D {
 
     public:
 
-        ~FLANNIndex()
-        {
+        ~FLANNIndex() {
             if (m_index != NULL) {
                 delete m_index;
 
@@ -108,8 +106,7 @@ namespace m3D {
 
         /** Copy operator
          */
-        FLANNIndex<T> operator=(const FLANNIndex<T> &other)
-        {
+        FLANNIndex<T> operator=(const FLANNIndex<T> &other) {
             return FLANNIndex<T>(other);
         }
 
@@ -119,8 +116,7 @@ namespace m3D {
     protected:
 
         void
-        build_index(const vector<T> &ranges)
-        {
+        build_index(const vector<T> &ranges) {
             this->transform_featurespace(ranges);
 
             if (m_index != NULL) {
@@ -142,19 +138,17 @@ namespace m3D {
 #pragma mark Overwritten Public Methods
 
         void
-        remove_point(typename Point<T>::ptr p)
-        {
+        remove_point(typename Point<T>::ptr p) {
             throw "FLANN does not support removing individual points";
         }
 
         void
-        add_point(typename Point<T>::ptr p)
-        {
+        add_point(typename Point<T>::ptr p) {
             // construct the coordinate for indexing
 
             vector<T> coordinate(this->size());
 
-            for (size_t i = 0; i<this->dimension(); i++) {
+            for (size_t i = 0; i < this->dimension(); i++) {
                 size_t j = this->m_index_variable_indexes[i];
 
                 coordinate[i] = p->coordinate[j];
@@ -168,7 +162,7 @@ namespace m3D {
 
             T data[t.size()][1];
 
-            for (size_t i = 0; i<this->dimension(); i++) {
+            for (size_t i = 0; i < this->dimension(); i++) {
                 data[i][0] = t[i];
             }
 
@@ -182,8 +176,7 @@ namespace m3D {
         }
 
         typename Point<T>::list *
-        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL)
-        {
+        search(const vector<T> &x, const SearchParameters *params, vector<T> *distances = NULL) {
             // Check if the index needs re-building
 
             vector<T> h;
@@ -217,7 +210,7 @@ namespace m3D {
             }
 
             flann::Matrix<T> query = flann::Matrix<T>(&query_point[0], 1, this->dimension());
-            vector< vector<int> > indices;
+            vector<vector<int> > indices;
             vector<vector<T> > dists;
             if (params->search_type() == SearchTypeKNN) {
                 const KNNSearchParams<T> *p = dynamic_cast<const KNNSearchParams<T> *> (params);
@@ -228,9 +221,9 @@ namespace m3D {
             }
 
             // re-wrap results
-            typename Point<T>::list * result = new typename Point<T>::list();
+            typename Point<T>::list *result = new typename Point<T>::list();
             for (size_t row = 0; row < indices.size(); row++) {
-                vector <int> _indices = indices[row];
+                vector<int> _indices = indices[row];
                 for (size_t col = 0; col < _indices.size(); col++) {
                     typename Point<T>::ptr p = this->m_points->at(_indices[col]);
                     result->push_back(p);
@@ -239,9 +232,9 @@ namespace m3D {
 
             if (distances) {
                 for (size_t row = 0; row < dists.size(); row++) {
-                    vector <T> _dists = dists[row];
+                    vector<T> _dists = dists[row];
                     for (size_t col = 0; col < _dists.size(); col++) {
-                        distances->push_back((T) _dists[ col ]);
+                        distances->push_back((T) _dists[col]);
                     }
                 }
             }
@@ -267,41 +260,37 @@ namespace m3D {
         /** Protected accessor. Required for copy constructor
          * @return pointer to the index
          */
-        Index< L2<T> > *index()
-        {
+        Index<L2<T> > *index() {
             return m_index;
         };
 
         /** Protected accessor. Required for copy constructor
          * @return dataset
          */
-        Matrix<T> dataset()
-        {
+        Matrix<T> dataset() {
             return m_dataset;
         };
 
         /** Create dataset from the feature-space, as prescribed
          * by the index variables
          */
-        void construct_dataset()
-        {
+        void construct_dataset() {
             // re-package data for FLANN
             size_t count = this->size() * this->dimension();
-            T* data = (T *) malloc(count * sizeof (T));
+            T *data = (T *) malloc(count * sizeof(T));
             for (size_t row = 0; row < this->white_point_matrix.size1(); row++) {
                 for (size_t col = 0; col < this->white_point_matrix.size2(); col++) {
-                    data[ row * this->white_point_matrix.size2() + col ] = this->white_point_matrix(row, col);
+                    data[row * this->white_point_matrix.size2() + col] = this->white_point_matrix(row, col);
                 }
             }
             m_dataset = flann::Matrix<T>(data, this->size(), this->dimension());
         }
 
-        void build_index_from_dataset()
-        {
+        void build_index_from_dataset() {
             // Set up Index options
             flann::IndexParams params;
             params = flann::KDTreeSingleIndexParams();
-            m_index = new flann::Index< flann::L2<T> >(m_dataset, params);
+            m_index = new flann::Index<flann::L2<T> >(m_dataset, params);
             m_index->buildIndex();
         }
     };

@@ -39,7 +39,7 @@ namespace m3D {
     /** Abstract base class for a feature space index, which
      * requires pre-whitening of data.
      */
-    template <typename T>
+    template<typename T>
     class WhiteningIndex : public PointIndex<T>
     {
     public:
@@ -69,28 +69,25 @@ namespace m3D {
 #pragma mark Protected Constructor/Destructor
 
         inline
-        WhiteningIndex(typename Point<T>::list *points, size_t dimension) : PointIndex<T>(points, dimension)
-        {
+        WhiteningIndex(typename Point<T>::list *points, size_t dimension) : PointIndex<T>(points, dimension) {
         };
 
         inline
-        WhiteningIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : PointIndex<T>(points, indexes)
-        {
+        WhiteningIndex(typename Point<T>::list *points, const vector<size_t> &indexes) : PointIndex<T>(points,
+                                                                                                       indexes) {
         };
 
         inline
-        WhiteningIndex(FeatureSpace<T> *fs) : PointIndex<T>(fs)
-        {
+        WhiteningIndex(FeatureSpace<T> *fs) : PointIndex<T>(fs) {
         };
 
         inline
-        WhiteningIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : PointIndex<T>(fs, index_variables)
-        {
+        WhiteningIndex(FeatureSpace<T> *fs, const vector<netCDF::NcVar> &index_variables) : PointIndex<T>(fs,
+                                                                                                          index_variables) {
         };
 
         inline
-        WhiteningIndex(const WhiteningIndex<T> &o) : PointIndex<T>(o), point_matrix(o.point_matrix)
-        {
+        WhiteningIndex(const WhiteningIndex<T> &o) : PointIndex<T>(o), point_matrix(o.point_matrix) {
         };
 
 #pragma mark -
@@ -116,8 +113,7 @@ namespace m3D {
 #pragma mark -
 #pragma mark Destructor
 
-        ~WhiteningIndex()
-        {
+        ~WhiteningIndex() {
         };
 
     protected:
@@ -153,8 +149,7 @@ namespace m3D {
         // calculate transformation omega from F to F' 
         // and calculate F'
 
-        void transform_featurespace(vector<T> ranges)
-        {
+        void transform_featurespace(vector<T> ranges) {
             using namespace std;
             using namespace ::m3D::utils;
 
@@ -176,7 +171,7 @@ namespace m3D {
                     for (size_t col_index = 0; col_index < this->dimension(); col_index++) {
                         size_t actual_index = this->m_index_variable_indexes[col_index];
 
-                        point_matrix(row_index, col_index) = p->values[ actual_index ];
+                        point_matrix(row_index, col_index) = p->values[actual_index];
                     }
                 }
             }
@@ -204,8 +199,7 @@ namespace m3D {
          * @param vector
          * @return vector
          */
-        vector<T> transform_vector(const vector<T> &x)
-        {
+        vector<T> transform_vector(const vector<T> &x) {
             vector<T> r(x.size());
 
             for (size_t i = 0; i < x.size(); i++) {
@@ -216,7 +210,7 @@ namespace m3D {
         };
     };
 
-    template <typename T>
+    template<typename T>
     const T WhiteningIndex<T>::white_radius = 1.0;
 }
 

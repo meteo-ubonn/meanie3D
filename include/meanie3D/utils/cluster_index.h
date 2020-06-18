@@ -34,15 +34,15 @@
 
 namespace m3D {
     namespace utils {
-        
+
         using std::vector;
 
-        template <typename T>
+        template<typename T>
         struct ClusterIndex
         {
         public:
 
-            typedef MultiArray< ::m3D::id_t> index_t;
+            typedef MultiArray< ::m3D::id_t > index_t;
 
         private:
 
@@ -51,7 +51,7 @@ namespace m3D {
         public:
 
             ClusterIndex(typename Cluster<T>::list &list,
-                    const vector<size_t> &dimensions);
+                         const vector<size_t> &dimensions);
 
             ~ClusterIndex();
 
@@ -64,8 +64,8 @@ namespace m3D {
             /** Iterates over the other array, finds all point
              */
             static size_t count_common_points(const ClusterIndex<T> *a,
-                    const ClusterIndex<T> *b,
-                    ::m3D::id_t id);
+                                              const ClusterIndex<T> *b,
+                                              ::m3D::id_t id);
 
             /** What is the ratio of gridpoints in cluster A that
              * are also occupied by points from cluster B? 
@@ -76,8 +76,8 @@ namespace m3D {
              * @param cluster A
              * @param cluster B
              */
-            double occupation_ratio(const Cluster<T> *cluster_a,
-                    const Cluster<T> *cluster_b) const;
+            double occupation_ratio(const Cluster <T> *cluster_a,
+                                    const Cluster <T> *cluster_b) const;
 
         };
     }

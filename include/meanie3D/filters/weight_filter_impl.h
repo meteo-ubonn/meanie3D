@@ -32,30 +32,25 @@
 
 namespace m3D {
 
-    template <typename T>
-    WeightThresholdFilter<T>::WeightThresholdFilter(WeightFunction<T> *w,
-            T lower,
-            T upper,
-            bool show_progress)
-    : FeatureSpaceFilter<T>(show_progress)
-    , m_weight_function(w)
-    , m_lower_threshold(lower)
-    , m_upper_threshold(upper)
-    {
+    template<typename T>
+    WeightThresholdFilter<T>::WeightThresholdFilter(WeightFunction <T> *w,
+                                                    T lower,
+                                                    T upper,
+                                                    bool show_progress)
+            : FeatureSpaceFilter<T>(show_progress), m_weight_function(w), m_lower_threshold(lower),
+              m_upper_threshold(upper) {
     }
 
-    template <typename T>
-    WeightThresholdFilter<T>::~WeightThresholdFilter()
-    {
+    template<typename T>
+    WeightThresholdFilter<T>::~WeightThresholdFilter() {
     }
 
 #pragma mark -
 #pragma mark Abstract filter method
 
-    template <typename T>
+    template<typename T>
     void
-    WeightThresholdFilter<T>::apply(FeatureSpace<T> *fs)
-    {
+    WeightThresholdFilter<T>::apply(FeatureSpace <T> *fs) {
         using namespace std;
 
         boost::progress_display *progress_bar = NULL;
@@ -70,8 +65,8 @@ namespace m3D {
 
         typename Point<T>::list::iterator pit;
 
-        vector< Point<T> * > accepted;
-        vector< Point<T> * > erased;
+        vector<Point<T> *> accepted;
+        vector<Point<T> *> erased;
 
         for (size_t k = 0; k < fs->points.size(); k++) {
             if (this->show_progress()) {

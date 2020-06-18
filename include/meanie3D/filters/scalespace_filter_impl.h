@@ -46,13 +46,13 @@ namespace m3D {
 #pragma mark -
 #pragma mark Utility methods
 
-    template <typename T>
+    template<typename T>
     T ScaleSpaceFilter<T>::scale_to_filter_width(T t, T decay) {
         T filter_width = sqrt(ceil(-2.0 * t * log(decay))) / 2.0;
         return filter_width;
     }
 
-    template <typename T>
+    template<typename T>
     T ScaleSpaceFilter<T>::filter_width_to_scale(T width, T decay) {
         T scale = -2.0 * width * width / log(decay);
         return scale;
@@ -61,18 +61,14 @@ namespace m3D {
 #pragma mark -
 #pragma mark Constructor/Destructor
 
-    template <typename T>
+    template<typename T>
     ScaleSpaceFilter<T>::ScaleSpaceFilter(T scale,
-            const vector<T> &resolution,
-            const vector<string> &excluded_vars,
-            T decay,
-            bool show_progress)
-    : FeatureSpaceFilter<T>(show_progress)
-    , m_scale(scale)
-    , m_decay(decay)
-    , m_progress_bar(NULL)
-    , m_excluded_vars(excluded_vars)
-    {
+                                          const vector<T> &resolution,
+                                          const vector<string> &excluded_vars,
+                                          T decay,
+                                          bool show_progress)
+            : FeatureSpaceFilter<T>(show_progress), m_scale(scale), m_decay(decay), m_progress_bar(NULL),
+              m_excluded_vars(excluded_vars) {
         if (scale < 0) {
             throw logic_error("scale can not be less than zero");
         }
@@ -104,23 +100,21 @@ namespace m3D {
         }
     }
 
-    template <typename T>
-    ScaleSpaceFilter<T>::~ScaleSpaceFilter()
-    {
+    template<typename T>
+    ScaleSpaceFilter<T>::~ScaleSpaceFilter() {
     }
 
 #pragma mark -
 #pragma mark Abstract filter method
 
-    template <typename T>
+    template<typename T>
     void
-    ScaleSpaceFilter<T>::applyWithArrayIndexRecursive(FeatureSpace<T> *fs,
-            ArrayIndex<T> *originalIndex,
-            ArrayIndex<T> *filteredPoints,
-            vector<size_t> &dimensionIndexes,
-            size_t dimensionIndex,
-            typename CoordinateSystem<T>::GridPoint& gridpoint)
-    {
+    ScaleSpaceFilter<T>::applyWithArrayIndexRecursive(FeatureSpace <T> *fs,
+                                                      ArrayIndex <T> *originalIndex,
+                                                      ArrayIndex <T> *filteredPoints,
+                                                      vector<size_t> &dimensionIndexes,
+                                                      size_t dimensionIndex,
+                                                      typename CoordinateSystem<T>::GridPoint &gridpoint) {
         // loop over the dimension with the given index. For each
         // coordinate, loop over the other two. At Each point, apply
         // the one-dimensional kernel
@@ -139,7 +133,8 @@ namespace m3D {
             gridpoint[realDimIndex] = index;
 
             if (dimensionIndex < (gridpoint.size() - 1)) {
-                applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, dimensionIndex + 1, gridpoint);
+                applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, dimensionIndex + 1,
+                                             gridpoint);
             } else {
                 // we reached the fixed dimension
 
@@ -257,13 +252,12 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ScaleSpaceFilter<T>::applyWithArrayIndexForDimension(FeatureSpace<T> *fs,
-            ArrayIndex<T> *originalIndex,
-            ArrayIndex<T> *filteredPoints,
-            size_t fixedDimensionIndex)
-    {
+    ScaleSpaceFilter<T>::applyWithArrayIndexForDimension(FeatureSpace <T> *fs,
+                                                         ArrayIndex <T> *originalIndex,
+                                                         ArrayIndex <T> *filteredPoints,
+                                                         size_t fixedDimensionIndex) {
         // iterate over the other two
 
         // Create a vector, that enumerates the dimensions such, that the
@@ -286,10 +280,9 @@ namespace m3D {
         applyWithArrayIndexRecursive(fs, originalIndex, filteredPoints, dimensionIndexes, 0, gridpoint);
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ScaleSpaceFilter<T>::applyWithArrayIndex(FeatureSpace<T> *fs)
-    {
+    ScaleSpaceFilter<T>::applyWithArrayIndex(FeatureSpace <T> *fs) {
         using namespace std;
 
         const CoordinateSystem<T> *cs = fs->coordinate_system;
@@ -356,8 +349,9 @@ namespace m3D {
 
         if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
-            cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
-                    << "(" << (fs->size() - originalPoints) << " new points))" << endl;
+            cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints
+                 << " original points, "
+                 << "(" << (fs->size() - originalPoints) << " new points))" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
         }
@@ -367,13 +361,12 @@ namespace m3D {
         delete filteredIndex;
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ScaleSpaceFilter<T>::apply_parallellized_on_dimension(FeatureSpace<T> *fs,
-            ArrayIndex<T> *originalIndex,
-            ArrayIndex<T> *filteredPoints,
-            size_t fixedDimension)
-    {
+    ScaleSpaceFilter<T>::apply_parallellized_on_dimension(FeatureSpace <T> *fs,
+                                                          ArrayIndex <T> *originalIndex,
+                                                          ArrayIndex <T> *filteredPoints,
+                                                          size_t fixedDimension) {
         using namespace std;
 
         const CoordinateSystem<T> *cs = fs->coordinate_system;
@@ -430,7 +423,7 @@ namespace m3D {
 #if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
                 if (fs->off_limits()->get(gridpoint))
                     continue;
-#endif  
+#endif
 
                 ScaleSpaceKernel<T> g = this->m_kernels[fixedDimension];
 
@@ -461,7 +454,7 @@ namespace m3D {
 #if SCALE_SPACE_SKIPS_NON_ORIGINAL_POINTS
                     if (fs->off_limits()->get(gridpoint))
                         continue;
-#endif  
+#endif
 
                     // get the point at the iterated position
 
@@ -552,10 +545,9 @@ namespace m3D {
         }
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ScaleSpaceFilter<T>::apply_parallellized(FeatureSpace<T> *fs)
-    {
+    ScaleSpaceFilter<T>::apply_parallellized(FeatureSpace <T> *fs) {
         LinearIndexMapping mapping(fs->coordinate_system->get_dimension_sizes());
         size_t N = mapping.size();
         const size_t value_rank = fs->value_rank();
@@ -623,8 +615,9 @@ namespace m3D {
 
         if (this->show_progress()) {
             cout << "done. (" << stop_timer() << "s)" << endl;
-            cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints << " original points, "
-                    << "(" << (fs->size() - originalPoints) << " new points))" << endl;
+            cout << "Filtered featurespace contains " << fs->size() << " points (" << originalPoints
+                 << " original points, "
+                 << "(" << (fs->size() - originalPoints) << " new points))" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
         }
@@ -634,10 +627,9 @@ namespace m3D {
         delete filteredIndex;
     }
 
-    template <typename T>
+    template<typename T>
     void
-    ScaleSpaceFilter<T>::apply(FeatureSpace<T> *fs)
-    {
+    ScaleSpaceFilter<T>::apply(FeatureSpace <T> *fs) {
         this->m_unfiltered_min = fs->min();
         this->m_unfiltered_max = fs->max();
         //this->applyWithArrayIndex(fs);
@@ -648,10 +640,9 @@ namespace m3D {
 #pragma mark -
 #pragma mark Range handling
 
-    template <typename T>
+    template<typename T>
     map<size_t, T>
-    ScaleSpaceFilter<T>::getRangeFactors()
-    {
+    ScaleSpaceFilter<T>::getRangeFactors() {
         map<size_t, T> factors;
         typename map<size_t, T>::iterator mi;
 
@@ -663,17 +654,15 @@ namespace m3D {
         return factors;
     }
 
-    template <typename T>
+    template<typename T>
     const map<size_t, T> &
-    ScaleSpaceFilter<T>::get_filtered_min()
-    {
+    ScaleSpaceFilter<T>::get_filtered_min() {
         return m_min;
     }
 
-    template <typename T>
+    template<typename T>
     const map<size_t, T> &
-    ScaleSpaceFilter<T>::get_filtered_max()
-    {
+    ScaleSpaceFilter<T>::get_filtered_max() {
         return m_max;
     }
 }

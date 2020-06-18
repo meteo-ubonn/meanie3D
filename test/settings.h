@@ -56,10 +56,10 @@ public:
      * @param Filename of the generated test data
      */
     FSTestSettings(size_t num_dims,
-            size_t num_vars,
-            vector<float> axis_bound_value,
-            size_t num_gridpoints = NUMBER_OF_GRIDPOINTS,
-            std::string test_filename = "fs_test.nc");
+                   size_t num_vars,
+                   vector<float> axis_bound_value,
+                   size_t num_gridpoints = NUMBER_OF_GRIDPOINTS,
+                   std::string test_filename = "fs_test.nc");
 
     /** @constructor
      * @param Number of dimensions
@@ -68,9 +68,9 @@ public:
      * @param Filename of the generated test data
      */
     FSTestSettings(size_t num_dims,
-            size_t num_vars,
-            size_t num_gridpoints = NUMBER_OF_GRIDPOINTS,
-            std::string test_filename = "fs_test.nc");
+                   size_t num_vars,
+                   size_t num_gridpoints = NUMBER_OF_GRIDPOINTS,
+                   std::string test_filename = "fs_test.nc");
 
     /** Number of dimensions and dimension variables in the testfile (max 4) 
      */

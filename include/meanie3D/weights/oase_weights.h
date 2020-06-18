@@ -44,7 +44,7 @@ namespace m3D {
     using std::vector;
     using std::map;
 
-    template <class T>
+    template<class T>
     class OASEWeightFunction : public WeightFunction<T>
     {
     private:
@@ -52,19 +52,18 @@ namespace m3D {
         vector<string> m_vars; // variables for weighting
         map<size_t, T> m_min; // [index,min]
         map<size_t, T> m_max; // [index,max]
-        MultiArray<T> *m_weight;
-        const CoordinateSystem<T> *m_coordinate_system;
+        MultiArray <T> *m_weight;
+        const CoordinateSystem <T> *m_coordinate_system;
 
         // Weight function with range weight
 
-        PointIndex<T> *m_index; // index for range search
+        PointIndex <T> *m_index; // index for range search
         vector<T> m_bandwidth; // bandwidth for range weight
         SearchParameters *m_search_params; // search params for search
-        Kernel<T> *m_kernel; // kernel for weighing 
+        Kernel <T> *m_kernel; // kernel for weighing
 
         void
-        calculate_weight_function(FeatureSpace<T> *fs)
-        {
+        calculate_weight_function(FeatureSpace <T> *fs) {
             size_t spatial_dim = fs->coordinate_system->rank();
             vector<size_t> indexes(spatial_dim);
             for (size_t i = 0; i < spatial_dim; i++) indexes[i] = i;
@@ -87,13 +86,11 @@ namespace m3D {
          * for valid_min/valid_max
          * @param featurespace
          */
-        OASEWeightFunction(const detection_params_t<T> &params, 
-                             const detection_context_t<T> &ctx)
-        : m_vars(params.variables)
-        , m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0))
-        , m_coordinate_system(ctx.coord_system)
-        , m_bandwidth(ctx.bandwidth)
-        {
+        OASEWeightFunction(const detection_params_t <T> &params,
+                           const detection_context_t <T> &ctx)
+                : m_vars(params.variables),
+                  m_weight(new MultiArrayBlitz<T>(ctx.coord_system->get_dimension_sizes(), 0.0)),
+                  m_coordinate_system(ctx.coord_system), m_bandwidth(ctx.bandwidth) {
             // If scale-space filter is present, use the filtered
             // limits. If not, use the original limits
             if (ctx.sf == NULL) {
@@ -109,8 +106,7 @@ namespace m3D {
             calculate_weight_function(ctx.fs);
         }
 
-        ~OASEWeightFunction()
-        {
+        ~OASEWeightFunction() {
             if (this->m_weight != NULL) {
                 delete m_weight;
                 m_weight = NULL;
@@ -121,8 +117,7 @@ namespace m3D {
          * cloud type, 10.8um, cband_radolan, cloud optical 
          * thickness and lightning counts
          */
-        T weight_version_one(Point<T> *p)
-        {
+        T weight_version_one(Point <T> *p) {
             T sum = 0.0;
 
             const float msevi_l2_nwcsaf_ct_multiplier = 1.0;
@@ -236,8 +231,7 @@ namespace m3D {
 
         /** Actual weight computation happens here
          */
-        T compute_weight(Point<T> *p)
-        {
+        T compute_weight(Point <T> *p) {
 
 
             typename Point<T>::list *neighbors = m_index->search(p->coordinate, m_search_params);
@@ -265,8 +259,7 @@ namespace m3D {
             return weight;
         }
 
-        T operator()(const typename Point<T>::ptr p) const
-        {
+        T operator()(const typename Point<T>::ptr p) const {
             return m_weight->get(p->gridpoint);
         }
     };

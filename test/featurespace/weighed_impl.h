@@ -1,12 +1,11 @@
 #ifndef M3D_TEST_FS_WEIGHED_IMPL_H
 #define M3D_TEST_FS_WEIGHED_IMPL_H
 
-template <class T>
+template<class T>
 void FSWeighedTest2D<T>::create_uniform_distribution_recursive(const NcVar &var,
-        size_t modulo,
-        size_t dimensionIndex,
-        typename CoordinateSystem<T>::GridPoint &gridpoint)
-{
+                                                               size_t modulo,
+                                                               size_t dimensionIndex,
+                                                               typename CoordinateSystem<T>::GridPoint &gridpoint) {
     using namespace netCDF;
 
     NcDim dim = var.getDim(dimensionIndex);
@@ -23,7 +22,7 @@ void FSWeighedTest2D<T>::create_uniform_distribution_recursive(const NcVar &var,
         for (int index = 0; index < dim.getSize(); index++) {
             gridpoint[dimensionIndex] = index;
 
-            vector<size_t> count(gridpoint.size(), 1);
+            vector <size_t> count(gridpoint.size(), 1);
 
             if (gridpoint[dimensionIndex] % modulo == 0) {
                 this->m_pointCount++;
@@ -34,7 +33,7 @@ void FSWeighedTest2D<T>::create_uniform_distribution_recursive(const NcVar &var,
 
                 T value = (T) m_distribution(coordinate);
 
-                vector<size_t> gp(gridpoint.begin(), gridpoint.end());
+                vector <size_t> gp(gridpoint.begin(), gridpoint.end());
 
                 var.putVar(gp, value);
             }
@@ -45,9 +44,8 @@ void FSWeighedTest2D<T>::create_uniform_distribution_recursive(const NcVar &var,
 /** Creates a distribution of points every modulo grid points, 
  * where all values are 1.0
  */
-template <class T>
-void FSWeighedTest2D<T>::create_uniform_distribution(const NcVar &var, size_t modulo)
-{
+template<class T>
+void FSWeighedTest2D<T>::create_uniform_distribution(const NcVar &var, size_t modulo) {
     // homogenous point distribution in N-D, every modulo grid point is used
 
     typename CoordinateSystem<T>::GridPoint gridpoint(this->coordinate_system()->rank(), 0);
@@ -64,8 +62,7 @@ void FSWeighedTest2D<T>::create_uniform_distribution(const NcVar &var, size_t mo
 }
 
 template<class T>
-void FSWeighedTest2D<T>::SetUp()
-{
+void FSWeighedTest2D<T>::SetUp() {
     FSTestBase<T>::SetUp();
 
     // Set the bandwidths
@@ -82,7 +79,7 @@ void FSWeighedTest2D<T>::SetUp()
     vector<float> max_h(this->m_settings->fs_dim(), 0.0);
 
     for (size_t i = 0; i < this->m_bandwidths.size(); i++) {
-        vector<T> h = this->m_bandwidths.at(i);
+        vector <T> h = this->m_bandwidths.at(i);
 
         assert(h.size() == bw_size);
 
@@ -119,8 +116,7 @@ void FSWeighedTest2D<T>::SetUp()
 }
 
 template<class T>
-void FSWeighedTest2D<T>::TearDown()
-{
+void FSWeighedTest2D<T>::TearDown() {
     FSTestBase<T>::TearDown();
 }
 
@@ -128,14 +124,12 @@ void FSWeighedTest2D<T>::TearDown()
 #pragma mark Test parameterization
 
 template<class T>
-FSWeighedTest2D<T>::FSWeighedTest2D() : FSTestBase<T>()
-{
+FSWeighedTest2D<T>::FSWeighedTest2D() : FSTestBase<T>() {
     this->m_settings = new FSTestSettings(2, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
 }
 
 template<class T>
-FSWeighedTest3D<T>::FSWeighedTest3D() : FSWeighedTest2D<T>()
-{
+FSWeighedTest3D<T>::FSWeighedTest3D() : FSWeighedTest2D<T>() {
     this->m_settings = new FSTestSettings(3, 1, NUMBER_OF_GRIDPOINTS, FSTestBase<T>::filename_from_current_testcase());
 }
 
