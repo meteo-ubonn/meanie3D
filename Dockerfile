@@ -19,7 +19,6 @@ shapelib \
 libhdf5-dev \
 netcdf-bin libnetcdf-dev libnetcdf-c++4 python3-netcdf4 \
 zlib1g zlib1g-dev
-
 RUN pip3 install setuptools
 
 # Build NetCDF-CXX (always an extra bloody sausage with this package...)
@@ -46,10 +45,11 @@ RUN rm -rf netcdf-cxx4-4.2.1 && rm v4.2.1.tar.gz
 # RUN rm -rf visit*
 
 # Meanie3D
-RUN git clone --recurse-submodules --depth=1 https://github.com/JuergenSimon/meanie3D.git#dockerize
+RUN git clone --recurse-submodules --depth=1 https://github.com/JuergenSimon/meanie3D
 WORKDIR /meanie3D
-RUN cmake -DFOR_DOCKER=1 .
-RUN make install 
+RUN git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch --all
+RUN git checkout --track origin/dockerize && git pull
+RUN cmake -DFOR_DOCKER=1 . && make install 
 
 # Cleanup
 WORKDIR /
