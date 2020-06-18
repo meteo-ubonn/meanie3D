@@ -46,7 +46,7 @@ RUN rm -rf netcdf-cxx4-4.2.1 && rm v4.2.1.tar.gz
 # RUN rm -rf visit*
 
 # Meanie3D
-RUN git clone --recurse-submodules --depth=1 https://github.com/meteo-ubonn/meanie3D.git#dockerize
+RUN git clone --recurse-submodules --depth=1 https://github.com/JuergenSimon/meanie3D.git#dockerize
 WORKDIR /meanie3D
 RUN cmake -DFOR_DOCKER=1 .
 RUN make install 
