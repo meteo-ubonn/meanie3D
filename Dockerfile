@@ -48,7 +48,7 @@ RUN rm -rf netcdf-cxx4-4.2.1 && rm v4.2.1.tar.gz
 RUN git clone --recurse-submodules --depth=1 https://github.com/JuergenSimon/meanie3D
 WORKDIR /meanie3D
 RUN git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch --all
-RUN git checkout --track origin/dockerize && git pull
+RUN git checkout --track remotes/origin/dockerize && git pull
 RUN cmake -DFOR_DOCKER=1 . && make install 
 
 # Cleanup
