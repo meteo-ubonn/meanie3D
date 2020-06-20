@@ -196,7 +196,7 @@ def main():
     configuration = meanie3D.app.utils.load_configuration(config_file);
 
     print("-------------------------------------------------------------------------------------")
-    print("Configuration: ") + configuration['description']
+    print(f"Configuration: {configuration['description']}")
     print("-------------------------------------------------------------------------------------")
 
     # Enrich the configuration with env/command line stuff
