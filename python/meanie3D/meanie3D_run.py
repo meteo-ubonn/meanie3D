@@ -36,29 +36,29 @@ import meanie3D.app.utils
 import meanie3D.app.postprocessing
 
 # Make sure the C++ executables are installed
-meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-cfm2vtk","meanie3D-trackstats","rm"])
+meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-trackstats","rm"])
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
 #
 def usage():
-    print "meanie3D -c=<json file> -f=<netcdf directory> [-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] [--version] [--time-operations]"
-    print "runs a complete set of netcdf files through the clustering/tracking"
-    print "-c : json config file specifying variables etc."
-    print "-f : directory containing the files. It is assumed that"
-    print "           the files are in the correct order when sorted alphabetically."
-    print "--scales,-s  : comma separated list of scale parameters."
-    print "--ranges,-r  : comma separated list of bandwidths, one for each spatial and value range variable."
-    print "--json-example : prints an example .json configuration and exits"
-    print "--start index of time step to start with in files with time dimension"
-    print "--end   index of time step to end at in files with time dimension"
-    print "--resume     : if this flag is present, the algorithm assumes to resume"
-    print "              operations where it last left off. If not present, previous"
-    print "              results will be erased before starting"
-    print "--help, -h  : print this message and exit."
-    print "--version   : prints the version information and exits"
-    print "--time-operations: time operations and print out their elapsed time"
-    print "--skip-trackstats: skip meanie3D-trackstats, even if the configuration is present"
+    print("meanie3D -c=<json file> -f=<netcdf directory> [-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] [--version] [--time-operations]")
+    print("runs a complete set of netcdf files through the clustering/tracking")
+    print("-c : json config file specifying variables etc.")
+    print("-f : directory containing the files. It is assumed that")
+    print("           the files are in the correct order when sorted alphabetically.")
+    print("--scales,-s  : comma separated list of scale parameters.")
+    print("--ranges,-r  : comma separated list of bandwidths, one for each spatial and value range variable.")
+    print("--json-example : prints an example .json configuration and exits")
+    print("--start index of time step to start with in files with time dimension")
+    print("--end   index of time step to end at in files with time dimension")
+    print("--resume     : if this flag is present, the algorithm assumes to resume")
+    print("              operations where it last left off. If not present, previous")
+    print("              results will be erased before starting")
+    print("--help, -h  : print this message and exit.")
+    print("--version   : prints the version information and exits")
+    print("--time-operations: time operations and print out their elapsed time")
+    print("--skip-trackstats: skip meanie3D-trackstats, even if the configuration is present")
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -67,13 +67,13 @@ def usage():
 ## Prints the configuration file .json file description and exits
 #
 def print_configuration_format():
-    print '''{'''
-    print '''   "description" : "...",  /* Description of file content */'''
-    print '''   "data" : {...},         /* call --help config.data for help on this section */'''
-    print '''   "detection" : {...},    /* call --help config.detection for help on this section */'''
-    print '''   "tracking" : {...},     /* call --help config.tracking for help on this section */'''
-    print '''   "postprocessing" : {...} /* call --help config.postprocessing for help on this section */'''
-    print '''}'''
+    print('{')
+    print('   "description" : "...",  /* Description of file content */')
+    print('   "data" : {...},         /* call --help config.data for help on this section */')
+    print('   "detection" : {...},    /* call --help config.detection for help on this section */')
+    print('   "tracking" : {...},     /* call --help config.tracking for help on this section */')
+    print('   "postprocessing" : {...} /* call --help config.postprocessing for help on this section */')
+    print('}')
     sys.exit(1)
 # ----------------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ def print_configuration_format():
 ## Prints version info and exits
 #
 def print_version():
-    print "meanie3D: " + meanie3D.getVersion() + "\n"
+    print("meanie3D: " + meanie3D.getVersion() + "\n")
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ def main():
                      "scales="]
         opts, args = getopt.getopt(argv, "c:f:s:o:r:h", long_args)
     except getopt.GetoptError as detail:
-        print detail
+        print(f"{detail}")
         sys.exit(2)
 
     scales = []
@@ -182,11 +182,11 @@ def main():
     if start_time_index != -1 or end_time_index != -1 :
 
         if (start_time_index == -1 and end_time_index != -1) or (start_time_index != -1 and end_time_index == -1):
-            print "start-time-index and end-time-index must both be set"
+            print("start-time-index and end-time-index must both be set")
             sys.exit(2)
 
         if start_time_index > end_time_index:
-            print "start-time-index is after end-time-index!"
+            print("start-time-index is after end-time-index!")
             sys.exit(2)
 
         uses_time = True
@@ -195,9 +195,9 @@ def main():
 
     configuration = meanie3D.app.utils.load_configuration(config_file);
 
-    print "-------------------------------------------------------------------------------------"
-    print "Configuration: " + configuration['description']
-    print "-------------------------------------------------------------------------------------"
+    print("-------------------------------------------------------------------------------------")
+    print("Configuration: ") + configuration['description']
+    print("-------------------------------------------------------------------------------------")
 
     # Enrich the configuration with env/command line stuff
     configuration["source_directory"] = os.path.abspath(netcdf_dir)

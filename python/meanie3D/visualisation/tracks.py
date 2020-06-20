@@ -44,7 +44,7 @@ def run(conf):
 
     visitConf = utils.getValueForKeyPath(conf,'postprocessing.tracks.visit')
     if not visitConf:
-        print "No configuration for visuals. Nothing to do."
+        print (".*")
         return 0
 
     # Set up background gradient, axis labels etc.
@@ -73,8 +73,8 @@ def run(conf):
 
         track_pattern =  "*-track_*.vtk"
         list = sorted(glob.glob(track_pattern))
-        print "Looking with pattern " + track_pattern
-        print "Found %d track files." % len(list)
+        print (".*") + track_pattern
+        print (".*") % len(list)
         count = 0;
         for trackFile in list:
 
@@ -88,7 +88,7 @@ def run(conf):
 
             # Plot the actual track data
             file = conf['tracks_dir'] + os.path.sep + trackFile
-            print "Adding plot for " + file
+            print (".*") + file
             utils.addPseudocolorPlot(file,trackPlotConf)
 
             count = count + 1
@@ -101,10 +101,10 @@ def run(conf):
         trackPlotConf['PseudocolorAttributes']['legendFlag'] = legendFlag
         # pp.pprint(trackPlotConf)
 
-    print "Drawing plots"
+    print (".*")
     visit.DrawPlots()
 
-    print "Saving image to %s" % os.getcwd()
+    print (".*") % os.getcwd()
     utils.saveImage("tracks",0)
 
     os.chdir(currentDirectory)

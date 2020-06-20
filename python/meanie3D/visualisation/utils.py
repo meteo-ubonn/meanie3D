@@ -35,22 +35,22 @@ meanie3D.app.external.locateCommands(['convert', 'composite','python'])
 
 ret_code, paths_string = meanie3D.app.external.execute_command('python','-c "import sys; print sys.path"', True)
 if ret_code == 0:
-    print "Attempting to locate python module netCDF4"
+    print (".*")
     result = meanie3D.app.utils.find_in_paths(["/usr/lib","/usr/local/lib"],"netCDF4","site-packages")
     if not result:
         result = meanie3D.app.utils.find_in_paths(["/usr/lib","/usr/local/lib"],"netCDF4","dist-packages")
 
     if not result:
-        print "Failed to locate python module netCDF4"
+        print (".*")
         exit(-1)
     else:
-        print "Found netCDF4 at %s" % result
+        print (".*") % result
         sys.path.append(os.path.split(result)[0]);
-        print "Python path after adding system search directories:"
+        print (".*")
         print(sys.path)
 
 else:
-    print "Failed to obtain system's python path"
+    print (".*")
     exit(-1)
 
 import netCDF4
@@ -371,7 +371,7 @@ def plotMapdata(configuration, path):
         if os.path.exists(mapFile):
             addPseudocolorPlots(mapFile, configuration, path + ".plots")
         else:
-            print "ERROR:could not find map file at " + mapFile
+            print (".*") + mapFile
     return
 
 
@@ -537,11 +537,11 @@ def create_movie(basename, moviename):
     :param moviename:
     :return:
     '''
-    print "Creating movie '" + moviename + "' from files '" + basename + "*.png ..."
+    print (".*")
     args = "-limit memory 4GB -delay 50 -quality 100 -dispose Background %s*.png %s" % (basename, moviename)
-    print "convert %s" % args
+    print (".*") % args
     meanie3D.app.external.execute_command('convert', args, False)
-    print "done."
+    print (".*")
     return
 
 
@@ -671,9 +671,9 @@ def add_datetime(conf, netcdf_file,time_index):
         date = date.replace(microsecond=0)
         have_valid_time = True
     except ValueError as vi:
-        print "Error reading time information from file:"
-        print vi.message
-        print "Falling back on time index"
+        print (".*")
+        print (vi.message)
+        print (".*")
         date = time_index
 
     x = 0.725
@@ -714,7 +714,7 @@ def create_dual_panel(basename_left, basename_right, basename_combined):
     left_files = sorted(glob.glob(basename_left + "*.png"))
     right_files = sorted(glob.glob(basename_right + "*.png"))
     if len(left_files) != len(right_files):
-        print "ERROR:the two image series " + basename_left + "*.png and " + basename_right + "*.png have different lengths!"
+        print (".*")
         return
 
     # create a small image to blank the datestamp with

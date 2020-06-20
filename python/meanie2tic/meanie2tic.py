@@ -59,7 +59,7 @@ def write_csv(json):
 
     objects = csv.writer(objects_file, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
-    print "Writing object information:\n"
+    print("Writing object information:\n")
     tracks = json['tracks'];
     for ti in range(0,len(tracks)):
         track  = tracks[ti]
@@ -70,7 +70,7 @@ def write_csv(json):
             header = ['timestep','id','centerx','centery','volume',
                       'boxxmin','boxxmax','boxymin','boxymax',
                       'lwpmean','lwpmin','lwpmax']
-            print header
+            print(header)
             objects.writerow(header)
 
         for ci in range(0,len(clusters)):
@@ -111,14 +111,14 @@ def write_csv(json):
             # (12)	 Max LWP of the object (=maximal LWP value included)
             row.append(cluster['max'][0])
 
-            print row
+            print(f"{row}")
             objects.writerow(row)
 
 
     #
     # Write the tracks
     #
-    print "Writing tracking information:\n"
+    print("Writing tracking information:\n")
 
     tracks_file = open('tracks.csv', 'wb')
     if (not tracks_file):
@@ -143,7 +143,7 @@ def write_csv(json):
         # if the first row, write a header
         if li == 0:
             header = ['timestep','idstep1','idstep2','weight']
-            print header
+            print(f"{header}")
             tracks.writerow(header)
 
         row = []
@@ -159,17 +159,17 @@ def write_csv(json):
         # (4)	Weight factor to decide object relevance after split/merge event for life
         row.append(0)
 
-        print row
+        print(f"{row}")
         tracks.writerow(row)
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
 #
 def usage():
-    print "meanie2tic.py [--file,-f] <json file> [--help,-h]"
-    print "Converts meanie3D track-dictionary.json into CSV files for Tracking Intercomparison project"
-    print "--file,-f : track dictionary file (defaults to 'track-dictionary.json' if omitted)"
-    print "--help, -h  : print this message and exit."
+    print("meanie2tic.py [--file,-f] <json file> [--help,-h]")
+    print("Converts meanie3D track-dictionary.json into CSV files for Tracking Intercomparison project")
+    print("--file,-f : track dictionary file (defaults to 'track-dictionary.json' if omitted)")
+    print("--help, -h  : print this message and exit.")
     sys.exit(1)
     return
 # ----------------------------------------------------------------------------
@@ -182,7 +182,7 @@ def main():
         argv = sys.argv[1:]
         opts, args = getopt.getopt(argv, "f:h", ["file","help"])
     except getopt.GetoptError as detail:
-        print detail
+        print(f"{detail}")
         sys.exit(2)
 
     if len(sys.argv) < 2:

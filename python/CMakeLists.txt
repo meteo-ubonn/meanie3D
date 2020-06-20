@@ -52,5 +52,4 @@ IF (Python3_FOUND)
     ADD_CUSTOM_TARGET(${PROJECT_NAME}-clean COMMAND rm -rf build dist *.egg-info setup.py meanie3D/__init__.py README.txt)
 
     INSTALL(CODE "EXECUTE_PROCESS(COMMAND \"${Python3_EXECUTABLE}\" setup.py install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
-
 ENDIF ()

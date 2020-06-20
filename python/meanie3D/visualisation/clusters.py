@@ -34,8 +34,7 @@ import meanie3D.visualisation
 import utils
 
 from meanie3D.app import external
-external.locateCommands(['meanie3D-cfm2vtk'])
-
+__have_vtk__ = external.hasCommand('meanie3D-cfm2vtk')
 
 # ------------------------------------------------------------------------------
 # Adds clusters with names "*_infix_*.vtk" to the current visualisation window.
@@ -57,7 +56,7 @@ def add_clusters(cluster_vtk_file,configuration):
         sys.stderr.write("ERROR:no value found for postprocessing.clusters.visit.cluster")
         return
     # plot the clusters
-    print "Adding clusters from file %s" % cluster_vtk_file
+    print (".*") % cluster_vtk_file
     utils.addPseudocolorPlot(cluster_vtk_file, clusterOptions)
     return
 
@@ -77,12 +76,12 @@ def run(conf):
 
     clusterConf = utils.getValueForKeyPath(conf,'postprocessing.clusters')
     if not clusterConf:
-        print "No configuration for cluster postprocessing. Nothing to do."
+        print (".*")
         return 0
 
     visitConf = utils.getValueForKeyPath(clusterConf,'visit')
     if not visitConf:
-        print "No configuration for visuals. Nothing to do."
+        print (".*")
         return 0
 
     views = utils.getValueForKeyPath(visitConf,'views')
@@ -94,10 +93,10 @@ def run(conf):
     utils.setAnnotations(conf,'postprocessing.clusters.visit.annotations')
 
     if not utils.getValueForKeyPath(conf,'resume'):
-        print "Removing results from previous runs"
+        print (".*")
         subprocess.call("rm -rf images movies *.vtk *.vtr *tracking*.png *source*.png", shell=True)
     else:
-        print "Removing intermediary files from previous runs"
+        print (".*")
         subprocess.call("rm -f *.vtk *.vtr *.vtu", shell=True)
 
     # Figure out the ending for the cluster vtk files
@@ -110,12 +109,12 @@ def run(conf):
     # Glob the netcdf directory or find the single file
     uses_time = utils.getValueForKeyPath(conf,'uses_time')
 
-    print "Current work directory: " + os.path.abspath(os.getcwd())
+    print (".*") + os.path.abspath(os.getcwd())
     if uses_time:
-        print "Processing file " + conf['source_directory']
+        print (".*") + conf['source_directory']
         netcdf_file = conf['source_directory']
     else:
-        print "Processing files in directory " + conf['source_directory']
+        print (".*") + conf['source_directory']
         netcdf_files = sorted(glob.glob(conf['source_directory']+"/*.nc"))
 
     # Keep track of number of images to allow
@@ -154,12 +153,12 @@ def run(conf):
         label_vtk_file        = basename + "-clusters-centers.vtk"
         displacement_vtk_file = basename + "-clusters-displacements.vtk"
 
-        print "netcdf_file  = " + netcdf_file
-        print "cluster_file = " + cluster_file
+        print (".*") + netcdf_file
+        print (".*") + cluster_file
 
         # check if the files both exist
         if not os.path.exists(cluster_file):
-            print "Cluster file does not exist. Skipping."
+            print (".*")
             continue
 
         # predict the filenames for checking on resume
@@ -171,10 +170,10 @@ def run(conf):
         if conf['resume'] == True:
             exists = utils.images_exist(visitConf['views'],"source",image_count)
             if exists == "all":
-                print "Source visualization " + number_postfix + " exists. Skipping."
+                print (".*")
                 skip_source = True
             elif exists == "partial":
-                print "Deleting partial visualization " + number_postfix
+                print (".*") + number_postfix
                 utils.delete_images(conf,"source",image_count)
 
         if skip_source == False:
@@ -189,7 +188,7 @@ def run(conf):
                     utils.add_datetime(clusterConf,netcdf_file,time_index)
 
                 # Add source data and threshold it
-                print "Plotting source data ..."
+                print (".*")
                 start_time = time.time()
 
 
@@ -202,25 +201,25 @@ def run(conf):
                 visit.DeleteAllPlots()
                 visit.ClearWindow()
 
-                print "    done. (%.2f seconds)" % (time.time()-start_time)
+                print (".*") % (time.time()-start_time)
 
-        if utils.getValueForKeyPath(clusterConf,'visualiseClusters'):
+        if utils.getValueForKeyPath(clusterConf,'visualiseClusters') and __have_vtk__:
 
             skip = False
             if conf['resume'] == True:
 
                 exists = utils.images_exist(visitConf['views'],"tracking",image_count)
                 if exists == "all":
-                    print "Cluster visualization "+number_postfix+" exists. Skipping."
+                    print (".*")
                     skip = True
                 elif exists == "partial":
-                    print "Deleting partial cluster visualization " + number_postfix
+                    print (".*") + number_postfix
                     utils.delete_images(conf,"tracking",image_count)
 
             if skip == False:
 
                 # Run the conversion
-                print "-- Converting clusters to .vtr --"
+                print (".*")
                 start_time = time.time()
                 params = "-f %s %s" \
                          % (cluster_file,utils.getValueForKeyPath(conf,'postprocessing.clusters.meanie3D-cfm2vtk'))
@@ -232,9 +231,9 @@ def run(conf):
                     params += " --vtk-dimensions=%s" % vtkDimString
 
                 # pdb.set_trace();
-                print "meanie3D-cfm2vtk %s" % params
+                print (".*") % params
                 meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
-                print "    done. (%.2f seconds)" % (time.time()-start_time)
+                print (".*") % (time.time()-start_time)
 
                 # Move cluster output file to individual file
                 if uses_time:
@@ -242,7 +241,7 @@ def run(conf):
                     os.rename(cluster_vtk_file,cluster_vtk_file_dst)
                     cluster_vtk_file = cluster_vtk_file_dst
 
-                print "-- Rendering cluster scene --"
+                print (".*")
                 start_time = time.time()
 
                 # Add ancillary background data
@@ -274,7 +273,7 @@ def run(conf):
                 visit.DrawPlots()
                 utils.saveImagesForViews(views,"tracking")
 
-                print "    done. (%.2f seconds)" % (time.time()-start_time)
+                print (".*") % (time.time()-start_time)
 
         # clean up
 
@@ -312,7 +311,7 @@ def run(conf):
         utils.createMoviesForViews(views,"tracking", movieFormats)
 
     # clean up
-    print "Cleaning up ..."
+    print (".*")
     subprocess.call("mkdir images", shell=True)
     subprocess.call("mv *tracking_*.png images", shell=True)
     subprocess.call("mv *source_*.png images", shell=True)

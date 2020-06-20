@@ -101,14 +101,27 @@ def locateCommandInPath(command, path, recurse):
     return result
 
 
-## Attempts to locate the given executables in the given filesystem paths.
-#
-# \param command_list - list of strings containing the commands
-# \param path_list - list of strings containing the search paths
-# \param recurse - boolean. If <true> the method recurses into each path.
-# \return a dictionary containing the command names mapping to the command paths
-# \throws IOError if a command can not be located or is not executable
+def hasCommand(command):
+    """
+    Tests if the command is available
+    @param command name
+    @returns True or False
+    """
+    try:
+        locateCommands([command])
+    except IOError:
+        return False
+        
+
 def locateCommandsInPaths(command_list, path_list, recurse):
+    """
+    Attempts to locate the given executables in the given filesystem paths.
+    @param command_list - list of strings containing the commands
+    @param path_list - list of strings containing the search paths
+    @param recurse - boolean. If <true> the method recurses into each path.
+    @returns a dictionary containing the command names mapping to the command paths
+    @throws IOError if a command can not be located or is not executable
+    """
     for command in command_list:
         result = COMMAND_NOT_FOUND
         for path in path_list:
