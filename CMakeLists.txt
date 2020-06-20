@@ -55,23 +55,12 @@ INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
 # Options
 # -------------------------------------
 OPTION(FOR_DOCKER "Build for dockerized version" OFF)
-OPTION(WITH_OPENMP "Enable/Disable OpenMP" ON)
 OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
 OPTION(WITH_VTK "Enable/Disable visualisation code (requires VTK)" OFF)
 OPTION(WITH_RADOLAN_UTILS "Compile with radolan adaptor (requires libradolan)" OFF)
 OPTION(WITH_SATELLITE_UTILS "Compile with tools for satellite data" OFF)
 OPTION(WITH_KONRAD_UTILS "Compile with binaries for KONRAD tracks" OFF)
 OPTION(WITH_DOCS "Compile source code documentation" OFF)
-
-# -------------------------------------
-# Submodules
-# -------------------------------------
-
-ADD_SUBDIRECTORY(python)
-IF (WITH_RADOLAN_UTILS)
-  ADD_SUBDIRECTORY(radolan)
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/radolan/include)
-ENDIF()
 
 # ------------------------------------- 
 # PRESETS
@@ -125,12 +114,14 @@ ELSE()
   ENDIF ()
 
   # -------------------------------------
-  # Radolan Adaptor
+  # Radolan Utils
   # -------------------------------------
   SET(RADOLAN_ENABLED ${WITH_RADOLAN_UTILS})
   IF (RADOLAN_ENABLED)
-    MESSAGE(STATUS "Compiling with radolan adaptor.")
+    MESSAGE(STATUS "RADOLAN utilities enabled")
     ADD_DEFINITIONS(-DWITH_RADOLAN=1)
+  ELSE()
+    MESSAGE(STATUS "RADOLAN utilities disabled")
   ENDIF ()
 
   # -------------------------------------
@@ -138,8 +129,10 @@ ELSE()
   # -------------------------------------
   SET(KONRAD_ENABLED ${WITH_KONRAD_UTILS})
   IF (KONRAD_ENABLED)
-    MESSAGE(STATUS "Adding binaries for working with KONRAD data")
+    MESSAGE(STATUS "KONRAD utilities enabled")
     ADD_DEFINITIONS(-DWITH_KONRAD_UTILS=1)
+  ELSE()
+    MESSAGE(STATUS "KONRAD utilities disabled")
   ENDIF ()
 
   # -------------------------------------
@@ -147,19 +140,12 @@ ELSE()
   # -------------------------------------
   SET(SATELLITE_ENABLED ${WITH_SATELLITE_UTILS})
   IF (SATELLITE_ENABLED)
-    MESSAGE(STATUS "Adding binaries for working with EUMETSAT satellite data")
+    MESSAGE(STATUS "Satellite data utilities enabled")
     ADD_DEFINITIONS(-DWITH_SATELLITE=1)
+  ELSE()
+    MESSAGE(STATUS "Satellite data utilities disabled")
   ENDIF ()
 
-  # -------------------------------------
-  # OpenCV (legacy)
-  # -------------------------------------
-
-  SET(OPENCV_ENABLED ${WITH_OPENCV})
-  IF (OPENCV_ENABLED)
-  MESSAGE(STATUS "OpenCV is enabled.")
-    ADD_DEFINITIONS(-DWITH_OPENCV=1)
-  ENDIF ()
 ENDIF()
 
 # -------------------------------------
@@ -254,20 +240,9 @@ ELSE ()
   INCLUDE_DIRECTORIES(${SHP_INCLUDE_DIR})
 ENDIF ()
 
-# OpenMP
-IF (OPENMP_DISABLED)
-  IF (CMAKE_COMPILER_IS_GNUCXX)
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  ELSE(CMAKE_COMPILER_IS_GNUCXX)
-    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  ENDIF (CMAKE_COMPILER_IS_GNUCXX)
-ENDIF (OPENMP_DISABLED)
-
 # VTK
 IF (VTK_ENABLED)
-  FIND_PACKAGE(VTK 6.0 REQUIRED NO_MODULE)
+  FIND_PACKAGE(VTK 8.2 REQUIRED NO_MODULE)
   IF (VTK_FOUND)
     MESSAGE(STATUS "VTK found")
     INCLUDE(${VTK_USE_FILE})
@@ -279,22 +254,10 @@ ENDIF ()
 
 FIND_PACKAGE(libradolan REQUIRED)
 IF (libradolan_FOUND)
-  MESSAGE(STATUS "libradolan enabled")
+  MESSAGE(STATUS "libradolan found")
   INCLUDE_DIRECTORIES(${libradolan_INCLUDE_DIR})
 ELSE()
   MESSAGE(FATAL_ERROR "libradolan not found")
-ENDIF()
-
-IF (KONRAD_ENABLED)
-  MESSAGE(STATUS "KONRAD utilities enabled")
-ELSE()
-  MESSAGE(STATUS "KONRAD utilities disabled")
-ENDIF()
-
-IF (SATELLITE_ENABLED)
-  MESSAGE(STATUS "OASE satellite data utilities enabled")
-ELSE()
-  MESSAGE(STATUS "OASE satellite data utilities disabled")
 ENDIF()
 
 # ------------------------------------- 
@@ -418,6 +381,7 @@ ADD_LIBRARY(meanie3D SHARED
   include/meanie3D/weights/weight_function_factory_impl.h
   include/meanie3D/weights.h
   src/exceptions/CFFileConversionException.cpp
+  src/adaptors/Radolan.cpp
   src/kdtree/kdtree.c
   src/numericalrecipes/betai.c
   src/numericalrecipes/betacf.c
@@ -561,8 +525,7 @@ TARGET_LINK_LIBRARIES(meanie3D
   ${Boost_LIBRARIES}
   ${VTK_LIBRARIES}
   ${Blitz_LIBRARY}
-  ${OpenCV_LIBRARIES}
-  ${OpenMP_RT_LIBRARIES})
+  ${NETCDF_LIBRARIES})
 SET_TARGET_PROPERTIES(meanie3D PROPERTIES LINKER_LANGUAGE CXX)
 
 # Detection tool
@@ -576,7 +539,7 @@ TARGET_LINK_LIBRARIES(meanie3D-detect
   ${VTK_LIBRARIES}
   ${HDF5_LIBRARIES}
   ${NETCDF_LIBRARIES})
-SET_TARGET_PROPERTIES(meanie3D-detect PROPERTIES LINKER_LANGUAGE CXX)
+#SET_TARGET_PROPERTIES(meanie3D-detect PROPERTIES LINKER_LANGUAGE CXX)
 
 # tracking tool
 
@@ -702,7 +665,7 @@ IF (VTK_ENABLED)
     ${HDF5_LIBRARIES}
     ${OpenMP_RT_LIBRARIES})
   SET_TARGET_PROPERTIES(meanie3D-cfm2vtk PROPERTIES LINKER_LANGUAGE CXX)
-ENDIF ()
+ENDIF (VTK_ENABLED)
 
 # ------------------------------------------------------------- #
 # Tests
@@ -815,19 +778,23 @@ INSTALL(TARGETS meanie3D-track RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-trackstats RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-timestamp RUNTIME DESTINATION "/usr/local/bin")
 INSTALL(TARGETS meanie3D-minmax RUNTIME DESTINATION "/usr/local/bin")
-IF (WITH_SATELLITE_UTILS)
+
+IF (SATELLITE_ENABLED)
   INSTALL(TARGETS meanie3D-satconv RUNTIME DESTINATION "/usr/local/bin")
   INSTALL(TARGETS meanie3D-parallax_correction RUNTIME DESTINATION "/usr/local/bin")
 ENDIF()
-IF (WITH_KONRAD_UTILS)
+
+IF (KONRAD_ENABLED)
   INSTALL(TARGETS meanie3D-trackstats-conrad RUNTIME DESTINATION "/usr/local/bin")
-ENDIF()
-IF (WITH_RADOLAN_UTILS)
+ENDIF (KONRAD_ENABLED)
+
+IF (RADOLAN_ENABLED)
   INSTALL(TARGETS meanie3D-radolan2cfm RUNTIME DESTINATION "/usr/local/bin")
-ENDIF()
-IF (WITH_VTK)
+ENDIF (RADOLAN_ENABLED)
+
+IF (VTK_ENABLED)
   INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
-ENDIF (WITH_VTK)
+ENDIF (VTK_ENABLED)
 
 # ------------------------------------------------------------- #
 # Documentation
