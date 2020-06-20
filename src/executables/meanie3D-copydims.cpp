@@ -102,7 +102,7 @@ void parse_commmandline(program_options::variables_map vm,
 
     // parse dimension list
 
-    typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
+    typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
 
     boost::char_separator<char> sep(",");
 

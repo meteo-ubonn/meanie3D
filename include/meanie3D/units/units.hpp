@@ -322,7 +322,7 @@ namespace units
         struct convert
         {
             // If this fails, then T1 is not convertible to T2:
-            static_assert_<convertible<T1, T2>::value> check_convertible;
+            static_assert_<convertible<T1, T2>::value > check_convertible;
 
             template <typename V>
             static V fn(const V &v)
