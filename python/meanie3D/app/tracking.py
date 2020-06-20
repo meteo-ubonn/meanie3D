@@ -29,8 +29,7 @@ import os.path
 import time
 from subprocess import call
 
-import external
-import utils
+from meanie3D.app import external, utils
 
 ## Checks the configuration for mandatory items etc.
 # \param The configuration to check.

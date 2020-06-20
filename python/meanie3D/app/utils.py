@@ -29,7 +29,7 @@ import os.path
 import pdb
 import shutil
 import sys
-import external
+from . import external
 
 
 def load_configuration(filename):

@@ -34,8 +34,8 @@ from . import __have_visit__
 from . import __visitPath__
 
 import meanie3D
-from meanie3D.app import utils
-from meanie3D.app import external
+from . import utils
+from . import external
 
 # ----------------------------------------------------------------------------
 

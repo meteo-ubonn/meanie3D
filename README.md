@@ -51,18 +51,17 @@ Optionally, the following libraries may be used, if they are switched on with th
 
 Meanie3D uses OpenMP by default (-DWITH_OPENMP=1) and requires an OpenMP enabled compiler, such as:
 
-* GNU 4.3 or better (Linux, Mac)
+* GNU 9.0 or better (Linux, Mac)
 * OpenMP/LLVM (Mac) - a clang implementation supporting OpenMP (http://clang-omp.github.io). Install this 
 compiler for optimal results on OSX. You can disable the OpenMP implementation adding the 
 flags -DWITH_OPENMP=0 to your cmake call.
 
-### Obtain and compile Meanie3D
+### Build instructions
 
 Meanie3D uses CMAKE to generate makefiles. You can use CMAKE's abilities to generate IDE files if you prefer. Start 
 by cloning the master branch (for an up-to date but possibly unstable version) or one of the stable releases.
 
   git clone https://github.com/meteo-ubonn/meanie3D.git
-
 
 TODO: revise handling of map data
 If you want to download the OASE topology and mapdata file for visualisation, you can obtain this file by adding:
@@ -163,7 +162,19 @@ layout is not considered and you have to make adjustments to the search paths, p
 your Find<XZY>.cmake file to juergen.simon@uni-bonn.de so I can include your changes in the next release 
 and maybe save someone else the trouble.
 
-## More information
+## Python package
+In addition to the C++ binaries, the installation also uses pip3 to put a python package in place. 
+This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
+you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
+pipeline is handled based on this configuration. This is the recommended way to run the software. For
+details on the configuration file format, see HOWTO.md.
 
+## Visualisation
+The C++ binaries produce certain files when VTK is enabled. In order to generate imagery or tracking
+movies, meanie3D relies on executing python scripts in VisIt (). You will have to install this software
+to get access to the visualization. For details on what is possible by scripting VisIt with python,
+see the following tutorial: https://www.visitusers.org/index.php?title=VisIt-tutorial-Python-scripting
+
+## More information
 Check out the Main Wiki Page at http://git.meteo.uni-bonn.de/projects/meanie3d/wiki for details on how the 
 method works, file formats and what the individual binaries do. 
