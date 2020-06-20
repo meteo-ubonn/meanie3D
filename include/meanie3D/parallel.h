@@ -21,12 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef M3D_PARALL_H
-#define    M3D_PARALL_H
-
-#if WITH_OPENMP
-#include <omp.h>
-#endif
+#ifndef M3D_PARALLEL_H
+#define M3D_PARALLEL_H
 
 #define PROVIDE_MUTEX !
 #define PROVIDE_THREADSAFETY !

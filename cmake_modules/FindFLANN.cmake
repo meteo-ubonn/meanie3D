@@ -1,5 +1,6 @@
 FIND_PATH(FLANN_INCLUDE_DIR flann PATHS /usr/include /usr/local/include/ opt/local/include)
 FIND_LIBRARY(FLANN NAMES flann PATHS /usr/lib /usr/local/lib /opt/local/lib)
+FIND_LIBRARY(LZ4 NAMES lz4 PATHS /usr/lib /usr/local/lib /opt/local/lib)
 
 IF (FLANN_INCLUDE_DIR AND FLANN)
    SET(FLANN_LIBRARIES ${FLANN})

@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-
+#ifdef WITH_KONRAD_UTILS
 #ifndef M3D_CONRAD_CLUSTER_H
 #define M3D_CONRAD_CLUSTER_H
 
@@ -241,3 +241,4 @@ namespace m3D {
 }
 
 #endif
+#endif // KONRAD

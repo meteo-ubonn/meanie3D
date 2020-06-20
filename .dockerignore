@@ -1,5 +1,6 @@
 .idea
 .vscode
+build
 CMakeFiles
 cmake-build-debug
 Makefile.docker

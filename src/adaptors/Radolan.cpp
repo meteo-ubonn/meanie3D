@@ -1,4 +1,3 @@
-
 #include <meanie3D/adaptors.h>
 #include <meanie3D/exceptions.h>
 

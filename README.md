@@ -1,5 +1,4 @@
 # meanie3D                                                                          
-[//]: # {#mainpage}
 
 This project provides a very generic implementation of mean-shift clustering on NetCDF data sets. 
 The data sets need to follow the "CF-Metadata":http://cfconventions.org. The mean-shift algorithm 
@@ -26,14 +25,13 @@ Meanie3D comes under [[MIT license]].
 
 ## Version
 
-The latest stable version is v1.6.0. Versions are tagged.  
+The latest stable version is v1.6.1. Versions are tagged.  
 
 ## Build Instructions
 
 ### Dependencies
 
 Meanie3D comes with a number of dependencies that need to be installed prior to attempting installation:
-
 * Boost 1.56 or better (http://www.boost.org)
 * FLANN 1.8.0 or better (http://www.cs.ubc.ca/research/flann/)
 * Blitz++ (http://sourceforge.net/projects/blitz/)
@@ -43,12 +41,11 @@ Meanie3D comes with a number of dependencies that need to be installed prior to 
 * Python 2.5 or better (https://www.python.org)
 * numpy (try running @pip install numpy@ or download and install from http://www.numpy.org)
 * NetCDF4-python (try running @pip install netCDF4@ or download and install from http://unidata.github.io/netcdf4-python)
+* libradolan (http://meteo-ubonn.github.io/radolan/)
 
 Optionally, the following libraries may be used, if they are switched on with the appropriate flags:
-
-* Intel's Thread Building Blocks (-DWITH_TBB=1) version 4.3 (https://www.threadingbuildingblocks.org). This is mutually exclusive with OpenMP (-DWITH_OPENMP=1). 
 * VTK 6.0 or better (http://www.vtk.org/VTK/resources/software.html)
-* OpenCV 2.4.x or better (http://opencv.org/downloads.html)
+* doxygen (https://www.doxygen.nl/download.html)
 
 ### Compiler Prerequisites
 
@@ -64,32 +61,24 @@ flags -DWITH_OPENMP=0 to your cmake call.
 Meanie3D uses CMAKE to generate makefiles. You can use CMAKE's abilities to generate IDE files if you prefer. Start 
 by cloning the master branch (for an up-to date but possibly unstable version) or one of the stable releases.
 
-<pre>
-git clone https://github.com/meteo-ubonn/meanie3D.git
-cd meanie3D
-git submodule init
-git submodule update radolan
-</pre>
+  git clone https://github.com/meteo-ubonn/meanie3D.git
 
+
+TODO: revise handling of map data
 If you want to download the OASE topology and mapdata file for visualisation, you can obtain this file by adding:
-<pre>
-git clone http://git.meteo.uni-bonn.de/git/oase-mapdata
-</pre>
+
+  git clone http://git.meteo.uni-bonn.de/git/oase-mapdata
 
 Create a build directory:
 
-<pre>
-cd ..
-mkdir meanie3D-make
-cd meanie3D-make
-cmake ../meanie3D
-</pre>
+  mkdir meanie3D-make
+  cd meanie3D-make
+  cmake ../meanie3D
 
+### Available build types
 In order to switch optimizations on, tell cmake to use the release build type:
 
-<pre>
-cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
-</pre>
+  cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
 
 Note that there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. 
 You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected 
@@ -97,44 +86,61 @@ problems in reading/writing NetCDF files, you may have fallen victim to the prob
 (leave the -DCMAKE_BUILD_TYPE=Release).  Once all dependencies are successfully resolved, install the product by 
 calling the following: 
 
-<pre>
-make install
-</pre>
+  make install
 
-There are a number of flags you can use to customize your installation:
+There are a number of options to customize your installation:
 
-### VTK/ visualization code
+### -DWITH_VTK=YES
+Because of the large footprint of the VTK package, the visualization code is disabled by default. While 
+visualization is not necessary to run the algorithm, it can be useful to develop your parameters to 
+have visual queues as to what is happening. Setting this flag will result in the following changes:
+* The `meanie3D-cfm2vtk` binary will be compiled. This tool can visualize netCDF files in Visit/VTK
+* In several places in the code, visualizable output for intermediary steps becomes available:
+  * Cluster boundaries/outlines
+  * Cluster 'modes' (algorithmic center of a cluster)
+  * Cluster geometrical centers
+  * Weight function used in detection
+  * Mean-shift vectors 
+  * Visualization of search window for mean shift.
+  * Cluster weight function response
+  * Individual variables of the original netCDF (by cluster)
+  * Cluster tracks
 
-Because of the heavyweight of the VTK package, the visualization code is disabled by default. If you have VTK6 
-installed, you can enable visualizations by adding the following flag to your cmake call:
-<pre>
--D WITH_VTK=YES
-</pre>
+*Important Notes*: Visualization is switched off in the Docker version. The visualiation code uses
+libradolan. If you do switch this on, you will be required to install libradolan as well. 
 
-This will result in some binaries and command line options for visualization to become available to you. 
+### -DWITH_OPENMP=YES
+In order to speed the process up, meanie3D uses OpenMP to parallelize it's computation. This option
+is switched on by default.
 
-### Add tests
-
+### -D WITH_TESTS=YES
 Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will 
 become important to you if you should decide to work on the core algorithms yourself. The tests are a good 
-method of making sure you haven't broken anything critical. In order to enable unit tests, use the flag:
-<pre>
--D WITH_TESTS=YES
-</pre>
+method of making sure you haven't broken anything critical. The unit tests can then be run by calling
+  
+  make test
 
-The unit tests can then be run by calling
-<pre>
-make test
-</pre>
-
-### Source code level documentation
-
+### -DWITH_DOCS=YES
 In order to start developing your own Meanie3D code, it might be useful to have API documentation of the 
 various classes in the project. If you have doxygen installed, you can call the following make command to 
 create a browsable HTML documentation in doc/html (open the file index.html). 
-<pre>
-make docs
-</pre>
+
+  make docs
+
+### -DWITH_RADOLAN_UTILS=YES
+This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN 
+format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
+
+### -DWITH_SATELLITE_UTILS=YES
+The package comes with binaries to perform some conversion on satellite data. Those binaries were 
+provided in the context of research work for the OASE project. The following binaries will be provided 
+if this flag is set:
+* `meanie3D-satconv` - Converts spectral radiance to equivalent brightness temperature or vice versa
+* `meanie3D-parallax_correction` - Applies parallax correction to mseviri satellite data in OASE composite files.
+
+### -DWITH_KONRAD_UTILS=YES
+The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes
+the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
 
 ## Frequently Asked Quesions 
 
