@@ -271,7 +271,7 @@ def find(path,filename,requiredComponent=None):
                 if result:
                     return result
     except OSError as err:
-        print(f"{err}")
+        print(err)
 
     return None
 

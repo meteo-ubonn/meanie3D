@@ -111,7 +111,7 @@ def write_csv(json):
             # (12)	 Max LWP of the object (=maximal LWP value included)
             row.append(cluster['max'][0])
 
-            print(f"{row}")
+            print(row)
             objects.writerow(row)
 
 
@@ -143,7 +143,7 @@ def write_csv(json):
         # if the first row, write a header
         if li == 0:
             header = ['timestep','idstep1','idstep2','weight']
-            print(f"{header}")
+            print(header)
             tracks.writerow(header)
 
         row = []
@@ -159,7 +159,7 @@ def write_csv(json):
         # (4)	Weight factor to decide object relevance after split/merge event for life
         row.append(0)
 
-        print(f"{row}")
+        print(row)
         tracks.writerow(row)
 
 # ----------------------------------------------------------------------------
@@ -182,7 +182,7 @@ def main():
         argv = sys.argv[1:]
         opts, args = getopt.getopt(argv, "f:h", ["file","help"])
     except getopt.GetoptError as detail:
-        print(f"{detail}")
+        print(detail)
         sys.exit(2)
 
     if len(sys.argv) < 2:

@@ -105,7 +105,7 @@ def main():
                      "scales="]
         opts, args = getopt.getopt(argv, "c:f:s:o:r:h", long_args)
     except getopt.GetoptError as detail:
-        print(f"{detail}")
+        print(detail)
         sys.exit(2)
 
     scales = []
@@ -196,7 +196,7 @@ def main():
     configuration = meanie3D.app.utils.load_configuration(config_file);
 
     print("-------------------------------------------------------------------------------------")
-    print(f"Configuration: {configuration['description']}")
+    print("Configuration: " + configuration['description'])
     print("-------------------------------------------------------------------------------------")
 
     # Enrich the configuration with env/command line stuff

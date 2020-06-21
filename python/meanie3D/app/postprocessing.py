@@ -167,10 +167,10 @@ def run_trackstats(configuration, directory):
 
     return_code = -1
     try:
-        print(f'{".*".join(params)}')
+        print(".*".join(params))
         return_code = external.execute_command("meanie3D-trackstats", " ".join(params), silent=True)
     except:
-        print(f'{(".*") % sys.exc_info()[0]}')
+        print((".*") % sys.exc_info()[0])
         raise
 
     os.chdir("..")
