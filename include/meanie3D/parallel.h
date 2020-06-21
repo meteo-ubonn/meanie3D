@@ -24,6 +24,10 @@
 #ifndef M3D_PARALLEL_H
 #define M3D_PARALLEL_H
 
+#if WITH_OPENMP
+#include <omp.h>
+#endif
+
 #define PROVIDE_MUTEX !
 #define PROVIDE_THREADSAFETY !
 
