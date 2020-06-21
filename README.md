@@ -119,6 +119,13 @@ method of making sure you haven't broken anything critical. The unit tests can t
   
   make test
 
+### -DWITH_PYTHON=YES
+In addition to the C++ binaries, the installation also uses pip3 to put a python package in place. 
+This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
+you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
+pipeline is handled based on this configuration file. *This is the recommended way to run the software*. 
+For details on the configuration file format, see HOWTO.md. 
+
 ### -DWITH_DOCS=YES
 In order to start developing your own Meanie3D code, it might be useful to have API documentation of the 
 various classes in the project. If you have doxygen installed, you can call the following make command to 
@@ -149,7 +156,7 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
   * Core functions and python frontend
 * `dev-core`
   * Code optimizations for build type 'Debug'
-  * Core functions and python frontend.
+  * Core functions and python frontend
 * `dev-vtk`
   * Code optimizations for build type 'Debug'
   * Core functions and python frontend
@@ -162,7 +169,7 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
   * Visualization code
   * Tests 
   * Documentation
-  * RADOLAN, Satellite and KONRAR utilities 
+  * RADOLAN, Satellite and KONRAD utilities 
 * `prod-core`
   * Code optimizations for build type 'Release'
   * Core functions and python frontend.
@@ -178,7 +185,7 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
   * Visualization code
   * Tests 
   * Documentation
-  * RADOLAN, Satellite and KONRAR utilities 
+  * RADOLAN, Satellite and KONRAD utilities 
 
 The term "core functions" refers to the detection, tracking and track evaluation code. For local 
 development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, 
@@ -205,13 +212,6 @@ and adjust the search paths there instead of hardwiring paths into the CMakeList
 layout is not considered and you have to make adjustments to the search paths, please send a copy of 
 your Find<XZY>.cmake file to juergen.simon@uni-bonn.de so I can include your changes in the next release 
 and maybe save someone else the trouble.
-
-## Python package
-In addition to the C++ binaries, the installation also uses pip3 to put a python package in place. 
-This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
-you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
-pipeline is handled based on this configuration. This is the recommended way to run the software. For
-details on the configuration file format, see HOWTO.md.
 
 ## Visualisation
 The C++ binaries produce certain files when VTK is enabled. In order to generate imagery or tracking
