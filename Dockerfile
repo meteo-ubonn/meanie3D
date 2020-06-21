@@ -8,13 +8,13 @@ RUN apt-get -y install software-properties-common
 RUN apt-get -y update 
 RUN apt-get -y install \
 wget git cmake \
-gcc g++ python3 python3-pip \
+gcc g++ python python-pip \
 libboost-all-dev libflann1.9 libflann-dev blitz++ \
 shapelib libhdf5-dev netcdf-bin libnetcdf-dev libnetcdf-c++4 libnetcdf-c++4-dev zlib1g zlib1g-dev 
-RUN pip3 install setuptools netcdf4 external utils
+RUN pip install setuptools netcdf4 external utils
 
 # Visualisation
-# RUN pip3 install Cython h5py netcdf4
+# RUN pip install Cython h5py netcdf4
 # RUN apt-get -y --fix-missing  install gnuplot vtk6 libvtk6-dev
 # RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit2_10_0.linux-x86_64-rhel6-wmesa.tar.gz
 # RUN wget --quiet http://portal.nersc.gov/project/visit/releases/2.10.0/visit-install2_10_0

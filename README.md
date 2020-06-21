@@ -120,7 +120,7 @@ method of making sure you haven't broken anything critical. The unit tests can t
   make test
 
 ### -DWITH_PYTHON=YES
-In addition to the C++ binaries, the installation also uses pip3 to put a python package in place. 
+In addition to the C++ binaries, the installation also uses pip to put a python package in place. 
 This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
 you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
 pipeline is handled based on this configuration file. *This is the recommended way to run the software*. 

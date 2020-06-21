@@ -177,7 +177,7 @@ def setValueForKeyPath(object,keypath,value):
         # in visualisation objects. Try to set an enumerated value when hitting
         # this combination
         if type(value) is str and type(getattr(object,keypath)) is int:
-            print (".*")
+            print "Attempting to resolve constant"
             value = getattr(object,value)
 
         if type(object) is dict:
@@ -271,7 +271,7 @@ def find(path,filename,requiredComponent=None):
                 if result:
                     return result
     except OSError as err:
-        print(err)
+        print err
 
     return None
 

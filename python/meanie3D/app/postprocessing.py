@@ -56,10 +56,10 @@ def check_configuration(configuration):
     # Check the configuration
     dimensions = utils.getValueForKeyPath(configuration, 'data.dimensions')
     if (not dimensions):
-        print (".*")
+        print "ERROR:configuration must contain 'dimensions'"
         return -1
     if (not len(dimensions) in [2, 3]):
-        print (".*")
+        print "ERROR:Can only process 2D or 3D"
         return -1
 
     # Check that visualiseTracks has .vtk to work from
@@ -69,7 +69,7 @@ def check_configuration(configuration):
         if tracks:
             if utils.getValueForKeyPath(tracks, 'visualiseTracks') and not utils.getValueForKeyPath(tracks,
                                                                                                     'meanie3D-trackstats.vtk_tracks'):
-                print (".*")
+                print "WARNING: tracks.visualiseTracks = True but tracks.meanie3D-trackstats.vtk_tracks = False. Correcting."
                 utils.setValueForKeyPath(configuration, 'postprocessing.tracks.meanie3D-trackstats.vtk_tracks', True)
 
             # Complement vtk_dimensions to make our life a little easier down the road.
@@ -83,7 +83,7 @@ def check_configuration(configuration):
             # Make sure that plotStats has gnuplot files to work with
             if utils.getValueForKeyPath(tracks, 'plotStats') and not utils.getValueForKeyPath(tracks,
                                                                                               'meanie3D-trackstats.gnuplot'):
-                print (".*")
+                print "WARNING: track.plot_stats = True but tracks.meanie3D-trackstats.gnuplot = False. Correcting."
                 utils.setValueForKeyPath(configuration, 'postprocessing.tracks.meanie3D-trackstats.gnuplot', True)
 
 
@@ -98,19 +98,19 @@ def run_trackstats(configuration, directory):
     '''
     pconf = configuration['postprocessing']
     if not 'tracks' in pconf:
-        print (".*")
+        print "Skipping meanie3D-trackstats because 'tracks' configuration is missing"
         return False
 
     tracks = pconf['tracks']
     if not 'meanie3D-trackstats' in tracks:
-        print (".*")
+        print "Skipping meanie3D-trackstats because 'tracks.meanie3D-trackstats' configuration is missing"
         return False
 
     if utils.getValueForKeyPath(configuration,'skip_trackstats'):
-        print (".*")
+        print "Skipping meanie3D-trackstats because --skip-trackstats is present"
         return False
 
-    print (f"{directory}")
+    print "Running meanie3D-trackstats for %s" % directory
     conf = tracks['meanie3D-trackstats']
 
     os.chdir(directory)
@@ -161,16 +161,16 @@ def run_trackstats(configuration, directory):
     params.append("-s netcdf")
 
     if configuration['resume'] and haveFiles:
-        print (".*")
+        print "Skipping meanie3D-trackstats"
         os.chdir("..")
         return True
 
     return_code = -1
     try:
-        print(".*".join(params))
+        print "meanie3D-trackstats %s" % (" ".join(params))
         return_code = external.execute_command("meanie3D-trackstats", " ".join(params), silent=True)
     except:
-        print((".*") % sys.exc_info()[0])
+        print "ERROR:%s" % sys.exc_info()[0]
         raise
 
     os.chdir("..")
@@ -194,7 +194,7 @@ def plot_trackstats(configuration, directory):
         return False
 
     conf = tracks['meanie3D-trackstats']
-    print (".*") % directory
+    print "Plotting .eps files for %s" % directory
 
     os.chdir(directory)
 
@@ -249,7 +249,7 @@ def plot_trackstats(configuration, directory):
     try:
         return_code = external.execute_command("gnuplot", "plot_stats.gp")
     except:
-        print (".*") % sys.exc_info()[0]
+        print "ERROR:%s" % sys.exc_info()[0]
 
     os.chdir("..")
     return (return_code == 0)
@@ -266,7 +266,7 @@ def plot_stats_comparison(configuration):
     '''
     scales = configuration['scales']
     if not scales:
-        print (".*")
+        print "No scales found, no comparison is done."
         return False
 
     pconf = configuration['postprocessing']
@@ -278,7 +278,7 @@ def plot_stats_comparison(configuration):
 
     conf = utils.getValueForKeyPath(pconf, 'tracks.meanie3D-trackstats')
 
-    print (".*")
+    print "Plotting .eps files for comparison"
 
     # create a tempfile for gnuplot
     f = open('plot_stats_comparison.gp', 'w')
@@ -359,7 +359,7 @@ def plot_stats_comparison(configuration):
     try:
         return_code = external.execute_command("gnuplot", "plot_stats_comparison.gp")
     except:
-        print (".*") % sys.exc_info()[0]
+        print "ERROR:%s" % sys.exc_info()[0]
 
     os.chdir("..")
     return (return_code == 0)
@@ -371,7 +371,7 @@ def run_comparison(configuration):
     :param configuration:
     :return:
     '''
-    print (".*")
+    print "Running cross-scale comparison"
     return plot_stats_comparison(configuration)
 
 
@@ -389,13 +389,13 @@ def compile_and_run_template(templatePath, configuration, replacements, director
     '''
     scriptFilename = tempfile.mktemp() + ".py"
     # scriptFilename = os.path.abspath("generated.py")
-    # print (".*") + scriptFilename
+    # print "\tWriting python script for visualisation to: " + scriptFilename
     with open(templatePath) as infile, open(scriptFilename, 'w') as outfile:
         for line in infile:
             for src, target in replacements.iteritems():
                 line = line.replace(src, target)
             outfile.write(line)
-    # print (".*")
+    # print "\tDone."
 
     # Compile command line params for visualisation
     params = "-s %s" % scriptFilename
@@ -408,10 +408,10 @@ def compile_and_run_template(templatePath, configuration, replacements, director
     # Run visualisation
     returnCode = -1
     try:
-        print (".*") + params
+        print "Executing visit: " + params
         returnCode = external.execute_command('visit', params, silent=True)
     except:
-        print (".*") % sys.exc_info()[0]
+        print "ERROR:%s" % sys.exc_info()[0]
 
     # Change back out
     os.chdir('..')
@@ -427,9 +427,9 @@ def visualise_tracks(configuration, directory):
     :param directory:
     :return:
     '''
-    print (".*") % directory
+    print "Visualising tracks for %s" % directory
     if not __have_visit__:
-        print (".*")
+        print "Visit not found. Skipping."
         return
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
     templatePath = home + os.path.sep + os.path.sep.join(("meanie3D", "resources", "tracks_visit.py"))
@@ -452,9 +452,9 @@ def visualise_clusters(configuration, directory):
     :param directory:
     :return:
     '''
-    print (".*") % directory
+    print "Visualising clusters for %s" % directory
     if not __have_visit__:
-        print (".*")
+        print "Visit not found. Skipping."
         return
     home = os.path.abspath(os.path.dirname(meanie3D.__file__) + os.path.sep + os.path.pardir)
     templatePath = home + os.path.sep + os.path.sep.join(("meanie3D", "resources", "clusters_visit.py"))
@@ -500,7 +500,7 @@ def cleanup(configuration, directory):
     :param directory:
     :return:
     '''
-    print (".*") % directory
+    print "Cleaning temporary files for %s" % directory
     os.chdir(directory)
     if utils.getValueForKeyPath(configuration, 'postprocessing.tracks.meanie3D-trackstats.vtk_tracks'):
         for filename in glob.glob('*.vtk'):
@@ -541,23 +541,23 @@ def run(configuration):
     else:
         directories = ['clustering']
 
-    print (".*") % str(directories)
+    print "Processing directories: %s" % str(directories)
     for directory in directories:
         if os.path.isdir(directory):
-            print (".*") % directory
+            print "Processing %s" % directory
         else:
-            print (".*") % directory
+            print "ERROR:%s is not a directory!" % directory
             continue
 
         # run the track statistics
         if configuration['time_operations']:
-            print (".*")
+            print "Running trackstats ..."
             start_time = time.time()
 
         if (run_trackstats(configuration, directory)):
 
             if configuration['time_operations']:
-                print (".*") % (time.time()-start_time)
+                print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
             # Copy HTML files
             copy_html_files(configuration, directory)
@@ -570,24 +570,24 @@ def run(configuration):
             if __have_visit__ and utils.getValueForKeyPath(configuration, 'postprocessing.tracks.visualiseTracks'):
 
                 if configuration['time_operations']:
-                    print (".*")
+                    print "Visualising tracks ..."
                     start_time = time.time()
 
                 visualise_tracks(configuration, directory)
 
                 if configuration['time_operations']:
-                    print (".*") % (time.time()-start_time)
+                    print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
         if __have_visit__ and utils.getValueForKeyPath(configuration, 'postprocessing.clusters.visualiseClusters'):
 
             if configuration['time_operations']:
-                print (".*")
+                print "Visualising clusters ..."
                 start_time = time.time()
 
             visualise_clusters(configuration, directory)
 
             if configuration['time_operations']:
-                print (".*") % (time.time()-start_time)
+                print "Finished. (%.2f seconds)" % (time.time()-start_time)
 
         cleanup(configuration, directory)
 

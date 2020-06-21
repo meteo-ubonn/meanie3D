@@ -54,6 +54,7 @@ INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
 # ------------------------------------- 
 # Options
 # -------------------------------------
+OPTION(WITH_OPENMP "Enable/disable use of OpenMP for parallelization" ON)
 OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
 OPTION(WITH_VTK "Enable/Disable visualisation code (requires VisIt and VTK)" OFF)
 OPTION(WITH_RADOLAN_UTILS "Compile with radolan adaptor (requires libradolan)" OFF)
