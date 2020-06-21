@@ -18,9 +18,9 @@ GET_DIRECTORY_PROPERTY(PROJECT_URL DIRECTORY .. DEFINITION PROJECT_URL)
 GET_DIRECTORY_PROPERTY(PROJECT_LICENSE DIRECTORY .. DEFINITION PROJECT_LICENSE)
 
 # Python
-FIND_PACKAGE (Python3 COMPONENTS Interpreter)
-IF (Python3_FOUND)
-    MESSAGE(STATUS "Found Python interpreter (${Python3_VERSION}) ${Python3_EXECUTABLE}")
+FIND_PACKAGE (Python COMPONENTS Interpreter)
+IF (Python_FOUND)
+    MESSAGE(STATUS "Found Python interpreter (${Python_VERSION}) ${Python_EXECUTABLE}")
 ELSE ()
     MESSAGE(FATAL_ERROR "python not found")
 ENDIF ()
@@ -28,11 +28,11 @@ ENDIF ()
 # ------------------------------------------------------------- #
 # Python packaging
 # ------------------------------------------------------------- #
-IF (Python3_FOUND)
+IF (Python_FOUND)
 
     # Use the system's python path to append it to visit's python
     # path to enable importing modules to visit's python.
-    EXECUTE_PROCESS(COMMAND ${Python3_EXECUTABLE} -c "import sys; sys.stdout.write(':'.join(sys.path))" OUTPUT_VARIABLE SYSTEM_PYTHON_PATH)
+    EXECUTE_PROCESS(COMMAND ${Python_EXECUTABLE} -c "import sys; sys.stdout.write(':'.join(sys.path))" OUTPUT_VARIABLE SYSTEM_PYTHON_PATH)
 
     # Configure package file
     FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/meanie3D DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -48,8 +48,8 @@ IF (Python3_FOUND)
     ADD_CUSTOM_TARGET(copy-python-files ALL
             COMMAND cmake -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/meanie3D ${CMAKE_CURRENT_BINARY_DIR}
             DEPENDS meanie3D)
-    ADD_CUSTOM_TARGET(${PROJECT_NAME} ALL COMMAND ${Python3_EXECUTABLE} setup.py build)
+    ADD_CUSTOM_TARGET(${PROJECT_NAME} ALL COMMAND ${Python_EXECUTABLE} setup.py build)
     ADD_CUSTOM_TARGET(${PROJECT_NAME}-clean COMMAND rm -rf build dist *.egg-info setup.py meanie3D/__init__.py README.txt)
 
-    INSTALL(CODE "EXECUTE_PROCESS(COMMAND \"${Python3_EXECUTABLE}\" setup.py install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
+    INSTALL(CODE "EXECUTE_PROCESS(COMMAND \"${Python_EXECUTABLE}\" setup.py install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 ENDIF ()

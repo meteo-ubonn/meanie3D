@@ -54,110 +54,185 @@ INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/include)
 # ------------------------------------- 
 # Options
 # -------------------------------------
-OPTION(FOR_DOCKER "Build for dockerized version" OFF)
 OPTION(WITH_TESTS "Enable/Disable building of tests" OFF)
-OPTION(WITH_VTK "Enable/Disable visualisation code (requires VTK)" OFF)
+OPTION(WITH_VTK "Enable/Disable visualisation code (requires VisIt and VTK)" OFF)
 OPTION(WITH_RADOLAN_UTILS "Compile with radolan adaptor (requires libradolan)" OFF)
 OPTION(WITH_SATELLITE_UTILS "Compile with tools for satellite data" OFF)
 OPTION(WITH_KONRAD_UTILS "Compile with binaries for KONRAD tracks" OFF)
 OPTION(WITH_DOCS "Compile source code documentation" OFF)
+OPTION(WITH_PYTHON "Add the python frontend" ON)
 
 # ------------------------------------- 
 # PRESETS
 # -------------------------------------
 
-if (FOR_DOCKER) 
-  MESSAGE("Setting preset options for building docker container")
+IF(PRESET MATCHES "docker")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
   SET(CMAKE_BUILD_TYPE "Release")
-  ADD_DEFINITIONS(-DWITH_OPENMP=1)
-  ADD_DEFINITIONS(-DWITH_RADOLAN=0)
-  ADD_DEFINITIONS(-DWITH_SHAPELIB=0)
-  ADD_DEFINITIONS(-DWITH_VTK=0)
-  ADD_DEFINITIONS(-DWITH_TESTS=0)
-  ADD_DEFINITIONS(-DWITH_KONRAD_UTILS=0)
-  ADD_DEFINITIONS(-DWITH_SATELLITE=0)
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED OFF)
+  SET(TESTS_ENABLED OFF)
+  SET(RADOLAN_ENABLED OFF)
+  SET(SATELLITE_ENABLED OFF)
+  SET(KONRAD_ENABLED OFF)
+  SET(DOCS_ENABLED OFF)
+ELSEIF (PRESET MATCHES "dev-all")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "Debug")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED ON)
+  SET(TESTS_ENABLED ON)
+  SET(RADOLAN_ENABLED ON)
+  SET(SATELLITE_ENABLED ON)
+  SET(KONRAD_ENABLED ON)
+  SET(DOCS_ENABLED ON)
+ELSEIF(PRESET MATCHES "dev-core")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "Debug")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED OFF)
+  SET(TESTS_ENABLED OFF)
+  SET(RADOLAN_ENABLED OFF)
+  SET(SATELLITE_ENABLED OFF)
+  SET(KONRAD_ENABLED OFF)
+  SET(DOCS_ENABLED ON)
+ELSEIF (PRESET MATCHES "dev-vtk")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "Debug")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED ON)
+  SET(TESTS_ENABLED OFF)
+  SET(RADOLAN_ENABLED OFF)
+  SET(SATELLITE_ENABLED OFF)
+  SET(KONRAD_ENABLED OFF)
+  SET(DOCS_ENABLED ON)
+ELSEIF (PRESET MATCHES "dev-all")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "Debug")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED ON)
+  SET(TESTS_ENABLED ON)
+  SET(RADOLAN_ENABLED ON)
+  SET(SATELLITE_ENABLED ON)
+  SET(KONRAD_ENABLED ON)
+  SET(DOCS_ENABLED ON)
+ELSEIF (PRESET MATCHES "prod-core")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "Release")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED OFF)
+  SET(TESTS_ENABLED OFF)
+  SET(RADOLAN_ENABLED OFF)
+  SET(SATELLITE_ENABLED OFF)
+  SET(KONRAD_ENABLED OFF)
+  SET(DOCS_ENABLED OFF)
+ELSEIF (PRESET MATCHES "prod-vtk")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "Release")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED ON)
+  SET(TESTS_ENABLED OFF)
+  SET(RADOLAN_ENABLED OFF)
+  SET(SATELLITE_ENABLED OFF)
+  SET(KONRAD_ENABLED OFF)
+  SET(DOCS_ENABLED OFF)
 ELSE()
-  # ------------------------------------- 
-  # Multithreading / Parallelism Choices
-  # -------------------------------------
+  IF (NOT ${CMAKE_BUILD_TYPE})
+    SET(CMAKE_BUILD_TYPE "Release")
+  ENDIF()
   SET(OPENMP_ENABLED ${WITH_OPENMP})
-  IF (OPENMP_ENABLED)
-    MESSAGE(STATUS "OpenMP is enabled")
-    ADD_DEFINITIONS(-DWITH_OPENMP=1)
-  ELSE ()
-    MESSAGE(STATUS "OpenMP is disabled")
-  ENDIF ()
-
-  # -------------------------------------
-  # Visualization on/off
-  # -------------------------------------
-  SET(VTK_ENABLED ${WITH_VTK})
-  IF (VTK_ENABLED)
-    MESSAGE(STATUS "VTK is enabled")
-    ADD_DEFINITIONS(-DWITH_VTK=1)
-  ELSE ()
-    MESSAGE(STATUS "VTK is disabled")
-  ENDIF ()
-
-  # -------------------------------------
-  # Automated tests yes/no
-  # -------------------------------------
+  SET(PYTHON_ENABLED ${WITH_PYTHON})
   SET(TESTS_ENABLED ${WITH_TESTS})
-  IF (TESTS_ENABLED)
-    MESSAGE(STATUS "Tests are enabled.")
-    ENABLE_TESTING()
-    ADD_SUBDIRECTORY(gtest-1.7.0)
-    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
-    INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
-  ELSE ()
-    MESSAGE(STATUS "Tests are disabled. Use -DWITH_TESTS=ON/OFF to switch tests on or off.")
-  ENDIF ()
-
-  # -------------------------------------
-  # Radolan Utils
-  # -------------------------------------
+  SET(VTK_ENABLED ${WITH_VTK})
   SET(RADOLAN_ENABLED ${WITH_RADOLAN_UTILS})
-  IF (RADOLAN_ENABLED)
-    MESSAGE(STATUS "RADOLAN utilities enabled")
-    ADD_DEFINITIONS(-DWITH_RADOLAN=1)
-  ELSE()
-    MESSAGE(STATUS "RADOLAN utilities disabled")
-  ENDIF ()
-
-  # -------------------------------------
-  # KONRAD
-  # -------------------------------------
   SET(KONRAD_ENABLED ${WITH_KONRAD_UTILS})
-  IF (KONRAD_ENABLED)
-    MESSAGE(STATUS "KONRAD utilities enabled")
-    ADD_DEFINITIONS(-DWITH_KONRAD_UTILS=1)
-  ELSE()
-    MESSAGE(STATUS "KONRAD utilities disabled")
-  ENDIF ()
-
-  # -------------------------------------
-  # SATELLITE
-  # -------------------------------------
   SET(SATELLITE_ENABLED ${WITH_SATELLITE_UTILS})
-  IF (SATELLITE_ENABLED)
-    MESSAGE(STATUS "Satellite data utilities enabled")
-    ADD_DEFINITIONS(-DWITH_SATELLITE=1)
-  ELSE()
-    MESSAGE(STATUS "Satellite data utilities disabled")
-  ENDIF ()
-
+  SET(DOCS_ENABLED ${WITH_DOCS})
 ENDIF()
 
+# ------------------------------------- 
+# Multithreading / Parallelism Choices
 # -------------------------------------
-# Submodules
-# -------------------------------------
+IF (OPENMP_ENABLED)
+  MESSAGE(STATUS "OpenMP is enabled")
+  ADD_DEFINITIONS(-DWITH_OPENMP=1)
+ELSE ()
+  MESSAGE(STATUS "OpenMP is disabled")
+ENDIF ()
 
-ADD_SUBDIRECTORY(python)
+# -------------------------------------
+# Visualization on/off
+# -------------------------------------
+IF (VTK_ENABLED)
+  MESSAGE(STATUS "Visualization is enabled")
+  ADD_DEFINITIONS(-DWITH_VTK=1)
+ELSE ()
+  MESSAGE(STATUS "Visualization is disabled")
+ENDIF ()
+
+# -------------------------------------
+# Automated tests yes/no
+# -------------------------------------
+IF (TESTS_ENABLED)
+  MESSAGE(STATUS "Tests are enabled.")
+  ENABLE_TESTING()
+  ADD_DEFINITIONS(-DWITH_TESTS=1)
+  ADD_SUBDIRECTORY(gtest-1.7.0)
+  INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0)
+  INCLUDE_DIRECTORIES(BEFORE ${PROJECT_SOURCE_DIR}/gtest-1.7.0/include)
+ELSE ()
+  MESSAGE(STATUS "Tests are disabled. Use -DWITH_TESTS=ON/OFF to switch tests on or off.")
+ENDIF ()
+
+# -------------------------------------
+# Radolan Utils
+# -------------------------------------
+IF (RADOLAN_ENABLED)
+  MESSAGE(STATUS "RADOLAN utilities enabled")
+  ADD_DEFINITIONS(-DWITH_RADOLAN_UTILS=1)
+ELSE()
+  MESSAGE(STATUS "RADOLAN utilities disabled")
+ENDIF ()
+
+# -------------------------------------
+# KONRAD
+# -------------------------------------
+IF (KONRAD_ENABLED)
+  MESSAGE(STATUS "KONRAD utilities enabled")
+  ADD_DEFINITIONS(-DWITH_KONRAD_UTILS=1)
+ELSE()
+  MESSAGE(STATUS "KONRAD utilities disabled")
+ENDIF ()
+
+# -------------------------------------
+# SATELLITE
+# -------------------------------------
+IF (SATELLITE_ENABLED)
+  MESSAGE(STATUS "Satellite data utilities enabled")
+  ADD_DEFINITIONS(-DWITH_SATELLITE=1)
+ELSE()
+  MESSAGE(STATUS "Satellite data utilities disabled")
+ENDIF ()
+
+# -------------------------------------
+# Python frontend
+# -------------------------------------
+IF (PYTHON_ENABLED)
+  MESSAGE(STATUS "Installing python frontend")
+  ADD_DEFINITIONS(-DWITH_PYTHON=1)
+  ADD_SUBDIRECTORY(python)
+ENDIF(PYTHON_ENABLED)
 
 # -------------------------------------
 # Compiler Flags
 # -------------------------------------
-
 MESSAGE(STATUS "CMAKE_C_COMPILER = ${CMAKE_C_COMPILER}")
 MESSAGE(STATUS "CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
 MESSAGE(STATUS "Compiler ID = ${CMAKE_CXX_COMPILER_ID}")
@@ -254,7 +329,7 @@ IF (VTK_ENABLED)
     INCLUDE(${VTK_USE_FILE})
     INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
   ELSE ()
-    MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/VTK/resources/software.html)")
+    MESSAGE(FATAL_ERROR "VTK not found (http://www.vtk.org/vtk/resources/software.html)")
   ENDIF ()
 ENDIF ()
 
@@ -626,21 +701,20 @@ ENDIF(RADOLAN_ENABLED)
 
 # trackstats KONRAD
 
-IF (WITH_KONRAD_UTILS)
+IF (KONRAD_ENABLED)
   ADD_EXECUTABLE(meanie3D-trackstats-conrad meanie3D src/executables/meanie3D-trackstats-conrad.cpp)
   TARGET_LINK_LIBRARIES(meanie3D-trackstats-conrad
     meanie3D
     ${VTK_LIBRARIES}
     ${Boost_LIBRARIES}
     ${NETCDF_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES})
+    ${HDF5_LIBRARIES})
   SET_TARGET_PROPERTIES(meanie3D-trackstats-conrad PROPERTIES LINKER_LANGUAGE CXX)
 ENDIF()
 
 # Satellite data binaries
 
-IF (WITH_SATELLITE_UTILS)
+IF (SATELLITE_ENABLED)
 # Parallax correction 
   ADD_EXECUTABLE(meanie3D-parallax_correction src/executables/meanie3D-parallax_correction.cpp)
   TARGET_LINK_LIBRARIES(meanie3D-parallax_correction
@@ -650,14 +724,14 @@ IF (WITH_SATELLITE_UTILS)
     ${HDF5_LIBRARIES})
   SET_TARGET_PROPERTIES(meanie3D-parallax_correction PROPERTIES LINKER_LANGUAGE CXX)
 
-# satconv tool
-ADD_EXECUTABLE(meanie3D-satconv src/executables/meanie3D-satconv.cpp)
-TARGET_LINK_LIBRARIES(meanie3D-satconv
-  meanie3D
-  ${Boost_LIBRARIES}
-  ${NETCDF_LIBRARIES}
-  ${HDF5_LIBRARIES})
-SET_TARGET_PROPERTIES(meanie3D-satconv PROPERTIES LINKER_LANGUAGE CXX)
+  # satconv tool
+  ADD_EXECUTABLE(meanie3D-satconv src/executables/meanie3D-satconv.cpp)
+  TARGET_LINK_LIBRARIES(meanie3D-satconv
+    meanie3D
+    ${Boost_LIBRARIES}
+    ${NETCDF_LIBRARIES}
+    ${HDF5_LIBRARIES})
+  SET_TARGET_PROPERTIES(meanie3D-satconv PROPERTIES LINKER_LANGUAGE CXX)
 ENDIF()
 
 # VTK-converter
@@ -669,8 +743,7 @@ IF (VTK_ENABLED)
     ${Boost_LIBRARIES}
     ${VTK_LIBRARIES}
     ${NETCDF_LIBRARIES}
-    ${HDF5_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES})
+    ${HDF5_LIBRARIES})
   SET_TARGET_PROPERTIES(meanie3D-cfm2vtk PROPERTIES LINKER_LANGUAGE CXX)
 ENDIF (VTK_ENABLED)
 
@@ -723,7 +796,7 @@ IF (TESTS_ENABLED)
     ${Boost_LIBRARIES}
     ${NETCDF_LIBRARIES}
     ${FLANN_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES}
+    ${LZ4}
     ${HDF5_LIBRARIES}
     ${VTK_LIBRARIES}
     ${Blitz_LIBRARY})
@@ -751,10 +824,11 @@ IF (TESTS_ENABLED)
   TARGET_LINK_LIBRARIES(m3D-test-detection
     gtest
     meanie3D
+    ${FLANN_LIBRARIES}
+    ${LZ4}
     ${Boost_LIBRARIES}
     ${NETCDF_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${OpenMP_RT_LIBRARIES}
     ${VTK_LIBRARIES})
   SET_TARGET_PROPERTIES(m3D-test-detection PROPERTIES LINKER_LANGUAGE CXX)
 
@@ -806,7 +880,7 @@ ENDIF (VTK_ENABLED)
 # ------------------------------------------------------------- #
 # Documentation
 # ------------------------------------------------------------- #
-IF (WITH_DOCS)
+IF (DOCS_ENABLED)
   SET(FULL_VERSION_FOR_DOXYGEN 0.1.0)
   INCLUDE(FindDoxygen)
   IF (DOXYGEN_EXECUTABLE)

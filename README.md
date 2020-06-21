@@ -141,6 +141,50 @@ if this flag is set:
 The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes
 the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
 
+## Build presets
+A number of presets are provided to make the process easier. Those are selected via the -DPRESET=<preset name> 
+flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available presets are:
+* `docker` 
+  * Code optimizations for build type 'Release'
+  * Core functions and python frontend
+* `dev-core`
+  * Code optimizations for build type 'Debug'
+  * Core functions and python frontend.
+* `dev-vtk`
+  * Code optimizations for build type 'Debug'
+  * Core functions and python frontend
+  * Visualization code
+  * Tests 
+  * Documentation
+* `dev-all`
+  * Code optimizations for build type 'Debug'
+  * Core functions and python frontend
+  * Visualization code
+  * Tests 
+  * Documentation
+  * RADOLAN, Satellite and KONRAR utilities 
+* `prod-core`
+  * Code optimizations for build type 'Release'
+  * Core functions and python frontend.
+* `prod-vtk`
+  * Code optimizations for build type 'Release'
+  * Core functions and python frontend
+  * Visualization code
+  * Tests 
+  * Documentation
+* `prod-all`
+  * Code optimizations for build type 'Release'
+  * Core functions and python frontend
+  * Visualization code
+  * Tests 
+  * Documentation
+  * RADOLAN, Satellite and KONRAR utilities 
+
+The term "core functions" refers to the detection, tracking and track evaluation code. For local 
+development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, 
+use `prod-vtk`. If you just need the core functions and none of the visuals, choose the `core` sets 
+(`dev-core` or `prod-core`). 
+
 ## Frequently Asked Quesions 
 
 ### I'm having trouble compiling the code

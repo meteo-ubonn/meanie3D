@@ -10,7 +10,9 @@ Using the mean-shift algorithm, objects are detected in your data. The objects a
 the result first running the mean-shift algorithm with vectors discretized to snap
 onto the data set's own grid. The vectors are then linked into graphs. Each graph 
 has a mode, which is a point or area where the graph ends. A cluster is made up of 
-all points in the data set that end at the same mode. 
+all points in the data set that end at the same mode. Each cluster is given a unique
+ID (for the given time).
+
 ### Tracking
 When clustering a data set that varies over time (Example: satellite data), it is
 interesting to study the development of clusters over time. For this to happen, the
@@ -35,6 +37,20 @@ the same ID over time constitute a track.
 
 ## Python frontend
 
+## Visualization
+
+### Clusters and tracks
+In order to see a visual representation of the algorithms workings and it's results, 
+you will have to install the VisIt package. 
+
+### Track Graph
+A track graph describes the development of clusters over time, but not in terms of spatial 
+location, but rather in terms of it's development history, including merges and splits. 
+It is a useful tool to get a good overview over the provided tracks in terms of tracking 
+quality and for picking suitable tracks for subsequent analysis. 
+
+TODO: instructions how to generate and view tracking graph.
+
 ## Docker version
 The docker version does not support any of the visualisation features. This has
 something to do with the fact, that the VisIt application used to generate imagery
@@ -42,4 +58,4 @@ can not run in headless mode. Therefore the only functions available in the dock
 version are:
 * Cluster detection
 * Tracking
-* Track statistics
+* Track statistics and -Graph
