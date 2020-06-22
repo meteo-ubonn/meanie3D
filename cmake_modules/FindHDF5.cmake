@@ -3,7 +3,7 @@
 # Example: -DWITH_HDF5=/usr/local                                                                                                                                                                                     
 
 SET(HDF5_ROOT ${WITH_HDF5})
-IF (FOR_DOCKER)
+IF (PRESET MATCHES "^docker.*")
     MESSAGE(STATUS "Looking for HDF5 in Debian locations")
     FIND_PATH(HDF5_INCLUDE_DIR hdf5.h PATHS /usr/include/hdf5/serial)
     FIND_LIBRARY(HDF5 NAMES hdf5 PATHS /usr/lib/x86_64-linux-gnu/hdf5/serial)
