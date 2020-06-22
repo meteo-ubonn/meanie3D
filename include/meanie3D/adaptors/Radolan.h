@@ -53,8 +53,9 @@ namespace m3D {
                                          bool write_one_bytes_as_byte = false,
                                          const RDDataType *threshold = NULL,
                                          netCDF::NcFile::FileMode mode = netCDF::NcFile::replace,
-                                         bool omitOutside = true);
-                                        
+                                         bool omitOutside = true) 
+    throw(m3D::CFFileConversionException);
+
     /** Converts the radolan file at path into a CF-Metadata compliant NetCDF-File. 
      * @param radolanPath full path to the radolan file
      * @param netcdfPath full path to the netcdf file to be created
@@ -69,7 +70,8 @@ namespace m3D {
                                          const char *netcdfPath,
                                          bool write_one_bytes_as_byte,
                                          const RDDataType *threshold = NULL,
-                                         netCDF::NcFile::FileMode mode = netCDF::NcFile::write);
+                                         netCDF::NcFile::FileMode mode = netCDF::NcFile::write)
+    throw(m3D::CFFileConversionException);
 
     /** Simple function to get a visual rep of the file with ascii characters 
      * on terminal.
@@ -86,6 +88,7 @@ namespace m3D {
      * @return standard_name
      */
     const char *CFRadolanDataStandardName(RDScanType scanType);
+
 }
 
 #endif
