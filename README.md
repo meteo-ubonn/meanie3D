@@ -64,95 +64,22 @@ flags -DWITH_OPENMP=0 to your cmake call.
 
 Meanie3D uses CMAKE to generate makefiles. You can use CMAKE's abilities to generate IDE files if you prefer. Start 
 by cloning the master branch (for an up-to date but possibly unstable version) or one of the stable releases.
-
+```
   git clone https://github.com/meteo-ubonn/meanie3D.git
-
+```
 TODO: revise handling of map data
 If you want to download the OASE topology and mapdata file for visualisation, you can obtain this file by adding:
-
+```
   git clone http://git.meteo.uni-bonn.de/git/oase-mapdata
-
+```
 Create a build directory:
-
+```
   mkdir meanie3D-make
   cd meanie3D-make
   cmake ../meanie3D
+```
 
-### Available build types
-In order to switch optimizations on, tell cmake to use the release build type:
-
-  cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
-
-Note that there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. 
-You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected 
-problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build 
-(leave the -DCMAKE_BUILD_TYPE=Release).  Once all dependencies are successfully resolved, install the product by 
-calling the following: 
-
-  make install
-
-There are a number of options to customize your installation:
-
-### -DWITH_VTK=YES
-Because of the large footprint of the VTK package, the visualization code is disabled by default. While 
-visualization is not necessary to run the algorithm, it can be useful to develop your parameters to 
-have visual queues as to what is happening. Setting this flag will result in the following changes:
-* The `meanie3D-cfm2vtk` binary will be compiled. This tool can visualize netCDF files in Visit/VTK
-* In several places in the code, visualizable output for intermediary steps becomes available:
-  * Cluster boundaries/outlines
-  * Cluster 'modes' (algorithmic center of a cluster)
-  * Cluster geometrical centers
-  * Weight function used in detection
-  * Mean-shift vectors 
-  * Visualization of search window for mean shift.
-  * Cluster weight function response
-  * Individual variables of the original netCDF (by cluster)
-  * Cluster tracks
-
-*Important Notes*: Visualization is switched off in the Docker version. The visualiation code uses
-libradolan. If you do switch this on, you will be required to install libradolan as well. 
-
-### -DWITH_OPENMP=YES
-In order to speed the process up, meanie3D uses OpenMP to parallelize it's computation. This option
-is switched on by default.
-
-### -D WITH_TESTS=YES
-Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will 
-become important to you if you should decide to work on the core algorithms yourself. The tests are a good 
-method of making sure you haven't broken anything critical. The unit tests can then be run by calling
-  
-  make test
-
-### -DWITH_PYTHON=YES
-In addition to the C++ binaries, the installation also uses pip to put a python package in place. 
-This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
-you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
-pipeline is handled based on this configuration file. *This is the recommended way to run the software*. 
-For details on the configuration file format, see HOWTO.md. 
-
-### -DWITH_DOCS=YES
-In order to start developing your own Meanie3D code, it might be useful to have API documentation of the 
-various classes in the project. If you have doxygen installed, you can call the following make command to 
-create a browsable HTML documentation in doc/html (open the file index.html). 
-
-  make docs
-
-### -DWITH_RADOLAN_UTILS=YES
-This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN 
-format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
-
-### -DWITH_SATELLITE_UTILS=YES
-The package comes with binaries to perform some conversion on satellite data. Those binaries were 
-provided in the context of research work for the OASE project. The following binaries will be provided 
-if this flag is set:
-* `meanie3D-satconv` - Converts spectral radiance to equivalent brightness temperature or vice versa
-* `meanie3D-parallax_correction` - Applies parallax correction to mseviri satellite data in OASE composite files.
-
-### -DWITH_KONRAD_UTILS=YES
-The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes
-the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
-
-## Build presets
+### Build presets
 A number of presets are provided to make the process easier. Those are selected via the -DPRESET=<preset name> 
 flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available presets are:
 * `docker` 
@@ -195,6 +122,80 @@ The term "core functions" refers to the detection, tracking and track evaluation
 development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, 
 use `prod-vtk`. If you just need the core functions and none of the visuals, choose the `core` sets 
 (`dev-core` or `prod-core`). 
+
+### Available build types
+In order to switch optimizations on, tell cmake to use the release build type:
+```
+  cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
+```
+Note that there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. 
+You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected 
+problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build 
+(leave the -DCMAKE_BUILD_TYPE=Release).  Once all dependencies are successfully resolved, install the product by 
+calling the following: 
+```
+  make install
+```
+There are a number of options to customize your installation:
+
+### -DWITH_VTK=YES
+Because of the large footprint of the VTK package, the visualization code is disabled by default. While 
+visualization is not necessary to run the algorithm, it can be useful to develop your parameters to 
+have visual queues as to what is happening. Setting this flag will result in the following changes:
+* The `meanie3D-cfm2vtk` binary will be compiled. This tool can visualize netCDF files in Visit/VTK
+* In several places in the code, visualizable output for intermediary steps becomes available:
+  * Cluster boundaries/outlines
+  * Cluster 'modes' (algorithmic center of a cluster)
+  * Cluster geometrical centers
+  * Weight function used in detection
+  * Mean-shift vectors 
+  * Visualization of search window for mean shift.
+  * Cluster weight function response
+  * Individual variables of the original netCDF (by cluster)
+  * Cluster tracks
+
+*Important Notes*: Visualization is switched off in the Docker version. The visualiation code uses
+libradolan. If you do switch this on, you will be required to install libradolan as well. 
+
+### -DWITH_OPENMP=YES
+In order to speed the process up, meanie3D uses OpenMP to parallelize it's computation. This option
+is switched on by default.
+
+### -D WITH_TESTS=YES
+Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will 
+become important to you if you should decide to work on the core algorithms yourself. The tests are a good 
+method of making sure you haven't broken anything critical. The unit tests can then be run by calling
+```  
+  make test
+```
+### -DWITH_PYTHON=YES
+In addition to the C++ binaries, the installation also uses pip to put a python package in place. 
+This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
+you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
+pipeline is handled based on this configuration file. *This is the recommended way to run the software*. 
+For details on the configuration file format, see HOWTO.md. 
+
+### -DWITH_DOCS=YES
+In order to start developing your own Meanie3D code, it might be useful to have API documentation of the 
+various classes in the project. If you have doxygen installed, you can call the following make command to 
+create a browsable HTML documentation in doc/html (open the file index.html). 
+```
+  make docs
+```
+### -DWITH_RADOLAN_UTILS=YES
+This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN 
+format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
+
+### -DWITH_SATELLITE_UTILS=YES
+The package comes with binaries to perform some conversion on satellite data. Those binaries were 
+provided in the context of research work for the OASE project. The following binaries will be provided 
+if this flag is set:
+* `meanie3D-satconv` - Converts spectral radiance to equivalent brightness temperature or vice versa
+* `meanie3D-parallax_correction` - Applies parallax correction to mseviri satellite data in OASE composite files.
+
+### -DWITH_KONRAD_UTILS=YES
+The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes
+the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
 
 ## Frequently Asked Quesions 
 
