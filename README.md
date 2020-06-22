@@ -35,7 +35,7 @@ Meanie3D comes with a number of dependencies that need to be installed prior to 
 * Boost 1.56 or better (http://www.boost.org)
 * FLANN 1.8.0 or better (http://www.cs.ubc.ca/research/flann/)
 * Blitz++ (http://sourceforge.net/projects/blitz/)
-* shapelib v1.3+ (http://shapelib.maptools.org)
+* OpenMP (libomp) (https://www.openmp.org)
 * NetCDF 4.2 or better (http://www.unidata.ucar.edu/software/netcdf/) *including* the netcdf4-C++ API
 * HDF5 (http://www.hdfgroup.org/HDF5/)
 * Python 2.5 or better (https://www.python.org)
@@ -43,9 +43,15 @@ Meanie3D comes with a number of dependencies that need to be installed prior to 
 * NetCDF4-python (try running @pip install netCDF4@ or download and install from http://unidata.github.io/netcdf4-python)
 * libradolan (http://meteo-ubonn.github.io/radolan/)
 
+Optional:
+
 The following libraries may be used, if they are switched on with the appropriate flags
+* Data format
+  * shapelib v1.3+ (http://shapelib.maptools.org) - When present, certain utilities have additional options for outputting 
+  data in ESRI shapefile format.
 * Visualization:
   * Imagemagick (https://imagemagick.org)
+  * gnuplot (http://gnuplot.sourceforge.net)
   * VTK 7.0 or better (http://www.vtk.org)
   * Visit 3.0.0 or better (https://wci.llnl.gov/simulation/computer-codes/visit)
 * Generated source code documentation:
@@ -54,11 +60,10 @@ The following libraries may be used, if they are switched on with the appropriat
 ### Compiler Prerequisites
 
 Meanie3D uses OpenMP by default (-DWITH_OPENMP=1) and requires an OpenMP enabled compiler, such as:
-
 * GNU 9.0 or better (Linux, Mac)
-* OpenMP/LLVM (Mac) - a clang implementation supporting OpenMP (http://clang-omp.github.io). Install this 
-compiler for optimal results on OSX. You can disable the OpenMP implementation adding the 
-flags -DWITH_OPENMP=0 to your cmake call.
+* OpenMP/LLVM (Mac) - a clang implementation supporting OpenMP (http://clang-omp.github.io). Note that as of clang 10.0.0 OpenMP is supported, but you will still have to install the omp library (`brew install libomp`) 
+
+You can disable the OpenMP implementation adding the flags -DWITH_OPENMP=0 to your cmake call.
 
 ### Build instructions
 
@@ -80,7 +85,7 @@ Create a build directory:
 ```
 
 ### Build presets
-A number of presets are provided to make the process easier. Those are selected via the -DPRESET=<preset name> 
+A number of presets are provided to make the process easier. Those are selected via the -DPRESET=\<preset name\> 
 flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available presets are:
 * `docker` 
   * Code optimizations for build type 'Release'
@@ -124,22 +129,32 @@ use `prod-vtk`. If you just need the core functions and none of the visuals, cho
 (`dev-core` or `prod-core`). 
 
 ### Available build types
-In order to switch optimizations on, tell cmake to use the release build type:
+The following build types are available:
+* Debug (debug symbols, no optimizations)
+* Release (some debug symbols, optimized)
+* RelWithDebInfo (debug symbols, optimized)
+* MinSizeRel (minimal footprint, aggressive optimizations, no debug symbols)
+
+To select a build type, use the flag `CMAKE_BUILD_TYPE` like so:
 ```
   cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
 ```
-Note that there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. 
+
+*Note:* there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. 
 You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected 
 problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build 
-(leave the -DCMAKE_BUILD_TYPE=Release).  Once all dependencies are successfully resolved, install the product by 
+(leave the -DCMAKE_BUILD_TYPE=Debug).  Once all dependencies are successfully resolved, install the product by 
 calling the following: 
 ```
   make install
 ```
+*Note:* When using presets, the preset defines the build type. Setting this flag together with a preset has 
+no effect on the preset's choice.
 
 ### Options
 If you would like to select your own options, you can leave the PRESET parameter and switch things
-on and off using the following options:
+on and off. When using presets, the preset defines the options. Setting any of the following options
+together with a -DPRESET=\<preset-name\> option does not alter the preset's settings. 
 
 #### -DWITH_VTK=ON/OFF
 Because of the large footprint of the VTK package, the visualization code is disabled by default. While 
@@ -220,7 +235,7 @@ one installed (http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-cxx4-4.2.
 If cmake has trouble locating packages you installed, check the files in the cmake_modules directory 
 and adjust the search paths there instead of hardwiring paths into the CMakeLists.txt. If your system 
 layout is not considered and you have to make adjustments to the search paths, please send a copy of 
-your Find<XZY>.cmake file to juergen.simon@uni-bonn.de so I can include your changes in the next release 
+your Find\<XZY\>.cmake file to simon@webtecc.com so I can include your changes in the next release 
 and maybe save someone else the trouble.
 
 ## Visualisation

@@ -21,12 +21,12 @@ ENABLE_LANGUAGE(CXX)
 
 SET(${PROJECT_NAME}_MAJOR_VERSION 1)
 SET(${PROJECT_NAME}_MINOR_VERSION 6)
-SET(${PROJECT_NAME}_PATCH_LEVEL 0)
-SET(PACKAGE_VERSION "1.6.0")
+SET(${PROJECT_NAME}_PATCH_LEVEL 1)
+SET(PACKAGE_VERSION "1.6.1")
 SET(PROJECT_URL "http://git.meteo.uni-bonn.de/projects/meanie3d")
 SET(PROJECT_LICENSE "MIT License")
 SET(PROJECT_AUTHOR "Juergen Simon")
-SET(PROJECT_AUTHOR_EMAIL "tachyonimpulse@gmail.com")
+SET(PROJECT_AUTHOR_EMAIL "simon@webtecc.com")
 
 # ------------------------------------- 
 # Paths and build configuration
@@ -155,6 +155,28 @@ ELSEIF (PRESET MATCHES "prod-vtk")
   SET(SATELLITE_ENABLED OFF)
   SET(KONRAD_ENABLED OFF)
   SET(DOCS_ENABLED OFF)
+ELSEIF (PRESET MATCHES "fast-core")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "MinSizeRel")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED OFF)
+  SET(TESTS_ENABLED OFF)
+  SET(RADOLAN_ENABLED OFF)
+  SET(SATELLITE_ENABLED OFF)
+  SET(KONRAD_ENABLED OFF)
+  SET(DOCS_ENABLED OFF)
+ELSEIF (PRESET MATCHES "fast-vtk")
+  MESSAGE(STATUS "Selected preset ${PRESET}")
+  SET(CMAKE_BUILD_TYPE "MinSizeRel")
+  SET(OPENMP_ENABLED ON)
+  SET(PYTHON_ENABLED ON)
+  SET(VTK_ENABLED ON)
+  SET(TESTS_ENABLED OFF)
+  SET(RADOLAN_ENABLED OFF)
+  SET(SATELLITE_ENABLED OFF)
+  SET(KONRAD_ENABLED OFF)
+  SET(DOCS_ENABLED OFF)
 ELSE()
   IF (NOT ${CMAKE_BUILD_TYPE})
     SET(CMAKE_BUILD_TYPE "Release")
@@ -168,6 +190,11 @@ ELSE()
   SET(SATELLITE_ENABLED ${WITH_SATELLITE_UTILS})
   SET(DOCS_ENABLED ${WITH_DOCS})
 ENDIF()
+
+# ------------------------------------- 
+# Compilation type
+# -------------------------------------
+MESSAGE(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 # ------------------------------------- 
 # Multithreading / Parallelism Choices
@@ -776,10 +803,7 @@ ENDIF (VTK_ENABLED)
 IF (TESTS_ENABLED)
   # Test Suite
   ADD_EXECUTABLE(m3D-test-kernel test/kernels/testcases.h test/kernels/test.cpp)
-  TARGET_LINK_LIBRARIES(m3D-test-kernel
-      meanie3D
-      gtest
-      ${Boost_LIBRARIES})
+  TARGET_LINK_LIBRARIES(m3D-test-kernel meanie3D gtest ${Boost_LIBRARIES} OpenMP::OpenMP_CXX)
   SET_TARGET_PROPERTIES(m3D-test-kernel PROPERTIES LINKER_LANGUAGE CXX)
 
   # Unit tests for vector utils
@@ -790,10 +814,7 @@ IF (TESTS_ENABLED)
     test/collections/tests_set.h
     test/collections/tests_vector.h
     test/collections/test.cpp)
-  TARGET_LINK_LIBRARIES(m3D-test-collections
-    gtest
-    meanie3D
-    ${Boost_LIBRARIES})
+  TARGET_LINK_LIBRARIES(m3D-test-collections gtest meanie3D ${Boost_LIBRARIES} OpenMP::OpenMP_CXX)
   SET_TARGET_PROPERTIES(m3D-test-collections PROPERTIES LINKER_LANGUAGE CXX)
 
   # Unit tests for class FeatureSpace
@@ -821,7 +842,8 @@ IF (TESTS_ENABLED)
     ${LZ4}
     ${HDF5_LIBRARIES}
     ${VTK_LIBRARIES}
-    ${Blitz_LIBRARY})
+    ${Blitz_LIBRARY}
+    OpenMP::OpenMP_CXX)
   SET_TARGET_PROPERTIES(m3D-test-featurespace PROPERTIES LINKER_LANGUAGE CXX)
 
   # KDTree
@@ -851,7 +873,8 @@ IF (TESTS_ENABLED)
     ${Boost_LIBRARIES}
     ${NETCDF_LIBRARIES}
     ${HDF5_LIBRARIES}
-    ${VTK_LIBRARIES})
+    ${VTK_LIBRARIES}
+    OpenMP::OpenMP_CXX)
   SET_TARGET_PROPERTIES(m3D-test-detection PROPERTIES LINKER_LANGUAGE CXX)
 
   ADD_TEST(KernelTest m3D-test-kernel)
@@ -899,6 +922,13 @@ IF (VTK_ENABLED)
   INSTALL(TARGETS meanie3D-cfm2vtk RUNTIME DESTINATION "/usr/local/bin")
 ENDIF (VTK_ENABLED)
 
+ADD_CUSTOM_TARGET(${PROJECT_NAME}-uninstall COMMAND cat install_manifest.txt | xargs rm -rvf)
+ADD_CUSTOM_TARGET(uninstall)
+ADD_DEPENDENCIES(uninstall ${PROJECT_NAME}-uninstall)
+IF (PYTHON_ENABLED)
+    ADD_DEPENDENCIES(uninstall ${PROJECT_NAME}-python-uninstall)
+ENDIF()
+
 # ------------------------------------------------------------- #
 # Documentation
 # ------------------------------------------------------------- #
@@ -913,7 +943,7 @@ IF (DOCS_ENABLED)
     ENDIF (DOXYGEN_DOT_EXECUTABLE)
     CONFIGURE_FILE(${PROJECT_SOURCE_DIR}/doxy.in ${PROJECT_BINARY_DIR}/Doxyfile)
     FILE(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/html/radolan/doxygen)
-    ADD_CUSTOM_TARGET(meanie3D-docs COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/Doxyfile)
+    ADD_CUSTOM_TARGET(docs COMMAND ${DOXYGEN_EXECUTABLE} ${PROJECT_BINARY_DIR}/Doxyfile)
     MESSAGE(STATUS "Doxygen source code documentation will be available")
   ENDIF (DOXYGEN_EXECUTABLE)
 ENDIF()

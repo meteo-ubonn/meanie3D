@@ -1,6 +1,6 @@
 __author__ = 'Juergen Simon'
 __email__ = 'tachyonimpulse@gmail.com'
-__version__ = '1.6.0'
+__version__ = '1.6.1'
 __url__ = 'http://git.meteo.uni-bonn.de/projects/meanie3d'
 __all__ = ['app', 'visualisation', 'resources']
 

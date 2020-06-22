@@ -50,6 +50,6 @@ IF (Python2_FOUND)
             DEPENDS meanie3D)
     ADD_CUSTOM_TARGET(${PROJECT_NAME} ALL COMMAND ${Python2_EXECUTABLE} setup.py build)
     ADD_CUSTOM_TARGET(${PROJECT_NAME}-clean COMMAND rm -rf build dist *.egg-info setup.py meanie3D/__init__.py README.txt)
-
+    ADD_CUSTOM_TARGET(${PROJECT_NAME}-uninstall COMMAND ${Python2_EXECUTABLE} -m pip uninstall meanie3D)
     INSTALL(CODE "EXECUTE_PROCESS(COMMAND \"${Python2_EXECUTABLE}\" setup.py install WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 ENDIF ()
