@@ -1,5 +1,10 @@
 FROM debian:stable
 
+ARG VISIT_VERSION="3.1.0"
+ARG VISIT_PKG_URL="https://portal.nersc.gov/project/visit/releases/3.1.0/visit3_1_0.linux-x86_64-debian9.tar.gz"
+ARG VISIT_INSTALLER_URL=https://portal.nersc.gov/project/visit/releases/3.1.0/${VISIT_INSTALLER}
+ARG VISIT_INSTALLER=visit-install3_1_0
+
 RUN apt-get -y update --fix-missing
 RUN apt-get -y upgrade 
 RUN apt-get -y dist-upgrade
@@ -10,23 +15,32 @@ wget git cmake \
 gcc g++ libomp5 \
 python python-pip \
 libboost-all-dev libflann1.9 libflann-dev blitz++ \
-shapelib libhdf5-dev netcdf-bin libnetcdf-dev libnetcdf-c++4 libnetcdf-c++4-dev zlib1g zlib1g-dev 
+shapelib libhdf5-dev netcdf-bin libnetcdf-dev libnetcdf-c++4 libnetcdf-c++4-dev zlib1g zlib1g-dev
 RUN pip install setuptools netcdf4 external utils
+
+# Visualisation
+RUN pip install Cython h5py netcdf4
+RUN apt-get -y --fix-missing  install gnuplot vtk7 libvtk7-dev
+RUN wget --quiet ${VISIT_INSTALLER_URL}
+RUN wget --quiet ${VISIT_PKG_URL}
+RUN chmod u+x ./visit-install3_1_0
+RUN echo "1" | ./visit-install3_1_0 3.1.0 linux-x86_64 /usr/local/visit
+ENV VISIT_EXECUTABLE=/usr/local/visit/bin/visit
 
 # libradolan
 RUN git clone https://github.com/JuergenSimon/radolan.git
-RUN cd radolan && cmake . && make install && cd .. && rm -rf radolan
+RUN cd radolan && cmake . && make install && cd ..
 
 # Meanie3D
 RUN git clone --recurse-submodules --depth=1 https://github.com/JuergenSimon/meanie3D
 WORKDIR /meanie3D
 RUN git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch --all
 RUN git checkout --track remotes/origin/dockerize && git pull
-RUN git pull && cmake -DPRESET=docker . && make install 
+RUN git pull && cmake -DPRESET=docker-vtk . && make install 
 
 # Cleanup
 WORKDIR /
-RUN rm -rf meanie3D
+RUN rm -rf meanie3D radolan visit*
 RUN apt-get remove -y wget git cmake
 RUN apt autoremove -y
 

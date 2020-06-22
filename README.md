@@ -43,9 +43,13 @@ Meanie3D comes with a number of dependencies that need to be installed prior to 
 * NetCDF4-python (try running @pip install netCDF4@ or download and install from http://unidata.github.io/netcdf4-python)
 * libradolan (http://meteo-ubonn.github.io/radolan/)
 
-Optionally, the following libraries may be used, if they are switched on with the appropriate flags:
-* VTK 6.0 or better (http://www.vtk.org/VTK/resources/software.html)
-* doxygen (https://www.doxygen.nl/download.html)
+The following libraries may be used, if they are switched on with the appropriate flags
+* Visualization:
+  * Imagemagick (https://imagemagick.org)
+  * VTK 7.0 or better (http://www.vtk.org)
+  * Visit 3.0.0 or better (https://wci.llnl.gov/simulation/computer-codes/visit)
+* Generated source code documentation:
+  * doxygen (https://www.doxygen.nl/download.html)
 
 ### Compiler Prerequisites
 
