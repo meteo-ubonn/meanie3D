@@ -141,7 +141,7 @@ calling the following:
 If you would like to select your own options, you can leave the PRESET parameter and switch things
 on and off using the following options:
 
-#### -DWITH_VTK=YES
+#### -DWITH_VTK=ON/OFF
 Because of the large footprint of the VTK package, the visualization code is disabled by default. While 
 visualization is not necessary to run the algorithm, it can be useful to develop your parameters to 
 have visual queues as to what is happening. Setting this flag will result in the following changes:
@@ -160,11 +160,11 @@ have visual queues as to what is happening. Setting this flag will result in the
 *Important Notes*: Visualization is switched off in the Docker version. The visualiation code uses
 libradolan. If you do switch this on, you will be required to install libradolan as well. 
 
-#### -DWITH_OPENMP=YES
+#### -DWITH_OPENMP=ON/OFF
 In order to speed the process up, meanie3D uses OpenMP to parallelize it's computation. This option
 is switched on by default.
 
-#### -D WITH_TESTS=YES
+#### -D WITH_TESTS=ON/OFF
 Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will 
 become important to you if you should decide to work on the core algorithms yourself. The tests are a good 
 method of making sure you haven't broken anything critical. The unit tests can then be run by calling
@@ -172,14 +172,14 @@ method of making sure you haven't broken anything critical. The unit tests can t
   make test
 ```
 
-#### -DWITH_PYTHON=YES
+#### -DWITH_PYTHON=ON/OFF
 In addition to the C++ binaries, the installation also uses pip to put a python package in place. 
 This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
 you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
 pipeline is handled based on this configuration file. *This is the recommended way to run the software*. 
 For details on the configuration file format, see HOWTO.md. 
 
-#### -DWITH_DOCS=YES
+#### -DWITH_DOCS=ON/OFF
 In order to start developing your own Meanie3D code, it might be useful to have API documentation of the 
 various classes in the project. If you have doxygen installed, you can call the following make command to 
 create a browsable HTML documentation in doc/html (open the file index.html). 
@@ -187,18 +187,18 @@ create a browsable HTML documentation in doc/html (open the file index.html).
   make docs
 ```
 
-#### -DWITH_RADOLAN_UTILS=YES
+#### -DWITH_RADOLAN_UTILS=ON/OFF
 This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN 
 format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
 
-#### -DWITH_SATELLITE_UTILS=YES
+#### -DWITH_SATELLITE_UTILS=ON/OFF
 The package comes with binaries to perform some conversion on satellite data. Those binaries were 
 provided in the context of research work for the OASE project. The following binaries will be provided 
 if this flag is set:
 * `meanie3D-satconv` - Converts spectral radiance to equivalent brightness temperature or vice versa
 * `meanie3D-parallax_correction` - Applies parallax correction to mseviri satellite data in OASE composite files.
 
-#### -DWITH_KONRAD_UTILS=YES
+#### -DWITH_KONRAD_UTILS=ON/OFF
 The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes
 the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
 
