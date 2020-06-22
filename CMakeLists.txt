@@ -314,7 +314,7 @@ FIND_PACKAGE(Blitz REQUIRED)
 IF (Blitz_FOUND)
   INCLUDE_DIRECTORIES(${Blitz_INCLUDE_DIR})
 ELSE ()
-    MESSAGE(FATAL_ERROR "blitz++ not found")
+  MESSAGE(FATAL_ERROR "blitz++ not found")
 ENDIF ()
 
 # Shapefile
