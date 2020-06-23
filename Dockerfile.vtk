@@ -1,9 +1,9 @@
 FROM debian:stable
 
-ARG VISIT_VERSION="3.1.0"
-ARG VISIT_PKG_URL="https://portal.nersc.gov/project/visit/releases/3.1.0/visit3_1_0.linux-x86_64-debian9.tar.gz"
-ARG VISIT_INSTALLER=visit-install3_1_0
-ARG VISIT_INSTALLER_URL="https://portal.nersc.gov/project/visit/releases/3.1.0/${VISIT_INSTALLER}"
+ARG VISIT_VERSION="3.1.2"
+ARG VISIT_PKG_URL="https://portal.nersc.gov/project/visit/releases/3.1.2/visit3_1_2.linux-x86_64-debian9.tar.gz"
+ARG VISIT_INSTALLER=visit-install3_1_2
+ARG VISIT_INSTALLER_URL="https://portal.nersc.gov/project/visit/releases/3.1.2/${VISIT_INSTALLER}"
 
 RUN apt-get -y update --fix-missing
 RUN apt-get -y upgrade 
@@ -11,7 +11,7 @@ RUN apt-get -y dist-upgrade
 RUN apt-get -y install software-properties-common
 RUN apt-get -y update 
 RUN apt-get -y install \
-wget git cmake \
+wget git cmake cpio \
 gcc g++ libomp5 \
 python python-pip \
 libboost-all-dev libflann1.9 libflann-dev blitz++ \
@@ -22,7 +22,9 @@ RUN pip install setuptools external utils
 RUN pip install Cython h5py "netCDF4>=1.3.0<1.4.0"
 RUN apt-get -y --fix-missing  install gnuplot vtk7 libvtk7-dev
 RUN wget --quiet ${VISIT_INSTALLER_URL} && wget --quiet ${VISIT_PKG_URL} && chmod u+x ./${VISIT_INSTALLER}
-RUN echo "1" | ./visit-install3_1_0 3.1.0 linux-x86_64-debian9 /usr/local/visit
+RUN rm -rf /usr/local/visit &&\
+  mkdir -p /usr/local/visit/3.1.2+/linux-x86_64/bin &&\
+  echo "1" | ./visit-install3_1_2 3.1.2 linux-x86_64-debian9 /usr/local/visit
 ENV VISIT_EXECUTABLE=/usr/local/visit/bin/visit
 
 # libradolan
@@ -34,13 +36,12 @@ RUN git clone https://github.com/JuergenSimon/meanie3D
 WORKDIR /meanie3D
 RUN git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch --all
 RUN git checkout --track remotes/origin/dockerize
-RUN git pull 
-RUN cmake -DPRESET=docker-vtk . && make install
+RUN git pull && cmake -DPRESET=docker-vtk . && make install
 
 # Cleanup
 WORKDIR /
 RUN rm -rf meanie3D radolan visit*
-RUN apt-get remove -y wget git cmake
+RUN apt-get remove -y wget git cmake cpio 
 RUN apt autoremove -y
 
 # Prepare for runtime
