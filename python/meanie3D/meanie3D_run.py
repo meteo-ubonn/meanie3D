@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-'''
+"""
 The MIT License (MIT)
 
 (c) Juergen Simon 2014 (juergen.simon@uni-bonn.de)
@@ -22,27 +22,29 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-'''
+"""
 
+import getopt
 import os
 import sys
-import getopt
 
 import meanie3D
 import meanie3D.app
 import meanie3D.app.external
+import meanie3D.app.postprocessing
 import meanie3D.app.tracking
 import meanie3D.app.utils
-import meanie3D.app.postprocessing
 
 # Make sure the C++ executables are installed
-meanie3D.app.external.locateCommands(["meanie3D-detect","meanie3D-track","meanie3D-trackstats","rm"])
+meanie3D.app.external.locateCommands(["meanie3D-detect", "meanie3D-track", "meanie3D-trackstats", "rm"])
+
 
 # ----------------------------------------------------------------------------
 ## Prints usage and exits
 #
 def usage():
-    print("meanie3D -c=<json file> -f=<netcdf directory> [-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] [--version] [--time-operations]")
+    print(
+        "meanie3D -c=<json file> -f=<netcdf directory> [-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] [--version] [--time-operations]")
     print("runs a complete set of netcdf files through the clustering/tracking")
     print("-c : json config file specifying variables etc.")
     print("-f : directory containing the files. It is assumed that")
@@ -61,6 +63,8 @@ def usage():
     print("--skip-trackstats: skip meanie3D-trackstats, even if the configuration is present")
     sys.exit(1)
     return
+
+
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
@@ -75,6 +79,8 @@ def print_configuration_format():
     print('   "postprocessing" : {...} /* call --help config.postprocessing for help on this section */')
     print('}')
     sys.exit(1)
+
+
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
@@ -84,6 +90,8 @@ def print_version():
     print("meanie3D: " + meanie3D.getVersion() + "\n")
     sys.exit(1)
     return
+
+
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
@@ -132,10 +140,10 @@ def main():
             netcdf_dir = a
             num_params = num_params + 1
 
-        elif o in ["--scales","-s"]:
+        elif o in ["--scales", "-s"]:
             scales = str(a).split(',')
 
-        elif o in ["--ranges","-r"]:
+        elif o in ["--ranges", "-r"]:
             ranges = a
 
         elif o == "-o":
@@ -179,7 +187,7 @@ def main():
 
     # sanity checks on time range
 
-    if start_time_index != -1 or end_time_index != -1 :
+    if start_time_index != -1 or end_time_index != -1:
 
         if (start_time_index == -1 and end_time_index != -1) or (start_time_index != -1 and end_time_index == -1):
             print("start-time-index and end-time-index must both be set")
@@ -219,32 +227,34 @@ def main():
             return
 
     # Run the detection and tracking steps
-    detection = meanie3D.app.utils.getSafe(configuration,'detection')
-    tracking = meanie3D.app.utils.getSafe(configuration,'tracking')
+    detection = meanie3D.app.utils.getSafe(configuration, 'detection')
+    tracking = meanie3D.app.utils.getSafe(configuration, 'tracking')
     if (detection or tracking):
 
         # run the actual clustering/tracking script
         if not scales:
             if uses_time == False:
-                meanie3D.app.tracking.run(configuration,-1)
+                meanie3D.app.tracking.run(configuration, -1)
             else:
-                for time_index in range(start_time_index,end_time_index):
-                    meanie3D.app.tracking.run(configuration,time_index)
+                for time_index in range(start_time_index, end_time_index):
+                    meanie3D.app.tracking.run(configuration, time_index)
 
         else:
             for scale in scales:
                 configuration["scale"] = scale
                 if uses_time == False:
-                    meanie3D.app.tracking.run(configuration,-1)
+                    meanie3D.app.tracking.run(configuration, -1)
                 else:
-                    for time_index in range(start_time_index,end_time_index):
-                        meanie3D.app.tracking.run(configuration,time_index)
+                    for time_index in range(start_time_index, end_time_index):
+                        meanie3D.app.tracking.run(configuration, time_index)
 
     # Run the postprocessing steps
     if (configuration['postprocessing']):
         meanie3D.app.postprocessing.run(configuration)
 
     return
+
+
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
