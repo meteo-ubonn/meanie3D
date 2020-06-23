@@ -515,7 +515,7 @@ def run(configuration):
     # Otherwise it's 'clustering'. To be safe, iterate over both
     scales = configuration['scales']
     if scales:
-        directories = ['scale%s' % scale for scale in scales]
+        directories = [ configuration['output_dir'] + 'scale%s' % scale for scale in scales]
     else:
         directories = ['clustering']
 
