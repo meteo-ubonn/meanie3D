@@ -27,6 +27,7 @@ import os
 import subprocess
 import sys
 import time
+import pprint
 
 import visit
 
@@ -61,14 +62,15 @@ def add_clusters(cluster_vtk_file, configuration):
     return
 
 
-def run(conf):
+def run(conf, print_conf=False):
     """
     Visualises clusters of a given run.
     :param conf:
     :return:
     """
-    # pp = pprint.PrettyPrinter()
-    # pp.pprint(conf)
+    if print_conf:
+        pp = pprint.PrettyPrinter()
+        pp.pprint(conf)
 
     # Make sure the global configuration is in place
     utils.run_global_visit_configuration(conf)
@@ -226,8 +228,9 @@ def run(conf):
                     params += " --vtk-dimensions=%s" % vtkDimString
 
                 # pdb.set_trace();
-                print("meanie3D-cfm2vtk %s" % params)
-                meanie3D.app.external.execute_command('meanie3D-cfm2vtk', params)
+                success = external.run('meanie3D-cfm2vtk', params)
+                if not success:
+                    sys.exit(1)
                 print("    done. (%.2f seconds)" % (time.time() - start_time))
 
                 # Move cluster output file to individual file

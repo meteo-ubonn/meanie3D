@@ -282,7 +282,6 @@ def run(config, time_index):
             if config['time_operations']:
                 start_time = time.time()
 
-            print("meanie3D-detect " + params)
             success = external.run("meanie3D-detect", params, return_output=True)
             if not success:
                 print("ERROR: could not perform detection")
@@ -314,7 +313,6 @@ def run(config, time_index):
                 if config['time_operations']:
                     start_time = time.time()
 
-                print("meanie3D-track" + params)
                 success = external.run("meanie3D-track", params, return_output=True)
                 if not success:
                     print("ERROR: could not perform detection")

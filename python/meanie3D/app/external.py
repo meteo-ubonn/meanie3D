@@ -26,6 +26,7 @@ import os
 import platform
 import subprocess
 import sys
+import traceback
 from subprocess import Popen, CalledProcessError
 
 # ---------------------------------------------
@@ -172,18 +173,18 @@ def execute_command(command, parameters, return_output=False, silent=True):
             raise ValueError("Requested command: %s was not found")
 
     cmd = getCommand(COMMAND_MAP.get(command)) + ' ' + parameters
+    print("%s %s" % (command, parameters))
     if return_output:
         p = Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
         return p.returncode, out, err
     else:
-        if silent:
-            p = Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        else:
-            # TODO: this does seem to be broken
-            p = Popen(cmd, shell=True, stdout=subprocess.STDOUT, stderr=subprocess.STDOUT)
+        p = Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if not silent:
+            print(p.stdout.read())
+            print(p.stderr.read())
         p.communicate()
-        return p.returncode
+        return p.returncode, None, None
 
 
 def run(command, args, return_output=False):
@@ -191,18 +192,27 @@ def run(command, args, return_output=False):
     Convenience wrapper around executing external commands
     :param command: Command to execute
     :param args: Arguments to the program (as string)
-    :param return_output: Should return output of stderr?
+    :param return_output: Should return output of stdout?
     :return: ({boolean}, {stdout}, {stderr})
     """
     try:
-        return_code, outstream, errstream = execute_command(command, args, return_output)
-        return (return_code == 0), outstream, errstream
+        return_code, stdout, errstream = execute_command(command, args, return_output)
+        return (return_code == 0), stdout
     except ValueError as ex:
-        print("ERROR: %s", ex.__str__())
+        tb = traceback.format_exc()
+        error = ex.__str__()
     except CalledProcessError as ex:
-        print("ERROR: %s", ex.__str__())
+        tb = traceback.format_exc()
+        error = ex.__str__()
     except IOError as ex:
-        print("ERROR: %s", ex.__str__())
+        tb = traceback.format_exc()
+        error = ex.__str__()
+    except TypeError as ex:
+        tb = traceback.format_exc()
+        error = ex.__str__()
     except:
-        print("ERROR:%s" % sys.exc_info()[0])
+        tb = traceback.format_exc()
+        error = sys.exc_info()[0]
+    print(error)
+    print(tb)
     return False

@@ -33,27 +33,27 @@ from meanie3D.app import external, utils
 # make sure external commands are available
 external.locateCommands(['convert', 'composite', 'python'])
 
-ret_code, paths_string = external.run('python', '-c "import sys; print sys.path"', return_output=True)
-if ret_code == 0:
-    print ("Attempting to locate python module netCDF4")
+success, paths_string = external.run('python', '-c "import sys; print sys.path"', return_output=True)
+if success:
     home = os.path.expanduser('~')
     searchPaths = ['/usr/lib', '/usr/local/lib', home + os.path.sep + '.pyenv/versions']
-    print("Looking in paths:")
-    print(searchPaths)
+    print ("Attempting to locate python module netCDF4 in paths %s" % ",".join(searchPaths))
+    # print("Looking in paths:")
+    # print(searchPaths)
     result = utils.find_in_paths(searchPaths, "netCDF4", "site-packages")
     if not result:
         result = utils.find_in_paths(searchPaths, "netCDF4", "dist-packages")
     if not result:
         print("Failed to locate python module netCDF4")
-        exit(-1)
+        exit(1)
     else:
         print("Found netCDF4 at %s" % result)
         sys.path.append(os.path.split(result)[0])
-        print("Python path after adding system search directories:")
-        print(sys.path)
+        # print("Python path after adding system search directories:")
+        # print(sys.path)
 else:
     print("Failed to obtain system's python path")
-    exit(-1)
+    exit(1)
 
 # Now that the path is extended, import the rest
 import netCDF4

@@ -138,7 +138,7 @@ def getSafe(dictionary, key):
     :param key:
     :return:
     """
-    if key in dict and dictionary[key]:
+    if key in dictionary and dictionary[key]:
         return dictionary[key]
     else:
         return None
@@ -198,14 +198,14 @@ def setValueForKeyPath(obj, keypath, value):
     return
 
 
-def getValueForKeyPath(obj, keypath):
+def getValueForKeyPath(obj, key_path):
     """
     Gets the given object values along a keypath separated by periods. Example: axes2D.yAxis.title.units
     :param obj:
-    :param keypath:
+    :param key_path:
     :return:
     """
-    keys = keypath.split(".")
+    keys = key_path.split(".")
     if len(keys) > 1:
         if obj is None:
             return None
@@ -224,9 +224,9 @@ def getValueForKeyPath(obj, keypath):
         if obj is None:
             return None
         elif type(obj) is dict:
-            value = getSafe(obj, keypath)
+            value = getSafe(obj, key_path)
         else:
-            value = getattr(obj, keypath)
+            value = getattr(obj, key_path)
         return value
 
 

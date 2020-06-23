@@ -25,6 +25,7 @@ SOFTWARE.
 import glob
 import os
 import shutil
+import sys
 import tempfile
 import time
 
@@ -164,6 +165,8 @@ def run_trackstats(configuration, directory):
         return True
 
     success = external.run("meanie3D-trackstats", " ".join(params))
+    if not success:
+        sys.exit(0)
     os.chdir("..")
     return success
 

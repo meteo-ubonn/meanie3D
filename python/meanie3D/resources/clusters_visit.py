@@ -39,7 +39,7 @@ _CLUSTER_DIR = "P_CLUSTER_DIR"
 _M3D_HOME = "P_M3D_HOME"
 _RESUME = "P_RESUME"
 _CONFIG_FILE = "P_CONFIGURATION_FILE"
-_USES_TIME = "P_USES_TIME"
+_USES_TIME = P_USES_TIME
 _START_TIME = "P_START_TIME_INDEX"
 _END_TIME = "P_END_TIME_INDEX"
 
@@ -63,5 +63,5 @@ configuration['end_time_index'] = _END_TIME
 
 # run it
 # pdb.set_trace()
-meanie3D.visualisation.clusters.run(configuration)
+meanie3D.visualisation.clusters.run(configuration, print_conf=True)
 quit()

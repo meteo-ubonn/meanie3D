@@ -55,7 +55,7 @@ def write_csv(json):
   objects_file = open('objects.csv', 'wb')
   if (not objects_file):
     sys.stderr.write("Could not open 'objects.csv' for writing.")
-    sys.exit(-1)
+    sys.exit(1)
 
   objects = csv.writer(objects_file, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
@@ -122,7 +122,7 @@ def write_csv(json):
   tracks_file = open('tracks.csv', 'wb')
   if (not tracks_file):
     sys.stderr.write("Could not open 'tracks.csv' for writing.")
-    sys.exit(-1)
+    sys.exit(1)
 
   tracks = csv.writer(tracks_file, delimiter=';', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
@@ -200,7 +200,7 @@ def main():
   json = load_json(filename)
   if not json:
     sys.stderr.write("ERROR:could not read file %s" % filename)
-    sys.exit(-1)
+    sys.exit(1)
 
   write_csv(json)
   return
