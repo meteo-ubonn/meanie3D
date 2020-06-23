@@ -2,8 +2,8 @@ FROM debian:stable
 
 ARG VISIT_VERSION="3.1.0"
 ARG VISIT_PKG_URL="https://portal.nersc.gov/project/visit/releases/3.1.0/visit3_1_0.linux-x86_64-debian9.tar.gz"
-ARG VISIT_INSTALLER_URL=https://portal.nersc.gov/project/visit/releases/3.1.0/${VISIT_INSTALLER}
 ARG VISIT_INSTALLER=visit-install3_1_0
+ARG VISIT_INSTALLER_URL="https://portal.nersc.gov/project/visit/releases/3.1.0/${VISIT_INSTALLER}"
 
 RUN apt-get -y update --fix-missing
 RUN apt-get -y upgrade 
@@ -16,15 +16,13 @@ gcc g++ libomp5 \
 python python-pip \
 libboost-all-dev libflann1.9 libflann-dev blitz++ \
 shapelib libhdf5-dev netcdf-bin libnetcdf-dev libnetcdf-c++4 libnetcdf-c++4-dev zlib1g zlib1g-dev
-RUN pip install setuptools netcdf4 external utils
+RUN pip install setuptools external utils
 
 # Visualisation
-RUN pip install Cython h5py netcdf4
+RUN pip install Cython h5py "netCDF4>=1.3.0<1.4.0"
 RUN apt-get -y --fix-missing  install gnuplot vtk7 libvtk7-dev
-RUN wget --quiet ${VISIT_INSTALLER_URL}
-RUN wget --quiet ${VISIT_PKG_URL}
-RUN chmod u+x ./visit-install3_1_0
-RUN echo "1" | ./visit-install3_1_0 3.1.0 linux-x86_64 /usr/local/visit
+RUN wget --quiet ${VISIT_INSTALLER_URL} && wget --quiet ${VISIT_PKG_URL} && chmod u+x ./${VISIT_INSTALLER}
+RUN echo "1" | ./visit-install3_1_0 3.1.0 linux-x86_64-debian9 /usr/local/visit
 ENV VISIT_EXECUTABLE=/usr/local/visit/bin/visit
 
 # libradolan

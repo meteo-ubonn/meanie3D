@@ -39,16 +39,19 @@ import meanie3D.app.utils
 meanie3D.app.external.locateCommands(["meanie3D-detect", "meanie3D-track", "meanie3D-trackstats", "rm"])
 
 
-# ----------------------------------------------------------------------------
-## Prints usage and exits
-#
 def usage():
-    print(
-        "meanie3D -c=<json file> -f=<netcdf directory> [-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] [--version] [--time-operations]")
+    """
+    Prints usage information.
+    :return:
+    """
+    print("meanie3D -c=/path/to/json -f=/path/to/netcdf [-o /path/to/output] "
+          "[-s=<scale>] [--start=t1 --end=t2]  [--resume,-r] [--help,-h] "
+          "[--version] [--time-operations]")
     print("runs a complete set of netcdf files through the clustering/tracking")
     print("-c : json config file specifying variables etc.")
     print("-f : directory containing the files. It is assumed that")
     print("           the files are in the correct order when sorted alphabetically.")
+    print("-o : Output directory. If omitted, this is the same as the input directory")
     print("--scales,-s  : comma separated list of scale parameters.")
     print("--ranges,-r  : comma separated list of bandwidths, one for each spatial and value range variable.")
     print("--json-example : prints an example .json configuration and exits")
@@ -61,16 +64,13 @@ def usage():
     print("--version   : prints the version information and exits")
     print("--time-operations: time operations and print out their elapsed time")
     print("--skip-trackstats: skip meanie3D-trackstats, even if the configuration is present")
-    sys.exit(1)
-    return
 
 
-# ----------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------
-## Prints the configuration file .json file description and exits
-#
 def print_configuration_format():
+    """
+    Prints the configuration file .json file description
+    :return:
+    """
     print('{')
     print('   "description" : "...",  /* Description of file content */')
     print('   "data" : {...},         /* call --help config.data for help on this section */')
@@ -78,18 +78,14 @@ def print_configuration_format():
     print('   "tracking" : {...},     /* call --help config.tracking for help on this section */')
     print('   "postprocessing" : {...} /* call --help config.postprocessing for help on this section */')
     print('}')
-    sys.exit(1)
 
 
-# ----------------------------------------------------------------------------
-
-# ----------------------------------------------------------------------------
-## Prints version info and exits
-#
 def print_version():
+    """
+    Prints version info
+    :return:
+    """
     print("meanie3D: " + meanie3D.getVersion() + "\n")
-    sys.exit(1)
-    return
 
 
 # ----------------------------------------------------------------------------
@@ -126,9 +122,8 @@ def main():
     output_dir = "."
     netcdf_dir = ""
     num_params = 0
-
-    start_time_index = -1;
-    end_time_index = -1;
+    start_time_index = -1
+    end_time_index = -1
 
     for o, a in opts:
 
@@ -151,6 +146,7 @@ def main():
 
         elif o in ["--json-example"]:
             print_configuration_format()
+            sys.exit(0)
 
         elif o in ["--resume"]:
             resume = True
@@ -163,10 +159,11 @@ def main():
 
         elif o in ["--help"]:
             usage()
-            sys.exit()
+            sys.exit(0)
 
         elif o in ["--version"]:
             print_version()
+            sys.exit(0)
 
         elif o in ["--time-operations"]:
             time_operations = True
@@ -182,26 +179,23 @@ def main():
 
     if num_params < 2:
         usage()
+        sys.exit(1)
 
     uses_time = False
 
     # sanity checks on time range
 
     if start_time_index != -1 or end_time_index != -1:
-
         if (start_time_index == -1 and end_time_index != -1) or (start_time_index != -1 and end_time_index == -1):
             print("start-time-index and end-time-index must both be set")
-            sys.exit(2)
-
+            sys.exit(1)
         if start_time_index > end_time_index:
             print("start-time-index is after end-time-index!")
-            sys.exit(2)
-
+            sys.exit(1)
         uses_time = True
 
     # Parse configuration data and expand
-
-    configuration = meanie3D.app.utils.load_configuration(config_file);
+    configuration = meanie3D.app.utils.load_configuration(config_file)
 
     print("-------------------------------------------------------------------------------------")
     print("Configuration: " + configuration['description'])
