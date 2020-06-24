@@ -39,24 +39,15 @@ namespace m3D
 #if WRITE_MODES
     static size_t s_pass_counter = 0;
 
-    template <typename T>
-    size_t
-    ClusterOperation<T>::pass_counter()
-    {
+    template <typename T> size_t ClusterOperation<T>::pass_counter() {
         return s_pass_counter;
     };
 
-    template <typename T>
-    void
-    ClusterOperation<T>::reset_pass_counter()
-    {
+    template <typename T> void ClusterOperation<T>::reset_pass_counter() {
         s_pass_counter = 0;
     };
 
-    template <typename T>
-    void
-    ClusterOperation<T>::increment_pass_counter()
-    {
+    template <typename T> void ClusterOperation<T>::increment_pass_counter() {
         s_pass_counter++;
     }
 #endif
@@ -64,16 +55,11 @@ namespace m3D
 #pragma mark -
 #pragma mark Clustering Code
 
-    template <typename T>
-    ClusterList<T> *
-    ClusterOperation<T>::cluster()
-    {
+    template <typename T> ClusterList<T>* ClusterOperation<T>::cluster() {
         using namespace m3D::utils::vectors;
-
         const CoordinateSystem<T> *cs = m_context.coord_system;
         vector<T> resolution;
-        if (m_context.search_params->search_type() == SearchTypeRange)
-        {
+        if (m_context.search_params->search_type() == SearchTypeRange) {
             RangeSearchParams<T> *p = (RangeSearchParams<T> *)m_context.search_params;
             // Physical grid resolution in the
             // spatial range
@@ -81,21 +67,16 @@ namespace m3D
             resolution = ((T)4.0) * resolution;
             // Supplement with bandwidth values for
             // the value range
-            for (size_t i = resolution.size(); i < p->bandwidth.size(); i++)
-            {
+            for (size_t i = resolution.size(); i < p->bandwidth.size(); i++) {
                 resolution.push_back(p->bandwidth[i]);
             }
-        }
-        else
-        {
+        } else {
             KNNSearchParams<T> *p = (KNNSearchParams<T> *)m_context.search_params;
             resolution = p->resolution;
         }
 
-        if (m_context.show_progress)
-        {
-            cout << endl
-                 << "Creating meanshift vector graph ...";
+        if (m_context.show_progress) {
+            cout << endl << "Creating meanshift vector graph ...";
             start_timer();
             m_progress_bar = new boost::progress_display(this->feature_space->size());
         }
@@ -109,8 +90,7 @@ namespace m3D
             m_params.time_index);
 
         // Guard against empty feature-space
-        if (this->feature_space->points.size() == 0)
-        {
+        if (this->feature_space->points.size() == 0) {
             cout << "Feature space is empty" << endl;
             return cluster_list;
         }
@@ -121,10 +101,8 @@ namespace m3D
 #if WITH_OPENMP
 #pragma omp parallel for schedule(dynamic)
 #endif
-        for (size_t index = 0; index < this->feature_space->size(); index++)
-        {
-            if (m_context.show_progress)
-            {
+        for (size_t index = 0; index < this->feature_space->size(); index++) {
+            if (m_context.show_progress) {
 #if WITH_OPENMP
 #pragma omp critical
 #endif
@@ -133,6 +111,12 @@ namespace m3D
 
             // Get the meanshift vector for this point
             typename Point<T>::ptr x = this->feature_space->points[index];
+
+            // If the weight function indicates no significant response, skip
+            // this point
+
+
+            // Calculate the mean shift vector
             x->shift = meanshiftOperator.meanshift(x->values,
                                                    m_context.search_params,
                                                    m_context.kernel,
@@ -143,8 +127,7 @@ namespace m3D
             x->gridded_shift = this->feature_space->coordinate_system->to_gridpoints(spatial_shift);
         }
 
-        if (m_context.show_progress)
-        {
+        if (m_context.show_progress) {
             cout << "done. (" << stop_timer() << "s)" << endl;
             delete m_progress_bar;
             m_progress_bar = NULL;
