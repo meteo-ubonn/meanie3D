@@ -26,12 +26,13 @@
 
 using namespace boost;
 using namespace m3D;
+using namespace m3D::utils;
 using namespace m3D::utils::vectors;
 using namespace netCDF;
 using namespace std;
 
 /** Feature-space data type */
-typedef double FS_TYPE;
+#define FS_TYPE double
 
 /** Verbosity */
 typedef enum {
@@ -172,10 +173,10 @@ void convert_clusters(const string &filename,
     CoordinateSystem<FS_TYPE> *cs = NULL;
     ClusterList<FS_TYPE> *list = ClusterList<FS_TYPE>::read(filename, &cs);
 
-    //::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtr(list, cs, list->source_file, true, false, true);
-    // ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
+    //VisitUtils<FS_TYPE>::write_clusters_vtr(list, cs, list->source_file, true, false, true);
+    // VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
 
-    ::m3D::utils::VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin,
+    VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin,
                                                           write_as_xml);
 
     if (write_displacement_vectors) {
@@ -189,12 +190,12 @@ void convert_clusters(const string &filename,
             }
         }
         string displacements_path = path.filename().stem().string() + "-displacements.vtk";
-        ::m3D::utils::VisitUtils<FS_TYPE>::write_vectors_vtk(displacements_path, origins, displacements,
+        VisitUtils<FS_TYPE>::write_vectors_vtk(displacements_path, origins, displacements,
                                                              "displacement");
     }
 
     string centers_path = path.filename().stem().string() + "-centers.vtk";
-    ::m3D::utils::VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, list->clusters);
+    VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, list->clusters);
 
     delete list;
     delete cs;
@@ -315,6 +316,10 @@ int main(int argc, char **argv) {
     bool write_displacement_vectors = false;
     bool mind_the_time = false;
 
+    // string problemStr = "1.03964e-312";
+    // double problemChild = boost::lexical_cast<double>(problemStr);
+    // cout << problemStr << " = " << problemChild << endl;
+
     try {
         parse_commmandline(vm,
                            filename,
@@ -350,11 +355,12 @@ int main(int argc, char **argv) {
     } catch (const netCDF::exceptions::NcException &e) {
         cerr << "NetCDF exception:" << e.what() << endl;
         exit(EXIT_FAILURE);;
-    } catch (const std::exception &e) {
-        cerr << "std::exception:" << e.what() << endl;
-        cerr << e.what() << endl;
-        exit(EXIT_FAILURE);;
     }
+    // } catch (const std::exception &e) {
+    //     cerr << "std::exception:" << e.what() << endl;
+    //     cerr << e.what() << endl;
+    //     exit(EXIT_FAILURE);;
+    // }
 
     return 0;
 };
