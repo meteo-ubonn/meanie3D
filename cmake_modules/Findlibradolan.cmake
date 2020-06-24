@@ -14,7 +14,7 @@ FIND_LIBRARY(libradolan_LIBRARY NAMES radolan)
 
 IF (libradolan_INCLUDE_DIR AND libradolan_LIBRARY)
    SET(libradolan_FOUND TRUE)
-ENDIF (libradolan_INCLUDE_DIR AND libradolan_LIBRARY)
+ENDIF ()
 
 # handle the QUIETLY and REQUIRED arguments and set libradolan_FOUND to TRUE if 
 # all listed variables are TRUE
@@ -24,6 +24,8 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(libradolan DEFAULT_MSG libradolan_LIBRARY libr
 IF(libradolan_FOUND)
     SET(libradolan_LIBRARIES ${libradolan_LIBRARY} )
     SET(libradolan_INCLUDE_DIRS ${libradolan_INCLUDE_DIR} )
-ENDIF(libradolan_FOUND)
+ELSEIF (libradolan_FIND_REQUIRED)
+    MESSAGE(FATAL_ERROR "libradolan not found")
+ENDIF()
 
 MARK_AS_ADVANCED(libradolan_INCLUDE_DIR libradolan_LIBRARY)
