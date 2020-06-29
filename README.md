@@ -1,13 +1,13 @@
 # meanie3D                                                                          
 
 This project provides a very generic implementation of mean-shift clustering on NetCDF data sets. 
-The data sets need to follow the "CF-Metadata":http://cfconventions.org. The mean-shift algorithm 
+The data sets need to follow the [CF-Metadata](http://cfconventions.org). The mean-shift algorithm 
 is a robust unsupervised clustering algorithm with a wide range of applications. Meanie3D provides 
 a multivariate implementation with no limits as to the number of variables that can be used in 
 constructing the Featurespace. 
 
 This software supports 2D as well as 3D data sets and comes with many configuration options. The code 
-was written as part of my efforts within "OASE HErZ group":http://www.herz-tb1.uni-bonn.de and contains 
+was written as part of my efforts within [OASE HErZ group](http://www.herz-tb1.uni-bonn.de) and contains 
 some modules that are specific to this application as a result. If interest is there I might remove all 
 specific components at one point. Meanie3D is implemented largely as a C++ template library with only a 
 few object files (mostly from the numerical recipes library) for performance reason and uses OpenMP for 
@@ -32,30 +32,30 @@ The latest stable version is v1.6.1. Versions are tagged.
 ### Dependencies
 
 Meanie3D comes with a number of dependencies that need to be installed prior to attempting installation:
-* Boost 1.56 or better (http://www.boost.org)
-* FLANN 1.8.0 or better (http://www.cs.ubc.ca/research/flann/)
-* Blitz++ (http://sourceforge.net/projects/blitz/)
-* OpenMP (libomp) (https://www.openmp.org)
-* NetCDF 4.2 or better (http://www.unidata.ucar.edu/software/netcdf/) *including* the netcdf4-C++ API
-* HDF5 (http://www.hdfgroup.org/HDF5/)
-* Python 2.5 or better (https://www.python.org)
-* numpy (try running @pip install numpy@ or download and install from http://www.numpy.org)
+* [Boost 1.56 or better](http://www.boost.org)
+* [FLANN 1.8.0 or better](http://www.cs.ubc.ca/research/flann/)
+* [Blitz++](http://sourceforge.net/projects/blitz/)
+* [OpenMP (libomp)](https://www.openmp.org)
+* [NetCDF 4.2 or better](http://www.unidata.ucar.edu/software/netcdf/) *including* the netcdf4-C++ API
+* [HDF5](http://www.hdfgroup.org/HDF5/)
+* [Python 2.7](https://www.python.org)
+* NumPY (try running @pip install numpy@ or download and install from http://www.numpy.org)
 * NetCDF4-python (try running @pip install netCDF4@ or download and install from http://unidata.github.io/netcdf4-python)
-* libradolan (http://meteo-ubonn.github.io/radolan/)
+* [libradolan](http://meteo-ubonn.github.io/radolan/)
 
 Optional:
 
 The following libraries may be used, if they are switched on with the appropriate flags
 * Data format
-  * shapelib v1.3+ (http://shapelib.maptools.org) - When present, certain utilities have additional options for outputting 
+  * [shapelib v1.3+](http://shapelib.maptools.org) - When present, certain utilities have additional options for outputting 
   data in ESRI shapefile format.
 * Visualization:
-  * Imagemagick (https://imagemagick.org)
-  * gnuplot (http://gnuplot.sourceforge.net)
-  * VTK 7.0 or better (http://www.vtk.org)
-  * Visit 3.0.0 or better (https://wci.llnl.gov/simulation/computer-codes/visit)
+  * [Imagemagick](https://imagemagick.org)
+  * [gnuplot](http://gnuplot.sourceforge.net)
+  * [VTK 7.0 or better](http://www.vtk.org)
+  * [Visit 3.0.0 or better](https://wci.llnl.gov/simulation/computer-codes/visit)
 * Generated source code documentation:
-  * doxygen (https://www.doxygen.nl/download.html)
+  * [doxygen](https://www.doxygen.nl/download.html)
 
 ### Compiler Prerequisites
 
