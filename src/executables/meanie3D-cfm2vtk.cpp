@@ -270,12 +270,12 @@ int main(int argc, char **argv) {
             ("variable,v", program_options::value<string>(), "Name of the variable to be used")
             ("destination,d", program_options::value<string>()->default_value("."),
              "Name of output directory for the converted files (default '.')")
-            ("type,t", program_options::value<string>(), "'clusters' or 'composite'")
+            ("type,t", program_options::value<string>(), "'cluster' or 'composite'")
 #if WITH_VTK
             ("extract-skin,s", "Use delaunay filter to extract skin file")
             ("write-as-xml,x", "Write files in xml instead of ascii")
             ("write-displacement-vectors",
-             "Write out an extra file containing the displacement vectors (clusters only).")
+             "Write out an extra file containing the displacement vectors (type cluster only).")
             ("vtk-dimensions", program_options::value<string>(),
              "VTK files are written in the order of dimensions given. This may lead to wrong results if the order of the dimensions is not x,y,z. Add the comma-separated list of dimensions here, in the order you would like them to be written as (x,y,z)")
 #endif

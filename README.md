@@ -218,20 +218,23 @@ The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD
 ### Additional options for debugging
 In addition to runtime flags to the detection program, a few more options exist to write debug output.
 
-#### `-DDEBUG_GRAPH_AGGREGATION=1`
-If this option is present, a blow by blow description of the algorithms decisions on aggregating clusters from mean-shift vectors is given to stdout. This can sometimes be helpful to understand how certain clusters were formed.
+#### `-DDEBUG_GRAPH_AGGREGATION=ON`
+If this option is selected, a blow by blow description of the algorithms decisions on aggregating clusters from mean-shift vectors is given to stdout. This can sometimes be helpful to understand how certain clusters were formed.
 
-#### `-DWRITE_FEATURESPACE=1`
+#### `-DWRITE_CI_SCORE=ON`
+If this option is selected, details of the CI (convective initiation) score calculation are written out to VTK files. Tracking regions of elevated CI score was one of the ideas for the OASE group. Only useful when running the algorithm on SEVIRI satellite data and the flag `--ci-use-walker-mecikalski` is set on calling `meanie3D-detect`. 
+
+#### `-DWRITE_FEATURESPACE=ON`
 The featurespace is the data set constructed from all dimensions plus the variables in question. If this flag is set, this data set is written out as VTK files at construction and throughout the different filtering steps. This information can be useful to understand choices in building your featurespace and in filtering it. NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
 
-#### `-DWRITE_ZEROSHIFT_CLUSTERS=1`
+#### `-DWRITE_ZEROSHIFT_CLUSTERS=ON`
 Areas with mean-shift vectors that are zero after discretiziation are aggregated and serve as condensation points for the vector graph analysis. Those areas are called 'zero-shift' clusters. When this flag is set, those clusters are written to disk as .vtk files. NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
 
-#### `-DWRITE_OFF_LIMITS_MASK=1`
+#### `-DWRITE_OFF_LIMITS_MASK=ON`
 The CF-Metadata standard for NetCDF files allows to have a value for areas outside of the valid measurements. This applies for example to values outside the maximum range of a radar etc. When this flag is set, a file is written out
 in VTK format, that contains a mask for such areas (from the original data set). NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
 
-#### `-DWRITE_MODES=1`
+#### `-DWRITE_MODES=ON`
 When this flag is set, a file is written out which contains the cluster modes. NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
 
 ### Uninstall the software
