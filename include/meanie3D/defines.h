@@ -59,7 +59,7 @@
 #define GRID_ROUNDING_METHOD_NONE 0
 
 // ---------------------------------------------------- //
-// Debugging Flags(stdout)
+// Debugging Flags (stdout)
 // ---------------------------------------------------- //
 
 #define DEBUG_GRAPH_AGGREGATION 0

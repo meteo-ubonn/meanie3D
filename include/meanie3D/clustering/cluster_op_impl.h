@@ -114,6 +114,7 @@ namespace m3D
 
             // If the weight function indicates no significant response, skip
             // this point
+            // TODO: what happened to this code?
 
 
             // Calculate the mean shift vector

@@ -205,8 +205,8 @@ namespace m3D {
             params.dimensions.push_back(name);
             NcVar dimVar = file->getVar(name);
             if (dimVar.isNull()) {
-                cerr << "No dimension variable '" << std::string(name) << "' exists!" << endl;
-                exit(EXIT_FAILURE);;
+                cerr << "No dimension variable '" << std::string(name) << "' exists in file " << params.filename << endl;
+                exit(EXIT_FAILURE);
             }
             params.dimension_variables.push_back(name);
         }

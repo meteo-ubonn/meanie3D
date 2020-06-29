@@ -65,7 +65,7 @@ Meanie3D uses OpenMP by default (-DWITH_OPENMP=1) and requires an OpenMP enabled
 
 You can disable the OpenMP implementation adding the flags -DWITH_OPENMP=0 to your cmake call.
 
-### Build instructions
+### Build and install the software
 
 Meanie3D uses CMAKE to generate makefiles. You can use CMAKE's abilities to generate IDE files if you prefer. Start 
 by cloning the master branch (for an up-to date but possibly unstable version) or one of the stable releases.
@@ -90,19 +90,23 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
 * `docker` 
   * Code optimizations for build type 'Release'
   * Core functions and python frontend
+* `docker-vtk` 
+  * Code optimizations for build type 'Release'
+  * Core functions and python frontend
+  * VTK output enabled.
 * `dev-core`
   * Code optimizations for build type 'Debug'
   * Core functions and python frontend
 * `dev-vtk`
   * Code optimizations for build type 'Debug'
   * Core functions and python frontend
-  * Visualization code
-  * Tests 
+  * VTK output enabled.
   * Documentation
 * `dev-all`
   * Code optimizations for build type 'Debug'
   * Core functions and python frontend
-  * Visualization code
+  * VTK output enabled.
+  * Visualization enabled.
   * Tests 
   * Documentation
   * RADOLAN, Satellite and KONRAD utilities 
@@ -112,21 +116,19 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
 * `prod-vtk`
   * Code optimizations for build type 'Release'
   * Core functions and python frontend
-  * Visualization code
+  * VTK output enabled.
   * Tests 
   * Documentation
 * `prod-all`
   * Code optimizations for build type 'Release'
   * Core functions and python frontend
-  * Visualization code
+  * VTK output enabled.
+  * Visualization enabled.
   * Tests 
   * Documentation
   * RADOLAN, Satellite and KONRAD utilities 
 
-The term "core functions" refers to the detection, tracking and track evaluation code. For local 
-development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, 
-use `prod-vtk`. If you just need the core functions and none of the visuals, choose the `core` sets 
-(`dev-core` or `prod-core`). 
+The term "core functions" refers to the detection, tracking and track evaluation code. For local development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, use `prod-vtk`. If you just need the core functions and none of the visuals, choose the `core` sets (`dev-core` or `prod-core`).
 
 ### Available build types
 The following build types are available:
@@ -140,26 +142,17 @@ To select a build type, use the flag `CMAKE_BUILD_TYPE` like so:
   cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
 ```
 
-*Note:* there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. 
-You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected 
-problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build 
-(leave the -DCMAKE_BUILD_TYPE=Debug).  Once all dependencies are successfully resolved, install the product by 
-calling the following: 
+*Note:* there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build (leave the -DCMAKE_BUILD_TYPE=Debug).  Once all dependencies are successfully resolved, install the product by calling the following: 
 ```
   make install
 ```
-*Note:* When using presets, the preset defines the build type. Setting this flag together with a preset has 
-no effect on the preset's choice.
+*Note:* When using presets, the preset defines the build type. Setting this flag together with a preset has no effect on the preset's choice.
 
 ### Options
-If you would like to select your own options, you can leave the PRESET parameter and switch things
-on and off. When using presets, the preset defines the options. Setting any of the following options
-together with a -DPRESET=\<preset-name\> option does not alter the preset's settings. 
+If you would like to select your own options, you can leave the PRESET parameter and switch things on and off. When using presets, the preset defines the options. Setting any of the following options together with a -DPRESET=\<preset-name\> option does not alter the preset's settings. 
 
-#### -DWITH_VTK=ON/OFF
-Because of the large footprint of the VTK package, the visualization code is disabled by default. While 
-visualization is not necessary to run the algorithm, it can be useful to develop your parameters to 
-have visual queues as to what is happening. Setting this flag will result in the following changes:
+#### `-DWITH_VTK=ON/OFF`
+Because of the large footprint of the VTK package, the visualization code is disabled by default. While visualization is not necessary to run the algorithm, it can be useful to develop your parameters to have visual queues as to what is happening. Setting this flag will result in the following changes:
 * The `meanie3D-cfm2vtk` binary will be compiled. This tool can visualize netCDF files in Visit/VTK
 * In several places in the code, visualizable output for intermediary steps becomes available:
   * Cluster boundaries/outlines
@@ -172,78 +165,81 @@ have visual queues as to what is happening. Setting this flag will result in the
   * Individual variables of the original netCDF (by cluster)
   * Cluster tracks
 
-*Important Notes*: Visualization is switched off in the Docker version. The visualiation code uses
-libradolan. If you do switch this on, you will be required to install libradolan as well. 
+#### `-DWITH_VISUALISATION=ON/OFF`
+The meanie3D python program can utilize `Visit`, `gnuplot` and `imagemagick` to create images of the source data and results as part of batch processing. If this flag is set, CMAKE will make sure the necessary components are installed on your system. 
 
-#### -DWITH_OPENMP=ON/OFF
-In order to speed the process up, meanie3D uses OpenMP to parallelize it's computation. This option
-is switched on by default.
+#### `-DWITH_OPENMP=ON/OFF`
+In order to speed the process up, meanie3D uses OpenMP to parallelize it's computation. This option is switched on by default.
 
-#### -D WITH_TESTS=ON/OFF
-Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will 
-become important to you if you should decide to work on the core algorithms yourself. The tests are a good 
-method of making sure you haven't broken anything critical. The unit tests can then be run by calling
+#### `-DWITH_TESTS=ON/OFF`
+Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will become important to you if you should decide to work on the core algorithms yourself. The tests are a good method of making sure you haven't broken anything critical. The unit tests can then be run by calling
 ```  
   make test
 ```
 
-#### -DWITH_PYTHON=ON/OFF
-In addition to the C++ binaries, the installation also uses pip to put a python package in place. 
-This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows 
-you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
-pipeline is handled based on this configuration file. *This is the recommended way to run the software*. 
-For details on the configuration file format, see HOWTO.md. 
+#### `-DWITH_PYTHON=ON/OFF`
+In addition to the C++ binaries, the installation also uses pip to put a python package in place. This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
+pipeline is handled based on this configuration file. *This is the recommended way to run the software*. For details on the configuration file format, please refer to the user manual. 
 
-#### -DWITH_DOCS=ON/OFF
-In order to start developing your own Meanie3D code, it might be useful to have API documentation of the 
-various classes in the project. If you have doxygen installed, you can call the following make command to 
-create a browsable HTML documentation in doc/html (open the file index.html). 
+TODO: location of user manual
+
+#### `-DWITH_DOCS=ON/OFF`
+In order to start developing your own Meanie3D code, it might be useful to have API documentation of the various classes in the project. If you have doxygen installed, you can call the following make command to create a browsable HTML documentation in doc/html (open the file index.html). 
 ```
   make docs
 ```
 
-#### -DWITH_RADOLAN_UTILS=ON/OFF
-This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN 
-format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
+#### `-DWITH_RADOLAN_UTILS=ON/OFF`
+This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
 
-#### -DWITH_SATELLITE_UTILS=ON/OFF
-The package comes with binaries to perform some conversion on satellite data. Those binaries were 
-provided in the context of research work for the OASE project. The following binaries will be provided 
-if this flag is set:
+#### `-DWITH_SATELLITE_UTILS=ON/OFF`
+The package comes with binaries to perform some conversion on satellite data. Those binaries were provided in the context of research work for the OASE project. The following binaries will be provided if this flag is set:
 * `meanie3D-satconv` - Converts spectral radiance to equivalent brightness temperature or vice versa
 * `meanie3D-parallax_correction` - Applies parallax correction to mseviri satellite data in OASE composite files.
 
-#### -DWITH_KONRAD_UTILS=ON/OFF
-The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes
-the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
+#### `-DWITH_KONRAD_UTILS=ON/OFF`
+The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
+
+### Additional options for debugging
+In addition to runtime flags to the detection program, a few more options exist to write debug output.
+
+#### `-DDEBUG_GRAPH_AGGREGATION=1`
+If this option is present, a blow by blow description of the algorithms decisions on aggregating clusters from mean-shift vectors is given to stdout. This can sometimes be helpful to understand how certain clusters were formed.
+
+#### `-DWRITE_FEATURESPACE=1`
+The featurespace is the data set constructed from all dimensions plus the variables in question. If this flag is set, this data set is written out as VTK files at construction and throughout the different filtering steps. This information can be useful to understand choices in building your featurespace and in filtering it. NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
+
+#### `-DWRITE_ZEROSHIFT_CLUSTERS=1`
+Areas with mean-shift vectors that are zero after discretiziation are aggregated and serve as condensation points for the vector graph analysis. Those areas are called 'zero-shift' clusters. When this flag is set, those clusters are written to disk as .vtk files. NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
+
+#### `-DWRITE_OFF_LIMITS_MASK=1`
+The CF-Metadata standard for NetCDF files allows to have a value for areas outside of the valid measurements. This applies for example to values outside the maximum range of a radar etc. When this flag is set, a file is written out
+in VTK format, that contains a mask for such areas (from the original data set). NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
+
+#### `-DWRITE_MODES=1`
+When this flag is set, a file is written out which contains the cluster modes. NOTE: requires the code to be compiled with -DWITH_VTK=ON or an adequate preset. 
+
+### Uninstall the software
+Navigate to the build directory. Invoke the following command:
+```
+make uninstall
+```
+
+The command will remove the C++ binaries, meanie3D dynamic library and executables from your system. 
 
 ## Frequently Asked Quesions 
 
 ### I'm having trouble compiling the code
-The code has been tested on MacOS X and Suse Linux. Feel free to report problems using the 
-"New Issue":http://git.meteo.uni-bonn.de/projects/meanie3d/issues/new link above. Please 
-prepend "[BUILD PROBLEM]:" to your subject line. 
+The code has been tested on MacOS X and Suse Linux. Feel free to report problems using the "New Issue":http://git.meteo.uni-bonn.de/projects/meanie3d/issues/new link above. Please prepend "[BUILD PROBLEM]:" to your subject line. 
 
 ### NetCDF/HDF5 trouble
-Versions - make sure the NetCDF version is 4.2 or better. Also make certain that you have a HDF5 
-installation to match it. If you want to make sure, uninstall HDF5 and NetCDF and re-install them 
-from source (HDF5 first, then NetCDF) Commonly there is a problem with the NetCDF C++ API - NetCDF 
-has a legacy C++ API from NetCDF3, which does not work with Meanie3D. Make sure you have the correct 
-one installed (http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-cxx4-4.2.tar.gz) 
+Versions - make sure the NetCDF version is 4.2 or better. Also make certain that you have a HDF5 installation to match it. If you want to make sure, uninstall HDF5 and NetCDF and re-install them from source (HDF5 first, then NetCDF) Commonly there is a problem with the NetCDF C++ API - NetCDF has a legacy C++ API from NetCDF3, which does not work with Meanie3D. Make sure you have the correct one installed (http://www.unidata.ucar.edu/downloads/netcdf/ftp/netcdf-cxx4-4.2.tar.gz) 
 
 ### CMAKE does not find your installed packages
-If cmake has trouble locating packages you installed, check the files in the cmake_modules directory 
-and adjust the search paths there instead of hardwiring paths into the CMakeLists.txt. If your system 
-layout is not considered and you have to make adjustments to the search paths, please send a copy of 
-your Find\<XZY\>.cmake file to simon@webtecc.com so I can include your changes in the next release 
-and maybe save someone else the trouble.
+If cmake has trouble locating packages you installed, check the files in the cmake_modules directory and adjust the search paths there instead of hardwiring paths into the CMakeLists.txt. If your system layout is not considered and you have to make adjustments to the search paths, please send a copy of your Find\<XZY\>.cmake file to simon@webtecc.com so I can include your changes in the next release and maybe save someone else the trouble.
 
 ## Visualisation
-The C++ binaries produce certain files when VTK is enabled. In order to generate imagery or tracking
-movies, meanie3D relies on executing python scripts in VisIt (). You will have to install this software
-to get access to the visualization. For details on what is possible by scripting VisIt with python,
-see the following tutorial: https://www.visitusers.org/index.php?title=VisIt-tutorial-Python-scripting
+The C++ binaries produce certain files when VTK is enabled. In order to generate imagery or tracking movies, meanie3D relies on executing python scripts in VisIt (https://wci.llnl.gov/simulation/computer-codes/visit). You will have to install this software to get access to the visualization. For details on what is possible by scripting VisIt with python, see the following tutorial: https://www.visitusers.org/index.php?title=VisIt-tutorial-Python-scripting. 
 
 ## More information
-Check out the Main Wiki Page at http://git.meteo.uni-bonn.de/projects/meanie3d/wiki for details on how the 
-method works, file formats and what the individual binaries do. 
+Check out the Main Wiki Page at http://git.meteo.uni-bonn.de/projects/meanie3d/wiki for details on how the method works, file formats and what the individual binaries do. 
