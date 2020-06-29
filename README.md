@@ -61,9 +61,9 @@ The following libraries may be used, if they are switched on with the appropriat
 
 Meanie3D uses OpenMP by default (-DWITH_OPENMP=1) and requires an OpenMP enabled compiler, such as:
 * GNU 9.0 or better (Linux, Mac)
-* OpenMP/LLVM (Mac) - a clang implementation supporting OpenMP (http://clang-omp.github.io). Note that as of clang 10.0.0 OpenMP is supported, but you will still have to install the omp library (`brew install libomp`) 
+* OpenMP/LLVM (Mac) - a clang implementation supporting OpenMP5 (http://clang-omp.github.io). Note that as of clang 10.0.0 OpenMP is supported out of the box, but you will still have to install the libomp library (`brew install libomp`) 
 
-You can disable the OpenMP implementation adding the flags -DWITH_OPENMP=0 to your cmake call.
+You can disable the OpenMP implementation adding the flags `-DWITH_OPENMP=0` to your cmake call (does nothing when using presets).
 
 ### Build and install the software
 
@@ -107,9 +107,9 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
   * Core functions and python frontend
   * VTK output enabled.
   * Visualization enabled.
+  * RADOLAN, Satellite and KONRAD utilities 
   * Tests 
   * Documentation
-  * RADOLAN, Satellite and KONRAD utilities 
 * `prod-core`
   * Code optimizations for build type 'Release'
   * Core functions and python frontend.
@@ -117,16 +117,31 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
   * Code optimizations for build type 'Release'
   * Core functions and python frontend
   * VTK output enabled.
-  * Tests 
-  * Documentation
 * `prod-all`
   * Code optimizations for build type 'Release'
   * Core functions and python frontend
   * VTK output enabled.
   * Visualization enabled.
+  * RADOLAN, Satellite and KONRAD utilities 
   * Tests 
   * Documentation
+* `fast-core`
+  * Code optimizations for build type 'MinSizeRel'
+  * Core functions and python frontend.
+* `fast-vtk`
+  * Code optimizations for build type 'MinSizeRel'
+  * Core functions and python frontend
+  * VTK output enabled.
+  * Tests 
+  * Documentation
+* `fast-all`
+  * Code optimizations for build type 'MinSizeRel'
+  * Core functions and python frontend
+  * VTK output enabled.
+  * Visualization enabled.
   * RADOLAN, Satellite and KONRAD utilities 
+  * Tests 
+  * Documentation
 
 The term "core functions" refers to the detection, tracking and track evaluation code. For local development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, use `prod-vtk`. If you just need the core functions and none of the visuals, choose the `core` sets (`dev-core` or `prod-core`).
 
