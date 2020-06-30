@@ -159,7 +159,7 @@ def run_trackstats(configuration, directory):
         params.append("--vtk-dimensions=%s" % conf['vtkDimensions'])
     params.append("-s netcdf")
 
-    if configuration['resume'] and haveFiles:
+    if 'resume' in configuration and haveFiles:
         print("Skipping meanie3D-trackstats")
         os.chdir("..")
         return True

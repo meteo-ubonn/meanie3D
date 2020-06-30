@@ -223,7 +223,7 @@ def main():
     # Run the detection and tracking steps
     detection = meanie3D.app.utils.getSafe(configuration, 'detection')
     tracking = meanie3D.app.utils.getSafe(configuration, 'tracking')
-    if (detection or tracking):
+    if detection or tracking:
 
         # run the actual clustering/tracking script
         if not scales:
@@ -243,7 +243,7 @@ def main():
                         meanie3D.app.tracking.run(configuration, time_index)
 
     # Run the postprocessing steps
-    if (configuration['postprocessing']):
+    if 'postprocessing' in configuration:
         meanie3D.app.postprocessing.run(configuration)
 
     return
