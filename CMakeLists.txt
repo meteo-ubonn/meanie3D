@@ -579,6 +579,7 @@ ADD_LIBRARY(meanie3D SHARED
   include/meanie3D/weights/exp10_weight.h
   include/meanie3D/weights/inverse_default.h
   include/meanie3D/weights/oase_weights.h
+  include/meanie3D/weights/inv_erfc_weights.h
   include/meanie3D/weights/weight_function.h
   include/meanie3D/weights/weight_function_factory.h
   include/meanie3D/weights/weight_function_factory_impl.h

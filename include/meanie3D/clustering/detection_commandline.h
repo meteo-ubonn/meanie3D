@@ -81,7 +81,7 @@ namespace m3D {
                  "uniform,gauss,epanechnikov or none")
                 ("weight-function-name,w",
                  program_options::value<string>()->default_value(params.weight_function_name),
-                 "default,inverse,pow10 or oase")
+                 "default,inverse,pow10,inverfc,oase or oaseci")
                 ("wwf-lower-threshold",
                  program_options::value<T>()->default_value(params.wwf_lower_threshold),
                  "Lower threshold for weight function filter.")

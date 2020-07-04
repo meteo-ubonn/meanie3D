@@ -303,7 +303,7 @@ namespace m3D {
             ctx.sf->apply(ctx.fs);
 
 #if WRITE_FEATURESPACE
-            std::string fn = path.stem().string() + "_scale_" + boost::lexical_cast<string>(scale) + ".vtk";
+            std::string fn = path.stem().string() + "_scale_" + boost::lexical_cast<string>(params.scale) + ".vtk";
             VisitUtils<T>::write_featurespace_vtk(fn, ctx.fs);
 #endif
         }
