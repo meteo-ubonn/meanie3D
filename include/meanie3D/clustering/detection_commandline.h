@@ -449,11 +449,8 @@ namespace m3D {
 
         // Weight Function
         params.weight_function_name = vm["weight-function-name"].as<string>();
-        if (!(params.weight_function_name == "default"
-              || params.weight_function_name == "inverse"
-              || params.weight_function_name == "pow10"
-              || params.weight_function_name == "oase"
-              || params.weight_function_name == "oase-ci")) {
+        if (!(params.weight_function_name == "default" || params.weight_function_name == "inverse" || params.weight_function_name == "pow10" || params.weight_function_name == "inverfc" || params.weight_function_name == "oase" || params.weight_function_name == "oase-ci"))
+        {
             cerr << "Illegal weight function name " << params.weight_function_name <<
                  ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
             exit(EXIT_FAILURE);
