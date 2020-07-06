@@ -176,11 +176,13 @@ void convert_clusters(const string &filename,
     //VisitUtils<FS_TYPE>::write_clusters_vtr(list, cs, list->source_file, true, false, true);
     // VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin, write_as_xml);
 
+    cout << "Writing clusters as vtk/vtu" << endl;
     VisitUtils<FS_TYPE>::write_clusters_vtu(list, cs, list->source_file, 5, true, extract_skin,
                                                           write_as_xml);
 
     if (write_displacement_vectors) {
-        vector<vector<FS_TYPE> > origins;
+        cout << "Writing displacement vectors" << endl;
+        vector<vector<FS_TYPE>> origins;
         vector<vector<FS_TYPE> > displacements;
         for (size_t i = 0; i < list->size(); i++) {
             Cluster<FS_TYPE>::ptr c = list->clusters.at(i);
@@ -195,10 +197,12 @@ void convert_clusters(const string &filename,
     }
 
     string centers_path = path.filename().stem().string() + "-centers.vtk";
+    cout << "Writing cluster centers" << endl;
     VisitUtils<FS_TYPE>::write_geometrical_cluster_centers_vtk(centers_path, list->clusters);
 
     delete list;
     delete cs;
+    cout << "Done." << endl;
 }
 
 void convert_composite(const string &filename,
