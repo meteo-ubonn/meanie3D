@@ -1,36 +1,22 @@
-# meanie3D                                                                          
+# meanie3D
 
-This project provides a very generic implementation of mean-shift clustering on NetCDF data sets. 
-The data sets need to follow the [CF-Metadata](http://cfconventions.org). The mean-shift algorithm 
-is a robust unsupervised clustering algorithm with a wide range of applications. Meanie3D provides 
-a multivariate implementation with no limits as to the number of variables that can be used in 
-constructing the Featurespace. 
+This project provides a generic implementation of [mean-shift clustering](https://en.wikipedia.org/wiki/Mean_shift) on [CF-Metadata](http://cfconventions.org) compliant NetCDF data sets. The mean-shift algorithm is a robust unsupervised clustering algorithm with a wide range of applications. Meanie3D provides a multivariate implementation with no limits as to the number of variables that can be used in constructing the Featurespace. 
 
 This software supports 2D as well as 3D data sets and comes with many configuration options. The code 
-was written as part of my efforts within [OASE HErZ group](http://www.herz-tb1.uni-bonn.de) and contains 
-some modules that are specific to this application as a result. If interest is there I might remove all 
-specific components at one point. Meanie3D is implemented largely as a C++ template library with only a 
-few object files (mostly from the numerical recipes library) for performance reason and uses OpenMP for 
-parallelisation. 
+was written as part of research efforts of the [OASE HErZ group](http://www.herz-tb1.uni-bonn.de) and contains some modules that are specific to this application as a result. 
 
-The software package comes with a single command in the form of a python script 'meanie3D' which makes 
-it very easy to use. The detection, tracking and post-processing steps (such as statistics, visualisation 
-of tracks, source data and clusters as well as the track graph (a simple, graphical representation of 
-a tracking dictionary for obtaining detailed view on the history of individual clusters and tracks) are 
-all controlled through a single configuration file. 
+Meanie3D is implemented largely as a C++ template library with only a few object files (mostly from the numerical recipes library) for performance reason and uses OpenMP for parallelisation. 
+
+The software package comes with a python frontend `meanie3D` which makes it very easy to use. The detection, tracking and post-processing steps (such as statistics, visualisation of tracks, source data and clusters as well as the track graph (a simple, graphical representation of a tracking dictionary for obtaining detailed view on the history of individual clusters and tracks) are all controlled through a single configuration file. 
 
 ## License
-
 Meanie3D comes under [[MIT license]]. 
 
 ## Version
-
 The latest stable version is v1.6.1. Versions are tagged.  
 
 ## Build Instructions
-
 ### Dependencies
-
 Meanie3D comes with a number of dependencies that need to be installed prior to attempting installation:
 * [Boost 1.56 or better](http://www.boost.org)
 * [FLANN 1.8.0 or better](http://www.cs.ubc.ca/research/flann/)
@@ -43,12 +29,9 @@ Meanie3D comes with a number of dependencies that need to be installed prior to 
 * NetCDF4-python (try running @pip install netCDF4@ or download and install from http://unidata.github.io/netcdf4-python)
 * [libradolan](http://meteo-ubonn.github.io/radolan/)
 
-Optional:
-
 The following libraries may be used, if they are switched on with the appropriate flags
 * Data format
-  * [shapelib v1.3+](http://shapelib.maptools.org) - When present, certain utilities have additional options for outputting 
-  data in ESRI shapefile format.
+  * [shapelib v1.3+](http://shapelib.maptools.org) - When present, certain utilities have additional options for writing out data in ESRI shapefile format.
 * Visualization:
   * [Imagemagick](https://imagemagick.org)
   * [gnuplot](http://gnuplot.sourceforge.net)
@@ -58,7 +41,6 @@ The following libraries may be used, if they are switched on with the appropriat
   * [doxygen](https://www.doxygen.nl/download.html)
 
 ### Compiler Prerequisites
-
 Meanie3D uses OpenMP by default (-DWITH_OPENMP=1) and requires an OpenMP enabled compiler, such as:
 * GNU 9.0 or better (Linux, Mac)
 * OpenMP/LLVM (Mac) - a clang implementation supporting OpenMP5 (http://clang-omp.github.io). Note that as of clang 10.0.0 OpenMP is supported out of the box, but you will still have to install the libomp library (`brew install libomp`) 
@@ -66,34 +48,18 @@ Meanie3D uses OpenMP by default (-DWITH_OPENMP=1) and requires an OpenMP enabled
 You can disable the OpenMP implementation adding the flags `-DWITH_OPENMP=0` to your cmake call (does nothing when using presets).
 
 ### Build and install the software
+Meanie3D uses [cmake](https://cmake.org). Start by cloning the master branch (for an up-to date but possibly unstable version) or one of the stable releases.
 
-Meanie3D uses CMAKE to generate makefiles. You can use CMAKE's abilities to generate IDE files if you prefer. Start 
-by cloning the master branch (for an up-to date but possibly unstable version) or one of the stable releases.
-```
   git clone https://github.com/meteo-ubonn/meanie3D.git
-```
-TODO: revise handling of map data
-If you want to download the OASE topology and mapdata file for visualisation, you can obtain this file by adding:
-```
-  git clone http://git.meteo.uni-bonn.de/git/oase-mapdata
-```
-Create a build directory:
-```
-  mkdir meanie3D-make
-  cd meanie3D-make
-  cmake ../meanie3D
-```
+  cd meanie3D
+  mkdir build
+  cd build
+  cmake -DPRESET=fast-vtk ..
+  make install
 
 ### Build presets
 A number of presets are provided to make the process easier. Those are selected via the -DPRESET=\<preset name\> 
 flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available presets are:
-* `docker` 
-  * Code optimizations for build type 'Release'
-  * Core functions and python frontend
-* `docker-vtk` 
-  * Code optimizations for build type 'Release'
-  * Core functions and python frontend
-  * VTK output enabled.
 * `dev-core`
   * Code optimizations for build type 'Debug'
   * Core functions and python frontend
@@ -142,8 +108,15 @@ flag to cmake. (Example: `cmake -DPRESET=dev-all ../meanie3D`). The available pr
   * RADOLAN, Satellite and KONRAD utilities 
   * Tests 
   * Documentation
+* `docker` 
+  * Code optimizations for build type 'Release'
+  * Core functions and python frontend
+* `docker-vtk` 
+  * Code optimizations for build type 'Release'
+  * Core functions and python frontend
+  * VTK output enabled.
 
-The term "core functions" refers to the detection, tracking and track evaluation code. For local development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, use `prod-vtk`. If you just need the core functions and none of the visuals, choose the `core` sets (`dev-core` or `prod-core`).
+The term "core functions" refers to the detection, tracking and track evaluation code. For local development in most cases, the preset `dev-vtk` is sufficient. For more aggressive optimisations, use `prod-vtk`. If you just need the core functions and none of the visuals, choose the `core` sets (`dev-core` or `prod-core`). For best performance, use the `fast` presets.
 
 ### Available build types
 The following build types are available:
@@ -153,18 +126,15 @@ The following build types are available:
 * MinSizeRel (minimal footprint, aggressive optimizations, no debug symbols)
 
 To select a build type, use the flag `CMAKE_BUILD_TYPE` like so:
-```
-  cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
-```
 
-*Note:* there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. You should try the release build in any event, since it speeds up performance a lot. If you observe unexpected problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build (leave the -DCMAKE_BUILD_TYPE=Debug).  Once all dependencies are successfully resolved, install the product by calling the following: 
-```
-  make install
-```
-*Note:* When using presets, the preset defines the build type. Setting this flag together with a preset has no effect on the preset's choice.
+  cmake -DCMAKE_BUILD_TYPE=Release ../meanie3D
+
+*Note:* there have been some problems on Linux with aggressive optimization and NetCDF. Your mileage may vary. You should try the `Release` build type in any event, since it speeds up performance a lot. If you observe unexpected problems in reading/writing NetCDF files, you may have fallen victim to the problem and revert to standard build (leave the -DCMAKE_BUILD_TYPE=Debug).  
+
+**Note:** When using presets, the preset defines the build type. Setting this flag together with a preset has no effect on the preset's choice.
 
 ### Options
-If you would like to select your own options, you can leave the PRESET parameter and switch things on and off. When using presets, the preset defines the options. Setting any of the following options together with a -DPRESET=\<preset-name\> option does not alter the preset's settings. 
+If you would like to select your own options, you can leave the PRESET parameter and switch components on and off selectively (Remember: setting any of the following options together with a -DPRESET=\<preset-name\> option does not alter the preset's settings).
 
 #### `-DWITH_VTK=ON/OFF`
 Because of the large footprint of the VTK package, the visualization code is disabled by default. While visualization is not necessary to run the algorithm, it can be useful to develop your parameters to have visual queues as to what is happening. Setting this flag will result in the following changes:
@@ -188,9 +158,8 @@ In order to speed the process up, meanie3D uses OpenMP to parallelize it's compu
 
 #### `-DWITH_TESTS=ON/OFF`
 Meanie3D has a number of regression tests, that cover the core algorithms and collection classes. This will become important to you if you should decide to work on the core algorithms yourself. The tests are a good method of making sure you haven't broken anything critical. The unit tests can then be run by calling
-```  
+
   make test
-```
 
 #### `-DWITH_PYTHON=ON/OFF`
 In addition to the C++ binaries, the installation also uses pip to put a python package in place. This adds an executable simply called `meanie3D`, which is a front-end to the core functions. It allows you to put your clustering and tracking parameters down in the form of a configuration file. The entire 
@@ -198,11 +167,18 @@ pipeline is handled based on this configuration file. *This is the recommended w
 
 TODO: location of user manual
 
+##### Python2 vs Python3
+
+  Because the meanie3D python package contains code that is executed in Visit's own python CLI, you will have to use a python2 version if you want the visualisation code switched on. For your own visualisations from VTK output generated by the software, you may run Python3. In order to configure a specific python2 installation, use the following hint:
+
+    cmake -DPython2_ROOT_DIR=/path/to/python/root ...
+
+  For Python3 use ```-DPython3_ROOT_DIR``` instead. 
+
 #### `-DWITH_DOCS=ON/OFF`
 In order to start developing your own Meanie3D code, it might be useful to have API documentation of the various classes in the project. If you have doxygen installed, you can call the following make command to create a browsable HTML documentation in doc/html (open the file index.html). 
-```
+
   make docs
-```
 
 #### `-DWITH_RADOLAN_UTILS=ON/OFF`
 This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
@@ -239,9 +215,8 @@ When this flag is set, a file is written out which contains the cluster modes. N
 
 ### Uninstall the software
 Navigate to the build directory. Invoke the following command:
-```
-make uninstall
-```
+  
+  make uninstall
 
 The command will remove the C++ binaries, meanie3D dynamic library and executables from your system. 
 
