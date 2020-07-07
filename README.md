@@ -183,10 +183,11 @@ In order to start developing your own Meanie3D code, it might be useful to have 
 #### `-DWITH_RADOLAN_UTILS=ON/OFF`
 This will result in compilation of the `meanie3D-radolan2cfm` utility, which converts files in RADOLAN format to a cf-metadata compliant netCDF file, which then can be used to run the tracking. 
 
-#### `-DWITH_SATELLITE_UTILS=ON/OFF`
-The package comes with binaries to perform some conversion on satellite data. Those binaries were provided in the context of research work for the OASE project. The following binaries will be provided if this flag is set:
+#### `-DWITH_SATELLITE=ON/OFF`
+When this option is switched on, the package comes with binaries to perform some conversion on satellite data. Those binaries were provided in the context of research work for the OASE project. The following binaries will be provided if this flag is set:
 * `meanie3D-satconv` - Converts spectral radiance to equivalent brightness temperature or vice versa
 * `meanie3D-parallax_correction` - Applies parallax correction to mseviri satellite data in OASE composite files.
+In addition the detection code has special options for calculating a convective initiation score (Mecikalski, John R., and Kristopher M. Bedka. “Forecasting Convective Initiation by Monitoring the Evolution of Moving Cumulus in Daytime GOES Imagery.” Monthly Weather Review 134, no. 1 (2006). https://doi.org/10.1175/MWR3062.1.). This can be used to track convective cells in SEVIRI satellite data. 
 
 #### `-DWITH_KONRAD_UTILS=ON/OFF`
 The package comes with a tool `meanie3D-trackstats-conrad` which analyses KONRAD tracks in a way that makes the data comparable to meanie3D data. This is a specialized tool developed in the context of the OASE project.
