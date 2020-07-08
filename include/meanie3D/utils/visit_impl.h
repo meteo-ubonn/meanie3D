@@ -544,8 +544,8 @@ namespace m3D
             cellColors->SetName("cell_color");
             cellColors->SetLookupTable(cluster_lookup_table());
 
-            vtkSmartPointer<vtkIntArray> clusterIds = vtkSmartPointer<vtkIntArray>::New();
-            clusterIds->SetName("geometrical_center");
+            // vtkSmartPointer<vtkIntArray> clusterIds = vtkSmartPointer<vtkIntArray>::New();
+            // clusterIds->SetName("geometrical_center");
 
             for (size_t ci = 0; ci < list->clusters.size(); ci++)
             {
@@ -555,13 +555,13 @@ namespace m3D
 
                 // Write ID
                 T x, y, z;
-                VisitUtils<T>::get_vtk_coords(cluster->geometrical_center(), x, y, z);
-                vtkIdType center;
-                center = centerPoints->InsertNextPoint(x, y, point_dim == 2 ? 0 : z);
-                vtkSmartPointer<vtkPixel> centerPixel = vtkSmartPointer<vtkPixel>::New();
-                centerPixel->GetPointIds()->SetId(0, center);
-                centerCellArray->InsertNextCell(centerPixel);
-                clusterIds->InsertNextValue(id);
+                // VisitUtils<T>::get_vtk_coords(cluster->geometrical_center(), x, y, z);
+                // vtkIdType center;
+                // center = centerPoints->InsertNextPoint(x, y, point_dim == 2 ? 0 : z);
+                // vtkSmartPointer<vtkPixel> centerPixel = vtkSmartPointer<vtkPixel>::New();
+                // centerPixel->GetPointIds()->SetId(0, center);
+                // centerCellArray->InsertNextCell(centerPixel);
+                // clusterIds->InsertNextValue(id);
 
                 // Write point_color and value information
                 for (vtkIdType pi = 0; pi < cluster->size(); pi++)
@@ -660,16 +660,14 @@ namespace m3D
             // 2D is a square, 3D a hexahedron
             VTKCellType type = point_dim == 2 ? VTK_QUAD : VTK_HEXAHEDRON;
 
-            #ifdef FOOBAR
             // TODO: research and finish this part. The problem seems to be to have two unstructured
             // grids with different numbers of points in one file. 
             // Create an unstructured grid for center labels
-            vtkSmartPointer<vtkUnstructuredGrid> centerGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
-            centerGrid->SetPoints(centerPoints);
-            centerGrid->SetCells(type, centerCellArray);
-            centerGrid->GetPointData()->AddArray(clusterIds);
-            centerGrid->GetCellData()->AddArray(clusterIds);
-            #endif
+            // vtkSmartPointer<vtkUnstructuredGrid> centerGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
+            // centerGrid->SetPoints(centerPoints);
+            // centerGrid->SetCells(type, centerCellArray);
+            // centerGrid->GetPointData()->AddArray(clusterIds);
+            // centerGrid->GetCellData()->AddArray(clusterIds);
 
             // Create an unstructured grid and write it off
             vtkSmartPointer<vtkUnstructuredGrid> unstructuredGrid = vtkSmartPointer<vtkUnstructuredGrid>::New();
@@ -679,7 +677,7 @@ namespace m3D
             unstructuredGrid->GetPointData()->AddArray(pointColors);
             unstructuredGrid->GetCellData()->AddArray(cellData);
             unstructuredGrid->GetCellData()->AddArray(cellColors);
-            unstructuredGrid->GetCellData()->AddArray(clusterIds);
+            //unstructuredGrid->GetCellData()->AddArray(clusterIds);
 
             // Extract the envelope
             vtkSmartPointer<vtkAlgorithm> enveloper;
@@ -715,7 +713,7 @@ namespace m3D
             // from the same base class. Without this construct, the code would
             // have to be duplicated ...
 
-#define WRITE_CLUSTERS(writer, centerGrid, unstructuredGrid, include_boundary, poly_filename, enveloper) \
+#define WRITE_CLUSTERS(writer, unstructuredGrid, include_boundary, poly_filename, enveloper) \
     writer->SetFileName(mesh_filename.c_str());                                                  \
     /* TODO: comment back in when the problem with the labels on the grid is solved  */          \
     /* writer->SetInputData(centerGrid); */                                                      \
@@ -728,13 +726,12 @@ namespace m3D
         writer->SetInputConnection(enveloper->GetOutputPort());                                  \
         writer->Write();                                                                         \
     }
-
             if (write_xml) {
                 vtkSmartPointer<vtkXMLUnstructuredGridWriter> writer = vtkSmartPointer<vtkXMLUnstructuredGridWriter>::New();
-                WRITE_CLUSTERS(writer, centerGrid, unstructuredGrid, include_boundary, poly_filename, enveloper);
+                WRITE_CLUSTERS(writer, /*centerGrid,*/ unstructuredGrid, include_boundary, poly_filename, enveloper);
             } else {
                 vtkSmartPointer<vtkUnstructuredGridWriter> writer = vtkSmartPointer<vtkUnstructuredGridWriter>::New();
-                WRITE_CLUSTERS(writer, centerGrid, unstructuredGrid, include_boundary, poly_filename, enveloper);
+                WRITE_CLUSTERS(writer, /*centerGrid,*/ unstructuredGrid, include_boundary, poly_filename, enveloper);
             }
         }
 
