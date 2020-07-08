@@ -23,6 +23,7 @@
 #include <netcdf>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "detection.h"
 
@@ -51,7 +52,11 @@ namespace m3D
         ("replacement-values", program_options::value<string>(),"Comma-separated list var1=val,var2=val,... of values to replace missing values with in feature space construction. If no replacement value is specified while even one variable is out of valid range at one point, the whole point is discarded")
         ("replacement-filter", program_options::value<string>(), "Comma-separated list varname-<lowest|highest|median>-[percentage], to replace values with average of lowest/highest percent or median of neighbours")
         ("kernel-name,k", program_options::value<string>()->default_value(params.kernel_name), "uniform,gauss,epanechnikov or none")
-        ("weight-function-name,w", program_options::value<string>()->default_value(params.weight_function_name), "default,inverse,pow10,inverfc,oase or oaseci")
+        #if WITH_SATELLITE
+        ("weight-function-name,w", program_options::value<string>()->default_value(params.weight_function_name), "none, default, inverse, pow10, inverfc, oase or oaseci")
+        #else 
+        ("weight-function-name,w", program_options::value<string>()->default_value(params.weight_function_name), "none, default, inverse, pow10 or inverfc")
+        #endif
         ("wwf-lower-threshold",program_options::value<T>()->default_value(params.wwf_lower_threshold), "Lower threshold for weight function filter.")
         ("wwf-upper-threshold", program_options::value<T>()->default_value(params.wwf_upper_threshold), "Upper threshold for weight function filter.")
         ("scale,s", program_options::value<double>()->default_value(params.scale), "Scale parameter to pre-smooth the data with. Filter size is calculated from this automatically.")
@@ -411,18 +416,24 @@ namespace m3D
 
         // Kernel
         params.kernel_name = vm["kernel-name"].as<string>();
-
-        if (!(params.kernel_name == "uniform" || params.kernel_name == "epanechnikov" || params.kernel_name == "gauss" || params.kernel_name == "none"))
+        std::set<std::string> validKernels = {"uniform", "epanechnikov", "gauss", "none"};
+        if (validKernels.find(params.kernel_name) == validKernels.end())
         {
-            cerr << "Illegal kernel name " << params.kernel_name << ". Only 'none','uniform','gauss' or 'epanechnikov' are accepted." << endl;
+            cerr << "Illegal kernel name " << params.kernel_name << ". Use one of " << validKernels << endl;
             exit(EXIT_FAILURE);
         }
 
         // Weight Function
         params.weight_function_name = vm["weight-function-name"].as<string>();
-        if (!(params.weight_function_name == "default" || params.weight_function_name == "inverse" || params.weight_function_name == "pow10" || params.weight_function_name == "inverfc" || params.weight_function_name == "oase" || params.weight_function_name == "oase-ci"))
+        std:set<std::string> validWeights = {"none", "default", "inverse", "pow10", "inverfc"};
+        #if WITH_SATELLITE
+        validWeights.insert("oase");
+        validWeights.insert("oase-ci");
+        #endif
+
+        if (validWeights.find(params.weight_function_name) == validWeights.end())
         {
-            cerr << "Illegal weight function name " << params.weight_function_name << ". Only 'default','inverse','pow10' or 'oase' are known." << endl;
+            cerr << "Illegal weight function name " << params.weight_function_name << ". Use one of " << validWeights << endl;
             exit(EXIT_FAILURE);
         }
         params.wwf_lower_threshold = vm["wwf-lower-threshold"].as<T>();

@@ -31,6 +31,7 @@
 #include "inverse_default.h"
 #include "exp10_weight.h"
 #include "inv_erfc_weight.h"
+#include "no_weight.h"
 
 #include "weight_function_factory.h"
 
@@ -67,6 +68,10 @@ namespace m3D {
         else if (params.weight_function_name == "inverfc")
         {
             weight_function = new InvErfcWeightFunction<T>(params, ctx);
+        }
+        else if (params.weight_function_name == "none") 
+        {
+            weight_function = new NoWeightFunction<T>();
         }
         else
         {
