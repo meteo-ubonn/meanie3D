@@ -30,7 +30,7 @@
 #include "default_weights.h"
 #include "inverse_default.h"
 #include "exp10_weight.h"
-#include "inv_erfc_weights.h"
+#include "inv_erfc_weight.h"
 
 #include "weight_function_factory.h"
 
