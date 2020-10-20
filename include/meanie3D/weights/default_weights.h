@@ -35,11 +35,15 @@
 
 namespace m3D {
 
-    /** This weight function scales from [0..1]. The weight is calculated
-     * by iterating over all variables. For each variable a weight is 
-     * generated that varies from [0..1] as the variable goes from it's
-     * valid_min to valid_max (linear). The values are summed up and 
-     * divided by the number of variables. 
+    /** 
+     * Linear weight function:
+     * 
+     * f(x) = x
+     * 
+     * For each value range, the range of x is projected from 0..1 as
+     * the variable's value moves from it's min to it's max value.
+     * The actual value is the arithmetic mean of all variable weights.
+     * 
      */
     template<class T>
     class DefaultWeightFunction : public WeightFunction<T>
